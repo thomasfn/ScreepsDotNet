@@ -5,6 +5,7 @@
 	<WasmMainJSPath>main.js</WasmMainJSPath>
     <OutputType>Exe</OutputType>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	<Nullable>enable</Nullable>
 	<PublishTrimmed>true</PublishTrimmed>
 	<TrimMode>full</TrimMode>
 	<TrimmerRemoveSymbols>true</TrimmerRemoveSymbols>
@@ -15,8 +16,8 @@
     <ProjectReference Include="..\ScreepsDotNet.API\ScreepsDotNet.API.csproj" />
   </ItemGroup>
 
-	<ItemGroup>
-		<PackageReference Include="ScreepsDotNet.Bundler" Version="1.0.5" PrivateAssets="All"/>
-	</ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="ScreepsDotNet.Bundler" Version="1.0.5" PrivateAssets="All"/>
+  </ItemGroup>
 
 </Project>

@@ -31,6 +31,7 @@ export class DotNet {
     private exports: Record<string, unknown> | undefined;
     private _tickBarrier?: number;
     private perfFn?: () => number;
+    private verboseLogging: boolean = false;
 
     private get isTickBarrier() { return this._tickBarrier != null && this._tickBarrier > this.tickIndex; }
 
@@ -41,6 +42,10 @@ export class DotNet {
 
     public setModuleImports(moduleName: string, imports: Record<string, unknown>): void {
         this.imports[moduleName] = imports;
+    }
+
+    public setVerboseLogging(verboseLogging: boolean): void {
+        this.verboseLogging = verboseLogging;
     }
 
     public setPerfFn(perfFn: () => number): void {
@@ -57,10 +62,13 @@ export class DotNet {
         this.createRuntime();
     }
 
-    public loop(): void {
+    public loop(loopFn?: () => void): void {
         setSuppressedLogMode(false);
         try {
+            let profiler = this.profile();
             this.runPendingAsyncActions();
+            if (loopFn) { loopFn(); }
+            profiler = this.profile(profiler, 'loop');
         } finally {
             setSuppressedLogMode(true);
         }
@@ -117,7 +125,7 @@ export class DotNet {
             return {
                 config: {
                     ...this.monoConfig,
-                    diagnosticTracing: true,
+                    diagnosticTracing: this.verboseLogging,
                 },
                 imports: {},
                 downloadResource: (request) => ({

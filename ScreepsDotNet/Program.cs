@@ -5,6 +5,8 @@ namespace ScreepsDotNet
 {
     public static partial class Program
     {
+        private static Tutorial3_FirstAttack? tutorial3_FirstAttack;
+
         public static void Main()
         {
             
@@ -13,9 +15,11 @@ namespace ScreepsDotNet
         [JSExport]
         internal static void Loop()
         {
-            var game = new Native.NativeGame();
-            Console.WriteLine($"Hello from C#! Current tick: {game.Utils.GetTicks()}");
-            Console.WriteLine($"CPU usage this tick: {game.Utils.GetCpuTime() / 1000000.0:N} ms");
+            if (tutorial3_FirstAttack == null)
+            {
+                tutorial3_FirstAttack = new Tutorial3_FirstAttack(new Native.NativeGame());
+            }
+            tutorial3_FirstAttack.Loop();
         }
     }
 }

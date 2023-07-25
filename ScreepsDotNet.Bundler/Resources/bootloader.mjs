@@ -14162,11 +14162,15 @@ var bootloader = (function (exports) {
         this.fileMap = {};
         this.tickIndex = 0;
         this.imports = {};
+        this.verboseLogging = false;
         this.manifest = manifest.manifest;
         this.monoConfig = manifest.config;
       }
       setModuleImports(moduleName, imports) {
         this.imports[moduleName] = imports;
+      }
+      setVerboseLogging(verboseLogging) {
+        this.verboseLogging = verboseLogging;
       }
       setPerfFn(perfFn) {
         this.perfFn = perfFn;
@@ -14179,10 +14183,15 @@ var bootloader = (function (exports) {
         this.decodeManifest();
         this.createRuntime();
       }
-      loop() {
+      loop(loopFn) {
         setSuppressedLogMode(false);
         try {
+          let profiler = this.profile();
           this.runPendingAsyncActions();
+          if (loopFn) {
+            loopFn();
+          }
+          profiler = this.profile(profiler, 'loop');
         } finally {
           setSuppressedLogMode(true);
         }
@@ -14242,7 +14251,7 @@ var bootloader = (function (exports) {
           return {
             config: {
               ...this.monoConfig,
-              diagnosticTracing: true
+              diagnosticTracing: this.verboseLogging
             },
             imports: {},
             downloadResource: request => ({

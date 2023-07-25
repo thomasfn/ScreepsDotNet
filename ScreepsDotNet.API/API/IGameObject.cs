@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ScreepsDotNet.API.API
+namespace ScreepsDotNet.API
 {
     public interface IPosition
     {
@@ -17,6 +17,11 @@ namespace ScreepsDotNet.API.API
         /// The Y coordinate in the room
         /// </summary>
         int Y { get; }
+
+        /// <summary>
+        /// Gets the coordinate in the room
+        /// </summary>
+        Position Position { get; }
     }
 
     /// <summary>

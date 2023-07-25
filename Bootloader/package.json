@@ -22,7 +22,8 @@
         "typescript": "^5.1.6"
     },
     "scripts": {
-        "build": "rollup -c rollup.config.js"
+        "build": "rollup -c rollup.config.js",
+        "installandbuild": "npm i && npm run build"
     },
     "dependencies": {
         "fast-base64": "^0.1.8",

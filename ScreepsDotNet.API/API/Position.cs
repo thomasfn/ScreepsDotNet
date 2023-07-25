@@ -35,5 +35,8 @@ namespace ScreepsDotNet.API
             jsObj.SetProperty("x", X);
             jsObj.SetProperty("y", Y);
         }
+
+        public override string ToString()
+            => $"[{X},{Y}]";
     }
 }

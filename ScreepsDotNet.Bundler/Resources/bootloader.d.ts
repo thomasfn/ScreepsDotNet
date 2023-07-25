@@ -20,13 +20,15 @@ export declare class DotNet {
     private exports;
     private _tickBarrier?;
     private perfFn?;
+    private verboseLogging;
     private get isTickBarrier();
     constructor(manifest: Readonly<Manifest>);
     setModuleImports(moduleName: string, imports: Record<string, unknown>): void;
+    setVerboseLogging(verboseLogging: boolean): void;
     setPerfFn(perfFn: () => number): void;
     getExports(): Record<string, any> | undefined;
     init(): void;
-    loop(): void;
+    loop(loopFn?: () => void): void;
     private profile;
     private profileAccum;
     private decodeManifest;
