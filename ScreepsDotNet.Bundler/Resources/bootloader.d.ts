@@ -1,0 +1,38 @@
+import './polyfill-fromentries';
+import './polyfill-textencoder';
+import type { MonoConfig } from './dotnet';
+export interface ManifestEntry {
+    path: string;
+    compressed: boolean;
+    b64: string;
+}
+export interface Manifest {
+    manifest: ManifestEntry[];
+    config: MonoConfig;
+}
+export declare class DotNet {
+    private readonly manifest;
+    private readonly monoConfig;
+    private readonly fileMap;
+    private tickIndex;
+    private runtimeApi;
+    private readonly imports;
+    private exports;
+    private _tickBarrier?;
+    private perfFn?;
+    private get isTickBarrier();
+    constructor(manifest: Readonly<Manifest>);
+    setModuleImports(moduleName: string, imports: Record<string, unknown>): void;
+    setPerfFn(perfFn: () => number): void;
+    getExports(): Record<string, any> | undefined;
+    init(): void;
+    loop(): void;
+    private profile;
+    private profileAccum;
+    private decodeManifest;
+    private createRuntime;
+    private downloadResource;
+    private setupRuntime;
+    private runPendingAsyncActions;
+    private tickBarrier;
+}

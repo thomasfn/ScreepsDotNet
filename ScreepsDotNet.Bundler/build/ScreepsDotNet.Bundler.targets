@@ -1,0 +1,9 @@
+<Project>
+	
+	<Target Name="_BuildScreepsBundle" AfterTargets="_WasmGenerateAppBundle" >
+		<BundlerBuildTask AppBundleDir="$(WasmAppDir)">
+			<Output TaskParameter="BundleFilePaths" PropertyName="ScreepsBundleFilePaths" />
+		</BundlerBuildTask>
+	</Target>
+
+</Project>

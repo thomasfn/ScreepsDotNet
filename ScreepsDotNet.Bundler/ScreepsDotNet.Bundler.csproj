@@ -1,0 +1,60 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFrameworks>netstandard2.0;net7.0</TargetFrameworks>
+		<LangVersion>8.0</LangVersion>
+		<Nullable>enable</Nullable>
+		<TargetsForTfmSpecificBuildOutput>
+			$(TargetsForTfmSpecificBuildOutput);CopyProjectReferencesToPackage
+		</TargetsForTfmSpecificBuildOutput>
+		<BuildOutputTargetFolder>tasks</BuildOutputTargetFolder>
+		<NoWarn>NU5100</NoWarn>
+		<GenerateDependencyFile>true</GenerateDependencyFile>
+		<DebugType>embedded</DebugType>
+		<IsPackable>true</IsPackable>
+		<Title>ScreepsDotNet Bundler</Title>
+		<Authors>thomasfn</Authors>
+		<Description>An MSBuild task that bundles wasm apps for Screeps Arena environment</Description>
+		<Version>1.0.5</Version>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Build.Framework" Version="17.6.3" PrivateAssets="all" />
+		<PackageReference Include="Microsoft.Build.Utilities.Core" Version="17.6.3" PrivateAssets="all" ExcludeAssets="Runtime" />
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Content Include="build\ScreepsDotNet.Bundler.props" PackagePath="build\" />
+		<Content Include="build\ScreepsDotNet.Bundler.targets" PackagePath="build\" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Compile Update="BundleStaticAssets.Designer.cs">
+	    <DesignTime>True</DesignTime>
+	    <AutoGen>True</AutoGen>
+	    <DependentUpon>BundleStaticAssets.resx</DependentUpon>
+	  </Compile>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <EmbeddedResource Update="BundleStaticAssets.resx">
+	    <Generator>ResXFileCodeGenerator</Generator>
+	    <LastGenOutput>BundleStaticAssets.Designer.cs</LastGenOutput>
+	  </EmbeddedResource>
+	</ItemGroup>
+
+	<Target Name="CopyProjectReferencesToPackage" DependsOnTargets="ResolveReferences">
+		<ItemGroup>
+			<BuildOutputInPackage Include="@(ReferenceCopyLocalPaths)" TargetPath="%(ReferenceCopyLocalPaths.DestinationSubPath)" />
+		</ItemGroup>
+	</Target>
+
+	<Target Name="AddBuildDependencyFileToBuiltProjectOutputGroupOutput" BeforeTargets="BuiltProjectOutputGroup" Condition=" '$(GenerateDependencyFile)' == 'true'">
+
+		<ItemGroup>
+			<BuiltProjectOutputGroupOutput Include="$(ProjectDepsFilePath)" TargetPath="$(ProjectDepsFileName)" FinalOutputPath="$(ProjectDepsFilePath)" />
+		</ItemGroup>
+	</Target>
+
+</Project>

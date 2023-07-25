@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <RuntimeIdentifier>browser-wasm</RuntimeIdentifier>
+	<WasmMainJSPath>main.js</WasmMainJSPath>
+    <OutputType>Exe</OutputType>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	<PublishTrimmed>true</PublishTrimmed>
+	<TrimMode>full</TrimMode>
+	<TrimmerRemoveSymbols>true</TrimmerRemoveSymbols>
+	<InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ScreepsDotNet.API\ScreepsDotNet.API.csproj" />
+  </ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="ScreepsDotNet.Bundler" Version="1.0.5" PrivateAssets="All"/>
+	</ItemGroup>
+
+</Project>

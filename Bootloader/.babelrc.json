@@ -1,0 +1,7 @@
+{
+    "presets": [],
+    "plugins": [
+        "babel-plugin-transform-async-to-promises",
+        "@babel/plugin-transform-named-capturing-groups-regex"
+    ]
+}

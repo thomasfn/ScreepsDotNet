@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+	<PropertyGroup Condition="'$(MSBuildRuntimeType)' == 'Core'">
+		<ScreepsDotNetBundlerAssemblyPath>$(MSBuildThisProjectFileDirectory)..\tasks\net7.0\</ScreepsDotNetBundlerAssemblyPath>
+	</PropertyGroup>
+	
+	<PropertyGroup Condition="'$(MSBuildRuntimeType)' == 'Full'">
+		<ScreepsDotNetBundlerAssemblyPath>$(MSBuildThisProjectFileDirectory)..\tasks\netstandard2.0\</ScreepsDotNetBundlerAssemblyPath>
+	</PropertyGroup>
+	
+	<UsingTask TaskName="ScreepsDotNet.Bundler.BundlerBuildTask" AssemblyFile="$(ScreepsDotNetBundlerAssemblyPath)ScreepsDotNet.Bundler.dll" />
+</Project>
