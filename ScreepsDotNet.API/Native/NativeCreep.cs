@@ -21,6 +21,19 @@ namespace ScreepsDotNet.Native
                 BodyPartType.Work => "work",
                 _ => throw new NotImplementedException($"Unknown body part type '{bodyPartType}'"),
             };
+
+        public static BodyPartType ParseBodyPartType(this string str)
+            => str switch
+            {
+                "attack" => BodyPartType.Attack,
+                "carry" => BodyPartType.Carry,
+                "heal" => BodyPartType.Heal,
+                "move" => BodyPartType.Move,
+                "ranged_attack" => BodyPartType.RangedAttack,
+                "tough" => BodyPartType.Tough,
+                "work" => BodyPartType.Work,
+                _ => throw new NotImplementedException($"Unknown body part type '{str}'"),
+            };
     }
 
     [System.Runtime.Versioning.SupportedOSPlatform("browser")]
@@ -36,6 +49,14 @@ namespace ScreepsDotNet.Native
         [return: JSMarshalAsAttribute<JSType.Number>]
         internal static partial int Native_Attack([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject);
 
+        [JSImport("Creep.drop", "game/prototypes/wrapped")]
+        [return: JSMarshalAsAttribute<JSType.Number>]
+        internal static partial int Native_Drop([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.String>] string resourceType, [JSMarshalAs<JSType.Number>] int? amount);
+
+        [JSImport("Creep.harvest", "game/prototypes/wrapped")]
+        [return: JSMarshalAsAttribute<JSType.Number>]
+        internal static partial int Native_Harvest([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject);
+
         [JSImport("Creep.heal", "game/prototypes/wrapped")]
         [return: JSMarshalAsAttribute<JSType.Number>]
         internal static partial int Native_Heal([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject);
@@ -47,6 +68,10 @@ namespace ScreepsDotNet.Native
         [JSImport("Creep.moveTo", "game/prototypes/wrapped")]
         [return: JSMarshalAsAttribute<JSType.Number>]
         internal static partial int Native_MoveTo([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject);
+
+        [JSImport("Creep.pickup", "game/prototypes/wrapped")]
+        [return: JSMarshalAsAttribute<JSType.Number>]
+        internal static partial int Native_Pickup([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject);
 
         [JSImport("Creep.pull", "game/prototypes/wrapped")]
         [return: JSMarshalAsAttribute<JSType.Number>]
@@ -76,21 +101,8 @@ namespace ScreepsDotNet.Native
 
         public IEnumerable<BodyPart> Body
             => Native_GetCreepBody(ProxyObject)
-                .Select(x => new BodyPart(ParseBodyPartType(x.GetPropertyAsString("type")!), x.GetPropertyAsInt32("hits")))
+                .Select(x => new BodyPart(x.GetPropertyAsString("type")!.ParseBodyPartType(), x.GetPropertyAsInt32("hits")))
                 .ToArray();
-
-        private static BodyPartType ParseBodyPartType(string str)
-            => str switch
-            {
-                "attack" => BodyPartType.Attack,
-                "carry" => BodyPartType.Carry,
-                "heal" => BodyPartType.Heal,
-                "move" => BodyPartType.Move,
-                "ranged_attack" => BodyPartType.RangedAttack,
-                "tough" => BodyPartType.Tough,
-                "work" => BodyPartType.Work,
-                _ => throw new NotImplementedException($"Unknown body part type '{str}'"),
-            };
 
         public double Fatigue => ProxyObject.GetPropertyAsDouble("fatigue");
 
@@ -116,6 +128,12 @@ namespace ScreepsDotNet.Native
         public CreepAttackResult Attack(IStructure target)
             => (CreepAttackResult)Native_Attack(ProxyObject, target.ToJS());
 
+        public CreepDropResult Drop(ResourceType resource, int? amount = null)
+            => (CreepDropResult)Native_Drop(ProxyObject, resource.ToJS(), amount);
+
+        public CreepHarvestResult Harvest(ISource target)
+            => (CreepHarvestResult)Native_Harvest(ProxyObject, target.ToJS());
+
         public CreepHealResult Heal(ICreep target)
             => (CreepHealResult)Native_Heal(ProxyObject, target.ToJS());
 
@@ -124,6 +142,9 @@ namespace ScreepsDotNet.Native
 
         public CreepMoveResult MoveTo(IPosition target)
             => (CreepMoveResult)Native_MoveTo(ProxyObject, target.ToJS());
+
+        public CreepPickupResult Pickup(IResource target)
+            => (CreepPickupResult)Native_Pickup(ProxyObject, target.ToJS());
 
         public CreepPullResult Pull(ICreep target)
             => (CreepPullResult)Native_Pull(ProxyObject, target.ToJS());

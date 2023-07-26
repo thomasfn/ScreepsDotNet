@@ -21,6 +21,13 @@ namespace ScreepsDotNet.Native
                 ResourceType.Energy => "energy",
                 _ => throw new NotImplementedException($"Unknown resource type '{resourceType}'"),
             };
+
+        public static ResourceType ParseResourceType(this string str)
+            => str switch
+            {
+                "energy" => ResourceType.Energy,
+                _ => throw new NotImplementedException($"Unknown resource type '{str}'"),
+            };
     }
 
     [System.Runtime.Versioning.SupportedOSPlatform("browser")]

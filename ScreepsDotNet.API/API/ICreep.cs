@@ -60,6 +60,24 @@ namespace ScreepsDotNet.API
         NotInRange = -9
     }
 
+    public enum CreepDropResult
+    {
+        Ok = 0,
+        NotOwner = -1,
+        InvalidArgs = -10,
+        NotEnoughResources = -6,
+    }
+
+    public enum CreepHarvestResult
+    {
+        Ok = 0,
+        NotOwner = -1,
+        NoBodyPart = -12,
+        InvalidTarget = -7,
+        NotEnoughResources = -6,
+        NotInRange = -9
+    }
+
     public enum CreepHealResult
     {
         Ok = 0,
@@ -76,6 +94,15 @@ namespace ScreepsDotNet.API
         NoBodyPart = -12,
         Tired = -11,
         InvalidArgs = -10
+    }
+
+    public enum CreepPickupResult
+    {
+        Ok = 0,
+        NotOwner = -1,
+        InvalidTarget = -7,
+        Full = -8,
+        NotInRange = -9,
     }
 
     public enum CreepPullResult
@@ -153,33 +180,22 @@ namespace ScreepsDotNet.API
         /// </summary>
         CreepAttackResult Attack(IStructure target);
 
-        ///**
-        // * Build a structure at the target construction site using carried energy.
-        // * Requires {@link WORK} and {@link CARRY} body parts
-        // * @param target The target construction site to be built
-        // * @returns Either {@link OK} or one of ERR_* error codes
-        // */
-        //build(target: ConstructionSite) : CreepBuildResult;
-
         /// <summary>
-        /// Attack a structure in a short-ranged attack. Requires the ATTACK body part
+        /// Build a structure at the target construction site using carried energy.
+        /// Requires WORK and CARRY body parts
         /// </summary>
         // CreepBuildResult Build(IConstructionSite target);
 
-        ///**
-        // * Drop a resource on the ground
-        // * @param resource One of the RESOURCE_* constants
-        // * @param amount The amount of resource units to be dropped. If omitted, all the available carried amount is used
-        // * @returns Either {@link OK} or one of ERR_* error codes
-        // */
-        //drop(resource: ResourceType, amount?: number) : CreepDropResult;
+        /// <summary>
+        /// Drop a resource on the ground
+        /// </summary>
+        /// <param name="amount">amount The amount of resource units to be dropped. If omitted, all the available carried amount is used</param>
+        CreepDropResult Drop(ResourceType resource, int? amount = null);
 
-        ///**
-        // * Harvest energy from the source. Requires the {@link WORK} body part
-        // * @param target The object to be harvested
-        // * @returns Either {@link OK} or one of ERR_* error codes
-        // */
-        //harvest(target: Source) : CreepHarvestResult;
+        /// <summary>
+        /// Harvest energy from the source. Requires the WORK body part
+        /// </summary>
+        CreepHarvestResult Harvest(ISource target);
 
         /// <summary>
         /// Heal self or another creep nearby. Requires the HEAL body part.
@@ -196,12 +212,10 @@ namespace ScreepsDotNet.API
         /// </summary>
         CreepMoveResult MoveTo(IPosition target/*, FindPathOptions? options = null*/);
 
-        ///**
-        // * Pick up an item (a dropped piece of resource). Requires the {@link CARRY} body part.
-        // * @param target The target object to be picked up
-        // * @returns Either {@link OK} or one of ERR_* error codes
-        // */
-        //pickup(target: Resource) : CreepPickupResult;
+        /// <summary>
+        /// Pick up an item (a dropped piece of resource). Requires the CARRY body part.
+        /// </summary>
+        CreepPickupResult Pickup(IResource target);
 
         /// <summary>
         /// Help another creep to follow this creep. Requires the MOVE body part
@@ -232,18 +246,18 @@ namespace ScreepsDotNet.API
         /// Transfer resource from the creep to another object
         /// </summary>
         /// <param name="amount">The amount of resources to be transferred. If omitted, all the available carried amount is used</param>
-        CreepTransferResult Transfer(IStructure target, ResourceType resourceType, int? amount);
+        CreepTransferResult Transfer(IStructure target, ResourceType resourceType, int? amount = null);
 
         /// <summary>
         /// Transfer resource from the creep to another object
         /// </summary>
         /// <param name="amount">The amount of resources to be transferred. If omitted, all the available carried amount is used</param>
-        CreepTransferResult Transfer(ICreep target, ResourceType resourceType, int? amount);
+        CreepTransferResult Transfer(ICreep target, ResourceType resourceType, int? amount = null);
 
         /// <summary>
         /// Withdraw resources from a structure
         /// </summary>
         /// <param name="amount">The amount of resources to be transferred. If omitted, all the available carried amount is used</param>
-        CreepTransferResult Withdraw(IStructure target, ResourceType resourceType, int? amount);
+        CreepTransferResult Withdraw(IStructure target, ResourceType resourceType, int? amount = null);
     }
 }
