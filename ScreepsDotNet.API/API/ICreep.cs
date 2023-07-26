@@ -95,6 +95,17 @@ namespace ScreepsDotNet.API
         NoBodyPart = -12
     }
 
+    public enum CreepTransferResult
+    {
+        Ok = 0,
+        NotOwner = -1,
+        InvalidArgs = -10,
+        InvalidTarget = -7,
+        NotInRange = -9,
+        Full = -8,
+        NotEnoughResources = -6
+    }
+
     public interface ICreep : IGameObject
     {
         /// <summary>
@@ -122,8 +133,10 @@ namespace ScreepsDotNet.API
         /// </summary>
         bool My { get; }
 
-        ///** A {@link Store} object that contains cargo of this creep */
-        //store: Store;
+        /// <summary>
+        ///  A Store object that contains cargo of this creep.
+        /// </summary>
+        IStore Store { get; }
 
         /// <summary>
         /// Whether this creep is still being spawned
@@ -138,7 +151,7 @@ namespace ScreepsDotNet.API
         /// <summary>
         /// Attack a structure in a short-ranged attack. Requires the ATTACK body part
         /// </summary>
-        // CreepAttackResult Attack(IStructure target);
+        CreepAttackResult Attack(IStructure target);
 
         ///**
         // * Build a structure at the target construction site using carried energy.
@@ -203,7 +216,7 @@ namespace ScreepsDotNet.API
         /// <summary>
         /// A ranged attack against a structure. Requires the RANGED_ATTACK body part
         /// </summary>
-        // CreepRangedAttackResult RangedAttack(IStructure target);
+        CreepAttackResult RangedAttack(IStructure target);
 
         /// <summary>
         /// Heal another creep at a distance. Requires the HEAL body part
@@ -215,21 +228,22 @@ namespace ScreepsDotNet.API
         /// </summary>
         CreepRangedMassAttackResult RangedMassAttack();
 
-        ///**
-        // * Transfer resource from the creep to another object
-        // * @param target The target object
-        // * @param resource One of the RESOURCE_* constants
-        // * @param amount The amount of resources to be transferred. If omitted, all the available carried amount is used
-        // */
-        //transfer(target: Structure|Creep, resource: ResourceType, amount?: number) : CreepTransferResult;
+        /// <summary>
+        /// Transfer resource from the creep to another object
+        /// </summary>
+        /// <param name="amount">The amount of resources to be transferred. If omitted, all the available carried amount is used</param>
+        CreepTransferResult Transfer(IStructure target, ResourceType resourceType, int? amount);
 
-        ///**
-        // * Withdraw resources from a structure
-        // * @param target The target structure
-        // * @param resource One of the RESOURCE_* constants
-        // * @param amount The amount of resources to be transferred. If omitted, all the available carried amount is used
-        // * @returns Either {@link OK} or one of ERR_* error codes
-        // */
-        //withdraw(target: Structure, resource: ResourceType, amount?: number) : CreepWithdrawResult;
+        /// <summary>
+        /// Transfer resource from the creep to another object
+        /// </summary>
+        /// <param name="amount">The amount of resources to be transferred. If omitted, all the available carried amount is used</param>
+        CreepTransferResult Transfer(ICreep target, ResourceType resourceType, int? amount);
+
+        /// <summary>
+        /// Withdraw resources from a structure
+        /// </summary>
+        /// <param name="amount">The amount of resources to be transferred. If omitted, all the available carried amount is used</param>
+        CreepTransferResult Withdraw(IStructure target, ResourceType resourceType, int? amount);
     }
 }

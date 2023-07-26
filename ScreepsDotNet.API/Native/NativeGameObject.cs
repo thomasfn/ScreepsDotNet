@@ -10,7 +10,7 @@ using System.Linq;
 namespace ScreepsDotNet.Native
 {
     [System.Runtime.Versioning.SupportedOSPlatform("browser")]
-    internal partial class NativeGameObject : IGameObject
+    internal partial class NativeGameObject : IGameObject, IEquatable<NativeGameObject?>
     {
         #region Imports
 
@@ -61,6 +61,16 @@ namespace ScreepsDotNet.Native
 
         public override string ToString()
             => $"GameObject({Id}, {Position})";
+
+        public override bool Equals(object? obj) => Equals(obj as NativeGameObject);
+
+        public bool Equals(NativeGameObject? other) => other is not null && Id == other.Id;
+
+        public override int GetHashCode() => HashCode.Combine(Id);
+
+        public static bool operator ==(NativeGameObject? left, NativeGameObject? right) => EqualityComparer<NativeGameObject>.Default.Equals(left, right);
+
+        public static bool operator !=(NativeGameObject? left, NativeGameObject? right) => !(left == right);
     }
 
     [System.Runtime.Versioning.SupportedOSPlatform("browser")]
@@ -77,6 +87,8 @@ namespace ScreepsDotNet.Native
     [System.Runtime.Versioning.SupportedOSPlatform("browser")]
     internal static partial class NativeGameObjectUtils
     {
+        private const string TypeIdKey = "__dotnet_typeId";
+
         private static readonly JSObject prototypesObject;
         private static readonly IList<Type> prototypeTypeMappings = new List<Type>();
 
@@ -106,8 +118,13 @@ namespace ScreepsDotNet.Native
                 Console.WriteLine($"Failed to retrieve constructor for '{prototypeName}'");
                 return;
             }
+            if (constructor.HasProperty(TypeIdKey))
+            {
+                Console.WriteLine($"Constructor for '{prototypeName}' was already bound to {prototypeTypeMappings[constructor.GetPropertyAsInt32(TypeIdKey) - 1]}");
+                return;
+            }
             int typeId = prototypeTypeMappings.Count;
-            constructor.SetProperty("__dotnet_typeId", typeId + 1);
+            constructor.SetProperty(TypeIdKey, typeId + 1);
             prototypeTypeMappings.Add(typeof(TConcrete));
             NativeGameObjectPrototypes<TInterface>.ConstructorObj = constructor;
             NativeGameObjectPrototypes<TConcrete>.ConstructorObj = constructor;
@@ -115,7 +132,7 @@ namespace ScreepsDotNet.Native
 
         internal static Type? GetWrapperTypeForConstructor(JSObject constructor)
         {
-            int typeId = constructor.GetPropertyAsInt32("__dotnet_typeId") - 1;
+            int typeId = constructor.GetPropertyAsInt32(TypeIdKey) - 1;
             if (typeId < 0)
             {
                 Console.WriteLine($"Failed to retrieve wrapper type for {constructor} - typeId not found");
@@ -135,10 +152,31 @@ namespace ScreepsDotNet.Native
         }
 
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeCreep))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructure))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeOwnedStructure))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureTower))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureContainer))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureRampart))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureRoad))]
+
         static NativeGameObjectUtils()
         {
             prototypesObject = GetPrototypesObject();
-            RegisterPrototypeTypeMapping<ICreep, NativeCreep>("Creep");
+            try
+            {
+                // NOTE - order matters! We must do derived classes first and base classes last
+                RegisterPrototypeTypeMapping<IStructureTower, NativeStructureTower>("StructureTower");
+                RegisterPrototypeTypeMapping<IStructureContainer, NativeStructureContainer>("StructureContainer");
+                RegisterPrototypeTypeMapping<IStructureRampart, NativeStructureRampart>("StructureRampart");
+                RegisterPrototypeTypeMapping<IStructureRoad, NativeStructureRoad>("StructureRoad");
+                RegisterPrototypeTypeMapping<IOwnedStructure, NativeOwnedStructure>("OwnedStructure");
+                RegisterPrototypeTypeMapping<IStructure, NativeStructure>("Structure");
+                RegisterPrototypeTypeMapping<ICreep, NativeCreep>("Creep");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
         }
     }
 

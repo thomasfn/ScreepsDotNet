@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Runtime.InteropServices.JavaScript;
 
 namespace ScreepsDotNet.API
@@ -13,6 +14,24 @@ namespace ScreepsDotNet.API
             X = x;
             Y = y;
         }
+
+        public int LinearDistanceTo(Position other)
+            => Math.Max(Math.Abs(X - other.X), Math.Abs(Y - other.Y));
+
+        public int LinearDistanceTo(IPosition other)
+            => LinearDistanceTo(other.Position);
+
+        public double CartesianDistanceTo(Position other)
+            => Math.Sqrt((X - other.X) * (X - other.X) + (Y - other.Y) * (Y - other.Y));
+
+        public double CartesianDistanceTo(IPosition other)
+            => CartesianDistanceTo(other.Position);
+
+        public bool IsNextTo(Position other)
+            => LinearDistanceTo(other) <= 1;
+
+        public bool IsNextTo(IPosition other)
+            => IsNextTo(other.Position);
 
         public override bool Equals(object? obj) => obj is Position position && Equals(position);
 

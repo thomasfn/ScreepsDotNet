@@ -16,7 +16,14 @@ dotNet.setModuleImports('object', {
     getConstructorOf: (x) => Object.getPrototypeOf(x).constructor,
     create: Object.create,
 });
-dotNet.setModuleImports('game/prototypes/wrapped', buildWrappedPrototypes());
+dotNet.setModuleImports('game/prototypes/wrapped', {
+    ...buildWrappedPrototypes(),
+    Store: {
+        getCapacity: (thisObj, resourceType) => thisObj.getCapacity(resourceType),
+        getUsedCapacity: (thisObj, resourceType) => thisObj.getUsedCapacity(resourceType),
+        getFreeCapacity: (thisObj, resourceType) => thisObj.getFreeCapacity(resourceType),
+    },
+});
 dotNet.init();
 
 function buildWrappedPrototypes() {

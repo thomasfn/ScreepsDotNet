@@ -48,6 +48,14 @@ namespace ScreepsDotNet.Native
         [return: JSMarshalAsAttribute<JSType.Number>]
         internal static partial int Native_RangedMassAttack([JSMarshalAs<JSType.Object>] JSObject proxyObject);
 
+        [JSImport("Creep.transfer", "game/prototypes/wrapped")]
+        [return: JSMarshalAsAttribute<JSType.Number>]
+        internal static partial int Native_Transfer([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject, [JSMarshalAs<JSType.String>] string resourceType, [JSMarshalAs<JSType.Number>] int? amount);
+
+        [JSImport("Creep.withdraw", "game/prototypes/wrapped")]
+        [return: JSMarshalAsAttribute<JSType.Number>]
+        internal static partial int Native_Withdraw([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject, [JSMarshalAs<JSType.String>] string resourceType, [JSMarshalAs<JSType.Number>] int? amount);
+
         #endregion
 
         public IEnumerable<BodyPart> Body
@@ -76,13 +84,20 @@ namespace ScreepsDotNet.Native
 
         public bool My => ProxyObject.GetPropertyAsBoolean("my");
 
+        public IStore Store { get; }
+
         public bool Spawning => ProxyObject.GetPropertyAsBoolean("spawning");
 
         public NativeCreep(JSObject proxyObject)
             : base(proxyObject)
-        { }
+        {
+            Store = new NativeStore(proxyObject.GetPropertyAsJSObject("store")!);
+        }
 
         public CreepAttackResult Attack(ICreep target)
+            => (CreepAttackResult)Native_Attack(ProxyObject, target.ToJS());
+
+        public CreepAttackResult Attack(IStructure target)
             => (CreepAttackResult)Native_Attack(ProxyObject, target.ToJS());
 
         public CreepHealResult Heal(ICreep target)
@@ -100,11 +115,23 @@ namespace ScreepsDotNet.Native
         public CreepAttackResult RangedAttack(ICreep target)
             => (CreepAttackResult)Native_RangedAttack(ProxyObject, target.ToJS());
 
+        public CreepAttackResult RangedAttack(IStructure target)
+            => (CreepAttackResult)Native_RangedAttack(ProxyObject, target.ToJS());
+
         public CreepHealResult RangedHeal(ICreep target)
             => (CreepHealResult)Native_RangedHeal(ProxyObject, target.ToJS());
 
         public CreepRangedMassAttackResult RangedMassAttack()
             => (CreepRangedMassAttackResult)Native_RangedMassAttack(ProxyObject);
+
+        public CreepTransferResult Transfer(IStructure target, ResourceType resourceType, int? amount)
+            => (CreepTransferResult)Native_Transfer(ProxyObject, target.ToJS(), resourceType.ToJS(), amount);
+
+        public CreepTransferResult Transfer(ICreep target, ResourceType resourceType, int? amount)
+            => (CreepTransferResult)Native_Transfer(ProxyObject, target.ToJS(), resourceType.ToJS(), amount);
+
+        public CreepTransferResult Withdraw(IStructure target, ResourceType resourceType, int? amount)
+            => (CreepTransferResult)Native_Withdraw(ProxyObject, target.ToJS(), resourceType.ToJS(), amount);
 
         public override string ToString()
             => $"Creep({Id}, {Position})";
