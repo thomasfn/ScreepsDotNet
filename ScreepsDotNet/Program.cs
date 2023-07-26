@@ -22,7 +22,7 @@ namespace ScreepsDotNet
             if (tutorialScript == null)
             {
                 // Change the tutorial script to solve a different tutorial here
-                tutorialScript = new Tutorial5_StoreAndTransfer(new Native.NativeGame());
+                tutorialScript = new Tutorial7_SpawnCreeps(new Native.NativeGame());
             }
             tutorialScript.Loop();
         }

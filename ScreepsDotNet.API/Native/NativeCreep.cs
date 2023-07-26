@@ -7,6 +7,22 @@ using ScreepsDotNet.API;
 
 namespace ScreepsDotNet.Native
 {
+    internal static class BodyPartTypeExtensions
+    {
+        public static string ToJS(this BodyPartType bodyPartType)
+            => bodyPartType switch
+            {
+                BodyPartType.Attack => "attack",
+                BodyPartType.Carry => "carry",
+                BodyPartType.Heal => "heal",
+                BodyPartType.Move => "move",
+                BodyPartType.RangedAttack => "ranged_attack",
+                BodyPartType.Tough => "tough",
+                BodyPartType.Work => "work",
+                _ => throw new NotImplementedException($"Unknown body part type '{bodyPartType}'"),
+            };
+    }
+
     [System.Runtime.Versioning.SupportedOSPlatform("browser")]
     internal partial class NativeCreep : NativeGameObject, ICreep
     {

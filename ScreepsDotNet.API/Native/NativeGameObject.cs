@@ -158,6 +158,8 @@ namespace ScreepsDotNet.Native
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureContainer))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureRampart))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureRoad))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureSpawn))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeFlag))]
 
         static NativeGameObjectUtils()
         {
@@ -165,11 +167,14 @@ namespace ScreepsDotNet.Native
             try
             {
                 // NOTE - order matters! We must do derived classes first and base classes last
+                // This is to avoid a nasty bug where the runtime gets objects and their prototype objects mixed up due to the tracking id being set as a property on the object
                 RegisterPrototypeTypeMapping<IStructureTower, NativeStructureTower>("StructureTower");
                 RegisterPrototypeTypeMapping<IStructureContainer, NativeStructureContainer>("StructureContainer");
                 RegisterPrototypeTypeMapping<IStructureRampart, NativeStructureRampart>("StructureRampart");
                 RegisterPrototypeTypeMapping<IStructureRoad, NativeStructureRoad>("StructureRoad");
+                RegisterPrototypeTypeMapping<IStructureSpawn, NativeStructureSpawn>("StructureSpawn");
                 RegisterPrototypeTypeMapping<IOwnedStructure, NativeOwnedStructure>("OwnedStructure");
+                RegisterPrototypeTypeMapping<IFlag, NativeFlag>("Flag");
                 RegisterPrototypeTypeMapping<IStructure, NativeStructure>("Structure");
                 RegisterPrototypeTypeMapping<ICreep, NativeCreep>("Creep");
             }
