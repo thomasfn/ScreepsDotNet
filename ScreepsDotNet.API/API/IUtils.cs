@@ -1,10 +1,45 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace ScreepsDotNet.API
 {
+    public enum CreateConstructionSiteError
+    {
+        InvalidArgs = -10,
+        InvalidTarget = -7,
+        Full = -8
+    }
+
+    public readonly struct CreateConstructionSiteResult : IEquatable<CreateConstructionSiteResult>
+    {
+        public readonly IConstructionSite? Object;
+        public readonly CreateConstructionSiteError? Error;
+
+        public CreateConstructionSiteResult(IConstructionSite? @object, CreateConstructionSiteError? error)
+        {
+            Object = @object;
+            Error = error;
+        }
+
+        public override bool Equals(object? obj) => obj is CreateConstructionSiteResult result && Equals(result);
+
+        public bool Equals(CreateConstructionSiteResult other)
+            => EqualityComparer<IConstructionSite?>.Default.Equals(Object, other.Object)
+            && Error == other.Error;
+
+        public override int GetHashCode() => HashCode.Combine(Object, Error);
+
+        public static bool operator ==(CreateConstructionSiteResult left, CreateConstructionSiteResult right) => left.Equals(right);
+
+        public static bool operator !=(CreateConstructionSiteResult left, CreateConstructionSiteResult right) => !(left == right);
+    }
+
     public interface IUtils
     {
-        // createConstructionSite
+        /// <summary>
+        /// Create new ConstructionSite at the specified location.
+        /// </summary>
+        CreateConstructionSiteResult CreateConstructionSite<T>(Position position) where T : class, IStructure;
 
         // findClosestByPath
 

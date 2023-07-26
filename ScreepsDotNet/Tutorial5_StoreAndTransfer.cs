@@ -49,9 +49,7 @@ namespace ScreepsDotNet
             {
                 var energyStored = myCreep.Store[ResourceType.Energy];
                 var energySpace = myCreep.Store.GetFreeCapacity(ResourceType.Energy) ?? 0;
-                Console.WriteLine($"{myCreep} has {energyStored} energy stored and {energySpace} space for more");
                 var energyAvailable = container.Store[ResourceType.Energy];
-                Console.WriteLine($"{container} has {energyAvailable} energy available");
                 
                 // If we have space, load up until either the creep is full or the container is empty
                 if (energySpace > 0 && energyAvailable > 0)

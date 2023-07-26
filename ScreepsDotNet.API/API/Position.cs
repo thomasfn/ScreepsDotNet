@@ -47,6 +47,8 @@ namespace ScreepsDotNet.API
 
         public static implicit operator Position(Tuple<int, int> tuple) => new (tuple.Item1, tuple.Item2);
 
+        public static implicit operator Position((int, int) tuple) => new(tuple.Item1, tuple.Item2);
+
         public static implicit operator Position(JSObject jsObj) => new (jsObj.GetPropertyAsInt32("x"), jsObj.GetPropertyAsInt32("y"));
 
         public static Position operator +(Position lhs, (int dx, int dy) rhs)

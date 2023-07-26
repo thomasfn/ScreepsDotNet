@@ -49,6 +49,10 @@ namespace ScreepsDotNet.Native
         [return: JSMarshalAsAttribute<JSType.Number>]
         internal static partial int Native_Attack([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject);
 
+        [JSImport("Creep.build", "game/prototypes/wrapped")]
+        [return: JSMarshalAsAttribute<JSType.Number>]
+        internal static partial int Native_Build([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject);
+
         [JSImport("Creep.drop", "game/prototypes/wrapped")]
         [return: JSMarshalAsAttribute<JSType.Number>]
         internal static partial int Native_Drop([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.String>] string resourceType, [JSMarshalAs<JSType.Number>] int? amount);
@@ -127,6 +131,9 @@ namespace ScreepsDotNet.Native
 
         public CreepAttackResult Attack(IStructure target)
             => (CreepAttackResult)Native_Attack(ProxyObject, target.ToJS());
+
+        public CreepBuildResult Build(IConstructionSite target)
+            => (CreepBuildResult)Native_Build(ProxyObject, target.ToJS());
 
         public CreepDropResult Drop(ResourceType resource, int? amount = null)
             => (CreepDropResult)Native_Drop(ProxyObject, resource.ToJS(), amount);

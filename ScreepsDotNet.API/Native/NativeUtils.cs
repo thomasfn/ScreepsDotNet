@@ -12,6 +12,10 @@ namespace ScreepsDotNet.Native
     {
         #region Imports
 
+        [JSImport("createConstructionSite", "game/utils")]
+        [return: JSMarshalAsAttribute<JSType.Object>]
+        internal static partial JSObject Native_CreateConstructionSite([JSMarshalAs<JSType.Object>] JSObject position, [JSMarshalAs<JSType.Object>] JSObject prototype);
+
         [JSImport("getCpuTime", "game/utils")]
         [return: JSMarshalAsAttribute<JSType.Number>]
         internal static partial long Native_GetCpuTime();
@@ -33,6 +37,18 @@ namespace ScreepsDotNet.Native
         internal static partial int Native_GetTicks();
 
         #endregion
+
+        public CreateConstructionSiteResult CreateConstructionSite<T>(Position position) where T : class, IStructure
+        {
+            var positionObj = NativeGameObjectUtils.CreateObject(null);
+            position.ToJS(positionObj);
+            var resultObj = Native_CreateConstructionSite(positionObj, NativeGameObjectPrototypes<T>.ConstructorObj!);
+            if (resultObj == null) { throw new InvalidOperationException($"Native_CreateConstructionSite returned null or undefined"); }
+            var constructionSiteObj = resultObj.GetPropertyAsJSObject("object");
+            var constructionSite = constructionSiteObj != null ? NativeGameObjectUtils.CreateWrapperForObject(constructionSiteObj) as IConstructionSite : null;
+            CreateConstructionSiteError? error = resultObj.GetTypeOfProperty("error") == "number" ? (CreateConstructionSiteError)resultObj.GetPropertyAsInt32("error") : null;
+            return new CreateConstructionSiteResult(constructionSite, error);
+        }
 
         public long GetCpuTime()
             => Native_GetCpuTime();

@@ -184,7 +184,7 @@ namespace ScreepsDotNet.API
         /// Build a structure at the target construction site using carried energy.
         /// Requires WORK and CARRY body parts
         /// </summary>
-        // CreepBuildResult Build(IConstructionSite target);
+        CreepBuildResult Build(IConstructionSite target);
 
         /// <summary>
         /// Drop a resource on the ground
