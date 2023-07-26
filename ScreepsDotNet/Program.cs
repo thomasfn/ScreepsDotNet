@@ -1,11 +1,15 @@
-using System;
 using System.Runtime.InteropServices.JavaScript;
 
 namespace ScreepsDotNet
 {
+    public interface ITutorialScript
+    {
+        void Loop();
+    }
+
     public static partial class Program
     {
-        private static Tutorial3_FirstAttack? tutorial3_FirstAttack;
+        private static ITutorialScript? tutorialScript;
 
         public static void Main()
         {
@@ -15,11 +19,12 @@ namespace ScreepsDotNet
         [JSExport]
         internal static void Loop()
         {
-            if (tutorial3_FirstAttack == null)
+            if (tutorialScript == null)
             {
-                tutorial3_FirstAttack = new Tutorial3_FirstAttack(new Native.NativeGame());
+                // Change the tutorial script to solve a different tutorial here
+                tutorialScript = new Tutorial4_CreepsBodies(new Native.NativeGame());
             }
-            tutorial3_FirstAttack.Loop();
+            tutorialScript.Loop();
         }
     }
 }

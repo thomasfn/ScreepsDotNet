@@ -30,10 +30,37 @@ namespace ScreepsDotNet.API
     /// </summary>
     public interface IGameObject : IPosition
     {
+        /// <summary>
+        /// True if this object is live in the game at the moment
+        /// </summary>
         bool Exists { get; }
+
+        /// <summary>
+        /// The unique ID of this object that you can use in GetObjectById
+        /// </summary>
         string Id { get; }
+
+        /// <summary>
+        /// If defined, then this object will disappear after this number of ticks
+        /// </summary>
         int? TicksToDecay { get; }
 
-        T? FindClosestByPath<T>(IEnumerable<T> positions, object? options) where T : IPosition;
+        /// <summary>
+        /// Find a position with the shortest path from this game object
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="positions"></param>
+        /// <param name="options"></param>
+        /// <returns></returns>
+        T? FindClosestByPath<T>(IEnumerable<T> positions, object? options) where T : class, IPosition;
+
+        /// <summary>
+        /// Find a position with the shortest path from this game object
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="positions"></param>
+        /// <param name="options"></param>
+        /// <returns></returns>
+        Position? FindClosestByPath(IEnumerable<Position> positions, object? options);
     }
 }

@@ -30,7 +30,19 @@ namespace ScreepsDotNet.API
 
         public static implicit operator Position(JSObject jsObj) => new (jsObj.GetPropertyAsInt32("x"), jsObj.GetPropertyAsInt32("y"));
 
-        public void ToObject(JSObject jsObj)
+        public static Position operator +(Position lhs, (int dx, int dy) rhs)
+            => new (lhs.X + rhs.dx, lhs.Y + rhs.dy);
+
+        public static Position operator +(Position lhs, Direction rhs)
+            => lhs + rhs.ToLinear();
+
+        public static Position operator -(Position lhs, (int dx, int dy) rhs)
+            => new(lhs.X - rhs.dx, lhs.Y - rhs.dy);
+
+        public static Position operator -(Position lhs, Direction rhs)
+            => lhs - rhs.ToLinear();
+
+        public void ToJS(JSObject jsObj)
         {
             jsObj.SetProperty("x", X);
             jsObj.SetProperty("y", Y);

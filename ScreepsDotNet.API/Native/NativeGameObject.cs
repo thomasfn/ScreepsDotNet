@@ -5,12 +5,25 @@ using System.Runtime.InteropServices.JavaScript;
 using System.Runtime.CompilerServices;
 
 using ScreepsDotNet.API;
+using System.Linq;
 
 namespace ScreepsDotNet.Native
 {
     [System.Runtime.Versioning.SupportedOSPlatform("browser")]
     internal partial class NativeGameObject : IGameObject
     {
+        #region Imports
+
+        [JSImport("GameObject.findClosestByPath", "game/prototypes/wrapped")]
+        [return: JSMarshalAsAttribute<JSType.Object>]
+        internal static partial JSObject Native_FindClosestByPath_NoOpts([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Array<JSType.Object>>] JSObject[] positions);
+
+        [JSImport("GameObject.findClosestByPath", "game/prototypes/wrapped")]
+        [return: JSMarshalAsAttribute<JSType.Object>]
+        internal static partial JSObject Native_FindClosestByPath([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Array<JSType.Object>>] JSObject[] positions, [JSMarshalAs<JSType.Object>] JSObject options);
+
+        #endregion
+
         internal readonly JSObject ProxyObject;
 
         public bool Exists => ProxyObject.GetPropertyAsBoolean("exists");
@@ -30,9 +43,20 @@ namespace ScreepsDotNet.Native
             this.ProxyObject = wrappedJsObject;
         }
 
-        public T? FindClosestByPath<T>(IEnumerable<T> positions, object? options) where T : IPosition
+        public T? FindClosestByPath<T>(IEnumerable<T> positions, object? options) where T : class, IPosition
         {
-            throw new NotImplementedException();
+            var result = Native_FindClosestByPath_NoOpts(ProxyObject, positions.Select(x => x.ToJS()).ToArray());
+            if (result == null) { return null; }
+            var resultWrapper = NativeGameObjectUtils.CreateWrapperForObject(result);
+            if (resultWrapper is not T resultWrapperTyped) { return null; }
+            return resultWrapperTyped;
+        }
+
+        public Position? FindClosestByPath(IEnumerable<Position> positions, object? options)
+        {
+            var result = Native_FindClosestByPath_NoOpts(ProxyObject, positions.Select(x => { var obj = NativeGameObjectUtils.CreateObject(null); x.ToJS(obj); return obj; }).ToArray());
+            if (result == null) { return null; }
+            return result;
         }
 
         public override string ToString()
@@ -70,7 +94,7 @@ namespace ScreepsDotNet.Native
 
         [JSImport("create", "object")]
         [return: JSMarshalAsAttribute<JSType.Object>]
-        internal static partial JSObject Create([JSMarshalAs<JSType.Object>] JSObject? prototype);
+        internal static partial JSObject CreateObject([JSMarshalAs<JSType.Object>] JSObject? prototype);
 
         internal static void RegisterPrototypeTypeMapping<TInterface, TConcrete>(string prototypeName)
             where TInterface : IGameObject
@@ -124,7 +148,7 @@ namespace ScreepsDotNet.Native
         public static JSObject ToJS(this IPosition position)
         {
             if (position is NativeGameObject nativeGameObject) { return nativeGameObject.ProxyObject; }
-            var obj = NativeGameObjectUtils.Create(null);
+            var obj = NativeGameObjectUtils.CreateObject(null);
             obj.SetProperty("x", position.X);
             obj.SetProperty("y", position.Y);
             return obj;

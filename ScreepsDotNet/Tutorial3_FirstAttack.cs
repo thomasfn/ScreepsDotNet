@@ -5,7 +5,7 @@ using ScreepsDotNet.API;
 
 namespace ScreepsDotNet
 {
-    public class Tutorial3_FirstAttack
+    public class Tutorial3_FirstAttack : ITutorialScript
     {
         private readonly IGame game;
 

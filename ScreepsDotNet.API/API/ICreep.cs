@@ -36,9 +36,31 @@ namespace ScreepsDotNet.API
         public static bool operator ==(BodyPart left, BodyPart right) => left.Equals(right);
 
         public static bool operator !=(BodyPart left, BodyPart right) => !(left == right);
+
+        public override string ToString()
+            => $"{Type}[{Hits}]";
     }
 
     public enum CreepAttackResult
+    {
+        Ok = 0,
+        NotOwner = -1,
+        NoBodyPart = -12,
+        InvalidTarget = -7,
+        NotInRange = -9
+    }
+
+    public enum CreepBuildResult
+    {
+        Ok = 0,
+        NotOwner = -1,
+        NoBodyPart = -12,
+        NotEnoughResources = -6,
+        InvalidTarget = -7,
+        NotInRange = -9
+    }
+
+    public enum CreepHealResult
     {
         Ok = 0,
         NotOwner = -1,
@@ -54,6 +76,23 @@ namespace ScreepsDotNet.API
         NoBodyPart = -12,
         Tired = -11,
         InvalidArgs = -10
+    }
+
+    public enum CreepPullResult
+    {
+        Ok = 0,
+        NotOwner = -1,
+        NoBodyPart = -12,
+        Tired = -11,
+        InvalidTarget = -7,
+        InvalidArgs = -10
+    }
+
+    public enum CreepRangedMassAttackResult
+    {
+        Ok = 0,
+        NotOwner = -1,
+        NoBodyPart = -12
     }
 
     public interface ICreep : IGameObject
@@ -91,22 +130,15 @@ namespace ScreepsDotNet.API
         /// </summary>
         bool Spawning { get; }
 
-        ///**
-        // * Attack another creep or structure in a short-ranged attack. Requires the {@link ATTACK} body part
-        // * @param target The target object
-        // * @returns Either {@link OK} or one of ERR_* error codes
-        // */
-        //attack(target: Creep|Structure) : CreepAttackResult;
-
         /// <summary>
         /// Attack another creep in a short-ranged attack. Requires the ATTACK body part
         /// </summary>
         CreepAttackResult Attack(ICreep target);
 
         /// <summary>
-        /// Attack another structure in a short-ranged attack. Requires the ATTACK body part
+        /// Attack a structure in a short-ranged attack. Requires the ATTACK body part
         /// </summary>
-        //CreepAttackResult Attack(IStructure target);
+        // CreepAttackResult Attack(IStructure target);
 
         ///**
         // * Build a structure at the target construction site using carried energy.
@@ -115,6 +147,11 @@ namespace ScreepsDotNet.API
         // * @returns Either {@link OK} or one of ERR_* error codes
         // */
         //build(target: ConstructionSite) : CreepBuildResult;
+
+        /// <summary>
+        /// Attack a structure in a short-ranged attack. Requires the ATTACK body part
+        /// </summary>
+        // CreepBuildResult Build(IConstructionSite target);
 
         ///**
         // * Drop a resource on the ground
@@ -131,30 +168,18 @@ namespace ScreepsDotNet.API
         // */
         //harvest(target: Source) : CreepHarvestResult;
 
-        ///**
-        // * Heal self or another creep nearby. Requires the {@link HEAL} body part.
-        // * @param target The target creep object
-        // * @returns Either {@link OK} or one of ERR_* error codes
-        // */
-        //heal(target: Creep) : CreepHealResult;
-
-        ///**
-        // * Move the creep one square in the specified direction. Requires the {@link MOVE} body part
-        // * @param direction The direction to move
-        // * @returns Either {@link OK} or one of ERR_* error codes
-        // */
-        //move(direction: Direction) : CreepMoveResult;
-
-        ///**
-        // * Find the optimal path to the target and move to it. Requires the {@link MOVE} body part
-        // * @param target The target to move to. Can be a {@link GameObject} or any object containing x and y properties.
-        // * @param options An object with additional options that are passed to {@link findPath}
-        // * @returns Either {@link OK} or one of ERR_* error codes
-        // */
-        //moveTo(target: Position, options?: FindPathOptions) : CreepMoveResult;
+        /// <summary>
+        /// Heal self or another creep nearby. Requires the HEAL body part.
+        /// </summary>
+        CreepHealResult Heal(ICreep target);
 
         /// <summary>
-        ///  Find the optimal path to the target and move to it. Requires the MOVE body part
+        /// Move the creep one square in the specified direction. Requires the MOVE body part
+        /// </summary>
+        CreepMoveResult Move(Direction direction);
+
+        /// <summary>
+        /// Find the optimal path to the target and move to it. Requires the MOVE body part
         /// </summary>
         CreepMoveResult MoveTo(IPosition target/*, FindPathOptions? options = null*/);
 
@@ -165,32 +190,30 @@ namespace ScreepsDotNet.API
         // */
         //pickup(target: Resource) : CreepPickupResult;
 
-        ///**
-        // * Help another creep to follow this creep. Requires the {@link MOVE} body part
-        // * @param target The target creep
-        // * @returns Either {@link OK} or one of ERR_* error codes
-        // */
-        //pull(target: Creep) : CreepPullResult;
+        /// <summary>
+        /// Help another creep to follow this creep. Requires the MOVE body part
+        /// </summary>
+        CreepPullResult Pull(ICreep target);
 
-        ///**
-        // * A ranged attack against another creep or structure. Requires the {@link RANGED_ATTACK} body part
-        // * @param target The target object to be attacked
-        // * @returns Either {@link OK} or one of ERR_* error codes
-        // */
-        //rangedAttack(target: Creep|Structure) : CreepRangedAttackResult;
+        /// <summary>
+        /// A ranged attack against another creep. Requires the RANGED_ATTACK body part
+        /// </summary>
+        CreepAttackResult RangedAttack(ICreep target);
 
-        ///**
-        // * Heal another creep at a distance. Requires the {@link HEAL} body part
-        // * @param target The target creep object
-        // * @returns Either {@link OK} or one of ERR_* error codes
-        // */
-        //rangedHeal(target: Creep) : CreepRangedHealResult;
+        /// <summary>
+        /// A ranged attack against a structure. Requires the RANGED_ATTACK body part
+        /// </summary>
+        // CreepRangedAttackResult RangedAttack(IStructure target);
 
-        ///**
-        // * A ranged attack against all hostile creeps or structures within 3 squares range.  Requires the {@link RANGED_ATTACK} body part
-        // * @returns Either {@link OK} or one of ERR_* error codes
-        // */
-        //rangedMassAttack() : CreepRangedMassAttackResult;
+        /// <summary>
+        /// Heal another creep at a distance. Requires the HEAL body part
+        /// </summary>
+        CreepHealResult RangedHeal(ICreep target);
+
+        /// <summary>
+        /// A ranged attack against all hostile creeps or structures within 3 squares range.  Requires the RANGED_ATTACK body part
+        /// </summary>
+        CreepRangedMassAttackResult RangedMassAttack();
 
         ///**
         // * Transfer resource from the creep to another object
