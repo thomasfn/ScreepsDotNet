@@ -1,12 +1,33 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices.JavaScript;
 using System.Linq;
 
 using ScreepsDotNet.API;
-using System;
 
 namespace ScreepsDotNet.Native
 {
+    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    internal static class PositionExtensions
+    {
+        public static Position ToPosition(this JSObject obj)
+            => (obj.GetPropertyAsInt32("x"), obj.GetPropertyAsInt32("y"));
+
+        public static Position? ToPositionNullable(this JSObject? obj)
+            => obj != null ? new Position?(obj.ToPosition()) : null;
+
+        public static JSObject ToJS(this Position pos)
+        {
+            var obj = NativeGameObjectUtils.CreateObject(null);
+            obj.SetProperty("x", pos.X);
+            obj.SetProperty("y", pos.Y);
+            return obj;
+        }
+
+        public static JSObject? ToJS(this Position? pos)
+            => pos != null ? pos.Value.ToJS() : null;
+    }
+
     [System.Runtime.Versioning.SupportedOSPlatform("browser")]
     internal partial class NativeUtils : IUtils
     {
@@ -16,9 +37,37 @@ namespace ScreepsDotNet.Native
         [return: JSMarshalAsAttribute<JSType.Object>]
         internal static partial JSObject Native_CreateConstructionSite([JSMarshalAs<JSType.Object>] JSObject position, [JSMarshalAs<JSType.Object>] JSObject prototype);
 
+        [JSImport("findClosestByPath", "game/utils")]
+        [return: JSMarshalAsAttribute<JSType.Object>]
+        internal static partial JSObject Native_FindClosestByPath([JSMarshalAs<JSType.Object>] JSObject fromPos, [JSMarshalAs<JSType.Array<JSType.Object>>] JSObject[] positions, [JSMarshalAs<JSType.Object>] JSObject? options);
+
+        [JSImport("findClosestByRange", "game/utils")]
+        [return: JSMarshalAsAttribute<JSType.Object>]
+        internal static partial JSObject Native_FindClosestByRange([JSMarshalAs<JSType.Object>] JSObject fromPos, [JSMarshalAs<JSType.Array<JSType.Object>>] JSObject[] positions);
+
+        [JSImport("findInRange", "game/utils")]
+        [return: JSMarshalAsAttribute<JSType.Array<JSType.Object>>]
+        internal static partial JSObject[] Native_FindInRange([JSMarshalAs<JSType.Object>] JSObject fromPos, [JSMarshalAs<JSType.Array<JSType.Object>>] JSObject[] positions, [JSMarshalAs<JSType.Number>] int range);
+
+        [JSImport("findPath", "game/utils")]
+        [return: JSMarshalAsAttribute<JSType.Array<JSType.Object>>]
+        internal static partial JSObject[] Native_FindPath([JSMarshalAs<JSType.Object>] JSObject fromPos, [JSMarshalAs<JSType.Object>] JSObject toPos, [JSMarshalAs<JSType.Object>] JSObject? options);
+
         [JSImport("getCpuTime", "game/utils")]
         [return: JSMarshalAsAttribute<JSType.Number>]
         internal static partial long Native_GetCpuTime();
+
+        [JSImport("getDirection", "game/utils")]
+        [return: JSMarshalAsAttribute<JSType.Number>]
+        internal static partial int Native_GetDirection([JSMarshalAs<JSType.Number>] int dx, [JSMarshalAs<JSType.Number>] int dy);
+
+        [JSImport("getHeapStatistics", "game/utils")]
+        [return: JSMarshalAsAttribute<JSType.Object>]
+        internal static partial JSObject Native_GetHeapStatistics();
+
+        [JSImport("getObjectById", "game/utils")]
+        [return: JSMarshalAsAttribute<JSType.Object>]
+        internal static partial JSObject Native_GetObjectById(string id);
 
         [JSImport("getObjects", "game/utils")]
         [return: JSMarshalAsAttribute<JSType.Array<JSType.Object>>]
@@ -28,9 +77,13 @@ namespace ScreepsDotNet.Native
         [return: JSMarshalAsAttribute<JSType.Array<JSType.Object>>]
         internal static partial JSObject[] Native_GetObjectsByPrototype([JSMarshalAs<JSType.Object>] JSObject prototype);
 
-        [JSImport("getObjects", "game/utils")]
+        [JSImport("getRange", "game/utils")]
         [return: JSMarshalAsAttribute<JSType.Number>]
         internal static partial int Native_GetRange([JSMarshalAs<JSType.Object>] JSObject a, [JSMarshalAs<JSType.Object>] JSObject b);
+
+        [JSImport("getTerrainAt", "game/utils")]
+        [return: JSMarshalAsAttribute<JSType.Number>]
+        internal static partial int Native_GetTerrainAt([JSMarshalAs<JSType.Object>] JSObject pos);
 
         [JSImport("getTicks", "game/utils")]
         [return: JSMarshalAsAttribute<JSType.Number>]
@@ -40,18 +93,75 @@ namespace ScreepsDotNet.Native
 
         public CreateConstructionSiteResult CreateConstructionSite<T>(Position position) where T : class, IStructure
         {
-            var positionObj = NativeGameObjectUtils.CreateObject(null);
-            position.ToJS(positionObj);
-            var resultObj = Native_CreateConstructionSite(positionObj, NativeGameObjectPrototypes<T>.ConstructorObj!);
+            var resultObj = Native_CreateConstructionSite(position.ToJS(), NativeGameObjectPrototypes<T>.ConstructorObj!);
             if (resultObj == null) { throw new InvalidOperationException($"Native_CreateConstructionSite returned null or undefined"); }
             var constructionSiteObj = resultObj.GetPropertyAsJSObject("object");
-            var constructionSite = constructionSiteObj != null ? NativeGameObjectUtils.CreateWrapperForObject(constructionSiteObj) as IConstructionSite : null;
+            var constructionSite = constructionSiteObj.ToGameObject<IConstructionSite>();
             CreateConstructionSiteError? error = resultObj.GetTypeOfProperty("error") == "number" ? (CreateConstructionSiteError)resultObj.GetPropertyAsInt32("error") : null;
             return new CreateConstructionSiteResult(constructionSite, error);
         }
 
+        public T? FindClosestByPath<T>(Position fromPos, IEnumerable<T> positions, FindPathOptions? options) where T : class, IPosition
+            => Native_FindClosestByPath(fromPos.ToJS(), positions.Select(x => x.ToJS()).ToArray(), options.ToJS()).ToGameObject<IGameObject>() as T;
+
+        public Position? FindClosestByPath(Position fromPos, IEnumerable<Position> positions, FindPathOptions? options)
+            => Native_FindClosestByPath(fromPos.ToJS(), positions.Select(x => x.ToJS()).ToArray(), options.ToJS()).ToPositionNullable();
+
+        public T? FindClosestByRange<T>(Position fromPos, IEnumerable<T> positions) where T : class, IPosition
+            => Native_FindClosestByRange(fromPos.ToJS(), positions.Select(x => x.ToJS()).ToArray()).ToGameObject<IGameObject>() as T;
+
+        public Position? FindClosestByRange(Position fromPos, IEnumerable<Position> positions)
+            => Native_FindClosestByRange(fromPos.ToJS(), positions.Select(x => x.ToJS()).ToArray()).ToPositionNullable();
+
+        public IEnumerable<T> FindInRange<T>(Position fromPos, IEnumerable<T> positions, int range) where T : class, IPosition
+            => Native_FindInRange(fromPos.ToJS(), positions.Select(x => x.ToJS()).ToArray(), range)
+                .Select(x => x.ToGameObject<IGameObject>())
+                .Where(x => x is T)
+                .Cast<T>()
+                .ToArray();
+
+        public IEnumerable<Position> FindInRange(Position fromPos, IEnumerable<Position> positions, int range)
+            => Native_FindInRange(fromPos.ToJS(), positions.Select(x => x.ToJS()).ToArray(), range)
+                .Select(x => x.ToPosition())
+                .ToArray();
+
+        public IEnumerable<Position> FindPath(Position fromPos, Position toPos, FindPathOptions? options)
+            => Native_FindPath(fromPos.ToJS(), toPos.ToJS(), options.ToJS())
+                .Select(x => x.ToPosition())
+                .ToArray();
+
+        public IEnumerable<Position> FindPath(Position fromPos, IPosition toPos, FindPathOptions? options)
+            => Native_FindPath(fromPos.ToJS(), toPos.ToJS(), options.ToJS())
+                .Select(x => x.ToPosition())
+                .ToArray();
+
         public long GetCpuTime()
             => Native_GetCpuTime();
+
+        public Direction GetDirection(int dx, int dy)
+            => (Direction)Native_GetDirection(dx, dy);
+
+        public HeapInfo GetHeapStatistics()
+        {
+            var obj = Native_GetHeapStatistics();
+            return new HeapInfo(
+                obj.GetPropertyAsInt32("total_heap_size"),
+                obj.GetPropertyAsInt32("total_heap_size_executable"),
+                obj.GetPropertyAsInt32("total_physical_size"),
+                obj.GetPropertyAsInt32("total_available_size"),
+                obj.GetPropertyAsInt32("used_heap_size"),
+                obj.GetPropertyAsInt32("heap_size_limit"),
+                obj.GetPropertyAsInt32("malloced_memory"),
+                obj.GetPropertyAsInt32("peak_malloced_memory"),
+                obj.GetPropertyAsInt32("does_zap_garbage"),
+                obj.GetPropertyAsInt32("number_of_native_contexts"),
+                obj.GetPropertyAsInt32("number_of_detached_contexts"),
+                obj.GetPropertyAsInt32("externally_allocated_size")
+            );
+        }
+
+        public IGameObject? GetObjectById(string id)
+            => Native_GetObjectById(id).ToGameObject<IGameObject>();
 
         public IEnumerable<IGameObject> GetObjects()
             => Native_GetObjects()
@@ -67,6 +177,8 @@ namespace ScreepsDotNet.Native
         public int GetRange(IPosition a, IPosition b)
             => Native_GetRange(a.ToJS(), b.ToJS());
 
+        public Terrain GetTerrainAt(Position pos)
+            => (Terrain)Native_GetTerrainAt(pos.ToJS());
 
         public int GetTicks()
             => Native_GetTicks();

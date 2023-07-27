@@ -15,6 +15,8 @@ dotNet.setModuleImports('game', {
 dotNet.setModuleImports('object', {
     getConstructorOf: (x) => Object.getPrototypeOf(x).constructor,
     create: Object.create,
+    set: (obj, key, val) => obj[key] = val,
+    get: (obj, key) => obj[key],
 });
 dotNet.setModuleImports('game/prototypes/wrapped', {
     ...buildWrappedPrototypes(),

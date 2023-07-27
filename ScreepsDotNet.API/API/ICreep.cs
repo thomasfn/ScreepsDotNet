@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace ScreepsDotNet.API
 {
@@ -12,6 +13,12 @@ namespace ScreepsDotNet.API
         RangedAttack,
         Work,
         Tough
+    }
+
+    public static class BodyPartTypeExtensions
+    {
+        public static string ToBodyString(this IEnumerable<BodyPartType> bodyParts)
+            => $"[{string.Join(",", bodyParts.Select(x => x.ToString()))}]";
     }
 
     public readonly struct BodyPart : IEquatable<BodyPart>

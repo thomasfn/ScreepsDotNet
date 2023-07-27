@@ -6,5 +6,9 @@ namespace ScreepsDotNet.Native
     public class NativeGame : IGame
     {
         public IUtils Utils { get; } = new NativeUtils();
+
+        public IPathFinder PathFinder { get; } = new NativePathFinder();
+
+        public IConstants Constants { get; } = new NativeConstants();
     }
 }

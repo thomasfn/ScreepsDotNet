@@ -1,6 +1,4 @@
 ﻿using System;
-using System.IO;
-using System.Runtime.InteropServices.JavaScript;
 
 namespace ScreepsDotNet.API
 {
@@ -49,8 +47,6 @@ namespace ScreepsDotNet.API
 
         public static implicit operator Position((int, int) tuple) => new(tuple.Item1, tuple.Item2);
 
-        public static implicit operator Position(JSObject jsObj) => new (jsObj.GetPropertyAsInt32("x"), jsObj.GetPropertyAsInt32("y"));
-
         public static Position operator +(Position lhs, (int dx, int dy) rhs)
             => new (lhs.X + rhs.dx, lhs.Y + rhs.dy);
 
@@ -62,12 +58,6 @@ namespace ScreepsDotNet.API
 
         public static Position operator -(Position lhs, Direction rhs)
             => lhs - rhs.ToLinear();
-
-        public void ToJS(JSObject jsObj)
-        {
-            jsObj.SetProperty("x", X);
-            jsObj.SetProperty("y", Y);
-        }
 
         public override string ToString()
             => $"[{X},{Y}]";

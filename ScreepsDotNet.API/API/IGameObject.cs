@@ -52,7 +52,7 @@ namespace ScreepsDotNet.API
         /// <param name="positions"></param>
         /// <param name="options"></param>
         /// <returns></returns>
-        T? FindClosestByPath<T>(IEnumerable<T> positions, object? options) where T : class, IPosition;
+        T? FindClosestByPath<T>(IEnumerable<T> positions, FindPathOptions? options) where T : class, IPosition;
 
         /// <summary>
         /// Find a position with the shortest path from this game object
@@ -61,6 +61,69 @@ namespace ScreepsDotNet.API
         /// <param name="positions"></param>
         /// <param name="options"></param>
         /// <returns></returns>
-        Position? FindClosestByPath(IEnumerable<Position> positions, object? options);
+        Position? FindClosestByPath(IEnumerable<Position> positions, FindPathOptions? options);
+
+        /// <summary>
+        /// Find a position with the shortest linear distance from this game object
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="positions"></param>
+        /// <returns></returns>
+        T? FindClosestByRange<T>(IEnumerable<T> positions) where T : class, IPosition;
+
+        /// <summary>
+        /// Find a position with the shortest linear distance from this game object
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="positions"></param>
+        /// <returns></returns>
+        Position? FindClosestByRange(IEnumerable<Position> positions);
+
+        /// <summary>
+        /// Find all objects in the specified linear range
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="positions"></param>
+        /// <param name="range"></param>
+        /// <returns></returns>
+        IEnumerable<T> FindInRange<T>(IEnumerable<T> positions, int range) where T : class, IPosition;
+
+        /// <summary>
+        /// Find all objects in the specified linear range
+        /// </summary>
+        /// <param name="positions"></param>
+        /// <param name="range"></param>
+        /// <returns></returns>
+        IEnumerable<Position> FindInRange(IEnumerable<Position> positions, int range);
+
+        /// <summary>
+        /// Find a path from this object to the given position
+        /// </summary>
+        /// <param name="pos"></param>
+        /// <param name="options"></param>
+        /// <returns></returns>
+        IEnumerable<Position> FindPathTo(IPosition pos, FindPathOptions? options);
+
+        /// <summary>
+        /// Find a path from this object to the given position
+        /// </summary>
+        /// <param name="pos"></param>
+        /// <param name="options"></param>
+        /// <returns></returns>
+        IEnumerable<Position> FindPathTo(Position pos, FindPathOptions? options);
+
+        /// <summary>
+        /// Get linear range between this and target object
+        /// </summary>
+        /// <param name="pos"></param>
+        /// <returns></returns>
+        int GetRangeTo(IPosition pos);
+
+        /// <summary>
+        /// Get linear range between this and target object
+        /// </summary>
+        /// <param name="pos"></param>
+        /// <returns></returns>
+        int GetRangeTo(Position pos);
     }
 }
