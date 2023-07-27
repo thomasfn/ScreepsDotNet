@@ -41,10 +41,6 @@ namespace ScreepsDotNet.Native
     {
         #region Imports
 
-        [JSImport("getCreepBody", "game/extensions")]
-        [return: JSMarshalAsAttribute<JSType.Array<JSType.Object>>]
-        internal static partial JSObject[] Native_GetCreepBody([JSMarshalAs<JSType.Object>] JSObject proxyObject);
-
         [JSImport("Creep.attack", "game/prototypes/wrapped")]
         [return: JSMarshalAsAttribute<JSType.Number>]
         internal static partial int Native_Attack([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject);
@@ -104,7 +100,7 @@ namespace ScreepsDotNet.Native
         #endregion
 
         public IEnumerable<BodyPart> Body
-            => Native_GetCreepBody(ProxyObject)
+            => NativeGameObjectUtils.GetArrayOnObject(ProxyObject, "body")!
                 .Select(x => new BodyPart(x.GetPropertyAsString("type")!.ParseBodyPartType(), x.GetPropertyAsInt32("hits")))
                 .ToArray();
 

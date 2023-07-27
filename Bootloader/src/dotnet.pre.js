@@ -26,7 +26,12 @@ const _document = {
     },
 };
 function _WebAssemblyInstantiate(bytes, imports) {
-    const compiledModule = new WebAssembly.Module(bytes);
-    const compiledInstance = new WebAssembly.Instance(compiledModule, imports);
-    return Promise.resolve({ instance: compiledInstance, module: compiledModule });
+    try {
+        const compiledModule = new WebAssembly.Module(bytes);
+        const compiledInstance = new WebAssembly.Instance(compiledModule, imports);
+        return Promise.resolve({ instance: compiledInstance, module: compiledModule });
+    } catch (err) {
+        console.log(`Failed to create wasm instance: ${err}`);
+        return Promise.reject(err);
+    }
 }

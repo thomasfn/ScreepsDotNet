@@ -1,5 +1,7 @@
 import * as utils from 'game/utils';
 import * as prototypes from 'game/prototypes';
+import * as constants from 'game/constants';
+import * as pathFinder from 'game/path-finder';
 import { DotNet } from './bootloader';
 import * as manifest from './bundle.mjs';
 
@@ -8,6 +10,10 @@ dotNet.setPerfFn(utils.getCpuTime);
 dotNet.setVerboseLogging(false);
 dotNet.setModuleImports('game/utils', utils);
 dotNet.setModuleImports('game/prototypes', prototypes);
+dotNet.setModuleImports('game/constants', {
+    get: () => constants,
+});
+dotNet.setModuleImports('game/pathFinder', pathFinder);
 dotNet.setModuleImports('game', {
     getUtils: () => utils,
     getPrototypes: () => prototypes,

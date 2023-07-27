@@ -63,6 +63,16 @@ namespace ScreepsDotNet.Bundler {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
+        internal static byte[] bootloader_debug_mjs {
+            get {
+                object obj = ResourceManager.GetObject("bootloader_debug_mjs", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
         internal static byte[] bootloader_dts {
             get {
                 object obj = ResourceManager.GetObject("bootloader_dts", resourceCulture);
@@ -73,9 +83,9 @@ namespace ScreepsDotNet.Bundler {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
-        internal static byte[] bootloader_mjs {
+        internal static byte[] bootloader_release_mjs {
             get {
-                object obj = ResourceManager.GetObject("bootloader_mjs", resourceCulture);
+                object obj = ResourceManager.GetObject("bootloader_release_mjs", resourceCulture);
                 return ((byte[])(obj));
             }
         }

@@ -16,6 +16,9 @@ namespace ScreepsDotNet.Bundler
         [Required]
         public string AppBundleDir { get; set; } = null!;
 
+        [Required]
+        public string Configuration { get; set; } = null!;
+
         [Output]
         public string[] BundleFilePaths { get; set; } = null!;
 
@@ -56,7 +59,7 @@ namespace ScreepsDotNet.Bundler
                 writer.WriteLine($";");
             }
 
-            File.WriteAllBytes(Path.Combine(AppBundleDir, "bootloader.mjs"), BundleStaticAssets.bootloader_mjs);
+            File.WriteAllBytes(Path.Combine(AppBundleDir, "bootloader.mjs"), Configuration == "Release" ? BundleStaticAssets.bootloader_release_mjs : BundleStaticAssets.bootloader_debug_mjs);
             File.WriteAllBytes(Path.Combine(AppBundleDir, "bootloader.d.ts"), BundleStaticAssets.bootloader_dts);
             File.WriteAllBytes(Path.Combine(AppBundleDir, "main.mjs"), BundleStaticAssets.main_mjs);
 
