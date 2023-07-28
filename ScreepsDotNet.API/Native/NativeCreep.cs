@@ -112,15 +112,13 @@ namespace ScreepsDotNet.Native
 
         public bool My => ProxyObject.GetPropertyAsBoolean("my");
 
-        public IStore Store { get; }
+        public IStore Store => new NativeStore(ProxyObject.GetPropertyAsJSObject("store"));
 
         public bool Spawning => ProxyObject.GetPropertyAsBoolean("spawning");
 
         public NativeCreep(JSObject proxyObject)
             : base(proxyObject)
-        {
-            Store = new NativeStore(proxyObject.GetPropertyAsJSObject("store")!);
-        }
+        { }
 
         public CreepAttackResult Attack(ICreep target)
             => (CreepAttackResult)Native_Attack(ProxyObject, target.ToJS());

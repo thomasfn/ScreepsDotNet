@@ -21,15 +21,13 @@ namespace ScreepsDotNet.Native
 
         #endregion
 
-        public IStore Store { get; }
+        public IStore Store => new NativeStore(ProxyObject.GetPropertyAsJSObject("store"));
 
         public int Cooldown => ProxyObject.GetPropertyAsInt32("cooldown");
 
         public NativeStructureTower(JSObject proxyObject)
             : base(proxyObject)
-        {
-            Store = new NativeStore(proxyObject.GetPropertyAsJSObject("store")!);
-        }
+        { }
 
         public TowerActionResult Attack(ICreep target)
             => (TowerActionResult)Native_Attack(ProxyObject, target.ToJS());

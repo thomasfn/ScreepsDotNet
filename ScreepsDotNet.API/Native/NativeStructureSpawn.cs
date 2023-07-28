@@ -48,7 +48,7 @@ namespace ScreepsDotNet.Native
 
         #endregion
 
-        public IStore Store { get; }
+        public IStore Store => new NativeStore(ProxyObject.GetPropertyAsJSObject("store"));
 
         public ISpawning? Spawning
         {
@@ -62,9 +62,7 @@ namespace ScreepsDotNet.Native
 
         public NativeStructureSpawn(JSObject proxyObject)
             : base(proxyObject)
-        {
-            Store = new NativeStore(proxyObject.GetPropertyAsJSObject("store")!);
-        }
+        { }
 
         public SpawnCreepResult SpawnCreep(IEnumerable<BodyPartType> body)
         {

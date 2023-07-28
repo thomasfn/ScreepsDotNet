@@ -49,22 +49,22 @@ namespace ScreepsDotNet.Native
 
         #endregion
 
-        internal readonly JSObject ProxyObject;
+        internal readonly JSObject? ProxyObject;
 
-        public NativeStore(JSObject proxyObject)
+        public NativeStore(JSObject? proxyObject)
         {
             ProxyObject = proxyObject;
         }
 
-        public int this[ResourceType resourceType] => ProxyObject.GetPropertyAsInt32(resourceType.ToJS());
+        public int this[ResourceType resourceType] => ProxyObject?.GetPropertyAsInt32(resourceType.ToJS()) ?? 0;
 
         public int? GetCapacity(ResourceType? resourceType = null)
-            => Native_GetCapacity(ProxyObject, resourceType.ToJS());
+            => ProxyObject != null ? Native_GetCapacity(ProxyObject, resourceType.ToJS()) : null;
 
         public int? GetFreeCapacity(ResourceType? resourceType = null)
-            => Native_GetFreeCapacity(ProxyObject, resourceType.ToJS());
+            => ProxyObject != null ? Native_GetFreeCapacity(ProxyObject, resourceType.ToJS()) : null;
 
         public int? GetUsedCapacity(ResourceType? resourceType = null)
-            => Native_GetUsedCapacity(ProxyObject, resourceType.ToJS());
+            => ProxyObject != null ? Native_GetUsedCapacity(ProxyObject, resourceType.ToJS()) : null;
     }
 }

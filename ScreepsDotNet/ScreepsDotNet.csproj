@@ -22,7 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="ScreepsDotNet.Bundler" Version="1.0.6" PrivateAssets="All"/>
+    <PackageReference Include="ScreepsDotNet.Bundler" Version="1.0.6" PrivateAssets="All" />
   </ItemGroup>
 
 </Project>

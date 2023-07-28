@@ -6,6 +6,11 @@
     <Nullable>enable</Nullable>
 	<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	<RootNamespace>ScreepsDotNet</RootNamespace>
+	<IsPackable>true</IsPackable>
+	<Title>ScreepsDotNet API</Title>
+	<Authors>thomasfn</Authors>
+	<Description>A set of interfaces and a JS binding for the Screeps Arena API</Description>
+	<Version>1.0.0</Version>
   </PropertyGroup>
 
 </Project>
