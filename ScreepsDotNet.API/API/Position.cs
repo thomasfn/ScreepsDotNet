@@ -59,6 +59,15 @@ namespace ScreepsDotNet.API
         public static Position operator -(Position lhs, Direction rhs)
             => lhs - rhs.ToLinear();
 
+        public static Direction operator -(Position lhs, Position rhs)
+        {
+            int dx = lhs.X - rhs.X;
+            int dy = lhs.Y - rhs.Y;
+            var ang = Math.Atan2(dy, dx) + Math.PI * 0.5;
+            if (ang < 0.0) { ang += (Math.PI * 2.0); }
+            return (Direction)((int)Math.Round(ang / (Math.PI * 0.25)) % 8 + 1);
+        }
+
         public override string ToString()
             => $"[{X},{Y}]";
     }

@@ -29,5 +29,25 @@ namespace ScreepsDotNet.API
                 Direction.TopLeft => (-1, -1),
                 _ => (0, 0),
             };
+
+        public static Direction Opposite(this Direction direction)
+            => direction switch
+            {
+                Direction.Top => Direction.Bottom,
+                Direction.TopRight => Direction.BottomLeft,
+                Direction.Right => Direction.Left,
+                Direction.BottomRight => Direction.TopLeft,
+                Direction.Bottom => Direction.Top,
+                Direction.BottomLeft => Direction.TopRight,
+                Direction.Left => Direction.Right,
+                Direction.TopLeft => Direction.BottomRight,
+                _ => throw new ArgumentException("Invalid direction", nameof(direction)),
+            };
+
+        public static bool IsDiagonal(this Direction direction)
+            => direction == Direction.TopRight || direction == Direction.BottomRight || direction == Direction.BottomLeft || direction == Direction.TopLeft;
+
+        public static bool IsStraight(this Direction direction)
+            => direction == Direction.Top || direction == Direction.Right || direction == Direction.Bottom || direction == Direction.Left;
     }
 }

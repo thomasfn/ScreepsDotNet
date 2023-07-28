@@ -72,7 +72,7 @@ namespace ScreepsDotNet.API
         /// <summary>
         /// The path found as an array of objects containing x and y properties
         /// </summary>
-        public ReadOnlySpan<Position> Path => Path;
+        public ReadOnlySpan<Position> Path => path;
 
         /// <summary>
         /// Total number of operations performed before this path was calculated

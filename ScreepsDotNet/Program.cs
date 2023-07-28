@@ -26,7 +26,7 @@ namespace ScreepsDotNet
         private static void RunGC()
         {
             var timeBefore = game!.Utils.GetCpuTime();
-            GC.Collect();
+            GC.Collect(2, GCCollectionMode.Forced, true);
             var timeAfter = game!.Utils.GetCpuTime();
             Console.WriteLine($"GC in {(timeAfter - timeBefore) / 1000000.0:N} ms");
         }
