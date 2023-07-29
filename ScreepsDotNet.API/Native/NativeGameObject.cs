@@ -219,10 +219,10 @@ namespace ScreepsDotNet.Native
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureRampart))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureRoad))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureSpawn))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureWall))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeFlag))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeSource))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeConstructionSite))]
-
         static NativeGameObjectUtils()
         {
             prototypesObject = GetPrototypesObject();
@@ -236,6 +236,7 @@ namespace ScreepsDotNet.Native
                 RegisterPrototypeTypeMapping<IStructureRoad, NativeStructureRoad>("StructureRoad");
                 RegisterPrototypeTypeMapping<IStructureSpawn, NativeStructureSpawn>("StructureSpawn");
                 RegisterPrototypeTypeMapping<IOwnedStructure, NativeOwnedStructure>("OwnedStructure");
+                RegisterPrototypeTypeMapping<IStructureWall, NativeStructureSpawn>("StructureWall");
                 RegisterPrototypeTypeMapping<IStructure, NativeStructure>("Structure");
                 RegisterPrototypeTypeMapping<IFlag, NativeFlag>("Flag");
                 RegisterPrototypeTypeMapping<IResource, NativeResource>("Resource");

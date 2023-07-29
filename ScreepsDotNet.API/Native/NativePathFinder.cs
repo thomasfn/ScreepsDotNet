@@ -12,7 +12,10 @@ namespace ScreepsDotNet.Native
         public static JSObject ToJS(this SearchPathOptions options)
         {
             var obj = NativeGameObjectUtils.CreateObject(null);
-            // obj.SetProperty("costMatrix", )
+            if (options.CostMatrix is NativeCostMatrix nativeCostMatrix)
+            {
+                obj.SetProperty("costMatrix", nativeCostMatrix.ProxyObject);
+            }
             obj.SetProperty("plainCost", options.PlainCost);
             obj.SetProperty("swampCost", options.SwampCost);
             obj.SetProperty("flee", options.Flee);
@@ -79,6 +82,9 @@ namespace ScreepsDotNet.Native
         internal static partial JSObject Native_SearchPath([JSMarshalAs<JSType.Object>] JSObject origin, [JSMarshalAs<JSType.Array<JSType.Object>>] JSObject[] goals);
 
         #endregion
+
+        public ICostMatrix CreateCostMatrix()
+            => new NativeCostMatrix();
 
         public SearchPathResult SearchPath(Position origin, Goal goal, SearchPathOptions? options)
             => (options != null ? Native_SearchPath(origin.ToJS(), goal.ToJS(), options.Value.ToJS()) : Native_SearchPath(origin.ToJS(), goal.ToJS()))

@@ -49,5 +49,19 @@ namespace ScreepsDotNet.API
 
         public static bool IsStraight(this Direction direction)
             => direction == Direction.Top || direction == Direction.Right || direction == Direction.Bottom || direction == Direction.Left;
+
+        private static int Wrap(int value, int min, int max)
+        {
+            int range = (max - min) + 1;
+            int relValue = (value - min) % range;
+            if (relValue < 0) { relValue += range; }
+            return relValue + min;
+        }
+
+        public static Direction Clockwise(this Direction direction, int steps = 1)
+            => (Direction)(Wrap((int)direction + steps, 1, 8));
+
+        public static Direction CounterClockwise(this Direction direction, int steps = 1)
+            => direction.Clockwise(-steps);
     }
 }

@@ -89,5 +89,12 @@ namespace ScreepsDotNet.API
         /// <param name="body"></param>
         /// <returns></returns>
         SpawnCreepResult SpawnCreep(IEnumerable<BodyPartType> body);
+
+        /// <summary>
+        /// Start the creep spawning process
+        /// </summary>
+        /// <param name="body"></param>
+        /// <returns></returns>
+        SpawnCreepResult SpawnCreep(BodyType bodyType);
     }
 }

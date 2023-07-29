@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace ScreepsDotNet.API
 {
@@ -46,6 +47,157 @@ namespace ScreepsDotNet.API
 
         public override string ToString()
             => $"{Type}[{Hits}]";
+    }
+
+    /// <summary>
+    /// Describes the number of body parts of a creep.
+    /// </summary>
+    public readonly struct BodyType : IEquatable<BodyType>
+    {
+        public static readonly BodyType Invalid = new();
+
+        private readonly (BodyPartType bodyPartType, int quantity)[]? bodyPartTypes;
+        private readonly int? hash;
+
+        public ReadOnlySpan<(BodyPartType bodyPartType, int quantity)> BodyPartTypes => bodyPartTypes != null ? bodyPartTypes : ReadOnlySpan<(BodyPartType bodyPartType, int quantity)>.Empty;
+
+        public bool IsValid => bodyPartTypes != null && bodyPartTypes.Length > 0;
+
+        public IEnumerable<BodyPartType> AsBodyPartList
+        {
+            get
+            {
+                var seq = Enumerable.Empty<BodyPartType>();
+                if (bodyPartTypes != null)
+                {
+                    foreach ((BodyPartType tupleBodyPartType, int quantity) in bodyPartTypes)
+                    {
+                        seq = seq.Concat(Enumerable.Repeat<BodyPartType>(tupleBodyPartType, quantity));
+                    }
+                }
+                return seq;
+            }
+        }
+
+        public int this[BodyPartType bodyPartType]
+        {
+            get
+            {
+                if (bodyPartTypes == null) { return 0; }
+                foreach ((BodyPartType tupleBodyPartType, int quantity) in bodyPartTypes)
+                {
+                    if (tupleBodyPartType == bodyPartType) { return quantity; }
+                }
+                return 0;
+            }
+        }
+
+        public BodyType(ReadOnlySpan<(BodyPartType bodyPartType, int quantity)> bodyPartTypeTuples)
+        {
+            this.bodyPartTypes = bodyPartTypeTuples.ToArray();
+            Array.Sort(this.bodyPartTypes, (a, b) => (int)a.bodyPartType - (int)b.bodyPartType);
+            hash = CalculateHash();
+        }
+
+        public BodyType(IEnumerable<BodyPartType> bodyPartTypes)
+        {
+            Span<(BodyPartType bodyPartType, int quantity)> bodyPartTuples = stackalloc (BodyPartType bodyPartType, int quantity)[bodyPartTypes.Count()];
+            int bodyPartTuplesLength = 0;
+            foreach (var bodyPartType in bodyPartTypes)
+            {
+                bool found = false;
+                for (int i = 0; i < bodyPartTuplesLength; ++i)
+                {
+                    if (bodyPartTuples[i].bodyPartType == bodyPartType)
+                    {
+                        ++bodyPartTuples[i].quantity;
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found)
+                {
+                    bodyPartTuples[bodyPartTuplesLength] = (bodyPartType, 1);
+                    ++bodyPartTuplesLength;
+                }
+            }
+            this.bodyPartTypes = bodyPartTuples.ToArray();
+            Array.Sort(this.bodyPartTypes, (a, b) => (int)a.bodyPartType - (int)b.bodyPartType);
+            hash = CalculateHash();
+        }
+
+        public bool Has(BodyPartType bodyPartType)
+            => this[bodyPartType] > 0;
+
+        private int CalculateHash()
+        {
+            if (bodyPartTypes == null || bodyPartTypes.Length == 0) { return HashCode.Combine(0); }
+            int hash = bodyPartTypes[0].GetHashCode();
+            for (int i = 1; i < bodyPartTypes.Length; ++i)
+            {
+                hash = HashCode.Combine(hash, bodyPartTypes[i].GetHashCode());
+            }
+            return hash;
+        }
+
+        public override bool Equals(object? obj) => obj is BodyType type && Equals(type);
+
+        public bool Equals(BodyType other)
+        {
+            if (hash != other.hash) { return false; }
+            if (other.bodyPartTypes == null) { return bodyPartTypes == null; }
+            if (bodyPartTypes == null || bodyPartTypes.Length != other.bodyPartTypes.Length) { return false; }
+            for (int i = 0; i < bodyPartTypes.Length; ++i)
+            {
+                if (bodyPartTypes[i] != other.bodyPartTypes[i]) { return false; }
+            }
+            return true;
+        }
+
+        public override int GetHashCode()
+            => hash ?? HashCode.Combine(0);
+
+        public static bool operator ==(BodyType left, BodyType right) => left.Equals(right);
+
+        public static bool operator !=(BodyType left, BodyType right) => !(left == right);
+
+        public override string ToString()
+        {
+            if (bodyPartTypes == null || bodyPartTypes.Length == 0) { return "BodyType(INVALID)"; }
+            var sb = new StringBuilder();
+            sb.Append("BodyType(");
+            bool isFirst = true;
+            foreach (var tuple in bodyPartTypes)
+            {
+                if (isFirst)
+                {
+                    isFirst = false;
+                }
+                else
+                {
+                    sb.Append(", ");
+                }
+                sb.Append(tuple.quantity);
+                sb.Append("x ");
+                sb.Append(tuple.bodyPartType);
+                
+            }
+            sb.Append(')');
+            return sb.ToString();
+        }
+    }
+
+    public static class BodyTypeExtensions
+    {
+        public static int GetSpawnCost(this IConstants constants, BodyType bodyType)
+        {
+            int totalCost = 0;
+            foreach (var tuple in bodyType.BodyPartTypes)
+            {
+                totalCost += constants.GetBodyPartCost(tuple.bodyPartType) * tuple.quantity;
+            }
+            return totalCost;
+        }
     }
 
     public enum CreepAttackResult
@@ -146,6 +298,11 @@ namespace ScreepsDotNet.API
         /// An array describing the creep’s body
         /// </summary>
         IEnumerable<BodyPart> Body { get; }
+
+        /// <summary>
+        /// Gets the creep's body type.
+        /// </summary>
+        BodyType BodyType { get; }
 
         /// <summary>
         /// The movement fatigue indicator. If it is greater than zero, the creep cannot move

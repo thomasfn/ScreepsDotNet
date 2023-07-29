@@ -73,6 +73,9 @@ namespace ScreepsDotNet.Native
             return new SpawnCreepResult(creepObj != null ? NativeGameObjectUtils.CreateWrapperForObject(creepObj) as ICreep : null, (SpawnCreepError?)error);
         }
 
+        public SpawnCreepResult SpawnCreep(BodyType bodyType)
+            => SpawnCreep(bodyType.AsBodyPartList);
+
         public override string ToString()
             => $"StructureSpawn({Id}, {Position})";
 

@@ -5,8 +5,10 @@ namespace ScreepsDotNet.API
 {
     public readonly struct SearchPathOptions
     {
-        /** Custom navigation cost data */
-        //costMatrix?: CostMatrix;
+        /// <summary>
+        /// Custom navigation cost data
+        /// </summary>
+        public readonly ICostMatrix? CostMatrix;
 
         /// <summary>
         /// Cost for walking on plain positions.
@@ -39,8 +41,9 @@ namespace ScreepsDotNet.API
         /// </summary>
         public readonly double HeuristicWeight;
 
-        public SearchPathOptions(double plainCost = 2.0, double swampCost = 10.0, bool flee = false, int maxOps = 50000, double maxCost = double.MaxValue, double heuristicWeight = 1.2)
+        public SearchPathOptions(ICostMatrix? costMatrix = null, double plainCost = 2.0, double swampCost = 10.0, bool flee = false, int maxOps = 50000, double maxCost = double.MaxValue, double heuristicWeight = 1.2)
         {
+            CostMatrix = costMatrix;
             PlainCost = plainCost;
             SwampCost = swampCost;
             Flee = flee;
@@ -149,6 +152,12 @@ namespace ScreepsDotNet.API
 
     public interface IPathFinder
     {
+        /// <summary>
+        /// Creates a new CostMatrix containing 0's for all positions.
+        /// </summary>
+        /// <returns></returns>
+        ICostMatrix CreateCostMatrix();
+
         /// <summary>
         /// Find an optimal path between origin and goal.
         /// </summary>

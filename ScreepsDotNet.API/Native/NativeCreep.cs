@@ -99,10 +99,14 @@ namespace ScreepsDotNet.Native
 
         #endregion
 
+        private BodyType? cachedBodyType;
+
         public IEnumerable<BodyPart> Body
             => NativeGameObjectUtils.GetArrayOnObject(ProxyObject, "body")!
                 .Select(x => new BodyPart(x.GetPropertyAsString("type")!.ParseBodyPartType(), x.GetPropertyAsInt32("hits")))
                 .ToArray();
+
+        public BodyType BodyType => cachedBodyType ??= new(Body.Select(x => x.Type));
 
         public double Fatigue => ProxyObject.GetPropertyAsDouble("fatigue");
 
