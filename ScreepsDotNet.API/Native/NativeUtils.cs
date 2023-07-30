@@ -24,7 +24,18 @@ namespace ScreepsDotNet.Native
             return obj;
         }
 
+        public static JSObject ToJS(this FractionalPosition pos)
+        {
+            var obj = NativeGameObjectUtils.CreateObject(null);
+            obj.SetProperty("x", pos.X);
+            obj.SetProperty("y", pos.Y);
+            return obj;
+        }
+
         public static JSObject? ToJS(this Position? pos)
+            => pos != null ? pos.Value.ToJS() : null;
+
+        public static JSObject? ToJS(this FractionalPosition? pos)
             => pos != null ? pos.Value.ToJS() : null;
     }
 
@@ -36,6 +47,10 @@ namespace ScreepsDotNet.Native
         [JSImport("createConstructionSite", "game/utils")]
         [return: JSMarshalAsAttribute<JSType.Object>]
         internal static partial JSObject Native_CreateConstructionSite([JSMarshalAs<JSType.Object>] JSObject position, [JSMarshalAs<JSType.Object>] JSObject prototype);
+
+        [JSImport("createVisual", "game/visual")]
+        [return: JSMarshalAsAttribute<JSType.Object>]
+        internal static partial JSObject Native_CreateVisual([JSMarshalAs<JSType.Number>] int layer, [JSMarshalAs<JSType.Boolean>] bool persistent);
 
         [JSImport("findClosestByPath", "game/utils")]
         [return: JSMarshalAsAttribute<JSType.Object>]
@@ -100,6 +115,9 @@ namespace ScreepsDotNet.Native
             CreateConstructionSiteError? error = resultObj.GetTypeOfProperty("error") == "number" ? (CreateConstructionSiteError)resultObj.GetPropertyAsInt32("error") : null;
             return new CreateConstructionSiteResult(constructionSite, error);
         }
+
+        public IVisual CreateVisual(int layer = 0, bool persistent = false)
+            => new NativeVisual(Native_CreateVisual(layer, persistent));
 
         public T? FindClosestByPath<T>(Position fromPos, IEnumerable<T> positions, FindPathOptions? options) where T : class, IPosition
             => Native_FindClosestByPath(fromPos.ToJS(), positions.Select(x => x.ToJS()).ToArray(), options.ToJS()).ToGameObject<IGameObject>() as T;

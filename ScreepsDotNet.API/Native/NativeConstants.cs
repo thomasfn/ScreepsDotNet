@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices.JavaScript;
+﻿using System;
+using System.Runtime.InteropServices.JavaScript;
 
 using ScreepsDotNet.API;
 
@@ -18,6 +19,11 @@ namespace ScreepsDotNet.Native
         private readonly JSObject constantsObj;
         private readonly JSObject bodypartCostObj;
 
+        private int? bodyPartHitsCache;
+        private readonly int?[] bodyPartCostCache = new int?[Enum.GetValues<BodyPartType>().Length];
+
+        public int BodyPartHits => bodyPartHitsCache ??= constantsObj.GetPropertyAsInt32("BODYPART_HITS");
+
         public NativeConstants()
         {
             constantsObj = Native_GetConstants();
@@ -25,6 +31,6 @@ namespace ScreepsDotNet.Native
         }
 
         public int GetBodyPartCost(BodyPartType bodyPartType)
-            => bodypartCostObj.GetPropertyAsInt32(bodyPartType.ToJS());
+            => bodyPartCostCache[(int)bodyPartType] ??= bodypartCostObj.GetPropertyAsInt32(bodyPartType.ToJS());
     }
 }

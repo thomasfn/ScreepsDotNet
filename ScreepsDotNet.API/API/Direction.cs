@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Numerics;
 
 namespace ScreepsDotNet.API
 {
@@ -29,6 +30,12 @@ namespace ScreepsDotNet.API
                 Direction.TopLeft => (-1, -1),
                 _ => (0, 0),
             };
+
+        public static Vector2 ToVector(this Direction direction)
+        {
+            var linear = direction.ToLinear();
+            return new(linear.dx, linear.dy);
+        }
 
         public static Direction Opposite(this Direction direction)
             => direction switch

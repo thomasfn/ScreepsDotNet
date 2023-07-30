@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Numerics;
 
 namespace ScreepsDotNet.API
 {
@@ -47,6 +48,8 @@ namespace ScreepsDotNet.API
 
         public static implicit operator Position((int, int) tuple) => new(tuple.Item1, tuple.Item2);
 
+        public static implicit operator Vector2(Position pos) => new(pos.X, pos.Y);
+
         public static Position operator +(Position lhs, (int dx, int dy) rhs)
             => new (lhs.X + rhs.dx, lhs.Y + rhs.dy);
 
@@ -70,5 +73,55 @@ namespace ScreepsDotNet.API
 
         public override string ToString()
             => $"[{X},{Y}]";
+    }
+
+    public readonly struct FractionalPosition : IEquatable<FractionalPosition>
+    {
+        public readonly double X;
+        public readonly double Y;
+
+        public FractionalPosition(double x, double y)
+        {
+            X = x;
+            Y = y;
+        }
+
+        public double CartesianDistanceTo(FractionalPosition other)
+            => Math.Sqrt((X - other.X) * (X - other.X) + (Y - other.Y) * (Y - other.Y));
+
+        public override bool Equals(object? obj) => obj is FractionalPosition position && Equals(position);
+
+        public bool Equals(FractionalPosition other)
+            => X == other.X
+            && Y == other.Y;
+
+        public override int GetHashCode() => HashCode.Combine(X, Y);
+
+        public static bool operator ==(FractionalPosition left, FractionalPosition right) => left.Equals(right);
+
+        public static bool operator !=(FractionalPosition left, FractionalPosition right) => !(left == right);
+
+        public static implicit operator FractionalPosition(Tuple<double, double> tuple) => new(tuple.Item1, tuple.Item2);
+
+        public static implicit operator FractionalPosition((double, double) tuple) => new(tuple.Item1, tuple.Item2);
+
+        public static implicit operator FractionalPosition(Position pos) => new(pos.X, pos.Y);
+
+        public static implicit operator Vector2(FractionalPosition pos) => new((float)pos.X, (float)pos.Y);
+
+        public static FractionalPosition operator +(FractionalPosition lhs, (double dx, double dy) rhs)
+            => new(lhs.X + rhs.dx, lhs.Y + rhs.dy);
+
+        public static FractionalPosition operator +(FractionalPosition lhs, Vector2 rhs)
+            => new(lhs.X + rhs.X, lhs.Y + rhs.Y);
+
+        public static FractionalPosition operator -(FractionalPosition lhs, (double dx, double dy) rhs)
+            => new(lhs.X - rhs.dx, lhs.Y - rhs.dy);
+
+        public static FractionalPosition operator -(FractionalPosition lhs, Vector2 rhs)
+            => new(lhs.X - rhs.X, lhs.Y - rhs.Y);
+
+        public override string ToString()
+            => $"[{X:N},{Y:N}]";
     }
 }

@@ -103,6 +103,14 @@ namespace ScreepsDotNet.API
         CreateConstructionSiteResult CreateConstructionSite<T>(Position position) where T : class, IStructure;
 
         /// <summary>
+        /// Creates a new empty instance of Visual.
+        /// </summary>
+        /// <param name="layer"></param>
+        /// <param name="persistent"></param>
+        /// <returns></returns>
+        IVisual CreateVisual(int layer = 0, bool persistent = false);
+
+        /// <summary>
         /// Find a position with the shortest path from this game object
         /// </summary>
         /// <typeparam name="T"></typeparam>

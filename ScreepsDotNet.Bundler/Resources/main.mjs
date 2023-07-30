@@ -2,6 +2,7 @@ import * as utils from 'game/utils';
 import * as prototypes from 'game/prototypes';
 import * as constants from 'game/constants';
 import * as pathFinder from 'game/path-finder';
+import * as visual from 'game/visual';
 import { DotNet } from './bootloader';
 import * as manifest from './bundle.mjs';
 
@@ -13,7 +14,15 @@ dotNet.setModuleImports('game/prototypes', prototypes);
 dotNet.setModuleImports('game/constants', {
     get: () => constants,
 });
-dotNet.setModuleImports('game/pathFinder', pathFinder);
+dotNet.setModuleImports('game/pathFinder', {
+    ...pathFinder,
+    CostMatrix: buildWrappedPrototype(pathFinder.CostMatrix),
+    createCostMatrix: () => new pathFinder.CostMatrix(),
+});
+dotNet.setModuleImports('game/visual', {
+    Visual: buildWrappedPrototype(visual.Visual),
+    createVisual: (layer, persistent) => new visual.Visual(layer, persistent),
+});
 dotNet.setModuleImports('game', {
     getUtils: () => utils,
     getPrototypes: () => prototypes,
@@ -38,20 +47,23 @@ function buildWrappedPrototypes() {
     /** @type {Record<string, Record<string, Function>>} */
     const wrappedPrototypes = {};
     for (const prototypeName in prototypes) {
-        /** @type {Record<string, Function>} */
-        const wrappedPrototype = {};
-        const constructor = prototypes[prototypeName];
-        const prototype = constructor.prototype;
-        const keys = Object.getOwnPropertyNames(prototype);
-        for (const key of keys) {
-            if (key === 'constructor') { continue; }
-            const value = Object.getOwnPropertyDescriptor(prototype, key).value;
-            if (typeof value !== 'function') { continue; }
-            wrappedPrototype[key] = (thisObj, ...args) => value.call(thisObj, ...args);
-        }
-        wrappedPrototypes[prototypeName] = wrappedPrototype;
+        wrappedPrototypes[prototypeName] = buildWrappedPrototype(prototypes[prototypeName]);
     }
     return wrappedPrototypes;
+}
+
+function buildWrappedPrototype(constructor) {
+    /** @type {Record<string, Function>} */
+    const wrappedPrototype = {};
+    const prototype = constructor.prototype;
+    const keys = Object.getOwnPropertyNames(prototype);
+    for (const key of keys) {
+        if (key === 'constructor') { continue; }
+        const value = Object.getOwnPropertyDescriptor(prototype, key).value;
+        if (typeof value !== 'function') { continue; }
+        wrappedPrototype[key] = (thisObj, ...args) => value.call(thisObj, ...args);
+    }
+    return wrappedPrototype;
 }
 
 const exports = dotNet.getExports();

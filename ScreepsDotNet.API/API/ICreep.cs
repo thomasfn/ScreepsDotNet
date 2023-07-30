@@ -121,7 +121,8 @@ namespace ScreepsDotNet.API
                     ++bodyPartTuplesLength;
                 }
             }
-            this.bodyPartTypes = bodyPartTuples.ToArray();
+            
+            this.bodyPartTypes = bodyPartTuples[..bodyPartTuplesLength].ToArray();
             Array.Sort(this.bodyPartTypes, (a, b) => (int)a.bodyPartType - (int)b.bodyPartType);
             hash = CalculateHash();
         }
