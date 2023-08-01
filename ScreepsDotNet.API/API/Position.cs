@@ -8,8 +8,6 @@ namespace ScreepsDotNet.API
         public readonly int X;
         public readonly int Y;
 
-        public bool IsWithinRoom => X >= 0 && X < 100 && Y >= 0 && Y < 100;
-
         public Position(int x, int y)
         {
             X = x;
@@ -19,20 +17,11 @@ namespace ScreepsDotNet.API
         public int LinearDistanceTo(Position other)
             => Math.Max(Math.Abs(X - other.X), Math.Abs(Y - other.Y));
 
-        public int LinearDistanceTo(IPosition other)
-            => LinearDistanceTo(other.Position);
-
         public double CartesianDistanceTo(Position other)
             => Math.Sqrt((X - other.X) * (X - other.X) + (Y - other.Y) * (Y - other.Y));
 
-        public double CartesianDistanceTo(IPosition other)
-            => CartesianDistanceTo(other.Position);
-
         public bool IsNextTo(Position other)
             => LinearDistanceTo(other) <= 1;
-
-        public bool IsNextTo(IPosition other)
-            => IsNextTo(other.Position);
 
         public override bool Equals(object? obj) => obj is Position position && Equals(position);
 

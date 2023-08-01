@@ -1,7 +1,6 @@
 using System;
 using System.Runtime.InteropServices.JavaScript;
-
-using ScreepsDotNet.API;
+using ScreepsDotNet.API.Arena;
 
 namespace ScreepsDotNet
 {
@@ -17,8 +16,8 @@ namespace ScreepsDotNet
 
         public static void Main()
         {
-            game = new Native.NativeGame();
-            tutorialScript = new Tutorial10_FinalTest(game);
+            game = new Native.Arena.NativeGame();
+            tutorialScript = new Arena.Tutorial10_FinalTest(game);
             RunGC();
             LogGCActivity();
         }
