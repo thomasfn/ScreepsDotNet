@@ -128,7 +128,9 @@ namespace ScreepsDotNet.Native
 
         public IVisual Circle(FractionalPosition position, CircleVisualStyle? style = null)
         {
-            Native_Circle(ProxyObject, position.ToJS(), style?.ToJS());
+            using var positionJs = position.ToJS();
+            using var styleJs = style?.ToJS();
+            Native_Circle(ProxyObject, positionJs, styleJs);
             return this;
         }
 
@@ -140,19 +142,26 @@ namespace ScreepsDotNet.Native
 
         public IVisual Line(FractionalPosition pos1, FractionalPosition pos2, LineVisualStyle? style = null)
         {
-            Native_Line(ProxyObject, pos1.ToJS(), pos2.ToJS(), style?.ToJS());
+            using var pos1Js = pos1.ToJS();
+            using var pos2Js = pos2.ToJS();
+            using var styleJs = style?.ToJS();
+            Native_Line(ProxyObject, pos1Js, pos2Js, styleJs);
             return this;
         }
 
         public IVisual Poly(IEnumerable<FractionalPosition> points, PolyVisualStyle? style = null)
         {
-            Native_Poly(ProxyObject, points.Select(x => x.ToJS()).ToArray(), style?.ToJS());
+            using var styleJs = style?.ToJS();
+            // TODO: Do disposal on points array after call
+            Native_Poly(ProxyObject, points.Select(x => x.ToJS()).ToArray(), styleJs);
             return this;
         }
 
         public IVisual Rect(FractionalPosition pos, double w, double h, RectVisualStyle? style = null)
         {
-            Native_Rect(ProxyObject, pos.ToJS(), w, h, style?.ToJS());
+            using var posJs = pos.ToJS();
+            using var styleJs = style?.ToJS();
+            Native_Rect(ProxyObject, posJs, w, h, styleJs);
             return this;
         }
 
@@ -161,7 +170,9 @@ namespace ScreepsDotNet.Native
 
         public IVisual Text(string text, FractionalPosition pos, TextVisualStyle? style = null)
         {
-            Native_Text(ProxyObject, text, pos.ToJS(), style?.ToJS());
+            using var posJs = pos.ToJS();
+            using var styleJs = style?.ToJS();
+            Native_Text(ProxyObject, text, posJs, styleJs);
             return this;
         }
     }

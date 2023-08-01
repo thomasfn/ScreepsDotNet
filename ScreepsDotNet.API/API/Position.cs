@@ -56,11 +56,17 @@ namespace ScreepsDotNet.API
         public static Position operator +(Position lhs, Direction rhs)
             => lhs + rhs.ToLinear();
 
+        public static FractionalPosition operator +(Position lhs, (double dx, double dy) rhs)
+            => new(lhs.X + rhs.dx, lhs.Y + rhs.dy);
+
         public static Position operator -(Position lhs, (int dx, int dy) rhs)
             => new(lhs.X - rhs.dx, lhs.Y - rhs.dy);
 
         public static Position operator -(Position lhs, Direction rhs)
             => lhs - rhs.ToLinear();
+
+        public static FractionalPosition operator -(Position lhs, (double dx, double dy) rhs)
+           => new(lhs.X - rhs.dx, lhs.Y - rhs.dy);
 
         public static Direction operator -(Position lhs, Position rhs)
         {
