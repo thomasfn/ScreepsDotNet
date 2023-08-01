@@ -8,6 +8,8 @@ namespace ScreepsDotNet.API
         public readonly int X;
         public readonly int Y;
 
+        public bool IsWithinRoom => X >= 0 && X < 100 && Y >= 0 && Y < 100;
+
         public Position(int x, int y)
         {
             X = x;

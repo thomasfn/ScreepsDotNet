@@ -1,4 +1,6 @@
-﻿namespace ScreepsDotNet.API
+﻿using System;
+
+namespace ScreepsDotNet.API
 {
     /// <summary>
     /// Container for custom navigation cost data.
@@ -11,7 +13,16 @@
         /// </summary>
         /// <param name="pos"></param>
         /// <returns></returns>
-        int this[Position pos] { get; set; }
+        byte this[Position pos] { get; set; }
+
+        /// <summary>
+        /// Sets the cost of a rectangle of positions in this CostMatrix.
+        /// More efficient than setting individually, especially for larger rectangles.
+        /// </summary>
+        /// <param name="min">Inclusive minimum of the rectangle</param>
+        /// <param name="max">Inclusive maximum of the rectangle</param>
+        /// <param name="values">min * max values (layouted as a sequence of rows)</param>
+        void SetRect(Position min, Position max, ReadOnlySpan<byte> values);
 
         /// <summary>
         /// Clones this CostMatrix.

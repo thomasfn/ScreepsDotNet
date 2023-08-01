@@ -42,6 +42,43 @@ namespace ScreepsDotNet.API
         Plain = 0
     }
 
+    /// <summary>
+    /// Represents a rectangular view of the room's terrain.
+    /// </summary>
+    public readonly struct TerrainSlice
+    {
+        private readonly Terrain[] data;
+
+        /// <summary>
+        /// The top-left coordinate of the slice.
+        /// </summary>
+        public readonly Position Min;
+
+        /// <summary>
+        /// The bottom-right coordinate of the slice.
+        /// </summary>
+        public readonly Position Max;
+
+        /// <summary>
+        /// Gets the size of the slice.
+        /// </summary>
+        public (int w, int h) Size => (Max.X - Min.X + 1, Max.Y - Min.Y + 1);
+
+        /// <summary>
+        /// Gets the terrain at the specified position.
+        /// </summary>
+        /// <param name="position">Position in world-space (e.g. not relative to the Min)</param>
+        /// <returns></returns>
+        public Terrain this[Position position] => data[(position.Y - Min.Y) * (Max.X - Min.X + 1) + position.X - Min.X];
+
+        public TerrainSlice(ReadOnlySpan<Terrain> data, Position min, Position max)
+        {
+            this.data = data.ToArray();
+            Min = min;
+            Max = max;
+        }
+    }
+
     public readonly struct HeapInfo
     {
         public readonly int TotalHeapSize;
@@ -241,6 +278,15 @@ namespace ScreepsDotNet.API
         /// <param name="pos"></param>
         /// <returns></returns>
         Terrain GetTerrainAt(Position pos);
+
+        /// <summary>
+        /// Gets a slice containing all terrain between two positions.
+        /// More efficient than several calls to GetTerrainAt for larger slices.
+        /// </summary>
+        /// <param name="min"></param>
+        /// <param name="max"></param>
+        /// <returns></returns>
+        TerrainSlice GetTerrain(Position min, Position max);
 
         /// <summary>
         /// Gets the number of ticks passed from the start of the current game.

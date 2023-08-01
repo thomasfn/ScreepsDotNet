@@ -100,6 +100,9 @@ namespace ScreepsDotNet.Native
         [return: JSMarshalAsAttribute<JSType.Number>]
         internal static partial int Native_GetTerrainAt([JSMarshalAs<JSType.Object>] JSObject pos);
 
+        [JSImport("getTerrain", "game/utils")]
+        internal static partial void Native_GetTerrain([JSMarshalAs<JSType.Number>] int minX, [JSMarshalAs<JSType.Number>] int minY, [JSMarshalAs<JSType.Number>] int maxX, [JSMarshalAs<JSType.Number>] int maxY, [JSMarshalAs<JSType.MemoryView>] Span<byte> outTerrainData);
+
         [JSImport("getTicks", "game/utils")]
         [return: JSMarshalAsAttribute<JSType.Number>]
         internal static partial int Native_GetTicks();
@@ -197,6 +200,24 @@ namespace ScreepsDotNet.Native
 
         public Terrain GetTerrainAt(Position pos)
             => (Terrain)Native_GetTerrainAt(pos.ToJS());
+
+        public TerrainSlice GetTerrain(Position min, Position max)
+        {
+            if (min.X < 0 || min.X >= 100 || min.X > max.X) { throw new ArgumentOutOfRangeException(nameof(min)); }
+            if (min.Y < 0 || min.Y >= 100 || min.Y > max.Y) { throw new ArgumentOutOfRangeException(nameof(min)); }
+            if (max.X < 0 || max.X >= 100) { throw new ArgumentOutOfRangeException(nameof(max)); }
+            if (max.Y < 0 || max.Y >= 100) { throw new ArgumentOutOfRangeException(nameof(max)); }
+            int w = (max.X - min.X) + 1;
+            int h = (max.Y - min.Y) + 1;
+            Span<byte> data = stackalloc byte[w * h];
+            Native_GetTerrain(min.X, min.Y, max.X, max.Y, data);
+            Span<Terrain> terrainData = stackalloc Terrain[w * h];
+            for (int i = 0; i < data.Length; ++i)
+            {
+                terrainData[i] = (Terrain)data[i];
+            }
+            return new(terrainData, min, max);
+        }
 
         public int GetTicks()
             => Native_GetTicks();

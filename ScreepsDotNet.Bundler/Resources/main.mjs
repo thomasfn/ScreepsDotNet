@@ -9,14 +9,47 @@ import * as manifest from './bundle.mjs';
 const dotNet = new DotNet(manifest);
 dotNet.setPerfFn(utils.getCpuTime);
 dotNet.setVerboseLogging(false);
-dotNet.setModuleImports('game/utils', utils);
+dotNet.setModuleImports('game/utils', {
+    ...utils,
+    getTerrain: (minX, minY, maxX, maxY, outMemoryView) => {
+        const w = (maxX - minX) + 1;
+        const h = (maxY - minY) + 1;
+        const arr = new Uint8Array(w * h);
+        const pos = {};
+        let i = 0;
+        for (let y = minY; y <= maxY; ++y) {
+            pos.y = y;
+            for (let x = minX; x <= maxX; ++x) {
+                pos.x = x;
+                arr[i] = utils.getTerrainAt(pos);
+                ++i;
+            }   
+        }
+        outMemoryView.set(arr);
+    },
+});
 dotNet.setModuleImports('game/prototypes', prototypes);
 dotNet.setModuleImports('game/constants', {
     get: () => constants,
 });
 dotNet.setModuleImports('game/pathFinder', {
     ...pathFinder,
-    CostMatrix: buildWrappedPrototype(pathFinder.CostMatrix),
+    CostMatrix: {
+        ...buildWrappedPrototype(pathFinder.CostMatrix),
+        setRect: (thisObj, minX, minY, maxX, maxY, memoryView) => {
+            const w = (maxX - minX) + 1;
+            const h = (maxY - minY) + 1;
+            const arr = new Uint8Array(w * h);
+            memoryView.copyTo(arr);
+            let i = 0;
+            for (let y = minY; y <= maxY; ++y) {
+                for (let x = minX; x <= maxX; ++x) {
+                    thisObj.set(x, y, arr[i]);
+                    ++i;
+                }   
+            }
+        },
+    },
     createCostMatrix: () => new pathFinder.CostMatrix(),
 });
 dotNet.setModuleImports('game/visual', {

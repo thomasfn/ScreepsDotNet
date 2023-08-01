@@ -13,12 +13,12 @@ namespace ScreepsDotNet.API
         /// <summary>
         /// Cost for walking on plain positions.
         /// </summary>
-        public readonly double PlainCost;
+        public readonly byte PlainCost;
 
         /// <summary>
         /// Cost for walking on swamp positions.
         /// </summary>
-        public readonly double SwampCost;
+        public readonly byte SwampCost;
 
         /// <summary>
         /// Instead of searching for a path to the goals this will search for a path away from the goals.
@@ -34,14 +34,14 @@ namespace ScreepsDotNet.API
         /// <summary>
         /// The maximum allowed cost of the path returned.
         /// </summary>
-        public readonly double MaxCost;
+        public readonly int MaxCost;
 
         /// <summary>
         /// Weight from 1 to 9 to apply to the heuristic in the A* formula F = G + weight * H.
         /// </summary>
         public readonly double HeuristicWeight;
 
-        public SearchPathOptions(ICostMatrix? costMatrix = null, double plainCost = 2.0, double swampCost = 10.0, bool flee = false, int maxOps = 50000, double maxCost = double.MaxValue, double heuristicWeight = 1.2)
+        public SearchPathOptions(ICostMatrix? costMatrix = null, byte plainCost = 2, byte swampCost = 10, bool flee = false, int maxOps = 50000, int maxCost = int.MaxValue, double heuristicWeight = 1.2)
         {
             CostMatrix = costMatrix;
             PlainCost = plainCost;
