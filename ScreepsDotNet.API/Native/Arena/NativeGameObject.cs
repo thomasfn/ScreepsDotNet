@@ -141,6 +141,7 @@ namespace ScreepsDotNet.Native.Arena
 
         private static readonly JSObject prototypesObject;
         private static readonly IList<Type> prototypeTypeMappings = new List<Type>();
+        private static readonly IDictionary<Type, string> prototypeNameMappings = new Dictionary<Type, string>();
 
         [JSImport("getUtils", "game")]
         [return: JSMarshalAsAttribute<JSType.Object>]
@@ -185,6 +186,8 @@ namespace ScreepsDotNet.Native.Arena
             prototypeTypeMappings.Add(typeof(TConcrete));
             NativeGameObjectPrototypes<TInterface>.ConstructorObj = constructor;
             NativeGameObjectPrototypes<TConcrete>.ConstructorObj = constructor;
+            prototypeNameMappings.Add(typeof(TInterface), prototypeName);
+            prototypeNameMappings.Add(typeof(TConcrete), prototypeName);
         }
 
         internal static Type? GetWrapperTypeForConstructor(JSObject constructor)
@@ -211,6 +214,9 @@ namespace ScreepsDotNet.Native.Arena
             return (Activator.CreateInstance(wrapperType, new object[] { proxyObject }) as NativeGameObject)!;
         }
 
+        internal static string GetPrototypeName(Type type)
+            => prototypeNameMappings[type];
+
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeCreep))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructure))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeOwnedStructure))]
@@ -236,7 +242,7 @@ namespace ScreepsDotNet.Native.Arena
                 RegisterPrototypeTypeMapping<IStructureRoad, NativeStructureRoad>("StructureRoad");
                 RegisterPrototypeTypeMapping<IStructureSpawn, NativeStructureSpawn>("StructureSpawn");
                 RegisterPrototypeTypeMapping<IOwnedStructure, NativeOwnedStructure>("OwnedStructure");
-                RegisterPrototypeTypeMapping<IStructureWall, NativeStructureSpawn>("StructureWall");
+                RegisterPrototypeTypeMapping<IStructureWall, NativeStructureWall>("StructureWall");
                 RegisterPrototypeTypeMapping<IStructure, NativeStructure>("Structure");
                 RegisterPrototypeTypeMapping<IFlag, NativeFlag>("Flag");
                 RegisterPrototypeTypeMapping<IResource, NativeResource>("Resource");
