@@ -1,10 +1,10 @@
-﻿using ScreepsDotNet.API;
-using ScreepsDotNet.API.Arena;
-using System;
-using System.Runtime.InteropServices;
+﻿using System;
 using System.Runtime.InteropServices.JavaScript;
 
-namespace ScreepsDotNet.Native
+using ScreepsDotNet.API;
+using ScreepsDotNet.API.Arena;
+
+namespace ScreepsDotNet.Native.Arena
 {
     [System.Runtime.Versioning.SupportedOSPlatform("browser")]
     internal partial class NativeCostMatrix : ICostMatrix

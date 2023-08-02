@@ -95,6 +95,6 @@ namespace ScreepsDotNet.API.Arena
         /// </summary>
         /// <param name="body"></param>
         /// <returns></returns>
-        SpawnCreepResult SpawnCreep(BodyType bodyType);
+        SpawnCreepResult SpawnCreep(BodyType<BodyPartType> bodyType);
     }
 }

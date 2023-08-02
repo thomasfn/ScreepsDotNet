@@ -2,10 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices.JavaScript;
-using ScreepsDotNet.API.Arena;
-using ScreepsDotNet.Native.Arena;
 
-namespace ScreepsDotNet.Native
+using ScreepsDotNet.API;
+using ScreepsDotNet.API.Arena;
+
+namespace ScreepsDotNet.Native.Arena
 {
     [System.Runtime.Versioning.SupportedOSPlatform("browser")]
     internal partial class NativeSpawning : ISpawning
@@ -73,7 +74,7 @@ namespace ScreepsDotNet.Native
             return new SpawnCreepResult(creepObj != null ? NativeGameObjectUtils.CreateWrapperForObject(creepObj) as ICreep : null, (SpawnCreepError?)error);
         }
 
-        public SpawnCreepResult SpawnCreep(BodyType bodyType)
+        public SpawnCreepResult SpawnCreep(BodyType<BodyPartType> bodyType)
             => SpawnCreep(bodyType.AsBodyPartList);
 
         public override string ToString()

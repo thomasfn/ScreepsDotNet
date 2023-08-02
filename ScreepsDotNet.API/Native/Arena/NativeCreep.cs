@@ -6,7 +6,7 @@ using System.Runtime.InteropServices.JavaScript;
 using ScreepsDotNet.API;
 using ScreepsDotNet.API.Arena;
 
-namespace ScreepsDotNet.Native
+namespace ScreepsDotNet.Native.Arena
 {
     internal static class BodyPartTypeExtensions
     {
@@ -100,14 +100,14 @@ namespace ScreepsDotNet.Native
 
         #endregion
 
-        private BodyType? cachedBodyType;
+        private BodyType<BodyPartType>? cachedBodyType;
 
-        public IEnumerable<BodyPart> Body
+        public IEnumerable<BodyPart<BodyPartType>> Body
             => NativeGameObjectUtils.GetArrayOnObject(ProxyObject, "body")!
-                .Select(x => new BodyPart(x.GetPropertyAsString("type")!.ParseBodyPartType(), x.GetPropertyAsInt32("hits")))
+                .Select(x => new BodyPart<BodyPartType>(x.GetPropertyAsString("type")!.ParseBodyPartType(), x.GetPropertyAsInt32("hits")))
                 .ToArray();
 
-        public BodyType BodyType => cachedBodyType ??= new(Body.Select(x => x.Type));
+        public BodyType<BodyPartType> BodyType => cachedBodyType ??= new(Body.Select(x => x.Type));
 
         public double Fatigue => ProxyObject.GetPropertyAsDouble("fatigue");
 

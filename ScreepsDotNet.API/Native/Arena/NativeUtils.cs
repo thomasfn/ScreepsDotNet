@@ -6,7 +6,7 @@ using System.Linq;
 using ScreepsDotNet.API;
 using ScreepsDotNet.API.Arena;
 
-namespace ScreepsDotNet.Native
+namespace ScreepsDotNet.Native.Arena
 {
     [System.Runtime.Versioning.SupportedOSPlatform("browser")]
     internal static class PositionExtensions

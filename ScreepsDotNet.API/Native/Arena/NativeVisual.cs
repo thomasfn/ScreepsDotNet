@@ -6,7 +6,7 @@ using System.Runtime.InteropServices.JavaScript;
 using ScreepsDotNet.API;
 using ScreepsDotNet.API.Arena;
 
-namespace ScreepsDotNet.Native
+namespace ScreepsDotNet.Native.Arena
 {
     [System.Runtime.Versioning.SupportedOSPlatform("browser")]
     internal static class VisualExtensions

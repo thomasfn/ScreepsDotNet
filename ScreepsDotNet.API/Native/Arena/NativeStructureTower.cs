@@ -1,9 +1,8 @@
-﻿using System;
-using System.Runtime.InteropServices.JavaScript;
-using ScreepsDotNet.API.Arena;
-using ScreepsDotNet.Native.Arena;
+﻿using System.Runtime.InteropServices.JavaScript;
 
-namespace ScreepsDotNet.Native
+using ScreepsDotNet.API.Arena;
+
+namespace ScreepsDotNet.Native.Arena
 {
     [System.Runtime.Versioning.SupportedOSPlatform("browser")]
     internal partial class NativeStructureTower : NativeOwnedStructure, IStructureTower

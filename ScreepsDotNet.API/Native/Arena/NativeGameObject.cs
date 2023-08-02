@@ -3,14 +3,12 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices.JavaScript;
 using System.Runtime.CompilerServices;
+using System.Linq;
 
 using ScreepsDotNet.API;
-using System.Linq;
-using System.Text;
 using ScreepsDotNet.API.Arena;
-using ScreepsDotNet.Native.Arena;
 
-namespace ScreepsDotNet.Native
+namespace ScreepsDotNet.Native.Arena
 {
     [System.Runtime.Versioning.SupportedOSPlatform("browser")]
     internal partial class NativeGameObject : IGameObject, IEquatable<NativeGameObject?>
