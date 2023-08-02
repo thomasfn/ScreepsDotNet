@@ -12,11 +12,25 @@
 		<GenerateDependencyFile>true</GenerateDependencyFile>
 		<DebugType>embedded</DebugType>
 		<IsPackable>true</IsPackable>
+	</PropertyGroup>
+
+	<PropertyGroup>
 		<Title>ScreepsDotNet Bundler</Title>
 		<Authors>thomasfn</Authors>
 		<Description>An MSBuild task that bundles wasm apps for Screeps Arena environment</Description>
 		<Version>1.0.9</Version>
+		<PackageVersion>1.0.9</PackageVersion>
+		<PackageProjectUrl>https://github.com/thomasfn/ScreepsDotNet</PackageProjectUrl>
+		<PackageLicenseFile>LICENSE</PackageLicenseFile>
+		<PackageTags>screeps world arena bundler msbuild</PackageTags>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<Copyright>Copyright (c) thomasfn 2023</Copyright>
 	</PropertyGroup>
+
+	<ItemGroup>
+		<Content Include="..\LICENSE" PackagePath="\" />
+		<Content Include="..\README.md" PackagePath="\" />
+	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Build.Framework" Version="17.6.3" PrivateAssets="all" />
@@ -30,18 +44,18 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Compile Update="BundleStaticAssets.Designer.cs">
-	    <DesignTime>True</DesignTime>
-	    <AutoGen>True</AutoGen>
-	    <DependentUpon>BundleStaticAssets.resx</DependentUpon>
-	  </Compile>
+		<Compile Update="BundleStaticAssets.Designer.cs">
+			<DesignTime>True</DesignTime>
+			<AutoGen>True</AutoGen>
+			<DependentUpon>BundleStaticAssets.resx</DependentUpon>
+		</Compile>
 	</ItemGroup>
 
 	<ItemGroup>
-	  <EmbeddedResource Update="BundleStaticAssets.resx">
-	    <Generator>ResXFileCodeGenerator</Generator>
-	    <LastGenOutput>BundleStaticAssets.Designer.cs</LastGenOutput>
-	  </EmbeddedResource>
+		<EmbeddedResource Update="BundleStaticAssets.resx">
+			<Generator>ResXFileCodeGenerator</Generator>
+			<LastGenOutput>BundleStaticAssets.Designer.cs</LastGenOutput>
+		</EmbeddedResource>
 	</ItemGroup>
 
 	<Target Name="CopyProjectReferencesToPackage" DependsOnTargets="ResolveReferences">

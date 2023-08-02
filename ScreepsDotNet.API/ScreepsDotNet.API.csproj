@@ -1,16 +1,31 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
-    <ImplicitUsings>disable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-	<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-	<RootNamespace>ScreepsDotNet</RootNamespace>
-	<IsPackable>true</IsPackable>
-	<Title>ScreepsDotNet API</Title>
-	<Authors>thomasfn</Authors>
-	<Description>A set of interfaces and a JS binding for the Screeps Arena API</Description>
-	<Version>1.0.0</Version>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net7.0</TargetFramework>
+		<ImplicitUsings>disable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<RootNamespace>ScreepsDotNet</RootNamespace>
+		<IsPackable>true</IsPackable>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<PackageId>ScreepsDotNet.API</PackageId>
+		<Title>ScreepsDotNet API</Title>
+		<Authors>thomasfn</Authors>
+		<Description>A set of interfaces and a JS binding for the Screeps Arena API</Description>
+		<Version>1.0.0</Version>
+		<PackageVersion>1.0.0</PackageVersion>
+		<PackageProjectUrl>https://github.com/thomasfn/ScreepsDotNet</PackageProjectUrl>
+		<PackageLicenseFile>LICENSE</PackageLicenseFile>
+		<PackageTags>screeps world arena api</PackageTags>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<Copyright>Copyright (c) thomasfn 2023</Copyright>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Content Include="..\LICENSE" PackagePath="\" />
+		<Content Include="..\README.md" PackagePath="\" />
+	</ItemGroup>
 
 </Project>
