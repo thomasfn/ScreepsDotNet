@@ -12,6 +12,7 @@ import Promise from 'promise-polyfill';
 
 export interface ManifestEntry {
     path: string;
+    originalSize: number;
     compressed: boolean;
     b64: string;
 }
@@ -103,7 +104,8 @@ export class DotNet {
             profilerB64 += this.profileAccum(profilerB64Marker);
             if (entry.compressed) {
                 const profilerInflateMarker = this.profile();
-                const fileData = fflate.inflateSync(fileDataRaw);
+                const fileData = new Uint8Array(entry.originalSize);
+                fflate.inflateSync(fileDataRaw, { out: fileData });
                 profilerInflate += this.profileAccum(profilerInflateMarker);
                 this.fileMap[entry.path] = fileData;
                 totalBytes += fileData.length;

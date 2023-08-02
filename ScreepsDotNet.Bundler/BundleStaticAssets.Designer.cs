@@ -63,9 +63,9 @@ namespace ScreepsDotNet.Bundler {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
-        internal static byte[] bootloader_debug_mjs {
+        internal static byte[] arena_bootloader_debug_mjs {
             get {
-                object obj = ResourceManager.GetObject("bootloader_debug_mjs", resourceCulture);
+                object obj = ResourceManager.GetObject("arena_bootloader_debug_mjs", resourceCulture);
                 return ((byte[])(obj));
             }
         }
@@ -73,9 +73,9 @@ namespace ScreepsDotNet.Bundler {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
-        internal static byte[] bootloader_dts {
+        internal static byte[] arena_bootloader_dts {
             get {
-                object obj = ResourceManager.GetObject("bootloader_dts", resourceCulture);
+                object obj = ResourceManager.GetObject("arena_bootloader_dts", resourceCulture);
                 return ((byte[])(obj));
             }
         }
@@ -83,9 +83,9 @@ namespace ScreepsDotNet.Bundler {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
-        internal static byte[] bootloader_release_mjs {
+        internal static byte[] arena_bootloader_release_mjs {
             get {
-                object obj = ResourceManager.GetObject("bootloader_release_mjs", resourceCulture);
+                object obj = ResourceManager.GetObject("arena_bootloader_release_mjs", resourceCulture);
                 return ((byte[])(obj));
             }
         }
@@ -93,9 +93,9 @@ namespace ScreepsDotNet.Bundler {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
-        internal static byte[] main_mjs {
+        internal static byte[] arena_main_mjs {
             get {
-                object obj = ResourceManager.GetObject("main_mjs", resourceCulture);
+                object obj = ResourceManager.GetObject("arena_main_mjs", resourceCulture);
                 return ((byte[])(obj));
             }
         }

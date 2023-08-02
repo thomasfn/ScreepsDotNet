@@ -8974,19 +8974,19 @@ var bootloader = (function (exports) {
           }
           if (!dontAddNull) HEAP8[buffer >> 0] = 0;
         }
-        var buffer, HEAP8, HEAPU8, HEAP16, HEAP32, HEAPU32, HEAPF32, HEAPF64;
+        var buffer, HEAP8, HEAPU8, HEAP16, HEAPU16, HEAP32, HEAPU32, HEAPF32, HEAPF64;
         function updateGlobalBufferAndViews(buf) {
           buffer = buf;
           Module["HEAP8"] = HEAP8 = new Int8Array(buf);
           Module["HEAP16"] = HEAP16 = new Int16Array(buf);
           Module["HEAP32"] = HEAP32 = new Int32Array(buf);
           Module["HEAPU8"] = HEAPU8 = new Uint8Array(buf);
-          Module["HEAPU16"] = new Uint16Array(buf);
+          Module["HEAPU16"] = HEAPU16 = new Uint16Array(buf);
           Module["HEAPU32"] = HEAPU32 = new Uint32Array(buf);
           Module["HEAPF32"] = HEAPF32 = new Float32Array(buf);
           Module["HEAPF64"] = HEAPF64 = new Float64Array(buf);
         }
-        Module["INITIAL_MEMORY"] || 536870912;
+        Module["INITIAL_MEMORY"] || 16777216;
         var wasmTable;
         var __ATPRERUN__ = [];
         var __ATINIT__ = [];
@@ -9006,6 +9006,7 @@ var bootloader = (function (exports) {
         function initRuntime() {
           if (!Module["noFSInit"] && !FS.init.initialized) FS.init();
           FS.ignorePermissions = false;
+          SOCKFS.root = FS.mount(SOCKFS, {}, null);
           callRuntimeCallbacks(__ATINIT__);
         }
         function postRun() {
@@ -9256,9 +9257,6 @@ var bootloader = (function (exports) {
             default:
               abort("invalid type for setValue: " + type);
           }
-        }
-        function ___assert_fail(condition, filename, line, func) {
-          abort("Assertion failed: " + UTF8ToString(condition) + ", at: " + [filename ? UTF8ToString(filename) : "unknown filename", line, func ? UTF8ToString(func) : "unknown function"]);
         }
         function ___cxa_allocate_exception(size) {
           return _malloc(size + 24) + 24;
@@ -11628,6 +11626,705 @@ var bootloader = (function (exports) {
             return stream;
           }
         };
+        function ___syscall_chdir(path) {
+          try {
+            path = SYSCALLS.getStr(path);
+            FS.chdir(path);
+            return 0;
+          } catch (e) {
+            if (typeof FS == "undefined" || !(e instanceof FS.ErrnoError)) throw e;
+            return -e.errno;
+          }
+        }
+        function ___syscall_chmod(path, mode) {
+          try {
+            path = SYSCALLS.getStr(path);
+            FS.chmod(path, mode);
+            return 0;
+          } catch (e) {
+            if (typeof FS == "undefined" || !(e instanceof FS.ErrnoError)) throw e;
+            return -e.errno;
+          }
+        }
+        var SOCKFS = {
+          mount: function (mount) {
+            Module["websocket"] = Module["websocket"] && "object" === typeof Module["websocket"] ? Module["websocket"] : {};
+            Module["websocket"]._callbacks = {};
+            Module["websocket"]["on"] = function (event, callback) {
+              if ("function" === typeof callback) {
+                this._callbacks[event] = callback;
+              }
+              return this;
+            };
+            Module["websocket"].emit = function (event, param) {
+              if ("function" === typeof this._callbacks[event]) {
+                this._callbacks[event].call(this, param);
+              }
+            };
+            return FS.createNode(null, "/", 16384 | 511, 0);
+          },
+          createSocket: function (family, type, protocol) {
+            type &= ~526336;
+            var streaming = type == 1;
+            if (streaming && protocol && protocol != 6) {
+              throw new FS.ErrnoError(66);
+            }
+            var sock = {
+              family: family,
+              type: type,
+              protocol: protocol,
+              server: null,
+              error: null,
+              peers: {},
+              pending: [],
+              recv_queue: [],
+              sock_ops: SOCKFS.websocket_sock_ops
+            };
+            var name = SOCKFS.nextname();
+            var node = FS.createNode(SOCKFS.root, name, 49152, 0);
+            node.sock = sock;
+            var stream = FS.createStream({
+              path: name,
+              node: node,
+              flags: 2,
+              seekable: false,
+              stream_ops: SOCKFS.stream_ops
+            });
+            sock.stream = stream;
+            return sock;
+          },
+          getSocket: function (fd) {
+            var stream = FS.getStream(fd);
+            if (!stream || !FS.isSocket(stream.node.mode)) {
+              return null;
+            }
+            return stream.node.sock;
+          },
+          stream_ops: {
+            poll: function (stream) {
+              var sock = stream.node.sock;
+              return sock.sock_ops.poll(sock);
+            },
+            ioctl: function (stream, request, varargs) {
+              var sock = stream.node.sock;
+              return sock.sock_ops.ioctl(sock, request, varargs);
+            },
+            read: function (stream, buffer, offset, length, position) {
+              var sock = stream.node.sock;
+              var msg = sock.sock_ops.recvmsg(sock, length);
+              if (!msg) {
+                return 0;
+              }
+              buffer.set(msg.buffer, offset);
+              return msg.buffer.length;
+            },
+            write: function (stream, buffer, offset, length, position) {
+              var sock = stream.node.sock;
+              return sock.sock_ops.sendmsg(sock, buffer, offset, length);
+            },
+            close: function (stream) {
+              var sock = stream.node.sock;
+              sock.sock_ops.close(sock);
+            }
+          },
+          nextname: function () {
+            if (!SOCKFS.nextname.current) {
+              SOCKFS.nextname.current = 0;
+            }
+            return "socket[" + SOCKFS.nextname.current++ + "]";
+          },
+          websocket_sock_ops: {
+            createPeer: function (sock, addr, port) {
+              var ws;
+              if (typeof addr == "object") {
+                ws = addr;
+                addr = null;
+                port = null;
+              }
+              if (ws) {
+                if (ws._socket) {
+                  addr = ws._socket.remoteAddress;
+                  port = ws._socket.remotePort;
+                } else {
+                  var result = /ws[s]?:\/\/([^:]+):(\d+)/.exec(ws.url);
+                  if (!result) {
+                    throw new Error("WebSocket URL must be in the format ws(s)://address:port");
+                  }
+                  addr = result[1];
+                  port = parseInt(result[2], 10);
+                }
+              } else {
+                try {
+                  var runtimeConfig = Module["websocket"] && "object" === typeof Module["websocket"];
+                  var url = "ws:#".replace("#", "//");
+                  if (runtimeConfig) {
+                    if ("string" === typeof Module["websocket"]["url"]) {
+                      url = Module["websocket"]["url"];
+                    }
+                  }
+                  if (url === "ws://" || url === "wss://") {
+                    var parts = addr.split("/");
+                    url = url + parts[0] + ":" + port + "/" + parts.slice(1).join("/");
+                  }
+                  var subProtocols = "binary";
+                  if (runtimeConfig) {
+                    if ("string" === typeof Module["websocket"]["subprotocol"]) {
+                      subProtocols = Module["websocket"]["subprotocol"];
+                    }
+                  }
+                  var opts = undefined;
+                  if (subProtocols !== "null") {
+                    subProtocols = subProtocols.replace(/^ +| +$/g, "").split(/ *, */);
+                    opts = subProtocols;
+                  }
+                  if (runtimeConfig && null === Module["websocket"]["subprotocol"]) {
+                    subProtocols = "null";
+                    opts = undefined;
+                  }
+                  var WebSocketConstructor;
+                  if (ENVIRONMENT_IS_NODE) {
+                    WebSocketConstructor = require("ws");
+                  } else {
+                    WebSocketConstructor = WebSocket;
+                  }
+                  ws = new WebSocketConstructor(url, opts);
+                  ws.binaryType = "arraybuffer";
+                } catch (e) {
+                  throw new FS.ErrnoError(23);
+                }
+              }
+              var peer = {
+                addr: addr,
+                port: port,
+                socket: ws,
+                dgram_send_queue: []
+              };
+              SOCKFS.websocket_sock_ops.addPeer(sock, peer);
+              SOCKFS.websocket_sock_ops.handlePeerEvents(sock, peer);
+              if (sock.type === 2 && typeof sock.sport != "undefined") {
+                peer.dgram_send_queue.push(new Uint8Array([255, 255, 255, 255, "p".charCodeAt(0), "o".charCodeAt(0), "r".charCodeAt(0), "t".charCodeAt(0), (sock.sport & 65280) >> 8, sock.sport & 255]));
+              }
+              return peer;
+            },
+            getPeer: function (sock, addr, port) {
+              return sock.peers[addr + ":" + port];
+            },
+            addPeer: function (sock, peer) {
+              sock.peers[peer.addr + ":" + peer.port] = peer;
+            },
+            removePeer: function (sock, peer) {
+              delete sock.peers[peer.addr + ":" + peer.port];
+            },
+            handlePeerEvents: function (sock, peer) {
+              var first = true;
+              var handleOpen = function () {
+                Module["websocket"].emit("open", sock.stream.fd);
+                try {
+                  var queued = peer.dgram_send_queue.shift();
+                  while (queued) {
+                    peer.socket.send(queued);
+                    queued = peer.dgram_send_queue.shift();
+                  }
+                } catch (e) {
+                  peer.socket.close();
+                }
+              };
+              function handleMessage(data) {
+                if (typeof data == "string") {
+                  var encoder = new TextEncoder$1();
+                  data = encoder.encode(data);
+                } else {
+                  assert(data.byteLength !== undefined);
+                  if (data.byteLength == 0) {
+                    return;
+                  } else {
+                    data = new Uint8Array(data);
+                  }
+                }
+                var wasfirst = first;
+                first = false;
+                if (wasfirst && data.length === 10 && data[0] === 255 && data[1] === 255 && data[2] === 255 && data[3] === 255 && data[4] === "p".charCodeAt(0) && data[5] === "o".charCodeAt(0) && data[6] === "r".charCodeAt(0) && data[7] === "t".charCodeAt(0)) {
+                  var newport = data[8] << 8 | data[9];
+                  SOCKFS.websocket_sock_ops.removePeer(sock, peer);
+                  peer.port = newport;
+                  SOCKFS.websocket_sock_ops.addPeer(sock, peer);
+                  return;
+                }
+                sock.recv_queue.push({
+                  addr: peer.addr,
+                  port: peer.port,
+                  data: data
+                });
+                Module["websocket"].emit("message", sock.stream.fd);
+              }
+              if (ENVIRONMENT_IS_NODE) {
+                peer.socket.on("open", handleOpen);
+                peer.socket.on("message", function (data, isBinary) {
+                  if (!isBinary) {
+                    return;
+                  }
+                  handleMessage(new Uint8Array(data).buffer);
+                });
+                peer.socket.on("close", function () {
+                  Module["websocket"].emit("close", sock.stream.fd);
+                });
+                peer.socket.on("error", function (error) {
+                  sock.error = 14;
+                  Module["websocket"].emit("error", [sock.stream.fd, sock.error, "ECONNREFUSED: Connection refused"]);
+                });
+              } else {
+                peer.socket.onopen = handleOpen;
+                peer.socket.onclose = function () {
+                  Module["websocket"].emit("close", sock.stream.fd);
+                };
+                peer.socket.onmessage = function peer_socket_onmessage(event) {
+                  handleMessage(event.data);
+                };
+                peer.socket.onerror = function (error) {
+                  sock.error = 14;
+                  Module["websocket"].emit("error", [sock.stream.fd, sock.error, "ECONNREFUSED: Connection refused"]);
+                };
+              }
+            },
+            poll: function (sock) {
+              if (sock.type === 1 && sock.server) {
+                return sock.pending.length ? 64 | 1 : 0;
+              }
+              var mask = 0;
+              var dest = sock.type === 1 ? SOCKFS.websocket_sock_ops.getPeer(sock, sock.daddr, sock.dport) : null;
+              if (sock.recv_queue.length || !dest || dest && dest.socket.readyState === dest.socket.CLOSING || dest && dest.socket.readyState === dest.socket.CLOSED) {
+                mask |= 64 | 1;
+              }
+              if (!dest || dest && dest.socket.readyState === dest.socket.OPEN) {
+                mask |= 4;
+              }
+              if (dest && dest.socket.readyState === dest.socket.CLOSING || dest && dest.socket.readyState === dest.socket.CLOSED) {
+                mask |= 16;
+              }
+              return mask;
+            },
+            ioctl: function (sock, request, arg) {
+              switch (request) {
+                case 21531:
+                  var bytes = 0;
+                  if (sock.recv_queue.length) {
+                    bytes = sock.recv_queue[0].data.length;
+                  }
+                  HEAP32[arg >> 2] = bytes;
+                  return 0;
+                default:
+                  return 28;
+              }
+            },
+            close: function (sock) {
+              if (sock.server) {
+                try {
+                  sock.server.close();
+                } catch (e) {}
+                sock.server = null;
+              }
+              var peers = Object.keys(sock.peers);
+              for (var i = 0; i < peers.length; i++) {
+                var peer = sock.peers[peers[i]];
+                try {
+                  peer.socket.close();
+                } catch (e) {}
+                SOCKFS.websocket_sock_ops.removePeer(sock, peer);
+              }
+              return 0;
+            },
+            bind: function (sock, addr, port) {
+              if (typeof sock.saddr != "undefined" || typeof sock.sport != "undefined") {
+                throw new FS.ErrnoError(28);
+              }
+              sock.saddr = addr;
+              sock.sport = port;
+              if (sock.type === 2) {
+                if (sock.server) {
+                  sock.server.close();
+                  sock.server = null;
+                }
+                try {
+                  sock.sock_ops.listen(sock, 0);
+                } catch (e) {
+                  if (!(e instanceof FS.ErrnoError)) throw e;
+                  if (e.errno !== 138) throw e;
+                }
+              }
+            },
+            connect: function (sock, addr, port) {
+              if (sock.server) {
+                throw new FS.ErrnoError(138);
+              }
+              if (typeof sock.daddr != "undefined" && typeof sock.dport != "undefined") {
+                var dest = SOCKFS.websocket_sock_ops.getPeer(sock, sock.daddr, sock.dport);
+                if (dest) {
+                  if (dest.socket.readyState === dest.socket.CONNECTING) {
+                    throw new FS.ErrnoError(7);
+                  } else {
+                    throw new FS.ErrnoError(30);
+                  }
+                }
+              }
+              var peer = SOCKFS.websocket_sock_ops.createPeer(sock, addr, port);
+              sock.daddr = peer.addr;
+              sock.dport = peer.port;
+              throw new FS.ErrnoError(26);
+            },
+            listen: function (sock, backlog) {
+              if (!ENVIRONMENT_IS_NODE) {
+                throw new FS.ErrnoError(138);
+              }
+              if (sock.server) {
+                throw new FS.ErrnoError(28);
+              }
+              var WebSocketServer = require("ws").Server;
+              var host = sock.saddr;
+              sock.server = new WebSocketServer({
+                host: host,
+                port: sock.sport
+              });
+              Module["websocket"].emit("listen", sock.stream.fd);
+              sock.server.on("connection", function (ws) {
+                if (sock.type === 1) {
+                  var newsock = SOCKFS.createSocket(sock.family, sock.type, sock.protocol);
+                  var peer = SOCKFS.websocket_sock_ops.createPeer(newsock, ws);
+                  newsock.daddr = peer.addr;
+                  newsock.dport = peer.port;
+                  sock.pending.push(newsock);
+                  Module["websocket"].emit("connection", newsock.stream.fd);
+                } else {
+                  SOCKFS.websocket_sock_ops.createPeer(sock, ws);
+                  Module["websocket"].emit("connection", sock.stream.fd);
+                }
+              });
+              sock.server.on("close", function () {
+                Module["websocket"].emit("close", sock.stream.fd);
+                sock.server = null;
+              });
+              sock.server.on("error", function (error) {
+                sock.error = 23;
+                Module["websocket"].emit("error", [sock.stream.fd, sock.error, "EHOSTUNREACH: Host is unreachable"]);
+              });
+            },
+            accept: function (listensock) {
+              if (!listensock.server || !listensock.pending.length) {
+                throw new FS.ErrnoError(28);
+              }
+              var newsock = listensock.pending.shift();
+              newsock.stream.flags = listensock.stream.flags;
+              return newsock;
+            },
+            getname: function (sock, peer) {
+              var addr, port;
+              if (peer) {
+                if (sock.daddr === undefined || sock.dport === undefined) {
+                  throw new FS.ErrnoError(53);
+                }
+                addr = sock.daddr;
+                port = sock.dport;
+              } else {
+                addr = sock.saddr || 0;
+                port = sock.sport || 0;
+              }
+              return {
+                addr: addr,
+                port: port
+              };
+            },
+            sendmsg: function (sock, buffer, offset, length, addr, port) {
+              if (sock.type === 2) {
+                if (addr === undefined || port === undefined) {
+                  addr = sock.daddr;
+                  port = sock.dport;
+                }
+                if (addr === undefined || port === undefined) {
+                  throw new FS.ErrnoError(17);
+                }
+              } else {
+                addr = sock.daddr;
+                port = sock.dport;
+              }
+              var dest = SOCKFS.websocket_sock_ops.getPeer(sock, addr, port);
+              if (sock.type === 1) {
+                if (!dest || dest.socket.readyState === dest.socket.CLOSING || dest.socket.readyState === dest.socket.CLOSED) {
+                  throw new FS.ErrnoError(53);
+                } else if (dest.socket.readyState === dest.socket.CONNECTING) {
+                  throw new FS.ErrnoError(6);
+                }
+              }
+              if (ArrayBuffer.isView(buffer)) {
+                offset += buffer.byteOffset;
+                buffer = buffer.buffer;
+              }
+              var data;
+              data = buffer.slice(offset, offset + length);
+              if (sock.type === 2) {
+                if (!dest || dest.socket.readyState !== dest.socket.OPEN) {
+                  if (!dest || dest.socket.readyState === dest.socket.CLOSING || dest.socket.readyState === dest.socket.CLOSED) {
+                    dest = SOCKFS.websocket_sock_ops.createPeer(sock, addr, port);
+                  }
+                  dest.dgram_send_queue.push(data);
+                  return length;
+                }
+              }
+              try {
+                dest.socket.send(data);
+                return length;
+              } catch (e) {
+                throw new FS.ErrnoError(28);
+              }
+            },
+            recvmsg: function (sock, length) {
+              if (sock.type === 1 && sock.server) {
+                throw new FS.ErrnoError(53);
+              }
+              var queued = sock.recv_queue.shift();
+              if (!queued) {
+                if (sock.type === 1) {
+                  var dest = SOCKFS.websocket_sock_ops.getPeer(sock, sock.daddr, sock.dport);
+                  if (!dest) {
+                    throw new FS.ErrnoError(53);
+                  } else if (dest.socket.readyState === dest.socket.CLOSING || dest.socket.readyState === dest.socket.CLOSED) {
+                    return null;
+                  } else {
+                    throw new FS.ErrnoError(6);
+                  }
+                } else {
+                  throw new FS.ErrnoError(6);
+                }
+              }
+              var queuedLength = queued.data.byteLength || queued.data.length;
+              var queuedOffset = queued.data.byteOffset || 0;
+              var queuedBuffer = queued.data.buffer || queued.data;
+              var bytesRead = Math.min(length, queuedLength);
+              var res = {
+                buffer: new Uint8Array(queuedBuffer, queuedOffset, bytesRead),
+                addr: queued.addr,
+                port: queued.port
+              };
+              if (sock.type === 1 && bytesRead < queuedLength) {
+                var bytesRemaining = queuedLength - bytesRead;
+                queued.data = new Uint8Array(queuedBuffer, queuedOffset + bytesRead, bytesRemaining);
+                sock.recv_queue.unshift(queued);
+              }
+              return res;
+            }
+          }
+        };
+        function getSocketFromFD(fd) {
+          var socket = SOCKFS.getSocket(fd);
+          if (!socket) throw new FS.ErrnoError(8);
+          return socket;
+        }
+        function setErrNo(value) {
+          HEAP32[___errno_location() >> 2] = value;
+          return value;
+        }
+        function inetNtop4(addr) {
+          return (addr & 255) + "." + (addr >> 8 & 255) + "." + (addr >> 16 & 255) + "." + (addr >> 24 & 255);
+        }
+        function inetNtop6(ints) {
+          var str = "";
+          var word = 0;
+          var longest = 0;
+          var lastzero = 0;
+          var zstart = 0;
+          var len = 0;
+          var i = 0;
+          var parts = [ints[0] & 65535, ints[0] >> 16, ints[1] & 65535, ints[1] >> 16, ints[2] & 65535, ints[2] >> 16, ints[3] & 65535, ints[3] >> 16];
+          var hasipv4 = true;
+          var v4part = "";
+          for (i = 0; i < 5; i++) {
+            if (parts[i] !== 0) {
+              hasipv4 = false;
+              break;
+            }
+          }
+          if (hasipv4) {
+            v4part = inetNtop4(parts[6] | parts[7] << 16);
+            if (parts[5] === -1) {
+              str = "::ffff:";
+              str += v4part;
+              return str;
+            }
+            if (parts[5] === 0) {
+              str = "::";
+              if (v4part === "0.0.0.0") v4part = "";
+              if (v4part === "0.0.0.1") v4part = "1";
+              str += v4part;
+              return str;
+            }
+          }
+          for (word = 0; word < 8; word++) {
+            if (parts[word] === 0) {
+              if (word - lastzero > 1) {
+                len = 0;
+              }
+              lastzero = word;
+              len++;
+            }
+            if (len > longest) {
+              longest = len;
+              zstart = word - longest + 1;
+            }
+          }
+          for (word = 0; word < 8; word++) {
+            if (longest > 1) {
+              if (parts[word] === 0 && word >= zstart && word < zstart + longest) {
+                if (word === zstart) {
+                  str += ":";
+                  if (zstart === 0) str += ":";
+                }
+                continue;
+              }
+            }
+            str += Number(_ntohs(parts[word] & 65535)).toString(16);
+            str += word < 7 ? ":" : "";
+          }
+          return str;
+        }
+        function readSockaddr(sa, salen) {
+          var family = HEAP16[sa >> 1];
+          var port = _ntohs(HEAPU16[sa + 2 >> 1]);
+          var addr;
+          switch (family) {
+            case 2:
+              if (salen !== 16) {
+                return {
+                  errno: 28
+                };
+              }
+              addr = HEAP32[sa + 4 >> 2];
+              addr = inetNtop4(addr);
+              break;
+            case 10:
+              if (salen !== 28) {
+                return {
+                  errno: 28
+                };
+              }
+              addr = [HEAP32[sa + 8 >> 2], HEAP32[sa + 12 >> 2], HEAP32[sa + 16 >> 2], HEAP32[sa + 20 >> 2]];
+              addr = inetNtop6(addr);
+              break;
+            default:
+              return {
+                errno: 5
+              };
+          }
+          return {
+            family: family,
+            addr: addr,
+            port: port
+          };
+        }
+        function inetPton4(str) {
+          var b = str.split(".");
+          for (var i = 0; i < 4; i++) {
+            var tmp = Number(b[i]);
+            if (isNaN(tmp)) return null;
+            b[i] = tmp;
+          }
+          return (b[0] | b[1] << 8 | b[2] << 16 | b[3] << 24) >>> 0;
+        }
+        function jstoi_q(str) {
+          return parseInt(str);
+        }
+        function inetPton6(str) {
+          var words;
+          var w, offset, z;
+          var valid6regx = /^((?=.*::)(?!.*::.+::)(::)?([\dA-F]{1,4}:(:|\b)|){5}|([\dA-F]{1,4}:){6})((([\dA-F]{1,4}((?!\3)::|:\b|$))|(?!\2\3)){2}|(((2[0-4]|1\d|[1-9])?\d|25[0-5])\.?\b){4})$/i;
+          var parts = [];
+          if (!valid6regx.test(str)) {
+            return null;
+          }
+          if (str === "::") {
+            return [0, 0, 0, 0, 0, 0, 0, 0];
+          }
+          if (str.startsWith("::")) {
+            str = str.replace("::", "Z:");
+          } else {
+            str = str.replace("::", ":Z:");
+          }
+          if (str.indexOf(".") > 0) {
+            str = str.replace(new RegExp("[.]", "g"), ":");
+            words = str.split(":");
+            words[words.length - 4] = jstoi_q(words[words.length - 4]) + jstoi_q(words[words.length - 3]) * 256;
+            words[words.length - 3] = jstoi_q(words[words.length - 2]) + jstoi_q(words[words.length - 1]) * 256;
+            words = words.slice(0, words.length - 2);
+          } else {
+            words = str.split(":");
+          }
+          offset = 0;
+          z = 0;
+          for (w = 0; w < words.length; w++) {
+            if (typeof words[w] == "string") {
+              if (words[w] === "Z") {
+                for (z = 0; z < 8 - words.length + 1; z++) {
+                  parts[w + z] = 0;
+                }
+                offset = z - 1;
+              } else {
+                parts[w + offset] = _htons(parseInt(words[w], 16));
+              }
+            } else {
+              parts[w + offset] = words[w];
+            }
+          }
+          return [parts[1] << 16 | parts[0], parts[3] << 16 | parts[2], parts[5] << 16 | parts[4], parts[7] << 16 | parts[6]];
+        }
+        var DNS = {
+          address_map: {
+            id: 1,
+            addrs: {},
+            names: {}
+          },
+          lookup_name: function (name) {
+            var res = inetPton4(name);
+            if (res !== null) {
+              return name;
+            }
+            res = inetPton6(name);
+            if (res !== null) {
+              return name;
+            }
+            var addr;
+            if (DNS.address_map.addrs[name]) {
+              addr = DNS.address_map.addrs[name];
+            } else {
+              var id = DNS.address_map.id++;
+              assert(id < 65535, "exceeded max address mappings of 65535");
+              addr = "172.29." + (id & 255) + "." + (id & 65280);
+              DNS.address_map.names[addr] = name;
+              DNS.address_map.addrs[name] = addr;
+            }
+            return addr;
+          },
+          lookup_addr: function (addr) {
+            if (DNS.address_map.names[addr]) {
+              return DNS.address_map.names[addr];
+            }
+            return null;
+          }
+        };
+        function getSocketAddress(addrp, addrlen, allowNull) {
+          if (allowNull && addrp === 0) return null;
+          var info = readSockaddr(addrp, addrlen);
+          if (info.errno) throw new FS.ErrnoError(info.errno);
+          info.addr = DNS.lookup_addr(info.addr) || info.addr;
+          return info;
+        }
+        function ___syscall_connect(fd, addr, addrlen) {
+          try {
+            var sock = getSocketFromFD(fd);
+            var info = getSocketAddress(addr, addrlen);
+            sock.sock_ops.connect(sock, info.addr, info.port);
+            return 0;
+          } catch (e) {
+            if (typeof FS == "undefined" || !(e instanceof FS.ErrnoError)) throw e;
+            return -e.errno;
+          }
+        }
         function ___syscall_faccessat(dirfd, path, amode, flags) {
           try {
             path = SYSCALLS.getStr(path);
@@ -11658,9 +12355,14 @@ var bootloader = (function (exports) {
         function ___syscall_fadvise64(fd, offset, len, advice) {
           return 0;
         }
-        function setErrNo(value) {
-          HEAP32[___errno_location() >> 2] = value;
-          return value;
+        function ___syscall_fchmod(fd, mode) {
+          try {
+            FS.fchmod(fd, mode);
+            return 0;
+          } catch (e) {
+            if (typeof FS == "undefined" || !(e instanceof FS.ErrnoError)) throw e;
+            return -e.errno;
+          }
         }
         function ___syscall_fcntl64(fd, cmd, varargs) {
           SYSCALLS.varargs = varargs;
@@ -11886,6 +12588,19 @@ var bootloader = (function (exports) {
             return -e.errno;
           }
         }
+        function ___syscall_mkdirat(dirfd, path, mode) {
+          try {
+            path = SYSCALLS.getStr(path);
+            path = SYSCALLS.calculateAt(dirfd, path);
+            path = PATH.normalize(path);
+            if (path[path.length - 1] === "/") path = path.substr(0, path.length - 1);
+            FS.mkdir(path, mode, 0);
+            return 0;
+          } catch (e) {
+            if (typeof FS == "undefined" || !(e instanceof FS.ErrnoError)) throw e;
+            return -e.errno;
+          }
+        }
         function ___syscall_newfstatat(dirfd, path, buf, flags) {
           try {
             path = SYSCALLS.getStr(path);
@@ -11927,10 +12642,112 @@ var bootloader = (function (exports) {
             return -e.errno;
           }
         }
+        function writeSockaddr(sa, family, addr, port, addrlen) {
+          switch (family) {
+            case 2:
+              addr = inetPton4(addr);
+              zeroMemory(sa, 16);
+              if (addrlen) {
+                HEAP32[addrlen >> 2] = 16;
+              }
+              HEAP16[sa >> 1] = family;
+              HEAP32[sa + 4 >> 2] = addr;
+              HEAP16[sa + 2 >> 1] = _htons(port);
+              break;
+            case 10:
+              addr = inetPton6(addr);
+              zeroMemory(sa, 28);
+              if (addrlen) {
+                HEAP32[addrlen >> 2] = 28;
+              }
+              HEAP32[sa >> 2] = family;
+              HEAP32[sa + 8 >> 2] = addr[0];
+              HEAP32[sa + 12 >> 2] = addr[1];
+              HEAP32[sa + 16 >> 2] = addr[2];
+              HEAP32[sa + 20 >> 2] = addr[3];
+              HEAP16[sa + 2 >> 1] = _htons(port);
+              break;
+            default:
+              return 5;
+          }
+          return 0;
+        }
+        function ___syscall_recvfrom(fd, buf, len, flags, addr, addrlen) {
+          try {
+            var sock = getSocketFromFD(fd);
+            var msg = sock.sock_ops.recvmsg(sock, len);
+            if (!msg) return 0;
+            if (addr) {
+              var errno = writeSockaddr(addr, sock.family, DNS.lookup_name(msg.addr), msg.port, addrlen);
+            }
+            HEAPU8.set(msg.buffer, buf);
+            return msg.buffer.byteLength;
+          } catch (e) {
+            if (typeof FS == "undefined" || !(e instanceof FS.ErrnoError)) throw e;
+            return -e.errno;
+          }
+        }
+        function ___syscall_renameat(olddirfd, oldpath, newdirfd, newpath) {
+          try {
+            oldpath = SYSCALLS.getStr(oldpath);
+            newpath = SYSCALLS.getStr(newpath);
+            oldpath = SYSCALLS.calculateAt(olddirfd, oldpath);
+            newpath = SYSCALLS.calculateAt(newdirfd, newpath);
+            FS.rename(oldpath, newpath);
+            return 0;
+          } catch (e) {
+            if (typeof FS == "undefined" || !(e instanceof FS.ErrnoError)) throw e;
+            return -e.errno;
+          }
+        }
+        function ___syscall_rmdir(path) {
+          try {
+            path = SYSCALLS.getStr(path);
+            FS.rmdir(path);
+            return 0;
+          } catch (e) {
+            if (typeof FS == "undefined" || !(e instanceof FS.ErrnoError)) throw e;
+            return -e.errno;
+          }
+        }
+        function ___syscall_sendto(fd, message, length, flags, addr, addr_len) {
+          try {
+            var sock = getSocketFromFD(fd);
+            var dest = getSocketAddress(addr, addr_len, true);
+            if (!dest) {
+              return FS.write(sock.stream, HEAP8, message, length);
+            } else {
+              return sock.sock_ops.sendmsg(sock, HEAP8, message, length, dest.addr, dest.port);
+            }
+          } catch (e) {
+            if (typeof FS == "undefined" || !(e instanceof FS.ErrnoError)) throw e;
+            return -e.errno;
+          }
+        }
+        function ___syscall_socket(domain, type, protocol) {
+          try {
+            var sock = SOCKFS.createSocket(domain, type, protocol);
+            return sock.stream.fd;
+          } catch (e) {
+            if (typeof FS == "undefined" || !(e instanceof FS.ErrnoError)) throw e;
+            return -e.errno;
+          }
+        }
         function ___syscall_stat64(path, buf) {
           try {
             path = SYSCALLS.getStr(path);
             return SYSCALLS.doStat(FS.stat, path, buf);
+          } catch (e) {
+            if (typeof FS == "undefined" || !(e instanceof FS.ErrnoError)) throw e;
+            return -e.errno;
+          }
+        }
+        function ___syscall_symlink(target, linkpath) {
+          try {
+            target = SYSCALLS.getStr(target);
+            linkpath = SYSCALLS.getStr(linkpath);
+            FS.symlink(target, linkpath);
+            return 0;
           } catch (e) {
             if (typeof FS == "undefined" || !(e instanceof FS.ErrnoError)) throw e;
             return -e.errno;
@@ -11953,12 +12770,53 @@ var bootloader = (function (exports) {
             return -e.errno;
           }
         }
+        function ___syscall_utimensat(dirfd, path, times, flags) {
+          try {
+            path = SYSCALLS.getStr(path);
+            path = SYSCALLS.calculateAt(dirfd, path, true);
+            if (!times) {
+              var atime = Date.now();
+              var mtime = atime;
+            } else {
+              var seconds = HEAP32[times >> 2];
+              var nanoseconds = HEAP32[times + 4 >> 2];
+              atime = seconds * 1e3 + nanoseconds / (1e3 * 1e3);
+              times += 8;
+              seconds = HEAP32[times >> 2];
+              nanoseconds = HEAP32[times + 4 >> 2];
+              mtime = seconds * 1e3 + nanoseconds / (1e3 * 1e3);
+            }
+            FS.utime(path, atime, mtime);
+            return 0;
+          } catch (e) {
+            if (typeof FS == "undefined" || !(e instanceof FS.ErrnoError)) throw e;
+            return -e.errno;
+          }
+        }
+        function __dlinit(main_dso_handle) {}
+        var dlopenMissingError = "To use dlopen, you need enable dynamic linking, see https://github.com/emscripten-core/emscripten/wiki/Linking";
+        function __dlopen_js(filename, flag) {
+          abort(dlopenMissingError);
+        }
         function __emscripten_date_now() {
           return Date.now();
         }
         var nowIsMonotonic = true;
         function __emscripten_get_now_is_monotonic() {
           return nowIsMonotonic;
+        }
+        function __gmtime_js(time, tmPtr) {
+          var date = new Date(HEAP32[time >> 2] * 1e3);
+          HEAP32[tmPtr >> 2] = date.getUTCSeconds();
+          HEAP32[tmPtr + 4 >> 2] = date.getUTCMinutes();
+          HEAP32[tmPtr + 8 >> 2] = date.getUTCHours();
+          HEAP32[tmPtr + 12 >> 2] = date.getUTCDate();
+          HEAP32[tmPtr + 16 >> 2] = date.getUTCMonth();
+          HEAP32[tmPtr + 20 >> 2] = date.getUTCFullYear() - 1900;
+          HEAP32[tmPtr + 24 >> 2] = date.getUTCDay();
+          var start = Date.UTC(date.getUTCFullYear(), 0, 1, 0, 0, 0, 0);
+          var yday = (date.getTime() - start) / (1e3 * 60 * 60 * 24) | 0;
+          HEAP32[tmPtr + 28 >> 2] = yday;
         }
         function __localtime_js(time, tmPtr) {
           var date = new Date(HEAP32[time >> 2] * 1e3);
@@ -11986,6 +12844,15 @@ var bootloader = (function (exports) {
             var ptr = res.ptr;
             HEAP32[allocated >> 2] = res.allocated;
             return ptr;
+          } catch (e) {
+            if (typeof FS == "undefined" || !(e instanceof FS.ErrnoError)) throw e;
+            return -e.errno;
+          }
+        }
+        function __msync_js(addr, len, flags, fd) {
+          try {
+            SYSCALLS.doMsync(addr, FS.getStream(fd), len, flags, 0);
+            return 0;
           } catch (e) {
             if (typeof FS == "undefined" || !(e instanceof FS.ErrnoError)) throw e;
             return -e.errno;
@@ -12173,6 +13040,17 @@ var bootloader = (function (exports) {
             return e.errno;
           }
         }
+        function _fd_fdstat_get(fd, pbuf) {
+          try {
+            var stream = SYSCALLS.getStreamFromFD(fd);
+            var type = stream.tty ? 2 : FS.isDir(stream.mode) ? 3 : FS.isLink(stream.mode) ? 7 : 4;
+            HEAP8[pbuf >> 0] = type;
+            return 0;
+          } catch (e) {
+            if (typeof FS == "undefined" || !(e instanceof FS.ErrnoError)) throw e;
+            return e.errno;
+          }
+        }
         function doReadv(stream, iov, iovcnt, offset) {
           var ret = 0;
           for (var i = 0; i < iovcnt; i++) {
@@ -12192,6 +13070,31 @@ var bootloader = (function (exports) {
             if (isNaN(offset)) return 61;
             var stream = SYSCALLS.getStreamFromFD(fd);
             var num = doReadv(stream, iov, iovcnt, offset);
+            HEAP32[pnum >> 2] = num;
+            return 0;
+          } catch (e) {
+            if (typeof FS == "undefined" || !(e instanceof FS.ErrnoError)) throw e;
+            return e.errno;
+          }
+        }
+        function doWritev(stream, iov, iovcnt, offset) {
+          var ret = 0;
+          for (var i = 0; i < iovcnt; i++) {
+            var ptr = HEAPU32[iov >> 2];
+            var len = HEAPU32[iov + 4 >> 2];
+            iov += 8;
+            var curr = FS.write(stream, HEAP8, ptr, len, offset);
+            if (curr < 0) return -1;
+            ret += curr;
+          }
+          return ret;
+        }
+        function _fd_pwrite(fd, iov, iovcnt, offset_low, offset_high, pnum) {
+          try {
+            var offset = convertI32PairToI53Checked(offset_low, offset_high);
+            if (isNaN(offset)) return 61;
+            var stream = SYSCALLS.getStreamFromFD(fd);
+            var num = doWritev(stream, iov, iovcnt, offset);
             HEAP32[pnum >> 2] = num;
             return 0;
           } catch (e) {
@@ -12224,17 +13127,17 @@ var bootloader = (function (exports) {
             return e.errno;
           }
         }
-        function doWritev(stream, iov, iovcnt, offset) {
-          var ret = 0;
-          for (var i = 0; i < iovcnt; i++) {
-            var ptr = HEAPU32[iov >> 2];
-            var len = HEAPU32[iov + 4 >> 2];
-            iov += 8;
-            var curr = FS.write(stream, HEAP8, ptr, len, offset);
-            if (curr < 0) return -1;
-            ret += curr;
+        function _fd_sync(fd) {
+          try {
+            var stream = SYSCALLS.getStreamFromFD(fd);
+            if (stream.stream_ops && stream.stream_ops.fsync) {
+              return -stream.stream_ops.fsync(stream);
+            }
+            return 0;
+          } catch (e) {
+            if (typeof FS == "undefined" || !(e instanceof FS.ErrnoError)) throw e;
+            return e.errno;
           }
-          return ret;
         }
         function _fd_write(fd, iov, iovcnt, pnum) {
           try {
@@ -12256,6 +13159,12 @@ var bootloader = (function (exports) {
         function _mono_set_timeout() {
           return __dotnet_runtime.__linker_exports.mono_set_timeout.apply(__dotnet_runtime, arguments);
         }
+        function _mono_wasm_add_dbg_command_received() {
+          return __dotnet_runtime.__linker_exports.mono_wasm_add_dbg_command_received.apply(__dotnet_runtime, arguments);
+        }
+        function _mono_wasm_asm_loaded() {
+          return __dotnet_runtime.__linker_exports.mono_wasm_asm_loaded.apply(__dotnet_runtime, arguments);
+        }
         function _mono_wasm_bind_cs_function() {
           return __dotnet_runtime.__linker_exports.mono_wasm_bind_cs_function.apply(__dotnet_runtime, arguments);
         }
@@ -12264,6 +13173,12 @@ var bootloader = (function (exports) {
         }
         function _mono_wasm_create_cs_owned_object_ref() {
           return __dotnet_runtime.__linker_exports.mono_wasm_create_cs_owned_object_ref.apply(__dotnet_runtime, arguments);
+        }
+        function _mono_wasm_debugger_log() {
+          return __dotnet_runtime.__linker_exports.mono_wasm_debugger_log.apply(__dotnet_runtime, arguments);
+        }
+        function _mono_wasm_fire_debugger_agent_message() {
+          return __dotnet_runtime.__linker_exports.mono_wasm_fire_debugger_agent_message.apply(__dotnet_runtime, arguments);
         }
         function _mono_wasm_get_by_index_ref() {
           return __dotnet_runtime.__linker_exports.mono_wasm_get_by_index_ref.apply(__dotnet_runtime, arguments);
@@ -12679,15 +13594,18 @@ var bootloader = (function (exports) {
           return u8array;
         }
         var asmLibraryArg = {
-          "__assert_fail": ___assert_fail,
           "__cxa_allocate_exception": ___cxa_allocate_exception,
           "__cxa_begin_catch": ___cxa_begin_catch,
           "__cxa_end_catch": ___cxa_end_catch,
           "__cxa_find_matching_catch_3": ___cxa_find_matching_catch_3,
           "__cxa_throw": ___cxa_throw,
           "__resumeException": ___resumeException,
+          "__syscall_chdir": ___syscall_chdir,
+          "__syscall_chmod": ___syscall_chmod,
+          "__syscall_connect": ___syscall_connect,
           "__syscall_faccessat": ___syscall_faccessat,
           "__syscall_fadvise64": ___syscall_fadvise64,
+          "__syscall_fchmod": ___syscall_fchmod,
           "__syscall_fcntl64": ___syscall_fcntl64,
           "__syscall_fstat64": ___syscall_fstat64,
           "__syscall_fstatfs64": ___syscall_fstatfs64,
@@ -12696,15 +13614,27 @@ var bootloader = (function (exports) {
           "__syscall_getdents64": ___syscall_getdents64,
           "__syscall_ioctl": ___syscall_ioctl,
           "__syscall_lstat64": ___syscall_lstat64,
+          "__syscall_mkdirat": ___syscall_mkdirat,
           "__syscall_newfstatat": ___syscall_newfstatat,
           "__syscall_openat": ___syscall_openat,
           "__syscall_readlinkat": ___syscall_readlinkat,
+          "__syscall_recvfrom": ___syscall_recvfrom,
+          "__syscall_renameat": ___syscall_renameat,
+          "__syscall_rmdir": ___syscall_rmdir,
+          "__syscall_sendto": ___syscall_sendto,
+          "__syscall_socket": ___syscall_socket,
           "__syscall_stat64": ___syscall_stat64,
+          "__syscall_symlink": ___syscall_symlink,
           "__syscall_unlinkat": ___syscall_unlinkat,
+          "__syscall_utimensat": ___syscall_utimensat,
+          "_dlinit": __dlinit,
+          "_dlopen_js": __dlopen_js,
           "_emscripten_date_now": __emscripten_date_now,
           "_emscripten_get_now_is_monotonic": __emscripten_get_now_is_monotonic,
+          "_gmtime_js": __gmtime_js,
           "_localtime_js": __localtime_js,
           "_mmap_js": __mmap_js,
+          "_msync_js": __msync_js,
           "_munmap_js": __munmap_js,
           "_tzset_js": __tzset_js,
           "abort": _abort,
@@ -12718,74 +13648,24 @@ var bootloader = (function (exports) {
           "environ_sizes_get": _environ_sizes_get,
           "exit": _exit,
           "fd_close": _fd_close,
+          "fd_fdstat_get": _fd_fdstat_get,
           "fd_pread": _fd_pread,
+          "fd_pwrite": _fd_pwrite,
           "fd_read": _fd_read,
           "fd_seek": _fd_seek,
+          "fd_sync": _fd_sync,
           "fd_write": _fd_write,
           "getTempRet0": _getTempRet0,
-          "invoke_i": invoke_i,
-          "invoke_ii": invoke_ii,
-          "invoke_iii": invoke_iii,
-          "invoke_iiii": invoke_iiii,
-          "invoke_iiiii": invoke_iiiii,
-          "invoke_iiiiii": invoke_iiiiii,
-          "invoke_iiiiiii": invoke_iiiiiii,
-          "invoke_iiiiiiii": invoke_iiiiiiii,
-          "invoke_iiiiiiiii": invoke_iiiiiiiii,
-          "invoke_iiiiiiijiii": invoke_iiiiiiijiii,
-          "invoke_iiiiiiji": invoke_iiiiiiji,
-          "invoke_iiiiiji": invoke_iiiiiji,
-          "invoke_iiiji": invoke_iiiji,
-          "invoke_iiji": invoke_iiji,
-          "invoke_jii": invoke_jii,
-          "invoke_v": invoke_v,
           "invoke_vi": invoke_vi,
-          "invoke_vii": invoke_vii,
-          "invoke_viii": invoke_viii,
-          "invoke_viiii": invoke_viiii,
-          "invoke_viiiii": invoke_viiiii,
-          "invoke_viiiiii": invoke_viiiiii,
-          "invoke_viiiiiii": invoke_viiiiiii,
-          "invoke_viiiiiiii": invoke_viiiiiiii,
-          "invoke_viiiiiiiii": invoke_viiiiiiiii,
-          "invoke_viiiiiiiiii": invoke_viiiiiiiiii,
-          "invoke_viiiiiiiiiii": invoke_viiiiiiiiiii,
-          "invoke_viiiiiiiiiiii": invoke_viiiiiiiiiiii,
-          "invoke_viiiiiiiiiiiii": invoke_viiiiiiiiiiiii,
-          "invoke_viiiiiiiiiiiiii": invoke_viiiiiiiiiiiiii,
-          "invoke_viiiiiiiiiiiiiii": invoke_viiiiiiiiiiiiiii,
-          "invoke_viiiiiiiiiiiiiiii": invoke_viiiiiiiiiiiiiiii,
-          "invoke_viiiiiiiiiiiiiiiii": invoke_viiiiiiiiiiiiiiiii,
-          "invoke_viiiiiiiiiiiiiiiiii": invoke_viiiiiiiiiiiiiiiiii,
-          "invoke_viiiiiiiiiiiiiiiiiii": invoke_viiiiiiiiiiiiiiiiiii,
-          "invoke_viiiiiiiiiiiiiiiiiiii": invoke_viiiiiiiiiiiiiiiiiiii,
-          "invoke_viiiiiiiiiiiiiiiiiiiii": invoke_viiiiiiiiiiiiiiiiiiiii,
-          "invoke_viiiiiiiiiiiiiiiiiiiiii": invoke_viiiiiiiiiiiiiiiiiiiiii,
-          "invoke_viiiiiiiiiiiiiiiiiiiiiii": invoke_viiiiiiiiiiiiiiiiiiiiiii,
-          "invoke_viiiiiiiiiiiiiiiiiiiiiiii": invoke_viiiiiiiiiiiiiiiiiiiiiiii,
-          "invoke_viiiiiiiiiiiiiiiiiiiiiiiii": invoke_viiiiiiiiiiiiiiiiiiiiiiiii,
-          "invoke_viiiiiiiiiiiiiiiiiiiiiiiiii": invoke_viiiiiiiiiiiiiiiiiiiiiiiiii,
-          "invoke_viiiiiiiiiiiiiiiiiiiiiiiiiii": invoke_viiiiiiiiiiiiiiiiiiiiiiiiiii,
-          "invoke_viiiiiiiiiiiiiiiiiiiiiiiiiiii": invoke_viiiiiiiiiiiiiiiiiiiiiiiiiiii,
-          "invoke_viiiiiiiiiiiiiiiiiiiiiiiiiiiii": invoke_viiiiiiiiiiiiiiiiiiiiiiiiiiiii,
-          "invoke_viiiiiiiiiiiiiiiiiiiiiiiiiiiiii": invoke_viiiiiiiiiiiiiiiiiiiiiiiiiiiiii,
-          "invoke_viiiiiiiiiiiiiiiiiiiiiiiiiiiiiii": invoke_viiiiiiiiiiiiiiiiiiiiiiiiiiiiiii,
-          "invoke_viiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii": invoke_viiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii,
-          "invoke_viiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii": invoke_viiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii,
-          "invoke_viiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii": invoke_viiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii,
-          "invoke_viiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii": invoke_viiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii,
-          "invoke_viiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii": invoke_viiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii,
-          "invoke_viiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii": invoke_viiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii,
-          "invoke_viiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii": invoke_viiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii,
-          "invoke_viiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii": invoke_viiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii,
-          "invoke_viiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii": invoke_viiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii,
-          "invoke_viiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii": invoke_viiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii,
-          "invoke_viiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii": invoke_viiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii,
           "llvm_eh_typeid_for": _llvm_eh_typeid_for,
           "mono_set_timeout": _mono_set_timeout,
+          "mono_wasm_add_dbg_command_received": _mono_wasm_add_dbg_command_received,
+          "mono_wasm_asm_loaded": _mono_wasm_asm_loaded,
           "mono_wasm_bind_cs_function": _mono_wasm_bind_cs_function,
           "mono_wasm_bind_js_function": _mono_wasm_bind_js_function,
           "mono_wasm_create_cs_owned_object_ref": _mono_wasm_create_cs_owned_object_ref,
+          "mono_wasm_debugger_log": _mono_wasm_debugger_log,
+          "mono_wasm_fire_debugger_agent_message": _mono_wasm_fire_debugger_agent_message,
           "mono_wasm_get_by_index_ref": _mono_wasm_get_by_index_ref,
           "mono_wasm_get_global_object_ref": _mono_wasm_get_global_object_ref,
           "mono_wasm_get_object_property_ref": _mono_wasm_get_object_property_ref,
@@ -12808,35 +13688,17 @@ var bootloader = (function (exports) {
         Module["___wasm_call_ctors"] = function () {
           return (Module["___wasm_call_ctors"] = Module["asm"]["__wasm_call_ctors"]).apply(null, arguments);
         };
-        Module["_memset"] = function () {
-          return (Module["_memset"] = Module["asm"]["memset"]).apply(null, arguments);
-        };
-        Module["_mono_aot_ScreepsDotNet_API_get_method"] = function () {
-          return (Module["_mono_aot_ScreepsDotNet_API_get_method"] = Module["asm"]["mono_aot_ScreepsDotNet_API_get_method"]).apply(null, arguments);
-        };
-        Module["_mono_aot_ScreepsDotNet_get_method"] = function () {
-          return (Module["_mono_aot_ScreepsDotNet_get_method"] = Module["asm"]["mono_aot_ScreepsDotNet_get_method"]).apply(null, arguments);
-        };
-        Module["_mono_aot_System_Console_get_method"] = function () {
-          return (Module["_mono_aot_System_Console_get_method"] = Module["asm"]["mono_aot_System_Console_get_method"]).apply(null, arguments);
-        };
-        Module["_mono_aot_System_Linq_get_method"] = function () {
-          return (Module["_mono_aot_System_Linq_get_method"] = Module["asm"]["mono_aot_System_Linq_get_method"]).apply(null, arguments);
-        };
-        Module["_mono_aot_corlib_get_method"] = function () {
-          return (Module["_mono_aot_corlib_get_method"] = Module["asm"]["mono_aot_corlib_get_method"]).apply(null, arguments);
-        };
-        Module["_mono_aot_System_Private_Uri_get_method"] = function () {
-          return (Module["_mono_aot_System_Private_Uri_get_method"] = Module["asm"]["mono_aot_System_Private_Uri_get_method"]).apply(null, arguments);
-        };
-        Module["_mono_aot_System_Runtime_InteropServices_JavaScript_get_method"] = function () {
-          return (Module["_mono_aot_System_Runtime_InteropServices_JavaScript_get_method"] = Module["asm"]["mono_aot_System_Runtime_InteropServices_JavaScript_get_method"]).apply(null, arguments);
-        };
         Module["_mono_wasm_register_root"] = function () {
           return (Module["_mono_wasm_register_root"] = Module["asm"]["mono_wasm_register_root"]).apply(null, arguments);
         };
         Module["_mono_wasm_deregister_root"] = function () {
           return (Module["_mono_wasm_deregister_root"] = Module["asm"]["mono_wasm_deregister_root"]).apply(null, arguments);
+        };
+        Module["_mono_wasm_typed_array_new_ref"] = function () {
+          return (Module["_mono_wasm_typed_array_new_ref"] = Module["asm"]["mono_wasm_typed_array_new_ref"]).apply(null, arguments);
+        };
+        Module["_mono_wasm_unbox_enum"] = function () {
+          return (Module["_mono_wasm_unbox_enum"] = Module["asm"]["mono_wasm_unbox_enum"]).apply(null, arguments);
         };
         Module["_mono_wasm_add_assembly"] = function () {
           return (Module["_mono_wasm_add_assembly"] = Module["asm"]["mono_wasm_add_assembly"]).apply(null, arguments);
@@ -12991,11 +13853,11 @@ var bootloader = (function (exports) {
         Module["_mono_wasm_f64_to_i52"] = function () {
           return (Module["_mono_wasm_f64_to_i52"] = Module["asm"]["mono_wasm_f64_to_i52"]).apply(null, arguments);
         };
-        Module["_mono_wasm_typed_array_new_ref"] = function () {
-          return (Module["_mono_wasm_typed_array_new_ref"] = Module["asm"]["mono_wasm_typed_array_new_ref"]).apply(null, arguments);
+        Module["_mono_wasm_set_is_debugger_attached"] = function () {
+          return (Module["_mono_wasm_set_is_debugger_attached"] = Module["asm"]["mono_wasm_set_is_debugger_attached"]).apply(null, arguments);
         };
-        Module["_mono_wasm_unbox_enum"] = function () {
-          return (Module["_mono_wasm_unbox_enum"] = Module["asm"]["mono_wasm_unbox_enum"]).apply(null, arguments);
+        Module["_mono_wasm_change_debugger_log_level"] = function () {
+          return (Module["_mono_wasm_change_debugger_log_level"] = Module["asm"]["mono_wasm_change_debugger_log_level"]).apply(null, arguments);
         };
         Module["_mono_wasm_send_dbg_command_with_parms"] = function () {
           return (Module["_mono_wasm_send_dbg_command_with_parms"] = Module["asm"]["mono_wasm_send_dbg_command_with_parms"]).apply(null, arguments);
@@ -13012,11 +13874,20 @@ var bootloader = (function (exports) {
         Module["_mono_wasm_event_pipe_session_disable"] = function () {
           return (Module["_mono_wasm_event_pipe_session_disable"] = Module["asm"]["mono_wasm_event_pipe_session_disable"]).apply(null, arguments);
         };
+        Module["_memset"] = function () {
+          return (Module["_memset"] = Module["asm"]["memset"]).apply(null, arguments);
+        };
         var ___errno_location = Module["___errno_location"] = function () {
           return (___errno_location = Module["___errno_location"] = Module["asm"]["__errno_location"]).apply(null, arguments);
         };
         Module["_mono_background_exec"] = function () {
           return (Module["_mono_background_exec"] = Module["asm"]["mono_background_exec"]).apply(null, arguments);
+        };
+        Module["_mono_wasm_get_icudt_name"] = function () {
+          return (Module["_mono_wasm_get_icudt_name"] = Module["asm"]["mono_wasm_get_icudt_name"]).apply(null, arguments);
+        };
+        Module["_mono_wasm_load_icu_data"] = function () {
+          return (Module["_mono_wasm_load_icu_data"] = Module["asm"]["mono_wasm_load_icu_data"]).apply(null, arguments);
         };
         Module["_mono_print_method_from_ip"] = function () {
           return (Module["_mono_print_method_from_ip"] = Module["asm"]["mono_print_method_from_ip"]).apply(null, arguments);
@@ -13024,20 +13895,20 @@ var bootloader = (function (exports) {
         Module["_mono_set_timeout_exec"] = function () {
           return (Module["_mono_set_timeout_exec"] = Module["asm"]["mono_set_timeout_exec"]).apply(null, arguments);
         };
+        var _ntohs = Module["_ntohs"] = function () {
+          return (_ntohs = Module["_ntohs"] = Module["asm"]["ntohs"]).apply(null, arguments);
+        };
+        var _htons = Module["_htons"] = function () {
+          return (_htons = Module["_htons"] = Module["asm"]["htons"]).apply(null, arguments);
+        };
         Module["___dl_seterr"] = function () {
           return (Module["___dl_seterr"] = Module["asm"]["__dl_seterr"]).apply(null, arguments);
         };
         Module["_htonl"] = function () {
           return (Module["_htonl"] = Module["asm"]["htonl"]).apply(null, arguments);
         };
-        Module["_htons"] = function () {
-          return (Module["_htons"] = Module["asm"]["htons"]).apply(null, arguments);
-        };
         var _emscripten_builtin_memalign = Module["_emscripten_builtin_memalign"] = function () {
           return (_emscripten_builtin_memalign = Module["_emscripten_builtin_memalign"] = Module["asm"]["emscripten_builtin_memalign"]).apply(null, arguments);
-        };
-        Module["_ntohs"] = function () {
-          return (Module["_ntohs"] = Module["asm"]["ntohs"]).apply(null, arguments);
         };
         Module["_memalign"] = function () {
           return (Module["_memalign"] = Module["asm"]["memalign"]).apply(null, arguments);
@@ -13060,239 +13931,86 @@ var bootloader = (function (exports) {
         var ___cxa_is_pointer_type = Module["___cxa_is_pointer_type"] = function () {
           return (___cxa_is_pointer_type = Module["___cxa_is_pointer_type"] = Module["asm"]["__cxa_is_pointer_type"]).apply(null, arguments);
         };
-        Module["dynCall_ji"] = function () {
-          return (Module["dynCall_ji"] = Module["asm"]["dynCall_ji"]).apply(null, arguments);
+        Module["dynCall_iiij"] = function () {
+          return (Module["dynCall_iiij"] = Module["asm"]["dynCall_iiij"]).apply(null, arguments);
         };
-        var dynCall_jii = Module["dynCall_jii"] = function () {
-          return (dynCall_jii = Module["dynCall_jii"] = Module["asm"]["dynCall_jii"]).apply(null, arguments);
+        Module["dynCall_iijj"] = function () {
+          return (Module["dynCall_iijj"] = Module["asm"]["dynCall_iijj"]).apply(null, arguments);
         };
-        Module["dynCall_viji"] = function () {
-          return (Module["dynCall_viji"] = Module["asm"]["dynCall_viji"]).apply(null, arguments);
+        Module["dynCall_iij"] = function () {
+          return (Module["dynCall_iij"] = Module["asm"]["dynCall_iij"]).apply(null, arguments);
         };
-        Module["dynCall_jijii"] = function () {
-          return (Module["dynCall_jijii"] = Module["asm"]["dynCall_jijii"]).apply(null, arguments);
-        };
-        var dynCall_iiiiiiijiii = Module["dynCall_iiiiiiijiii"] = function () {
-          return (dynCall_iiiiiiijiii = Module["dynCall_iiiiiiijiii"] = Module["asm"]["dynCall_iiiiiiijiii"]).apply(null, arguments);
-        };
-        var dynCall_iiji = Module["dynCall_iiji"] = function () {
-          return (dynCall_iiji = Module["dynCall_iiji"] = Module["asm"]["dynCall_iiji"]).apply(null, arguments);
-        };
-        var dynCall_iiiiiiji = Module["dynCall_iiiiiiji"] = function () {
-          return (dynCall_iiiiiiji = Module["dynCall_iiiiiiji"] = Module["asm"]["dynCall_iiiiiiji"]).apply(null, arguments);
-        };
-        var dynCall_iiiji = Module["dynCall_iiiji"] = function () {
-          return (dynCall_iiiji = Module["dynCall_iiiji"] = Module["asm"]["dynCall_iiiji"]).apply(null, arguments);
-        };
-        var dynCall_iiiiiji = Module["dynCall_iiiiiji"] = function () {
-          return (dynCall_iiiiiji = Module["dynCall_iiiiiji"] = Module["asm"]["dynCall_iiiiiji"]).apply(null, arguments);
-        };
-        Module["dynCall_iijjii"] = function () {
-          return (Module["dynCall_iijjii"] = Module["asm"]["dynCall_iijjii"]).apply(null, arguments);
+        Module["dynCall_j"] = function () {
+          return (Module["dynCall_j"] = Module["asm"]["dynCall_j"]).apply(null, arguments);
         };
         Module["dynCall_iijji"] = function () {
           return (Module["dynCall_iijji"] = Module["asm"]["dynCall_iijji"]).apply(null, arguments);
         };
-        Module["dynCall_iiiiji"] = function () {
-          return (Module["dynCall_iiiiji"] = Module["asm"]["dynCall_iiiiji"]).apply(null, arguments);
+        Module["dynCall_jiji"] = function () {
+          return (Module["dynCall_jiji"] = Module["asm"]["dynCall_jiji"]).apply(null, arguments);
         };
-        Module["dynCall_iiiiiijiii"] = function () {
-          return (Module["dynCall_iiiiiijiii"] = Module["asm"]["dynCall_iiiiiijiii"]).apply(null, arguments);
+        Module["dynCall_iiji"] = function () {
+          return (Module["dynCall_iiji"] = Module["asm"]["dynCall_iiji"]).apply(null, arguments);
         };
-        Module["dynCall_iiiiiijiiiii"] = function () {
-          return (Module["dynCall_iiiiiijiiiii"] = Module["asm"]["dynCall_iiiiiijiiiii"]).apply(null, arguments);
+        Module["dynCall_iijiiij"] = function () {
+          return (Module["dynCall_iijiiij"] = Module["asm"]["dynCall_iijiiij"]).apply(null, arguments);
         };
-        Module["dynCall_viijji"] = function () {
-          return (Module["dynCall_viijji"] = Module["asm"]["dynCall_viijji"]).apply(null, arguments);
+        Module["dynCall_iiiij"] = function () {
+          return (Module["dynCall_iiiij"] = Module["asm"]["dynCall_iiiij"]).apply(null, arguments);
         };
-        Module["dynCall_viiji"] = function () {
-          return (Module["dynCall_viiji"] = Module["asm"]["dynCall_viiji"]).apply(null, arguments);
+        Module["dynCall_jiiij"] = function () {
+          return (Module["dynCall_jiiij"] = Module["asm"]["dynCall_jiiij"]).apply(null, arguments);
         };
-        Module["dynCall_jiii"] = function () {
-          return (Module["dynCall_jiii"] = Module["asm"]["dynCall_jiii"]).apply(null, arguments);
-        };
-        Module["dynCall_jjjii"] = function () {
-          return (Module["dynCall_jjjii"] = Module["asm"]["dynCall_jjjii"]).apply(null, arguments);
-        };
-        Module["dynCall_vijji"] = function () {
-          return (Module["dynCall_vijji"] = Module["asm"]["dynCall_vijji"]).apply(null, arguments);
-        };
-        Module["dynCall_jjji"] = function () {
-          return (Module["dynCall_jjji"] = Module["asm"]["dynCall_jjji"]).apply(null, arguments);
-        };
-        Module["dynCall_jdi"] = function () {
-          return (Module["dynCall_jdi"] = Module["asm"]["dynCall_jdi"]).apply(null, arguments);
-        };
-        Module["dynCall_dji"] = function () {
-          return (Module["dynCall_dji"] = Module["asm"]["dynCall_dji"]).apply(null, arguments);
-        };
-        Module["dynCall_iji"] = function () {
-          return (Module["dynCall_iji"] = Module["asm"]["dynCall_iji"]).apply(null, arguments);
-        };
-        Module["dynCall_jji"] = function () {
-          return (Module["dynCall_jji"] = Module["asm"]["dynCall_jji"]).apply(null, arguments);
-        };
-        Module["dynCall_jfi"] = function () {
-          return (Module["dynCall_jfi"] = Module["asm"]["dynCall_jfi"]).apply(null, arguments);
-        };
-        Module["dynCall_fji"] = function () {
-          return (Module["dynCall_fji"] = Module["asm"]["dynCall_fji"]).apply(null, arguments);
-        };
-        Module["dynCall_vijii"] = function () {
-          return (Module["dynCall_vijii"] = Module["asm"]["dynCall_vijii"]).apply(null, arguments);
-        };
-        Module["dynCall_vijiii"] = function () {
-          return (Module["dynCall_vijiii"] = Module["asm"]["dynCall_vijiii"]).apply(null, arguments);
+        Module["dynCall_ji"] = function () {
+          return (Module["dynCall_ji"] = Module["asm"]["dynCall_ji"]).apply(null, arguments);
         };
         Module["dynCall_jiiiiiiiii"] = function () {
           return (Module["dynCall_jiiiiiiiii"] = Module["asm"]["dynCall_jiiiiiiiii"]).apply(null, arguments);
         };
-        Module["dynCall_viidjji"] = function () {
-          return (Module["dynCall_viidjji"] = Module["asm"]["dynCall_viidjji"]).apply(null, arguments);
+        Module["dynCall_vj"] = function () {
+          return (Module["dynCall_vj"] = Module["asm"]["dynCall_vj"]).apply(null, arguments);
+        };
+        Module["dynCall_iji"] = function () {
+          return (Module["dynCall_iji"] = Module["asm"]["dynCall_iji"]).apply(null, arguments);
+        };
+        Module["dynCall_ij"] = function () {
+          return (Module["dynCall_ij"] = Module["asm"]["dynCall_ij"]).apply(null, arguments);
+        };
+        Module["dynCall_jj"] = function () {
+          return (Module["dynCall_jj"] = Module["asm"]["dynCall_jj"]).apply(null, arguments);
+        };
+        Module["dynCall_iiijiiiii"] = function () {
+          return (Module["dynCall_iiijiiiii"] = Module["asm"]["dynCall_iiijiiiii"]).apply(null, arguments);
+        };
+        Module["dynCall_viiijjii"] = function () {
+          return (Module["dynCall_viiijjii"] = Module["asm"]["dynCall_viiijjii"]).apply(null, arguments);
+        };
+        Module["dynCall_iijjiii"] = function () {
+          return (Module["dynCall_iijjiii"] = Module["asm"]["dynCall_iijjiii"]).apply(null, arguments);
+        };
+        Module["dynCall_vijjjii"] = function () {
+          return (Module["dynCall_vijjjii"] = Module["asm"]["dynCall_vijjjii"]).apply(null, arguments);
         };
         Module["dynCall_iijii"] = function () {
           return (Module["dynCall_iijii"] = Module["asm"]["dynCall_iijii"]).apply(null, arguments);
         };
-        Module["dynCall_jiiii"] = function () {
-          return (Module["dynCall_jiiii"] = Module["asm"]["dynCall_jiiii"]).apply(null, arguments);
-        };
-        Module["dynCall_vjjii"] = function () {
-          return (Module["dynCall_vjjii"] = Module["asm"]["dynCall_vjjii"]).apply(null, arguments);
-        };
-        Module["dynCall_vjii"] = function () {
-          return (Module["dynCall_vjii"] = Module["asm"]["dynCall_vjii"]).apply(null, arguments);
-        };
-        Module["dynCall_jjii"] = function () {
-          return (Module["dynCall_jjii"] = Module["asm"]["dynCall_jjii"]).apply(null, arguments);
-        };
-        Module["dynCall_fiji"] = function () {
-          return (Module["dynCall_fiji"] = Module["asm"]["dynCall_fiji"]).apply(null, arguments);
-        };
-        Module["dynCall_diji"] = function () {
-          return (Module["dynCall_diji"] = Module["asm"]["dynCall_diji"]).apply(null, arguments);
-        };
-        Module["dynCall_diiji"] = function () {
-          return (Module["dynCall_diiji"] = Module["asm"]["dynCall_diiji"]).apply(null, arguments);
-        };
-        Module["dynCall_ijji"] = function () {
-          return (Module["dynCall_ijji"] = Module["asm"]["dynCall_ijji"]).apply(null, arguments);
-        };
-        Module["dynCall_ijii"] = function () {
-          return (Module["dynCall_ijii"] = Module["asm"]["dynCall_ijii"]).apply(null, arguments);
-        };
-        Module["dynCall_ijiiiiiiii"] = function () {
-          return (Module["dynCall_ijiiiiiiii"] = Module["asm"]["dynCall_ijiiiiiiii"]).apply(null, arguments);
-        };
-        Module["dynCall_ijiii"] = function () {
-          return (Module["dynCall_ijiii"] = Module["asm"]["dynCall_ijiii"]).apply(null, arguments);
-        };
-        Module["dynCall_ijiiiii"] = function () {
-          return (Module["dynCall_ijiiiii"] = Module["asm"]["dynCall_ijiiiii"]).apply(null, arguments);
-        };
         Module["dynCall_iijiii"] = function () {
           return (Module["dynCall_iijiii"] = Module["asm"]["dynCall_iijiii"]).apply(null, arguments);
         };
-        Module["dynCall_ijiiii"] = function () {
-          return (Module["dynCall_ijiiii"] = Module["asm"]["dynCall_ijiiii"]).apply(null, arguments);
+        Module["dynCall_vijiiii"] = function () {
+          return (Module["dynCall_vijiiii"] = Module["asm"]["dynCall_vijiiii"]).apply(null, arguments);
         };
-        Module["dynCall_jdii"] = function () {
-          return (Module["dynCall_jdii"] = Module["asm"]["dynCall_jdii"]).apply(null, arguments);
+        Module["dynCall_jij"] = function () {
+          return (Module["dynCall_jij"] = Module["asm"]["dynCall_jij"]).apply(null, arguments);
         };
-        Module["dynCall_jijiii"] = function () {
-          return (Module["dynCall_jijiii"] = Module["asm"]["dynCall_jijiii"]).apply(null, arguments);
+        Module["dynCall_vij"] = function () {
+          return (Module["dynCall_vij"] = Module["asm"]["dynCall_vij"]).apply(null, arguments);
         };
-        Module["dynCall_jiiiii"] = function () {
-          return (Module["dynCall_jiiiii"] = Module["asm"]["dynCall_jiiiii"]).apply(null, arguments);
+        Module["dynCall_jii"] = function () {
+          return (Module["dynCall_jii"] = Module["asm"]["dynCall_jii"]).apply(null, arguments);
         };
-        Module["dynCall_jiiiiii"] = function () {
-          return (Module["dynCall_jiiiiii"] = Module["asm"]["dynCall_jiiiiii"]).apply(null, arguments);
-        };
-        Module["dynCall_jjiii"] = function () {
-          return (Module["dynCall_jjiii"] = Module["asm"]["dynCall_jjiii"]).apply(null, arguments);
-        };
-        Module["dynCall_vijjii"] = function () {
-          return (Module["dynCall_vijjii"] = Module["asm"]["dynCall_vijjii"]).apply(null, arguments);
-        };
-        Module["dynCall_ijjiiii"] = function () {
-          return (Module["dynCall_ijjiiii"] = Module["asm"]["dynCall_ijjiiii"]).apply(null, arguments);
-        };
-        Module["dynCall_iiijjjii"] = function () {
-          return (Module["dynCall_iiijjjii"] = Module["asm"]["dynCall_iiijjjii"]).apply(null, arguments);
-        };
-        Module["dynCall_iiijjjjji"] = function () {
-          return (Module["dynCall_iiijjjjji"] = Module["asm"]["dynCall_iiijjjjji"]).apply(null, arguments);
-        };
-        Module["dynCall_viiiiijiiiiiii"] = function () {
-          return (Module["dynCall_viiiiijiiiiiii"] = Module["asm"]["dynCall_viiiiijiiiiiii"]).apply(null, arguments);
-        };
-        Module["dynCall_jijji"] = function () {
-          return (Module["dynCall_jijji"] = Module["asm"]["dynCall_jijji"]).apply(null, arguments);
-        };
-        Module["dynCall_jiji"] = function () {
-          return (Module["dynCall_jiji"] = Module["asm"]["dynCall_jiji"]).apply(null, arguments);
-        };
-        Module["dynCall_viiiji"] = function () {
-          return (Module["dynCall_viiiji"] = Module["asm"]["dynCall_viiiji"]).apply(null, arguments);
-        };
-        Module["dynCall_viijii"] = function () {
-          return (Module["dynCall_viijii"] = Module["asm"]["dynCall_viijii"]).apply(null, arguments);
-        };
-        Module["dynCall_viijjii"] = function () {
-          return (Module["dynCall_viijjii"] = Module["asm"]["dynCall_viijjii"]).apply(null, arguments);
-        };
-        Module["dynCall_viiiiiiji"] = function () {
-          return (Module["dynCall_viiiiiiji"] = Module["asm"]["dynCall_viiiiiiji"]).apply(null, arguments);
-        };
-        Module["dynCall_viijiiii"] = function () {
-          return (Module["dynCall_viijiiii"] = Module["asm"]["dynCall_viijiiii"]).apply(null, arguments);
-        };
-        Module["dynCall_viiiiji"] = function () {
-          return (Module["dynCall_viiiiji"] = Module["asm"]["dynCall_viiiiji"]).apply(null, arguments);
-        };
-        Module["dynCall_viiiiiiiji"] = function () {
-          return (Module["dynCall_viiiiiiiji"] = Module["asm"]["dynCall_viiiiiiiji"]).apply(null, arguments);
-        };
-        Module["dynCall_viiiijjiii"] = function () {
-          return (Module["dynCall_viiiijjiii"] = Module["asm"]["dynCall_viiiijjiii"]).apply(null, arguments);
-        };
-        Module["dynCall_iijiiiiiii"] = function () {
-          return (Module["dynCall_iijiiiiiii"] = Module["asm"]["dynCall_iijiiiiiii"]).apply(null, arguments);
-        };
-        Module["dynCall_iiijii"] = function () {
-          return (Module["dynCall_iiijii"] = Module["asm"]["dynCall_iiijii"]).apply(null, arguments);
-        };
-        Module["dynCall_viijjji"] = function () {
-          return (Module["dynCall_viijjji"] = Module["asm"]["dynCall_viijjji"]).apply(null, arguments);
-        };
-        Module["dynCall_iiiijijii"] = function () {
-          return (Module["dynCall_iiiijijii"] = Module["asm"]["dynCall_iiiijijii"]).apply(null, arguments);
-        };
-        Module["dynCall_viiiiiiiijii"] = function () {
-          return (Module["dynCall_viiiiiiiijii"] = Module["asm"]["dynCall_viiiiiiiijii"]).apply(null, arguments);
-        };
-        Module["dynCall_viiiiiiiiiiji"] = function () {
-          return (Module["dynCall_viiiiiiiiiiji"] = Module["asm"]["dynCall_viiiiiiiiiiji"]).apply(null, arguments);
-        };
-        Module["dynCall_jiiji"] = function () {
-          return (Module["dynCall_jiiji"] = Module["asm"]["dynCall_jiiji"]).apply(null, arguments);
-        };
-        Module["dynCall_viijiiiiii"] = function () {
-          return (Module["dynCall_viijiiiiii"] = Module["asm"]["dynCall_viijiiiiii"]).apply(null, arguments);
-        };
-        Module["dynCall_viijiii"] = function () {
-          return (Module["dynCall_viijiii"] = Module["asm"]["dynCall_viijiii"]).apply(null, arguments);
-        };
-        Module["dynCall_vijiiiiii"] = function () {
-          return (Module["dynCall_vijiiiiii"] = Module["asm"]["dynCall_vijiiiiii"]).apply(null, arguments);
-        };
-        Module["dynCall_vji"] = function () {
-          return (Module["dynCall_vji"] = Module["asm"]["dynCall_vji"]).apply(null, arguments);
-        };
-        Module["dynCall_viiiiijii"] = function () {
-          return (Module["dynCall_viiiiijii"] = Module["asm"]["dynCall_viiiiijii"]).apply(null, arguments);
-        };
-        Module["dynCall_iiijiii"] = function () {
-          return (Module["dynCall_iiijiii"] = Module["asm"]["dynCall_iiijiii"]).apply(null, arguments);
+        Module["dynCall_iijiiii"] = function () {
+          return (Module["dynCall_iijiiii"] = Module["asm"]["dynCall_iijiiii"]).apply(null, arguments);
         };
         Module["dynCall_jd"] = function () {
           return (Module["dynCall_jd"] = Module["asm"]["dynCall_jd"]).apply(null, arguments);
@@ -13303,38 +14021,8 @@ var bootloader = (function (exports) {
         Module["dynCall_iiijiiii"] = function () {
           return (Module["dynCall_iiijiiii"] = Module["asm"]["dynCall_iiijiiii"]).apply(null, arguments);
         };
-        Module["dynCall_iiiijii"] = function () {
-          return (Module["dynCall_iiiijii"] = Module["asm"]["dynCall_iiiijii"]).apply(null, arguments);
-        };
-        Module["dynCall_viiijjiii"] = function () {
-          return (Module["dynCall_viiijjiii"] = Module["asm"]["dynCall_viiijjiii"]).apply(null, arguments);
-        };
-        Module["dynCall_iiiiijii"] = function () {
-          return (Module["dynCall_iiiiijii"] = Module["asm"]["dynCall_iiiiijii"]).apply(null, arguments);
-        };
-        Module["dynCall_vj"] = function () {
-          return (Module["dynCall_vj"] = Module["asm"]["dynCall_vj"]).apply(null, arguments);
-        };
-        Module["dynCall_ij"] = function () {
-          return (Module["dynCall_ij"] = Module["asm"]["dynCall_ij"]).apply(null, arguments);
-        };
-        Module["dynCall_iij"] = function () {
-          return (Module["dynCall_iij"] = Module["asm"]["dynCall_iij"]).apply(null, arguments);
-        };
-        Module["dynCall_jj"] = function () {
-          return (Module["dynCall_jj"] = Module["asm"]["dynCall_jj"]).apply(null, arguments);
-        };
-        Module["dynCall_iiijiiiii"] = function () {
-          return (Module["dynCall_iiijiiiii"] = Module["asm"]["dynCall_iiijiiiii"]).apply(null, arguments);
-        };
-        Module["dynCall_j"] = function () {
-          return (Module["dynCall_j"] = Module["asm"]["dynCall_j"]).apply(null, arguments);
-        };
-        Module["dynCall_iijj"] = function () {
-          return (Module["dynCall_iijj"] = Module["asm"]["dynCall_iijj"]).apply(null, arguments);
-        };
-        Module["dynCall_iiiij"] = function () {
-          return (Module["dynCall_iiiij"] = Module["asm"]["dynCall_iiiij"]).apply(null, arguments);
+        Module["dynCall_jiiiii"] = function () {
+          return (Module["dynCall_jiiiii"] = Module["asm"]["dynCall_jiiiii"]).apply(null, arguments);
         };
         Module["dynCall_viij"] = function () {
           return (Module["dynCall_viij"] = Module["asm"]["dynCall_viij"]).apply(null, arguments);
@@ -13342,583 +14030,10 @@ var bootloader = (function (exports) {
         Module["dynCall_jijj"] = function () {
           return (Module["dynCall_jijj"] = Module["asm"]["dynCall_jijj"]).apply(null, arguments);
         };
-        Module["dynCall_jij"] = function () {
-          return (Module["dynCall_jij"] = Module["asm"]["dynCall_jij"]).apply(null, arguments);
-        };
-        function invoke_vii(index, a1, a2) {
-          var sp = stackSave();
-          try {
-            getWasmTableEntry(index)(a1, a2);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
         function invoke_vi(index, a1) {
           var sp = stackSave();
           try {
             getWasmTableEntry(index)(a1);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_ii(index, a1) {
-          var sp = stackSave();
-          try {
-            return getWasmTableEntry(index)(a1);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_v(index) {
-          var sp = stackSave();
-          try {
-            getWasmTableEntry(index)();
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_iii(index, a1, a2) {
-          var sp = stackSave();
-          try {
-            return getWasmTableEntry(index)(a1, a2);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_iiii(index, a1, a2, a3) {
-          var sp = stackSave();
-          try {
-            return getWasmTableEntry(index)(a1, a2, a3);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_viii(index, a1, a2, a3) {
-          var sp = stackSave();
-          try {
-            getWasmTableEntry(index)(a1, a2, a3);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_iiiiii(index, a1, a2, a3, a4, a5) {
-          var sp = stackSave();
-          try {
-            return getWasmTableEntry(index)(a1, a2, a3, a4, a5);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_viiii(index, a1, a2, a3, a4) {
-          var sp = stackSave();
-          try {
-            getWasmTableEntry(index)(a1, a2, a3, a4);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_iiiii(index, a1, a2, a3, a4) {
-          var sp = stackSave();
-          try {
-            return getWasmTableEntry(index)(a1, a2, a3, a4);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_viiiii(index, a1, a2, a3, a4, a5) {
-          var sp = stackSave();
-          try {
-            getWasmTableEntry(index)(a1, a2, a3, a4, a5);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_viiiiiiiiiii(index, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11) {
-          var sp = stackSave();
-          try {
-            getWasmTableEntry(index)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_iiiiiiii(index, a1, a2, a3, a4, a5, a6, a7) {
-          var sp = stackSave();
-          try {
-            return getWasmTableEntry(index)(a1, a2, a3, a4, a5, a6, a7);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_iiiiiii(index, a1, a2, a3, a4, a5, a6) {
-          var sp = stackSave();
-          try {
-            return getWasmTableEntry(index)(a1, a2, a3, a4, a5, a6);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_viiiiii(index, a1, a2, a3, a4, a5, a6) {
-          var sp = stackSave();
-          try {
-            getWasmTableEntry(index)(a1, a2, a3, a4, a5, a6);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_viiiiiii(index, a1, a2, a3, a4, a5, a6, a7) {
-          var sp = stackSave();
-          try {
-            getWasmTableEntry(index)(a1, a2, a3, a4, a5, a6, a7);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_viiiiiiiii(index, a1, a2, a3, a4, a5, a6, a7, a8, a9) {
-          var sp = stackSave();
-          try {
-            getWasmTableEntry(index)(a1, a2, a3, a4, a5, a6, a7, a8, a9);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_iiiiiiiii(index, a1, a2, a3, a4, a5, a6, a7, a8) {
-          var sp = stackSave();
-          try {
-            return getWasmTableEntry(index)(a1, a2, a3, a4, a5, a6, a7, a8);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_viiiiiiii(index, a1, a2, a3, a4, a5, a6, a7, a8) {
-          var sp = stackSave();
-          try {
-            getWasmTableEntry(index)(a1, a2, a3, a4, a5, a6, a7, a8);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_i(index) {
-          var sp = stackSave();
-          try {
-            return getWasmTableEntry(index)();
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_viiiiiiiiii(index, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) {
-          var sp = stackSave();
-          try {
-            getWasmTableEntry(index)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_viiiiiiiiiiii(index, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12) {
-          var sp = stackSave();
-          try {
-            getWasmTableEntry(index)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_viiiiiiiiiiiii(index, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13) {
-          var sp = stackSave();
-          try {
-            getWasmTableEntry(index)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_viiiiiiiiiiiiii(index, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14) {
-          var sp = stackSave();
-          try {
-            getWasmTableEntry(index)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_viiiiiiiiiiiiiii(index, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15) {
-          var sp = stackSave();
-          try {
-            getWasmTableEntry(index)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_viiiiiiiiiiiiiiii(index, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16) {
-          var sp = stackSave();
-          try {
-            getWasmTableEntry(index)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_viiiiiiiiiiiiiiiii(index, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17) {
-          var sp = stackSave();
-          try {
-            getWasmTableEntry(index)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_viiiiiiiiiiiiiiiiii(index, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18) {
-          var sp = stackSave();
-          try {
-            getWasmTableEntry(index)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_viiiiiiiiiiiiiiiiiii(index, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19) {
-          var sp = stackSave();
-          try {
-            getWasmTableEntry(index)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_viiiiiiiiiiiiiiiiiiii(index, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20) {
-          var sp = stackSave();
-          try {
-            getWasmTableEntry(index)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_viiiiiiiiiiiiiiiiiiiii(index, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21) {
-          var sp = stackSave();
-          try {
-            getWasmTableEntry(index)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_viiiiiiiiiiiiiiiiiiiiii(index, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22) {
-          var sp = stackSave();
-          try {
-            getWasmTableEntry(index)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_viiiiiiiiiiiiiiiiiiiiiii(index, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23) {
-          var sp = stackSave();
-          try {
-            getWasmTableEntry(index)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_viiiiiiiiiiiiiiiiiiiiiiii(index, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24) {
-          var sp = stackSave();
-          try {
-            getWasmTableEntry(index)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_viiiiiiiiiiiiiiiiiiiiiiiii(index, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25) {
-          var sp = stackSave();
-          try {
-            getWasmTableEntry(index)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_viiiiiiiiiiiiiiiiiiiiiiiiii(index, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26) {
-          var sp = stackSave();
-          try {
-            getWasmTableEntry(index)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_viiiiiiiiiiiiiiiiiiiiiiiiiii(index, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27) {
-          var sp = stackSave();
-          try {
-            getWasmTableEntry(index)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_viiiiiiiiiiiiiiiiiiiiiiiiiiii(index, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27, a28) {
-          var sp = stackSave();
-          try {
-            getWasmTableEntry(index)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27, a28);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_viiiiiiiiiiiiiiiiiiiiiiiiiiiii(index, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27, a28, a29) {
-          var sp = stackSave();
-          try {
-            getWasmTableEntry(index)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27, a28, a29);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_viiiiiiiiiiiiiiiiiiiiiiiiiiiiii(index, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27, a28, a29, a30) {
-          var sp = stackSave();
-          try {
-            getWasmTableEntry(index)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27, a28, a29, a30);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_viiiiiiiiiiiiiiiiiiiiiiiiiiiiiii(index, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27, a28, a29, a30, a31) {
-          var sp = stackSave();
-          try {
-            getWasmTableEntry(index)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27, a28, a29, a30, a31);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_viiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii(index, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27, a28, a29, a30, a31, a32) {
-          var sp = stackSave();
-          try {
-            getWasmTableEntry(index)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27, a28, a29, a30, a31, a32);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_viiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii(index, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27, a28, a29, a30, a31, a32, a33) {
-          var sp = stackSave();
-          try {
-            getWasmTableEntry(index)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27, a28, a29, a30, a31, a32, a33);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_viiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii(index, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27, a28, a29, a30, a31, a32, a33, a34) {
-          var sp = stackSave();
-          try {
-            getWasmTableEntry(index)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27, a28, a29, a30, a31, a32, a33, a34);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_viiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii(index, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27, a28, a29, a30, a31, a32, a33, a34, a35) {
-          var sp = stackSave();
-          try {
-            getWasmTableEntry(index)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27, a28, a29, a30, a31, a32, a33, a34, a35);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_viiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii(index, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27, a28, a29, a30, a31, a32, a33, a34, a35, a36) {
-          var sp = stackSave();
-          try {
-            getWasmTableEntry(index)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27, a28, a29, a30, a31, a32, a33, a34, a35, a36);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_viiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii(index, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27, a28, a29, a30, a31, a32, a33, a34, a35, a36, a37) {
-          var sp = stackSave();
-          try {
-            getWasmTableEntry(index)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27, a28, a29, a30, a31, a32, a33, a34, a35, a36, a37);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_viiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii(index, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27, a28, a29, a30, a31, a32, a33, a34, a35, a36, a37, a38) {
-          var sp = stackSave();
-          try {
-            getWasmTableEntry(index)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27, a28, a29, a30, a31, a32, a33, a34, a35, a36, a37, a38);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_viiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii(index, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27, a28, a29, a30, a31, a32, a33, a34, a35, a36, a37, a38, a39) {
-          var sp = stackSave();
-          try {
-            getWasmTableEntry(index)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27, a28, a29, a30, a31, a32, a33, a34, a35, a36, a37, a38, a39);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_viiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii(index, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27, a28, a29, a30, a31, a32, a33, a34, a35, a36, a37, a38, a39, a40) {
-          var sp = stackSave();
-          try {
-            getWasmTableEntry(index)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27, a28, a29, a30, a31, a32, a33, a34, a35, a36, a37, a38, a39, a40);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_viiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii(index, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27, a28, a29, a30, a31, a32, a33, a34, a35, a36, a37, a38, a39, a40, a41) {
-          var sp = stackSave();
-          try {
-            getWasmTableEntry(index)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27, a28, a29, a30, a31, a32, a33, a34, a35, a36, a37, a38, a39, a40, a41);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_viiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii(index, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27, a28, a29, a30, a31, a32, a33, a34, a35, a36, a37, a38, a39, a40, a41, a42) {
-          var sp = stackSave();
-          try {
-            getWasmTableEntry(index)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27, a28, a29, a30, a31, a32, a33, a34, a35, a36, a37, a38, a39, a40, a41, a42);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_iiiiiiijiii(index, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11) {
-          var sp = stackSave();
-          try {
-            return dynCall_iiiiiiijiii(index, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_iiji(index, a1, a2, a3, a4) {
-          var sp = stackSave();
-          try {
-            return dynCall_iiji(index, a1, a2, a3, a4);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_iiiiiiji(index, a1, a2, a3, a4, a5, a6, a7, a8) {
-          var sp = stackSave();
-          try {
-            return dynCall_iiiiiiji(index, a1, a2, a3, a4, a5, a6, a7, a8);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_jii(index, a1, a2) {
-          var sp = stackSave();
-          try {
-            return dynCall_jii(index, a1, a2);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_iiiji(index, a1, a2, a3, a4, a5) {
-          var sp = stackSave();
-          try {
-            return dynCall_iiiji(index, a1, a2, a3, a4, a5);
-          } catch (e) {
-            stackRestore(sp);
-            if (e !== e + 0) throw e;
-            _setThrew(1, 0);
-          }
-        }
-        function invoke_iiiiiji(index, a1, a2, a3, a4, a5, a6, a7) {
-          var sp = stackSave();
-          try {
-            return dynCall_iiiiiji(index, a1, a2, a3, a4, a5, a6, a7);
           } catch (e) {
             stackRestore(sp);
             if (e !== e + 0) throw e;
@@ -14120,7 +14235,10 @@ var bootloader = (function (exports) {
           profilerB64 += this.profileAccum(profilerB64Marker);
           if (entry.compressed) {
             const profilerInflateMarker = this.profile();
-            const fileData = inflateSync(fileDataRaw);
+            const fileData = new Uint8Array(entry.originalSize);
+            inflateSync(fileDataRaw, {
+              out: fileData
+            });
             profilerInflate += this.profileAccum(profilerInflateMarker);
             this.fileMap[entry.path] = fileData;
             totalBytes += fileData.length;

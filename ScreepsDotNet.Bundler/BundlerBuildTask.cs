@@ -22,6 +22,22 @@ namespace ScreepsDotNet.Bundler
         [Output]
         public string[] BundleFilePaths { get; set; } = null!;
 
+        private readonly struct BundledAsset
+        {
+            public readonly string Path;
+            public readonly int OriginalSize;
+            public readonly bool Compressed;
+            public readonly string B64;
+
+            public BundledAsset(string path, int originalSize, bool compressed, string b64)
+            {
+                Path = path;
+                OriginalSize = originalSize;
+                Compressed = compressed;
+                B64 = b64;
+            }
+        }
+
         public override bool Execute()
         {
             var monoConfig = JsonConvert.DeserializeObject<MonoConfig>(File.ReadAllText(Path.Combine(AppBundleDir, "mono-config.json")));
@@ -32,25 +48,48 @@ namespace ScreepsDotNet.Bundler
             }
             monoConfig.Assets = monoConfig.Assets.Where(ShouldBundleAsset);
 
-            var bundleFilePath = Path.Combine(AppBundleDir, "bundle.mjs");
+            IList<BundledAsset> bundledAssets = new List<BundledAsset>();
+            foreach (var asset in monoConfig.Assets)
+            {
+                var localPath = GetAssetLocalPath(asset);
+                var sourcePath = Path.Combine(AppBundleDir, localPath);
+                using var memoryStream = new MemoryStream();
+                int originalSize;
+                using (var deflateStream = new DeflateStream(memoryStream, CompressionMode.Compress, true))
+                {
+                    using var fileStream = File.OpenRead(sourcePath);
+                    fileStream.CopyTo(deflateStream);
+                    originalSize = (int)fileStream.Position;
+                }
+                var b64 = Convert.ToBase64String(memoryStream.ToArray());
+                bundledAssets.Add(new BundledAsset(localPath.Replace('\\', '/'), originalSize, true, b64));
+            }
+
+            var arenaFilePaths = BuildArena(Path.Combine(AppBundleDir, "arena"), monoConfig, bundledAssets);
+            // var worldFilePaths = BuildWorld(Path.Combine(AppBundleDir, "world"), monoConfig, bundledAssets);
+
+            BundleFilePaths = Enumerable.Empty<string>()
+                .Concat(arenaFilePaths)
+            //  .Concat(worldFilePaths)
+                .ToArray();
+
+            return !Log.HasLoggedErrors;
+        }
+
+        private IEnumerable<string> BuildArena(string path, MonoConfig monoConfig, IEnumerable<BundledAsset> bundledAssets)
+        {
+            Directory.CreateDirectory(path);
+
+            var bundleFilePath = Path.Combine(path, "bundle.mjs");
             using (var output = File.Open(bundleFilePath, FileMode.OpenOrCreate))
             {
                 output.SetLength(0);
                 using var writer = new StreamWriter(output);
                 writer.WriteLine($"export const manifest = [");
-                foreach (var asset in monoConfig.Assets)
+                foreach (var bundledAsset in bundledAssets)
                 {
-                    var localPath = GetAssetLocalPath(asset);
-                    var sourcePath = Path.Combine(AppBundleDir, localPath);
-                    using var memoryStream = new MemoryStream();
-                    using (var deflateStream = new DeflateStream(memoryStream, CompressionMode.Compress, true))
-                    {
-                        using var fileStream = File.OpenRead(sourcePath);
-                        fileStream.CopyTo(deflateStream);
-                    }
-                    var b64 = Convert.ToBase64String(memoryStream.ToArray());
-                    writer.Write($"  {{ path: './{localPath.Replace('\\', '/')}', compressed: true, b64: '");
-                    writer.Write(b64);
+                    writer.Write($"  {{ path: './{bundledAsset.Path}', originalSize: {bundledAsset.OriginalSize}, compressed: {(bundledAsset.Compressed ? "true" : "false")}, b64: '");
+                    writer.Write(bundledAsset.B64);
                     writer.WriteLine($"' }},");
                 }
                 writer.WriteLine($"];");
@@ -59,20 +98,52 @@ namespace ScreepsDotNet.Bundler
                 writer.WriteLine($";");
             }
 
-            File.WriteAllBytes(Path.Combine(AppBundleDir, "bootloader.mjs"), Configuration == "Release" ? BundleStaticAssets.bootloader_release_mjs : BundleStaticAssets.bootloader_debug_mjs);
-            File.WriteAllBytes(Path.Combine(AppBundleDir, "bootloader.d.ts"), BundleStaticAssets.bootloader_dts);
-            File.WriteAllBytes(Path.Combine(AppBundleDir, "main.mjs"), BundleStaticAssets.main_mjs);
+            File.WriteAllBytes(Path.Combine(path, "bootloader.mjs"), Configuration == "Release" ? BundleStaticAssets.arena_bootloader_release_mjs : BundleStaticAssets.arena_bootloader_debug_mjs);
+            File.WriteAllBytes(Path.Combine(path, "bootloader.d.ts"), BundleStaticAssets.arena_bootloader_dts);
+            File.WriteAllBytes(Path.Combine(path, "main.mjs"), BundleStaticAssets.arena_main_mjs);
 
-            BundleFilePaths = new string[]
+            return new string[]
             {
                 bundleFilePath,
-                Path.Combine(AppBundleDir, "bootloader.mjs"),
-                Path.Combine(AppBundleDir, "bootloader.d.ts"),
-                Path.Combine(AppBundleDir, "main.mjs")
+                Path.Combine(path, "bootloader.mjs"),
+                Path.Combine(path, "bootloader.d.ts"),
+                Path.Combine(path, "main.mjs")
             };
-
-            return !Log.HasLoggedErrors;
         }
+
+        //private IEnumerable<string> BuildWorld(string path, MonoConfig monoConfig, IEnumerable<BundledAsset> bundledAssets)
+        //{
+        //    Directory.CreateDirectory(path);
+
+        //    var bundleFilePath = Path.Combine(path, "bundle.js");
+        //    using (var output = File.Open(bundleFilePath, FileMode.OpenOrCreate))
+        //    {
+        //        output.SetLength(0);
+        //        using var writer = new StreamWriter(output);
+        //        writer.WriteLine($"const manifest = [");
+        //        foreach (var bundledAsset in bundledAssets)
+        //        {
+        //            writer.Write($"  {{ path: './{bundledAsset.Path}', originalSize: {bundledAsset.OriginalSize}, compressed: {(bundledAsset.Compressed ? "true" : "false")}, b64: '");
+        //            writer.Write(bundledAsset.B64);
+        //            writer.WriteLine($"' }},");
+        //        }
+        //        writer.WriteLine($"];");
+        //        writer.Write($"const config = ");
+        //        writer.Write(JsonConvert.SerializeObject(monoConfig));
+        //        writer.WriteLine($";");
+        //        writer.WriteLine($"module.exports = {{ manifest, config }};");
+        //    }
+
+        //    File.WriteAllBytes(Path.Combine(path, "bootloader.js"), Configuration == "Release" ? BundleStaticAssets.world_bootloader_release_js : BundleStaticAssets.world_bootloader_debug_js);
+        //    File.WriteAllBytes(Path.Combine(path, "main.js"), BundleStaticAssets.world_main_js);
+
+        //    return new string[]
+        //    {
+        //        bundleFilePath,
+        //        Path.Combine(path, "bootloader.js"),
+        //        Path.Combine(path, "main.js")
+        //    };
+        //}
 
         private static bool ShouldBundleAsset(MonoAsset monoAsset)
             => (monoAsset.Behavior == "assembly" && Path.GetExtension(monoAsset.Name) == ".dll") || monoAsset.Behavior == "dotnetwasm";

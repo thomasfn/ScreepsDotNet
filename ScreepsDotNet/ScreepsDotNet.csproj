@@ -2,19 +2,18 @@
   <PropertyGroup>
     <TargetFramework>net7.0</TargetFramework>
     <RuntimeIdentifier>browser-wasm</RuntimeIdentifier>
-	<WasmMainJSPath>main.js</WasmMainJSPath>
+	  <WasmMainJSPath>main.js</WasmMainJSPath>
     <OutputType>Exe</OutputType>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-	<Nullable>enable</Nullable>
-	<PublishTrimmed>true</PublishTrimmed>
-	<TrimMode>full</TrimMode>
-	<TrimmerRemoveSymbols>true</TrimmerRemoveSymbols>
-	<InvariantGlobalization>true</InvariantGlobalization>
-	
+	  <Nullable>enable</Nullable>
+	  <PublishTrimmed>true</PublishTrimmed>
+	  <TrimMode>full</TrimMode>
+	  <TrimmerRemoveSymbols>true</TrimmerRemoveSymbols>
+	  <InvariantGlobalization>true</InvariantGlobalization>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
-	<RunAOTCompilation>true</RunAOTCompilation>
+	  <RunAOTCompilation>true</RunAOTCompilation>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="ScreepsDotNet.Bundler" Version="1.0.6" PrivateAssets="All" />
+    <PackageReference Include="ScreepsDotNet.Bundler" Version="1.0.9" PrivateAssets="All" />
   </ItemGroup>
 
 </Project>
