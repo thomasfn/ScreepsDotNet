@@ -4,6 +4,7 @@ A toolset and API to build bots for [Screeps Arena](https://store.steampowered.c
 
 * [What is Screeps DotNet?](#what-is-screeps-dotnet)
 * [Quickstart](#quickstart)
+* [API](#api)
 * [Project structure](#project-structure)
 * [Limitations, Issues and Implications](#limitations-issues-and-implications)
 * [Troubleshooting](#troubleshooting)
@@ -138,6 +139,26 @@ If all has gone well, you should now have a working basic bot that runs successf
 ### Next steps
 
 You can architect your bot however you like. Generally it is recommended to keep the `Program.cs` as a slim bootstrap entrypoint and have it instantiate another class which will run the bot. You could use dependency injection to inject the instance of `IGame` to your code to keep it nice and separated from the specifics of the JS interop (which also makes it much easier to mock during unit testing), but the choice really is yours. Let your imagination run wild!
+
+## API
+
+The Screeps .Net API has been designed to be as close to the JS API as possible, with only minor alterations to adopt standard C# idioms. If you're familiar with the JS API, you will automatically be familiar with the .Net API. 
+
+The API is exposed as a set of interfaces and a few support structures and is contained within the `ScreepsDotNet.API` namespace. Any part of the API common to both Arena and World lives directly in this namespace. Anything more specific lives in either `ScreepsDotNet.API.Arena` or `ScreepsDotNet.API.World`.
+
+There is currently only one exposed concrete implementation, and this is `ScreepsDotNet.Native.Arena.NativeGame` implementing `IGame`. At the start of your program you can instantiate this directly. You should avoid creating multiple instances of this throughout the lifetime of your program, and instead just reuse the same instance.
+
+All other objects follow the same inheritance hierarchy as the JS API. For example - `IStructureTower : IOwnedStructure : IStructure : IGameObject : IPosition`.
+
+More details and documentation for the API is planned.
+
+### Notes & Tips
+
+- Instead of X and Y properties on game objects, you can access the `Position` of a game object, which is a struct encapsulating both X and Y. Positions can also be constructed in your own code, including from tuples, e.g. `Position myPos = (30, 40);`
+- Many Screeps Arena methods accept both a `Position` and an `IPosition`, to reflect that you can use a game object in the place of a position in the JS API. In some places you may need to convert an `IPosition` to a `Position` by using `gameObject.Position` where accepting an `IPosition` is impractical in the API.
+- JS interop is expensive. If you're using a property that involves JS interop frequently within the same method, for example `ICreep.Body` or `IOwnedStructure.My`, consider caching the evaluation in a local variable instead to reduce JS calls.
+- You can't store properties directly on objects like in the JS API, nor can you extend the objects yourself. You can, however, use `IGameObject` as the key of an `IDictionary` - this is the recommended way to associate data with an object. Don't forget to clean up the dictionary when the game object is destroyed!
+- Keeping objects alive between ticks is supported. If you retrieve the same object again from the API you might get multiple managed instances for the same JS object, but they will all be considered equal and have the same hash code, so this shouldn't cause any problems. Don't forget to test `IGameObject.Exists` to check that a reference is still valid.
 
 ## Project Structure
 
