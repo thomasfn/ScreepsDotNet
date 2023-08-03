@@ -1,4 +1,4 @@
-﻿namespace ScreepsDotNet.API.Arena
+﻿namespace ScreepsDotNet.API
 {
     public enum ResourceType
     {

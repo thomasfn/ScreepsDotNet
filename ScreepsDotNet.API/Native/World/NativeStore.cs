@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Runtime.InteropServices.JavaScript;
+
 using ScreepsDotNet.API;
 
-namespace ScreepsDotNet.Native.Arena
+namespace ScreepsDotNet.Native.World
 {
     internal static class ResourceTypeExtensions
     {

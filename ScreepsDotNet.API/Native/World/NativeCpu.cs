@@ -15,13 +15,25 @@ namespace ScreepsDotNet.Native.World
         [return: JSMarshalAsAttribute<JSType.Object>]
         internal static partial JSObject Native_GetHeapStatistics();
 
-        [JSImport("cpu.getUsed", "game")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial double Native_GetUsed();
+        [JSImport("get", "object")]
+        [return: JSMarshalAsAttribute<JSType.Function<JSType.Number>>]
+        internal static partial Func<double> Native_Get_GetUsed([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.String>] string key);
 
         #endregion
 
-        internal JSObject ProxyObject { get; set; }
+        private JSObject proxyObject;
+
+        internal JSObject ProxyObject
+        {
+            get => proxyObject;
+            set
+            {
+                proxyObject = value;
+                getUsedCache = null;
+            }
+        }
+
+        private Func<double>? getUsedCache;
 
         public double Limit => ProxyObject.GetPropertyAsDouble("limit");
 
@@ -37,7 +49,7 @@ namespace ScreepsDotNet.Native.World
 
         public NativeCpu(JSObject proxyObject)
         {
-            ProxyObject = proxyObject;
+            this.proxyObject = proxyObject;
         }
 
         public HeapInfo GetHeapStatistics()
@@ -60,7 +72,7 @@ namespace ScreepsDotNet.Native.World
         }
 
         public double GetUsed()
-            => Native_GetUsed();
+            => (getUsedCache ??= Native_Get_GetUsed(ProxyObject, "getUsed"))();
 
         public void Halt()
         {

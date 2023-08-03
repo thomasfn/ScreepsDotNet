@@ -24,13 +24,34 @@ function initDotNet() {
     dotNet.setVerboseLogging(false);
     dotNet.setModuleImports('object', {
         getConstructorOf: (x) => Object.getPrototypeOf(x).constructor,
+        getKeysOf: (x) => Object.keys(x),
+        interpretDateTime: (x) => x.getTime() / 1000,
         create: Object.create,
         set: (obj, key, val) => obj[key] = val,
         get: (obj, key) => obj[key],
     });
+    const prototypes = {
+        Room,
+        RoomObject,
+        Creep,
+        Structure,
+        OwnedStructure,
+        StructureSpawn,
+        StructureController,
+    };
     dotNet.setModuleImports('game', {
         ...Game,
         getGameObj: () => Game,
+        getPrototypes: () => prototypes,
+    });
+    dotNet.setModuleImports('game/prototypes/wrapped', {
+        ...buildWrappedPrototypes(prototypes),
+        Spawning: buildWrappedPrototype(StructureSpawn.Spawning),
+        Store: {
+            getCapacity: (thisObj, resourceType) => thisObj.getCapacity(resourceType),
+            getUsedCapacity: (thisObj, resourceType) => thisObj.getUsedCapacity(resourceType),
+            getFreeCapacity: (thisObj, resourceType) => thisObj.getFreeCapacity(resourceType),
+        },
     });
     try {
         dotNet.init();
@@ -42,6 +63,29 @@ function initDotNet() {
     }
     const after = Game.cpu.getUsed();
     console.log(`#${Game.time} INIT: created dotnet instance (${after - before}ms)`);
+}
+
+function buildWrappedPrototypes(prototypes) {
+    /** @type {Record<string, Record<string, Function>>} */
+    const wrappedPrototypes = {};
+    for (const prototypeName in prototypes) {
+        wrappedPrototypes[prototypeName] = buildWrappedPrototype(prototypes[prototypeName]);
+    }
+    return wrappedPrototypes;
+}
+
+function buildWrappedPrototype(constructor) {
+    /** @type {Record<string, Function>} */
+    const wrappedPrototype = {};
+    const prototype = constructor.prototype;
+    const keys = Object.getOwnPropertyNames(prototype);
+    for (const key of keys) {
+        if (key === 'constructor') { continue; }
+        const value = Object.getOwnPropertyDescriptor(prototype, key).value;
+        if (typeof value !== 'function') { continue; }
+        wrappedPrototype[key] = (thisObj, ...args) => value.call(thisObj, ...args);
+    }
+    return wrappedPrototype;
 }
 
 function startup() {

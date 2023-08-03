@@ -15,11 +15,13 @@ namespace ScreepsDotNet.API
     {
         public readonly BodyPartType Type;
         public readonly int Hits;
+        public readonly string? Boost;
 
-        public BodyPart(BodyPartType type, int hits)
+        public BodyPart(BodyPartType type, int hits, string? boost = null)
         {
             Type = type;
             Hits = hits;
+            Boost = boost;
         }
 
         public override bool Equals(object? obj) => obj is BodyPart<TBodyPartType> part && Equals(part);

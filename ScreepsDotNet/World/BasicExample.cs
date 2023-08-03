@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 
 using ScreepsDotNet.API.World;
 
@@ -15,7 +16,28 @@ namespace ScreepsDotNet.World
 
         public void Loop()
         {
-            Console.WriteLine($"Hello world from C#! The current tick is {game.Time} and your bucket contains {game.Cpu.Bucket} cpu. So far we used {game.Cpu.GetUsed()} cpu this tick.");
+            foreach (var room in game.Rooms)
+            {
+                TickRoom(room);
+            }
+        }
+
+        private void TickRoom(IRoom room)
+        {
+            var spawns = room.Find<IStructureSpawn>();
+            Console.WriteLine($"{room} has spawns: {string.Join(", ", spawns.Select(x => x.ToString()))}");
+
+            var spawn = spawns.FirstOrDefault();
+            if (spawn != null)
+            {
+                var result = spawn.SpawnCreep(new BodyPartType[] { BodyPartType.Move, BodyPartType.Carry, BodyPartType.Work }, "mycreep1", new(dryRun: true));
+                Console.WriteLine($"Tried to spawn creep (dry run), result is {result}");
+                if (result == SpawnCreepResult.Ok)
+                {
+                    result = spawn.SpawnCreep(new BodyPartType[] { BodyPartType.Move, BodyPartType.Carry, BodyPartType.Work }, "mycreep1", new());
+                    Console.WriteLine($"Tried to spawn creep, result is {result}");
+                }
+            }
         }
     }
 }
