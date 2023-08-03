@@ -1,9 +1,6 @@
 using System;
 using System.Runtime.InteropServices.JavaScript;
 
-using ScreepsDotNet.API.Arena;
-using ScreepsDotNet.Arena;
-
 namespace ScreepsDotNet
 {
     public interface ITutorialScript
@@ -13,28 +10,19 @@ namespace ScreepsDotNet
 
     public static partial class Program
     {
-        private static IGame? game;
+        private static API.World.IGame? game;
         private static ITutorialScript? tutorialScript;
 
         public static void Main()
         {
-            game = new Native.Arena.NativeGame();
-            tutorialScript = new Tutorial1_LoopAndImport(game);
-            RunGC();
-            LogGCActivity();
-        }
-
-        private static void RunGC()
-        {
-            var timeBefore = game!.Utils.GetCpuTime();
-            GC.Collect(2, GCCollectionMode.Forced, true);
-            var timeAfter = game!.Utils.GetCpuTime();
-            Console.WriteLine($"GC in {(timeAfter - timeBefore) / 1000000.0:N} ms");
+            game = new Native.World.NativeGame();
+            tutorialScript = new World.BasicExample(game);
         }
 
         [JSExport]
         internal static void Loop()
         {
+            game?.Tick();
             tutorialScript?.Loop();
             LogGCActivity();
         }

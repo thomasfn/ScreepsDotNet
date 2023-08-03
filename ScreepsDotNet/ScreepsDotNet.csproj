@@ -13,7 +13,7 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
-	  <RunAOTCompilation>true</RunAOTCompilation>
+	  <RunAOTCompilation>false</RunAOTCompilation>
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="ScreepsDotNet.Bundler" Version="1.0.9" PrivateAssets="All" />
+    <PackageReference Include="ScreepsDotNet.Bundler" Version="1.0.10" PrivateAssets="All" />
   </ItemGroup>
 
 </Project>

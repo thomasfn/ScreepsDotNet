@@ -130,4 +130,13 @@
   <data name="arena_main_mjs" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\arena\main.mjs;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
+  <data name="world_bootloader_debug_js" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\world\bootloader-debug.js;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="world_bootloader_release_js" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\world\bootloader-release.js;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="world_main_js" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\world\main.js;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
 </root>

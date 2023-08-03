@@ -99,5 +99,35 @@ namespace ScreepsDotNet.Bundler {
                 return ((byte[])(obj));
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] world_bootloader_debug_js {
+            get {
+                object obj = ResourceManager.GetObject("world_bootloader_debug_js", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] world_bootloader_release_js {
+            get {
+                object obj = ResourceManager.GetObject("world_bootloader_release_js", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] world_main_js {
+            get {
+                object obj = ResourceManager.GetObject("world_main_js", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
     }
 }
