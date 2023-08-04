@@ -14,6 +14,8 @@
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
 	  <RunAOTCompilation>false</RunAOTCompilation>
+	  <ScreepsCompressAssemblies>false</ScreepsCompressAssemblies>
+	  <ScreepsCompressWasm>false</ScreepsCompressWasm>
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,7 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="ScreepsDotNet.Bundler" Version="1.0.10" PrivateAssets="All" />
+    <PackageReference Include="ScreepsDotNet.Bundler" Version="1.0.11" PrivateAssets="All" />
   </ItemGroup>
 
 </Project>

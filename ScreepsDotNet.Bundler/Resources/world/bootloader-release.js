@@ -13278,6 +13278,7 @@ var bootloader = (function (exports) {
           inflateSync(fileDataRaw, {
             out: fileData
           });
+          log(`'${entry.path}' ${entry.originalSize / 1024 | 0} KiB -> ${fileDataRaw.length / 1024 | 0} KiB (~${(1-(fileDataRaw.length / entry.originalSize))*100}% ratio)`);
           profilerInflate += this.profileAccum(profilerInflateMarker);
           this.fileMap[entry.path] = fileData;
           totalBytes += fileData.length;
@@ -13417,3 +13418,5 @@ var bootloader = (function (exports) {
   return exports;
 
 })({});
+
+module.exports = bootloader;

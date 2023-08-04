@@ -1,7 +1,7 @@
 <Project>
 	
 	<Target Name="_BuildScreepsBundle" AfterTargets="_WasmGenerateAppBundle" >
-		<BundlerBuildTask AppBundleDir="$(WasmAppDir)" Configuration="$(Configuration)">
+		<BundlerBuildTask AppBundleDir="$(WasmAppDir)" Configuration="$(Configuration)" CompressAssemblies="$(ScreepsCompressAssemblies)" CompressWasm="$(ScreepsCompressWasm)">
 			<Output TaskParameter="BundleFilePaths" PropertyName="ScreepsBundleFilePaths" />
 		</BundlerBuildTask>
 	</Target>

@@ -19,6 +19,12 @@ namespace ScreepsDotNet.Bundler
         [Required]
         public string Configuration { get; set; } = null!;
 
+        [Required]
+        public bool CompressAssemblies { get; set; } = true;
+
+        [Required]
+        public bool CompressWasm { get; set; } = true;
+
         [Output]
         public string[] BundleFilePaths { get; set; } = null!;
 
@@ -53,16 +59,25 @@ namespace ScreepsDotNet.Bundler
             {
                 var localPath = GetAssetLocalPath(asset);
                 var sourcePath = Path.Combine(AppBundleDir, localPath);
-                using var memoryStream = new MemoryStream();
-                int originalSize;
-                using (var deflateStream = new DeflateStream(memoryStream, CompressionMode.Compress, true))
+                if (ShouldCompressAsset(asset))
                 {
-                    using var fileStream = File.OpenRead(sourcePath);
-                    fileStream.CopyTo(deflateStream);
-                    originalSize = (int)fileStream.Position;
+                    using var memoryStream = new MemoryStream();
+                    int originalSize;
+                    using (var deflateStream = new DeflateStream(memoryStream, CompressionMode.Compress, true))
+                    {
+                        using var fileStream = File.OpenRead(sourcePath);
+                        fileStream.CopyTo(deflateStream);
+                        originalSize = (int)fileStream.Position;
+                    }
+                    var b64 = Convert.ToBase64String(memoryStream.ToArray());
+                    bundledAssets.Add(new BundledAsset(localPath.Replace('\\', '/'), originalSize, true, b64));
                 }
-                var b64 = Convert.ToBase64String(memoryStream.ToArray());
-                bundledAssets.Add(new BundledAsset(localPath.Replace('\\', '/'), originalSize, true, b64));
+                else
+                {
+                    byte[] data = File.ReadAllBytes(sourcePath);
+                    var b64 = Convert.ToBase64String(data);
+                    bundledAssets.Add(new BundledAsset(localPath.Replace('\\', '/'), data.Length, false, b64));
+                }
             }
 
             var arenaFilePaths = BuildArena(Path.Combine(AppBundleDir, "arena"), monoConfig, bundledAssets);
@@ -147,6 +162,11 @@ namespace ScreepsDotNet.Bundler
 
         private static bool ShouldBundleAsset(MonoAsset monoAsset)
             => (monoAsset.Behavior == "assembly" && Path.GetExtension(monoAsset.Name) == ".dll") || monoAsset.Behavior == "dotnetwasm";
+
+        private bool ShouldCompressAsset(MonoAsset monoAsset)
+            => monoAsset.Behavior == "assembly" ? CompressAssemblies
+             : monoAsset.Behavior == "dotnetwasm" ? CompressWasm
+             : false;
 
         private static string GetAssetLocalPath(MonoAsset monoAsset)
             => monoAsset.Behavior == "assembly" ? Path.Combine("managed", monoAsset.Name) : monoAsset.Name;

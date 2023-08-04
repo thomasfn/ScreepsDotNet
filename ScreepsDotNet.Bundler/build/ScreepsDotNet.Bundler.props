@@ -10,4 +10,9 @@
 	</PropertyGroup>
 	
 	<UsingTask TaskName="ScreepsDotNet.Bundler.BundlerBuildTask" AssemblyFile="$(ScreepsDotNetBundlerAssemblyPath)ScreepsDotNet.Bundler.dll" />
+
+	<PropertyGroup>
+		<ScreepsCompressAssemblies>true</ScreepsCompressAssemblies>
+		<ScreepsCompressWasm>true</ScreepsCompressWasm>
+	</PropertyGroup>
 </Project>
