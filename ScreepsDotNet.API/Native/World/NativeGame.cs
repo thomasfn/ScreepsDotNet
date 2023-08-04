@@ -45,19 +45,22 @@ namespace ScreepsDotNet.Native.World
         [return: JSMarshalAsAttribute<JSType.Array<JSType.String>>]
         internal static partial string[] Native_GetKeysOf([JSMarshalAs<JSType.Object>] JSObject obj);
 
-        [JSImport("get", "object")]
-        [return: JSMarshalAsAttribute<JSType.Function<JSType.String, JSType.Object>>]
-        internal static partial Func<string, JSObject> Native_Get_GetObjectByIdFunc([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.String>] string key);
+        [JSImport("game.getObjectById", "game")]
+        [return: JSMarshalAsAttribute<JSType.Object>]
+        internal static partial JSObject Native_GetObjectById([JSMarshalAs<JSType.String>] string id);
+
+        [JSImport("game.notify", "game")]
+        internal static partial void Native_Notify([JSMarshalAs<JSType.String>] string message, [JSMarshalAs<JSType.Number>] int groupInterval);
 
         #endregion
 
         internal JSObject ProxyObject;
 
         private readonly NativeCpu nativeCpu;
+        private readonly NativeMap nativeMap;
+        private readonly NativePathFinder nativePathFinder;
 
         private readonly IList<WeakReference<INativeObject>> trackedNativeObjects = new List<WeakReference<INativeObject>>();
-
-        private Func<string, JSObject> getObjectByIdFunc;
 
         private readonly NativeObjectLazyLookup<ICreep> creepLazyLookup;
         private readonly NativeObjectLazyLookup<IFlag> flagLazyLookup;
@@ -79,6 +82,10 @@ namespace ScreepsDotNet.Native.World
 
         public ICpu Cpu => nativeCpu;
 
+        public IMap Map => nativeMap;
+
+        public IPathFinder PathFinder => nativePathFinder;
+
         public IReadOnlyDictionary<string, ICreep> Creeps => creepLazyLookup;
 
         public IReadOnlyDictionary<string, IFlag> Flags => flagLazyLookup;
@@ -94,13 +101,14 @@ namespace ScreepsDotNet.Native.World
         public NativeGame()
         {
             ProxyObject = Native_GetGameObject();
-            getObjectByIdFunc = Native_Get_GetObjectByIdFunc(ProxyObject, "getObjectById");
             CreepsObj = ProxyObject.GetPropertyAsJSObject("creeps")!;
             FlagsObj = ProxyObject.GetPropertyAsJSObject("flags")!;
             RoomsObj = ProxyObject.GetPropertyAsJSObject("rooms")!;
             SpawnsObj = ProxyObject.GetPropertyAsJSObject("spawns")!;
             StructuresObj = ProxyObject.GetPropertyAsJSObject("structures")!;
             nativeCpu = new NativeCpu(ProxyObject.GetPropertyAsJSObject("cpu")!);
+            nativeMap = new NativeMap();
+            nativePathFinder = new NativePathFinder();
             creepLazyLookup = new NativeObjectLazyLookup<ICreep>(() => CreepsObj, x => x.Name, (name, proxyObject) => new NativeCreep(this, proxyObject, name));
             flagLazyLookup = new NativeObjectLazyLookup<IFlag>(() => FlagsObj, x => x.Name, (name, proxyObject) => new NativeFlag(this, proxyObject, name));
             roomLazyLookup = new NativeObjectLazyLookup<IRoom>(() => RoomsObj, x => x.Name, (name, proxyObject) => new NativeRoom(this, proxyObject, name));
@@ -117,7 +125,6 @@ namespace ScreepsDotNet.Native.World
         {
             ProxyObject.Dispose();
             ProxyObject = Native_GetGameObject();
-            getObjectByIdFunc = Native_Get_GetObjectByIdFunc(ProxyObject, "getObjectById");
             CreepsObj.Dispose();
             CreepsObj = ProxyObject.GetPropertyAsJSObject("creeps")!;
             FlagsObj.Dispose();
@@ -166,9 +173,12 @@ namespace ScreepsDotNet.Native.World
         }
 
         JSObject INativeRoot.GetObjectById(string id)
-            => getObjectByIdFunc(id);
+            => Native_GetObjectById(id);
 
         public T? GetObjectById<T>(string id) where T : class, IRoomObject
-            => NativeRoomObjectUtils.CreateWrapperForRoomObject<T>(this, getObjectByIdFunc(id));
+            => NativeRoomObjectUtils.CreateWrapperForRoomObject<T>(this, Native_GetObjectById(id));
+
+        public void Notify(string message, int groupInterval = 0)
+            => Native_Notify(message, groupInterval);
     }
 }

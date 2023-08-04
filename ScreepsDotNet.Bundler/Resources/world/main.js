@@ -35,6 +35,7 @@ function initDotNet() {
         StructureContainer,
         StructureController,
         StructureExtension,
+        StructureStorage,
         StructureRampart,
         OwnedStructure,
         StructureRoad,
@@ -43,23 +44,74 @@ function initDotNet() {
         Source,
         Creep,
         Flag,
+        Resource,
         RoomObject,
         Room,
     };
     dotNet.setModuleImports('game', {
-        ...Game,
         getGameObj: () => Game,
         getPrototypes: () => prototypes,
         createRoomPosition: (x, y, roomName) => new RoomPosition(x, y, roomName),
+        createCostMatrix: () => new PathFinder.CostMatrix(),
+        game: {
+            getObjectById: (...args) => Game.getObjectById(...args),
+            notify: (...args) => Game.notify(...args),
+        },
+        map: {
+            describeExits: (...args) => Game.map.describeExits(...args),
+            findExit: (...args) => Game.map.findExit(...args),
+            findRoute: (...args) => Game.map.findRoute(...args),
+            getRoomLinearDistance: (...args) => Game.map.getRoomLinearDistance(...args),
+            getRoomTerrain: (...args) => Game.map.getRoomTerrain(...args),
+            getWorldSize: (...args) => Game.map.getWorldSize(...args),
+            getRoomStatus: (...args) => Game.map.getRoomStatus(...args),
+        },
+        cpu: {
+            getHeapStatistics: (...args) => Game.cpu.getHeapStatistics(...args),
+            getUsed: (...args) => Game.cpu.getUsed(...args),
+            halt: (...args) => Game.cpu.halt(...args),
+            setShardLimits: (...args) => Game.cpu.setShardLimits(...args),
+            unlock: (...args) => Game.cpu.unlock(...args),
+            generatePixel: (...args) => Game.cpu.generatePixel(...args),
+        },
     });
+    const wrappedPrototypes = buildWrappedPrototypes(prototypes);
     dotNet.setModuleImports('game/prototypes/wrapped', {
-        ...buildWrappedPrototypes(prototypes),
+        ...wrappedPrototypes,
         Spawning: buildWrappedPrototype(StructureSpawn.Spawning),
         Store: {
             getCapacity: (thisObj, resourceType) => thisObj.getCapacity(resourceType),
             getUsedCapacity: (thisObj, resourceType) => thisObj.getUsedCapacity(resourceType),
             getFreeCapacity: (thisObj, resourceType) => thisObj.getFreeCapacity(resourceType),
         },
+        CostMatrix: {
+            ...buildWrappedPrototype(PathFinder.CostMatrix),
+            setRect: (thisObj, minX, minY, maxX, maxY, memoryView) => {
+                const w = (maxX - minX) + 1;
+                const h = (maxY - minY) + 1;
+                const arr = new Uint8Array(w * h);
+                memoryView.copyTo(arr);
+                let i = 0;
+                for (let y = minY; y <= maxY; ++y) {
+                    for (let x = minX; x <= maxX; ++x) {
+                        thisObj.set(x, y, arr[i]);
+                        ++i;
+                    }   
+                }
+            },
+        },
+        Room: {
+            ...wrappedPrototypes.Room,
+            createFlag: (thisObj, ...args) => {
+                const result = thisObj.createFlag(...args);
+                if (typeof result === 'string') {
+                    return { name: result, code: 0 };
+                } else {
+                    return { code: result };
+                }
+            }
+        },
+        PathFinder,
     });
     try {
         dotNet.init();

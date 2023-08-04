@@ -3,28 +3,28 @@ using System.Runtime.InteropServices.JavaScript;
 
 using ScreepsDotNet.API;
 
-namespace ScreepsDotNet.Native.Arena
+namespace ScreepsDotNet.Native.World
 {
     [System.Runtime.Versioning.SupportedOSPlatform("browser")]
     internal partial class NativeCostMatrix : ICostMatrix
     {
         #region Imports
 
-        [JSImport("createCostMatrix", "game/pathFinder")]
+        [JSImport("createCostMatrix", "game")]
         [return: JSMarshalAsAttribute<JSType.Object>]
         internal static partial JSObject Native_Ctor();
 
-        [JSImport("CostMatrix.get", "game/pathFinder")]
+        [JSImport("CostMatrix.get", "game/prototypes/wrapped")]
         [return: JSMarshalAsAttribute<JSType.Number>]
         internal static partial byte Native_Get([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Number>] int x, [JSMarshalAs<JSType.Number>] int y);
 
-        [JSImport("CostMatrix.set", "game/pathFinder")]
+        [JSImport("CostMatrix.set", "game/prototypes/wrapped")]
         internal static partial void Native_Set([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Number>] int x, [JSMarshalAs<JSType.Number>] int y, [JSMarshalAs<JSType.Number>] byte cost);
 
-        [JSImport("CostMatrix.setRect", "game/pathFinder")]
+        [JSImport("CostMatrix.setRect", "game/prototypes/wrapped")]
         internal static partial void Native_SetRect([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Number>] int minX, [JSMarshalAs<JSType.Number>] int minY, [JSMarshalAs<JSType.Number>] int maxX, [JSMarshalAs<JSType.Number>] int maxY, [JSMarshalAs<JSType.MemoryView>] Span<byte> values);
 
-        [JSImport("CostMatrix.get", "game/pathFinder")]
+        [JSImport("CostMatrix.get", "game/prototypes/wrapped")]
         [return: JSMarshalAsAttribute<JSType.Object>]
         internal static partial JSObject Native_Clone([JSMarshalAs<JSType.Object>] JSObject proxyObject);
 
@@ -32,8 +32,8 @@ namespace ScreepsDotNet.Native.Arena
 
         internal readonly JSObject ProxyObject;
 
-        private const int RoomSizeX = 100;
-        private const int RoomSizeY = 100;
+        private const int RoomSizeX = 50;
+        private const int RoomSizeY = 50;
 
         private readonly byte[] localCache = new byte[RoomSizeX * RoomSizeY];
 

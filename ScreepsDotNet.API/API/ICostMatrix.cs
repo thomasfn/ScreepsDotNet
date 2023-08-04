@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ScreepsDotNet.API.Arena
+namespace ScreepsDotNet.API
 {
     /// <summary>
     /// Container for custom navigation cost data.

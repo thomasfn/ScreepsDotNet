@@ -24,33 +24,52 @@ namespace ScreepsDotNet
         {
             game?.Tick();
             tutorialScript?.Loop();
+            if (game is API.World.IGame worldGame)
+            {
+                CheckHeap(worldGame.Cpu.GetHeapStatistics());
+            }
+            else if (game is API.Arena.IGame arenaGame)
+            {
+                CheckHeap(arenaGame.Utils.GetHeapStatistics());
+            }
             LogGCActivity();
         }
 
-        private static int lastGen0CollectCount = GC.CollectionCount(0);
-        private static int lastGen1CollectCount = GC.CollectionCount(1);
-        private static int lastGen2CollectCount = GC.CollectionCount(2);
+        internal static void CheckHeap(in API.HeapInfo heapInfo)
+        {
+            if (ticksSinceLastGC < 10) { return; }
+            var heapUsageFrac = (heapInfo.TotalHeapSize + heapInfo.ExternallyAllocatedSize) / (double)heapInfo.HeapSizeLimit;
+            if (heapUsageFrac > 0.65)
+            {
+                Console.WriteLine($"Heap usage is high ({heapUsageFrac * 100.0:N}%), running GC...");
+                GC.Collect(GC.MaxGeneration, GCCollectionMode.Default, true);
+                ticksSinceLastGC = 0;
+            }
+            else if (heapUsageFrac > 0.85)
+            {
+                Console.WriteLine($"Heap usage is very high ({heapUsageFrac * 100.0:N}%), running aggressive GC...");
+                GC.Collect(GC.MaxGeneration, GCCollectionMode.Aggressive, true);
+                ticksSinceLastGC = 0;
+            }
+        }
+
+        private static readonly int[] lastCollectCount = new int[GC.MaxGeneration];
+        private static int ticksSinceLastGC = 0;
 
         internal static void LogGCActivity()
         {
-            int gen0CollectCount = GC.CollectionCount(0);
-            if (gen0CollectCount > lastGen0CollectCount)
+            bool didGC = false;
+            for (int i = 0; i < GC.MaxGeneration; ++i)
             {
-                lastGen0CollectCount = gen0CollectCount;
-                Console.WriteLine($"Gen 0 GC happened this loop (now up to {lastGen0CollectCount} collections)");
+                int collectCount = GC.CollectionCount(i);
+                if (collectCount > lastCollectCount[i])
+                {
+                    lastCollectCount[i] = collectCount;
+                    Console.WriteLine($"Gen {i} GC happened this loop (now up to {lastCollectCount[i]} collections)");
+                    didGC = true;
+                }
             }
-            int gen1CollectCount = GC.CollectionCount(1);
-            if (gen1CollectCount > lastGen1CollectCount)
-            {
-                lastGen1CollectCount = gen1CollectCount;
-                Console.WriteLine($"Gen 1 GC happened this loop (now up to {lastGen1CollectCount} collections)");
-            }
-            int gen2CollectCount = GC.CollectionCount(2);
-            if (gen2CollectCount > lastGen2CollectCount)
-            {
-                lastGen2CollectCount = gen2CollectCount;
-                Console.WriteLine($"Gen 2 GC happened this loop (now up to {lastGen2CollectCount} collections)");
-            }
+            if (!didGC) { ++ticksSinceLastGC; }
         }
     }
 }

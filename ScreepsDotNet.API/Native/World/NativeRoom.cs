@@ -13,11 +13,53 @@ namespace ScreepsDotNet.Native.World
     {
         #region Imports
 
+        [JSImport("Room.createConstructionSite", "game/prototypes/wrapped")]
+        [return: JSMarshalAsAttribute<JSType.Object>]
+        internal static partial JSObject Native_CreateConstructionSite([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Number>] int x, [JSMarshalAs<JSType.Number>] int y, [JSMarshalAs<JSType.String>] string structureType, [JSMarshalAs<JSType.String>] string? name);
+
+        [JSImport("Room.createFlag", "game/prototypes/wrapped")]
+        [return: JSMarshalAsAttribute<JSType.Object>]
+        internal static partial JSObject Native_CreateFlag([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Number>] int x, [JSMarshalAs<JSType.Number>] int y, [JSMarshalAs<JSType.String>] string? name, [JSMarshalAs<JSType.Number>] int? color, [JSMarshalAs<JSType.Number>] int? secondaryColor);
+
         [JSImport("Room.find", "game/prototypes/wrapped")]
         [return: JSMarshalAsAttribute<JSType.Array<JSType.Object>>]
         internal static partial JSObject[] Native_Find([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Number>] int type);
 
+        [JSImport("Room.findExitTo", "game/prototypes/wrapped")]
+        [return: JSMarshalAsAttribute<JSType.Number>]
+        internal static partial int Native_FindExitTo([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.String>] string room);
+
+        [JSImport("Room.findPath", "game/prototypes/wrapped")]
+        [return: JSMarshalAsAttribute<JSType.Array<JSType.Object>>]
+        internal static partial JSObject[] Native_FindPath([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject fromPos, [JSMarshalAs<JSType.Object>] JSObject toPos, [JSMarshalAs<JSType.Object>] JSObject? opts);
+
+        [JSImport("Room.findExitTo", "game/prototypes/wrapped")]
+        [return: JSMarshalAsAttribute<JSType.String>]
+        internal static partial string Native_GetEventLogRaw([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Boolean>] bool raw);
+
+        [JSImport("Room.getTerrain", "game/prototypes/wrapped")]
+        [return: JSMarshalAsAttribute<JSType.Object>]
+        internal static partial JSObject Native_GetTerrain([JSMarshalAs<JSType.Object>] JSObject proxyObject);
+
+        [JSImport("Room.lookAt", "game/prototypes/wrapped")]
+        [return: JSMarshalAsAttribute<JSType.Array<JSType.Object>>]
+        internal static partial JSObject[] Native_LookAt([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Number>] int x, [JSMarshalAs<JSType.Number>] int y);
+
+        [JSImport("Room.lookAtArea", "game/prototypes/wrapped")]
+        [return: JSMarshalAsAttribute<JSType.Array<JSType.Object>>]
+        internal static partial JSObject[] Native_LookAtArea([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Number>] int top, [JSMarshalAs<JSType.Number>] int left, [JSMarshalAs<JSType.Number>] int bottom, [JSMarshalAs<JSType.Number>] int right, [JSMarshalAs<JSType.Boolean>] bool asArray);
+
+        [JSImport("Room.lookForAt", "game/prototypes/wrapped")]
+        [return: JSMarshalAsAttribute<JSType.Array<JSType.Object>>]
+        internal static partial JSObject[] Native_LookForAt([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Number>] int type, [JSMarshalAs<JSType.Number>] int x, [JSMarshalAs<JSType.Number>] int y);
+
+        [JSImport("Room.lookForAtArea", "game/prototypes/wrapped")]
+        [return: JSMarshalAsAttribute<JSType.Array<JSType.Object>>]
+        internal static partial JSObject[] Native_LookForAtArea([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Number>] int type, [JSMarshalAs<JSType.Number>] int top, [JSMarshalAs<JSType.Number>] int left, [JSMarshalAs<JSType.Number>] int bottom, [JSMarshalAs<JSType.Number>] int right, [JSMarshalAs<JSType.Boolean>] bool asArray);
+
         #endregion
+
+        private NativeRoomTerrain? roomTerrainCache;
 
         public string Name { get; private set; }
 
@@ -31,7 +73,7 @@ namespace ScreepsDotNet.Native.World
 
         public object Memory => throw new NotImplementedException();
 
-        public object? Storage => throw new NotImplementedException();
+        public IStructureStorage? Storage => NativeRoomObjectUtils.CreateWrapperForRoomObject<IStructureStorage>(nativeRoot, ProxyObject.GetPropertyAsJSObject("storage"));
 
         public object? Terminal => throw new NotImplementedException();
 
@@ -60,7 +102,9 @@ namespace ScreepsDotNet.Native.World
 
         public RoomCreateFlagResult CreateFlag(Position position, out string newFlagName, string? name = null, Color? color = null, Color? secondaryColor = null)
         {
-            throw new NotImplementedException();
+            using var resultJs = Native_CreateFlag(ProxyObject, position.X, position.Y, name, (int?)color, (int?)secondaryColor);
+            newFlagName = resultJs.GetPropertyAsString("name") ?? string.Empty;
+            return (RoomCreateFlagResult)resultJs.GetPropertyAsInt32("code");
         }
 
         public IEnumerable<T> Find<T>() where T : class, IRoomObject
@@ -76,55 +120,94 @@ namespace ScreepsDotNet.Native.World
 
         public IEnumerable<Position> FindExits(RoomExitDirection? exitFilter = null)
         {
-            throw new NotImplementedException();
+            FindConstant findConstant = FindConstant.Exit;
+            if (exitFilter != null)
+            {
+                switch (exitFilter.Value)
+                {
+                    case RoomExitDirection.Top: findConstant = FindConstant.ExitTop; break;
+                    case RoomExitDirection.Right: findConstant = FindConstant.ExitRight; break;
+                    case RoomExitDirection.Bottom: findConstant = FindConstant.ExitBottom; break;
+                    case RoomExitDirection.Left: findConstant = FindConstant.ExitLeft; break;
+                }
+            }
+            return Native_Find(ProxyObject, (int)findConstant)
+                .Select(x => x.ToPosition())
+                .ToArray();
         }
 
         public RoomFindExitResult FindExitTo(IRoom room)
-        {
-            throw new NotImplementedException();
-        }
+            => FindExitTo(room.Name);
 
         public RoomFindExitResult FindExitTo(string roomName)
-        {
-            throw new NotImplementedException();
-        }
+            => (RoomFindExitResult)Native_FindExitTo(ProxyObject, roomName);
 
         public IEnumerable<PathStep> FindPath(Position fromPos, Position toPos, FindPathOptions? opts = null)
         {
-            throw new NotImplementedException();
+            using var fromPosJs = fromPos.ToJS();
+            using var toPosJs = toPos.ToJS();
+            using var optsJs = opts?.ToJS();
+            var path = Native_FindPath(ProxyObject, fromPosJs, toPosJs, optsJs);
+            try
+            {
+                return path
+                    .Select(x => x.ToPathStep())
+                    .ToArray();
+            }
+            finally
+            {
+                foreach (var pathStepJs in path)
+                {
+                    pathStepJs.Dispose();
+                }
+            }
         }
 
         public string GetRawEventLog()
-        {
-            throw new NotImplementedException();
-        }
+            => Native_GetEventLogRaw(ProxyObject, true);
 
         public RoomPosition GetPositionAt(Position position)
             => new(position, Name);
 
-        //public IRoomTerrain GetTerrain()
-        //{
-        //    throw new NotImplementedException();
-        //}
+        public IRoomTerrain GetTerrain()
+            => roomTerrainCache ??= new NativeRoomTerrain(Native_GetTerrain(ProxyObject));
 
         public IEnumerable<IRoomObject> LookAt(Position position)
-        {
-            throw new NotImplementedException();
-        }
+#pragma warning disable CS8619 // Nullability of reference types in value doesn't match target type.
+            => Native_LookAt(ProxyObject, position.X, position.Y)
+                .Select(x => NativeRoomObjectUtils.CreateWrapperForRoomObject<IRoomObject>(nativeRoot, x))
+                .Where(x => x != null)
+                .ToArray();
+#pragma warning restore CS8619 // Nullability of reference types in value doesn't match target type.
 
         public IEnumerable<IRoomObject> LookAtArea(Position min, Position max)
-        {
-            throw new NotImplementedException();
-        }
+#pragma warning disable CS8619 // Nullability of reference types in value doesn't match target type.
+            => Native_LookAtArea(ProxyObject, min.Y, min.X, max.Y, max.X, true)
+                .Select(x => NativeRoomObjectUtils.CreateWrapperForRoomObject<IRoomObject>(nativeRoot, x))
+                .Where(x => x != null)
+                .ToArray();
+#pragma warning restore CS8619 // Nullability of reference types in value doesn't match target type.
 
         public IEnumerable<T> LookForAt<T>(Position position) where T : class, IRoomObject
         {
-            throw new NotImplementedException();
+            var findConstant = NativeRoomObjectPrototypes<T>.FindConstant;
+            if (findConstant == null) { return Enumerable.Empty<T>(); }
+            return Native_LookForAt(ProxyObject, (int)findConstant, position.X, position.Y)
+                .Select(x => NativeRoomObjectUtils.CreateWrapperForRoomObject<IRoomObject>(nativeRoot, x))
+                .Where(x => x != null)
+                .Cast<T>()
+                .ToArray();
         }
 
         public IEnumerable<T> LookForAtArea<T>(Position min, Position max) where T : class, IRoomObject
         {
-            throw new NotImplementedException();
+            var findConstant = NativeRoomObjectPrototypes<T>.FindConstant;
+            if (findConstant == null) { return Enumerable.Empty<T>(); }
+            return Native_LookForAtArea(ProxyObject, (int)findConstant, min.Y, min.X, max.Y, max.X, true)
+                .Select(x => NativeRoomObjectUtils.CreateWrapperForRoomObject<IRoomObject>(nativeRoot, x))
+                .Where(x => x != null)
+                .Cast<T>()
+                .ToArray();
         }
 
         public override string ToString()

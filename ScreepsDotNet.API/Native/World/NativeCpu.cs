@@ -15,9 +15,24 @@ namespace ScreepsDotNet.Native.World
         [return: JSMarshalAsAttribute<JSType.Object>]
         internal static partial JSObject Native_GetHeapStatistics();
 
-        [JSImport("get", "object")]
-        [return: JSMarshalAsAttribute<JSType.Function<JSType.Number>>]
-        internal static partial Func<double> Native_Get_GetUsed([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.String>] string key);
+        [JSImport("cpu.getUsed", "game")]
+        [return: JSMarshalAsAttribute<JSType.Number>]
+        internal static partial double Native_GetUsed();
+
+        [JSImport("cpu.halt", "game")]
+        internal static partial void Native_Halt();
+
+        [JSImport("cpu.setShardLimits", "game")]
+        [return: JSMarshalAsAttribute<JSType.Number>]
+        internal static partial int Native_SetShardLimits([JSMarshalAs<JSType.Object>] JSObject newShardLimits);
+
+        [JSImport("cpu.unlock", "game")]
+        [return: JSMarshalAsAttribute<JSType.Number>]
+        internal static partial int Native_Unlock();
+
+        [JSImport("cpu.generatePixel", "game")]
+        [return: JSMarshalAsAttribute<JSType.Number>]
+        internal static partial int Native_GeneratePixel();
 
         #endregion
 
@@ -29,11 +44,8 @@ namespace ScreepsDotNet.Native.World
             set
             {
                 proxyObject = value;
-                getUsedCache = null;
             }
         }
-
-        private Func<double>? getUsedCache;
 
         public double Limit => ProxyObject.GetPropertyAsDouble("limit");
 
@@ -72,31 +84,25 @@ namespace ScreepsDotNet.Native.World
         }
 
         public double GetUsed()
-            => (getUsedCache ??= Native_Get_GetUsed(ProxyObject, "getUsed"))();
+            => Native_GetUsed();
 
         public void Halt()
-        {
-            throw new NotImplementedException();
-        }
+            => Native_Halt();
 
         public CpuSetShardLimitsResult SetShardLimits(IReadOnlyDictionary<string, double> shardLimits)
         {
-            throw new NotImplementedException();
+            using var obj = NativeRoomObjectUtils.CreateObject(null);
+            foreach (var pair in shardLimits)
+            {
+                obj.SetProperty(pair.Key, pair.Value);
+            }
+            return (CpuSetShardLimitsResult)Native_SetShardLimits(obj);
         }
 
         public CpuUnlockResult Unlock()
-        {
-            throw new NotImplementedException();
-        }
+            => (CpuUnlockResult)Native_Unlock();
 
         public CpuGeneratePixelResult GeneratePixel()
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Notify(string message, int groupInterval)
-        {
-            throw new NotImplementedException();
-        }
+            => (CpuGeneratePixelResult)Native_GeneratePixel();
     }
 }

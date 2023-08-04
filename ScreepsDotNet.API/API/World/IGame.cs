@@ -25,6 +25,16 @@ namespace ScreepsDotNet.API.World
         ICpu Cpu { get; }
 
         /// <summary>
+        /// A global object representing world map. Use it to navigate between rooms.
+        /// </summary>
+        IMap Map { get; }
+
+        /// <summary>
+        /// A global object providing path finding functionality.
+        /// </summary>
+        IPathFinder PathFinder { get; }
+
+        /// <summary>
         /// A hash containing all your creeps with creep names as hash keys.
         /// </summary>
         IReadOnlyDictionary<string, ICreep> Creeps { get; }
@@ -67,5 +77,14 @@ namespace ScreepsDotNet.API.World
         /// <param name="id"></param>
         /// <returns></returns>
         T? GetObjectById<T>(string id) where T : class, IRoomObject;
+
+        /// <summary>
+        /// Send a custom message at your profile email.
+        /// This way, you can set up notifications to yourself on any occasion within the game.
+        /// You can schedule up to 20 notifications during one game tick. Not available in the Simulation Room.
+        /// </summary>
+        /// <param name="message">Custom text which will be sent in the message. Maximum length is 1000 characters.</param>
+        /// <param name="groupInterval">If set to 0 (default), the notification will be scheduled immediately. Otherwise, it will be grouped with other notifications and mailed out later using the specified time in minutes.</param>
+        void Notify(string message, int groupInterval = 0);
     }
 }

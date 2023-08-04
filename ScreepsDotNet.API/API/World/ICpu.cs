@@ -120,14 +120,5 @@ namespace ScreepsDotNet.API.World
         /// </summary>
         /// <returns></returns>
         CpuGeneratePixelResult GeneratePixel();
-
-        /// <summary>
-        /// Send a custom message at your profile email.
-        /// This way, you can set up notifications to yourself on any occasion within the game.
-        /// You can schedule up to 20 notifications during one game tick. Not available in the Simulation Room.
-        /// </summary>
-        /// <param name="message">Custom text which will be sent in the message. Maximum length is 1000 characters.</param>
-        /// <param name="groupInterval">If set to 0 (default), the notification will be scheduled immediately. Otherwise, it will be grouped with other notifications and mailed out later using the specified time in minutes.</param>
-        void Notify(string message, int groupInterval);
     }
 }

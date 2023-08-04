@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices.JavaScript;
 using ScreepsDotNet.API;
 using ScreepsDotNet.API.World;
@@ -6,7 +7,7 @@ using ScreepsDotNet.API.World;
 namespace ScreepsDotNet.Native.World
 {
     [System.Runtime.Versioning.SupportedOSPlatform("browser")]
-    internal partial class NativeFlag : NativeRoomObject, IFlag
+    internal partial class NativeFlag : NativeRoomObject, IFlag, IEquatable<NativeFlag?>
     {
         #region Imports
 
@@ -68,5 +69,15 @@ namespace ScreepsDotNet.Native.World
             using var posJs = position.ToJS();
             return (FlagSetPositionResult)Native_SetPosition(ProxyObject, posJs);
         }
+
+        public override bool Equals(object? obj) => Equals(obj as NativeFlag);
+
+        public bool Equals(NativeFlag? other) => other is not null && name == other.name;
+
+        public override int GetHashCode() => HashCode.Combine(name);
+
+        public static bool operator ==(NativeFlag? left, NativeFlag? right) => EqualityComparer<NativeFlag>.Default.Equals(left, right);
+
+        public static bool operator !=(NativeFlag? left, NativeFlag? right) => !(left == right);
     }
 }

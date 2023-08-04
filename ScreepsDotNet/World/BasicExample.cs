@@ -93,6 +93,7 @@ namespace ScreepsDotNet.World
                 ++targetMinerCount;
             }
             Console.WriteLine($"{this}: INIT success (tracking {spawns.Count} spawns and {sources.Count} sources)");
+            Console.WriteLine($"{this}: room exits = {game.Map.DescribeExits(room.Name)}");
         }
 
         public void Tick()

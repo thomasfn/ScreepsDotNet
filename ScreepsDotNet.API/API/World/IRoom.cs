@@ -153,7 +153,7 @@ namespace ScreepsDotNet.API.World
         /// <summary>
         /// The Storage structure of this room, if present, otherwise undefined.
         /// </summary>
-        object? Storage { get; }
+        IStructureStorage? Storage { get; }
 
         /// <summary>
         /// The Terminal structure of this room, if present, otherwise undefined.
@@ -238,7 +238,7 @@ namespace ScreepsDotNet.API.World
         /// Get a Room.Terrain object which provides fast access to static terrain data. This method works for any room in the world even if you have no access to it.
         /// </summary>
         /// <returns></returns>
-        // IRoomTerrain GetTerrain();
+        IRoomTerrain GetTerrain();
 
         /// <summary>
         /// Get the list of objects at the specified room position.
