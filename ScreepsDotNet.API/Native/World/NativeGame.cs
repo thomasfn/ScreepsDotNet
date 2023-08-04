@@ -19,6 +19,8 @@ namespace ScreepsDotNet.Native.World
 
         JSObject SpawnsObj { get; }
 
+        JSObject CreepsObj { get; }
+
         void BeginTracking(INativeObject nativeObject);
 
         void EndTracking(INativeObject nativeObject);
@@ -59,6 +61,8 @@ namespace ScreepsDotNet.Native.World
 
         public JSObject SpawnsObj { get; private set; }
 
+        public JSObject CreepsObj { get; private set; }
+
         public ICpu Cpu => nativeCpu;
 
         public IEnumerable<IRoom> Rooms
@@ -85,6 +89,7 @@ namespace ScreepsDotNet.Native.World
             getObjectByIdFunc = Native_Get_GetObjectByIdFunc(ProxyObject, "getObjectById");
             RoomsObj = ProxyObject.GetPropertyAsJSObject("rooms")!;
             SpawnsObj = ProxyObject.GetPropertyAsJSObject("spawns")!;
+            CreepsObj = ProxyObject.GetPropertyAsJSObject("creeps")!;
             nativeCpu = new NativeCpu(ProxyObject.GetPropertyAsJSObject("cpu")!);
         }
 
@@ -97,6 +102,8 @@ namespace ScreepsDotNet.Native.World
             RoomsObj = ProxyObject.GetPropertyAsJSObject("rooms")!;
             SpawnsObj.Dispose();
             SpawnsObj = ProxyObject.GetPropertyAsJSObject("spawns")!;
+            CreepsObj.Dispose();
+            CreepsObj = ProxyObject.GetPropertyAsJSObject("creeps")!;
             nativeCpu.ProxyObject.Dispose();
             nativeCpu.ProxyObject = ProxyObject.GetPropertyAsJSObject("cpu")!;
             int pruneCount = 0;

@@ -23,7 +23,7 @@ namespace ScreepsDotNet.Native.World
 
         public bool Exists => proxyObjectOrNull != null;
 
-        public object? Controller => throw new NotImplementedException();
+        public IStructureController? Controller => NativeRoomObjectUtils.CreateWrapperForRoomObject<IStructureController>(nativeRoot, ProxyObject.GetPropertyAsJSObject("controller"));
 
         public int EnergyAvailable => ProxyObject.GetPropertyAsInt32("energyAvailable");
 

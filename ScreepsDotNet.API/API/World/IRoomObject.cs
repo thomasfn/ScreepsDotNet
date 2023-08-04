@@ -55,6 +55,9 @@ namespace ScreepsDotNet.API.World
         public static bool operator ==(RoomPosition left, RoomPosition right) => left.Equals(right);
 
         public static bool operator !=(RoomPosition left, RoomPosition right) => !(left == right);
+
+        public override string ToString()
+            => $"[{Position.X},{Position.Y}:{RoomName}]";
     }
 
     /// <summary>

@@ -102,6 +102,10 @@ namespace ScreepsDotNet.Native.World
         [return: JSMarshalAsAttribute<JSType.Object>]
         internal static partial JSObject GetPrototypesObject();
 
+        [JSImport("createRoomPosition", "game")]
+        [return: JSMarshalAsAttribute<JSType.Object>]
+        internal static partial JSObject CreateRoomPosition([JSMarshalAs<JSType.Number>] int x, [JSMarshalAs<JSType.Number>] int y, [JSMarshalAs<JSType.String>] string roomName);
+
         [JSImport("getConstructorOf", "object")]
         [return: JSMarshalAsAttribute<JSType.Object>]
         internal static partial JSObject GetConstructorOf([JSMarshalAs<JSType.Object>] JSObject obj);
@@ -184,8 +188,11 @@ namespace ScreepsDotNet.Native.World
             => prototypeNameMappings[type];
 
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureSpawn))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureController))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeOwnedStructure))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructure))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeSource))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeCreep))]
         static NativeRoomObjectUtils()
         {
             prototypesObject = GetPrototypesObject();
@@ -198,6 +205,7 @@ namespace ScreepsDotNet.Native.World
                 RegisterPrototypeTypeMapping<IOwnedStructure, NativeOwnedStructure>("OwnedStructure", FindConstant.Structures);
                 RegisterPrototypeTypeMapping<IStructure, NativeStructure>("Structure", FindConstant.Structures);
                 RegisterPrototypeTypeMapping<ISource, NativeSource>("Source", FindConstant.Sources);
+                RegisterPrototypeTypeMapping<ICreep, NativeCreep>("Creep", FindConstant.Creeps);
             }
             catch (Exception ex)
             {
@@ -213,12 +221,6 @@ namespace ScreepsDotNet.Native.World
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
             => (roomObject as NativeRoomObject).ProxyObject;
 #pragma warning restore CS8602 // Dereference of a possibly null reference.
-
-        public static RoomPosition ToRoomPosition(this JSObject obj)
-            => new(obj.ToPosition(), obj.GetPropertyAsString("roomName")!);
-
-        public static Position ToPosition(this JSObject obj)
-            => new(obj.GetPropertyAsInt32("x"), obj.GetPropertyAsInt32("y"));
 
         public static DateTime ToDateTime(this JSObject obj)
             => DateTime.UnixEpoch + TimeSpan.FromSeconds(NativeRoomObjectUtils.InterpretDateTime(obj));

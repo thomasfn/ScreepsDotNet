@@ -8,6 +8,8 @@ using ScreepsDotNet.API.World;
 
 namespace ScreepsDotNet.Native.World
 {
+    using BodyType = BodyType<BodyPartType>;
+
     [System.Runtime.Versioning.SupportedOSPlatform("browser")]
     internal partial class NativeSpawning : ISpawning
     {
@@ -138,6 +140,9 @@ namespace ScreepsDotNet.Native.World
                 return (SpawnCreepResult)Native_SpawnCreep(ProxyObject, body.Select(x => x.ToJS()).ToArray(), name);
             }
         }
+
+        public SpawnCreepResult SpawnCreep(BodyType bodyType, string name, SpawnCreepOptions? opts = null)
+            => SpawnCreep(bodyType.AsBodyPartList, name, opts);
 
         public RecycleCreepResult RecycleCreep(ICreep target)
             => (RecycleCreepResult)Native_RecycleCreep(ProxyObject, target.ToJS());

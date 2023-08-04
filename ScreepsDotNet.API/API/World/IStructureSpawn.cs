@@ -3,6 +3,8 @@ using System.Collections.Generic;
 
 namespace ScreepsDotNet.API.World
 {
+    using BodyType = BodyType<BodyPartType>;
+
     public enum SpawningCancelResult
     {
         /// <summary>
@@ -240,6 +242,15 @@ namespace ScreepsDotNet.API.World
         /// <param name="opts"></param>
         /// <returns></returns>
         SpawnCreepResult SpawnCreep(IEnumerable<BodyPartType> body, string name, SpawnCreepOptions? opts = null);
+
+        /// <summary>
+        /// Start the creep spawning process. The required energy amount can be withdrawn from all spawns and extensions in the room.
+        /// </summary>
+        /// <param name="bodyType"></param>
+        /// <param name="name"></param>
+        /// <param name="opts"></param>
+        /// <returns></returns>
+        SpawnCreepResult SpawnCreep(BodyType bodyType, string name, SpawnCreepOptions? opts = null);
 
         /// <summary>
         /// Kill the creep and drop up to 100% of resources spent on its spawning and boosting depending on remaining life time.

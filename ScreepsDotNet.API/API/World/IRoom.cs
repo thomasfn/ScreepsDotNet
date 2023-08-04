@@ -128,7 +128,7 @@ namespace ScreepsDotNet.API.World
         /// <summary>
         /// The Controller structure of this room, if present, otherwise undefined.
         /// </summary>
-        object? Controller { get; }
+        IStructureController? Controller { get; }
 
         /// <summary>
         /// Total amount of energy available in all spawns and extensions in the room.

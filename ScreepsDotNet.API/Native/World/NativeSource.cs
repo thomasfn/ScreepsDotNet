@@ -29,5 +29,8 @@ namespace ScreepsDotNet.Native.World
             proxyObjectOrNull = nativeRoot.GetObjectById(id);
             ClearNativeCache();
         }
+
+        public override string ToString()
+            => $"Source[{Position}]";
     }
 }

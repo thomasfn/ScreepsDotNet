@@ -38,6 +38,7 @@ function initDotNet() {
         OwnedStructure,
         StructureSpawn,
         StructureController,
+        Source,
     };
     dotNet.setModuleImports('game', {
         ...Game,
