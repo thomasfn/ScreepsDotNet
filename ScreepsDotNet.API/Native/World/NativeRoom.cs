@@ -37,11 +37,15 @@ namespace ScreepsDotNet.Native.World
 
         public object Visual => throw new NotImplementedException();
 
-        public NativeRoom(INativeRoot nativeRoot, JSObject proxyObject, string? knownName = null)
+        public NativeRoom(INativeRoot nativeRoot, JSObject proxyObject, string knownName)
             : base(nativeRoot, proxyObject)
         {
             Name = knownName ?? proxyObject.GetPropertyAsString("name")!;
         }
+
+        public NativeRoom(INativeRoot nativeRoot, JSObject proxyObject)
+            : this(nativeRoot, proxyObject, proxyObject.GetPropertyAsString("name")!)
+        { }
 
         public override void InvalidateProxyObject()
         {

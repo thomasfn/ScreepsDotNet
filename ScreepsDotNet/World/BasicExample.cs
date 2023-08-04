@@ -22,6 +22,7 @@ namespace ScreepsDotNet.World
 
         public void Loop()
         {
+            // Check for any rooms that are no longer visible and remove their manager
             var trackedRooms = roomManagers.Keys.ToArray();
             foreach (var room in trackedRooms)
             {
@@ -29,7 +30,9 @@ namespace ScreepsDotNet.World
                 Console.WriteLine($"Removing room manager for {room} as it is no longer visible");
                 roomManagers.Remove(room);
             }
-            foreach (var room in game.Rooms)
+
+            // Iterate over all visible rooms, create their manager if needed, and tick them
+            foreach (var room in game.Rooms.Values)
             {
                 if (!room.Controller?.My ?? false) { continue; }
                 if (!roomManagers.TryGetValue(room, out var roomManager))
@@ -49,6 +52,7 @@ namespace ScreepsDotNet.World
     {
         private readonly IGame game;
         private readonly IRoom room;
+        private readonly IStructureController roomController;
 
         private readonly ISet<IStructureSpawn> spawns = new HashSet<IStructureSpawn>();
         private readonly ISet<ISource> sources = new HashSet<ISource>();
@@ -68,10 +72,14 @@ namespace ScreepsDotNet.World
         {
             this.game = game;
             this.room = room;
+            var roomController = room.Controller;
+            if (roomController == null) { throw new InvalidOperationException($"Room {room} has no controller!"); }
+            this.roomController = roomController;
         }
 
         public void Init()
         {
+            // Cache all spawns and sources
             spawns.Clear();
             foreach (var spawn in room.Find<IStructureSpawn>())
             {
@@ -89,23 +97,30 @@ namespace ScreepsDotNet.World
 
         public void Tick()
         {
+            // Check for any creeps we're tracking that no longer exist
             foreach (var creep in allCreeps.ToArray())
             {
                 if (creep.Exists) { continue; }
                 allCreeps.Remove(creep);
                 OnCreepDied(creep);
             }
+
+            // Check the latest creep list for any new creeps
             var newCreepList = new HashSet<ICreep>(room.Find<ICreep>().Where(x => x.My));
             foreach (var creep in newCreepList)
             {
                 if (!allCreeps.Add(creep)) { continue; }
                 OnCreepSpawned(creep);
             }
+
+            // Tick all spawns
             foreach (var spawn in spawns)
             {
                 if (!spawn.Exists) { continue; }
                 TickSpawn(spawn);
             }
+
+            // Tick all tracked creeps
             foreach (var creep in minerCreeps)
             {
                 TickMiner(creep);
@@ -118,6 +133,7 @@ namespace ScreepsDotNet.World
 
         private void OnCreepSpawned(ICreep creep)
         {
+            // Check the body type and assign the creep a role by putting it in the right tracking list
             if (creep.BodyType == workerBodyType)
             {
                 if (minerCreeps.Count < targetMinerCount)
@@ -138,6 +154,7 @@ namespace ScreepsDotNet.World
 
         private void OnCreepDied(ICreep creep)
         {
+            // Check the body type and remove it from all tracking lists
             if (creep.BodyType == workerBodyType)
             {
                 minerCreeps.Remove(creep);
@@ -148,6 +165,7 @@ namespace ScreepsDotNet.World
 
         private void TickSpawn(IStructureSpawn spawn)
         {
+            // Check if we're able to spawn something, and spawn until we've filled our target role counts
             if (spawn.Spawning != null) { return; }
             if (minerCreeps.Count < targetMinerCount || upgraderCreeps.Count < targetUpgraderCount)
             {
@@ -162,6 +180,7 @@ namespace ScreepsDotNet.World
 
         private void TickMiner(ICreep creep)
         {
+            // Check energy storage
             if (creep.Store.GetFreeCapacity(ResourceType.Energy) > 0)
             {
                 // There is space for more energy
@@ -198,19 +217,18 @@ namespace ScreepsDotNet.World
 
         private void TickUpgrader(ICreep creep)
         {
-            var controller = room.Controller;
-            if (controller == null) { return; }
+            // Check energy storage
             if (creep.Store[ResourceType.Energy] > 0)
             {
                 // There is energy to drop off
-                var upgradeResult = creep.UpgradeController(controller);
+                var upgradeResult = creep.UpgradeController(roomController);
                 if (upgradeResult == CreepUpgradeControllerResult.NotInRange)
                 {
-                    creep.MoveTo(controller.Position);
+                    creep.MoveTo(roomController.Position);
                 }
                 else if (upgradeResult != CreepUpgradeControllerResult.Ok)
                 {
-                    Console.WriteLine($"{this}: {creep} unexpected result when upgrading {controller} ({upgradeResult})");
+                    Console.WriteLine($"{this}: {creep} unexpected result when upgrading {roomController} ({upgradeResult})");
                 }
             }
             else

@@ -31,19 +31,26 @@ function initDotNet() {
         get: (obj, key) => obj[key],
     });
     const prototypes = {
-        Room,
-        RoomObject,
-        Creep,
-        Structure,
-        OwnedStructure,
         StructureSpawn,
+        StructureContainer,
         StructureController,
+        StructureExtension,
+        StructureRampart,
+        OwnedStructure,
+        StructureRoad,
+        StructureWall,
+        Structure,
         Source,
+        Creep,
+        Flag,
+        RoomObject,
+        Room,
     };
     dotNet.setModuleImports('game', {
         ...Game,
         getGameObj: () => Game,
         getPrototypes: () => prototypes,
+        createRoomPosition: (x, y, roomName) => new RoomPosition(x, y, roomName),
     });
     dotNet.setModuleImports('game/prototypes/wrapped', {
         ...buildWrappedPrototypes(prototypes),

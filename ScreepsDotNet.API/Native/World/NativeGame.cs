@@ -15,11 +15,15 @@ namespace ScreepsDotNet.Native.World
     {
         JSObject GameObj { get; }
 
+        JSObject CreepsObj { get; }
+
+        JSObject FlagsObj { get; }
+
         JSObject RoomsObj { get; }
 
         JSObject SpawnsObj { get; }
 
-        JSObject CreepsObj { get; }
+        JSObject StructuresObj { get; }
 
         void BeginTracking(INativeObject nativeObject);
 
@@ -55,42 +59,58 @@ namespace ScreepsDotNet.Native.World
 
         private Func<string, JSObject> getObjectByIdFunc;
 
+        private readonly NativeObjectLazyLookup<ICreep> creepLazyLookup;
+        private readonly NativeObjectLazyLookup<IFlag> flagLazyLookup;
+        private readonly NativeObjectLazyLookup<IRoom> roomLazyLookup;
+        private readonly NativeObjectLazyLookup<IStructureSpawn> spawnLazyLookup;
+        private readonly NativeObjectLazyLookup<IStructure> structureLazyLookup;
+
         public JSObject GameObj => ProxyObject;
+
+        public JSObject CreepsObj { get; private set; }
+
+        public JSObject FlagsObj { get; private set; }
 
         public JSObject RoomsObj { get; private set; }
 
         public JSObject SpawnsObj { get; private set; }
 
-        public JSObject CreepsObj { get; private set; }
+        public JSObject StructuresObj { get; private set; }
 
         public ICpu Cpu => nativeCpu;
 
-        public IEnumerable<IRoom> Rooms
-        {
-            get
-            {
-                var result = new List<IRoom>();
-                var keys = Native_GetKeysOf(RoomsObj);
-                foreach (var roomName in keys)
-                {
-                    result.Add(new NativeRoom(this, RoomsObj.GetPropertyAsJSObject(roomName)!, roomName));
-                }
-                return result;
-            }
-        }
+        public IReadOnlyDictionary<string, ICreep> Creeps => creepLazyLookup;
+
+        public IReadOnlyDictionary<string, IFlag> Flags => flagLazyLookup;
+
+        public IReadOnlyDictionary<string, IRoom> Rooms => roomLazyLookup;
+
+        public IReadOnlyDictionary<string, IStructureSpawn> Spawns => spawnLazyLookup;
+
+        public IReadOnlyDictionary<string, IStructure> Structures => structureLazyLookup;
 
         public long Time => ProxyObject.GetPropertyAsInt32("time");
-
-        
 
         public NativeGame()
         {
             ProxyObject = Native_GetGameObject();
             getObjectByIdFunc = Native_Get_GetObjectByIdFunc(ProxyObject, "getObjectById");
+            CreepsObj = ProxyObject.GetPropertyAsJSObject("creeps")!;
+            FlagsObj = ProxyObject.GetPropertyAsJSObject("flags")!;
             RoomsObj = ProxyObject.GetPropertyAsJSObject("rooms")!;
             SpawnsObj = ProxyObject.GetPropertyAsJSObject("spawns")!;
-            CreepsObj = ProxyObject.GetPropertyAsJSObject("creeps")!;
+            StructuresObj = ProxyObject.GetPropertyAsJSObject("structures")!;
             nativeCpu = new NativeCpu(ProxyObject.GetPropertyAsJSObject("cpu")!);
+            creepLazyLookup = new NativeObjectLazyLookup<ICreep>(() => CreepsObj, x => x.Name, (name, proxyObject) => new NativeCreep(this, proxyObject, name));
+            flagLazyLookup = new NativeObjectLazyLookup<IFlag>(() => FlagsObj, x => x.Name, (name, proxyObject) => new NativeFlag(this, proxyObject, name));
+            roomLazyLookup = new NativeObjectLazyLookup<IRoom>(() => RoomsObj, x => x.Name, (name, proxyObject) => new NativeRoom(this, proxyObject, name));
+            spawnLazyLookup = new NativeObjectLazyLookup<IStructureSpawn>(() => SpawnsObj, x => x.Name, (name, proxyObject) => new NativeStructureSpawn(this, proxyObject, name));
+            structureLazyLookup = new NativeObjectLazyLookup<IStructure>(() => StructuresObj, x => x.Id, (name, proxyObject) => NativeRoomObjectUtils.CreateWrapperForRoomObject<IStructure>(this, proxyObject));
+            trackedNativeObjects.Add(new WeakReference<INativeObject>(creepLazyLookup));
+            trackedNativeObjects.Add(new WeakReference<INativeObject>(flagLazyLookup));
+            trackedNativeObjects.Add(new WeakReference<INativeObject>(roomLazyLookup));
+            trackedNativeObjects.Add(new WeakReference<INativeObject>(spawnLazyLookup));
+            trackedNativeObjects.Add(new WeakReference<INativeObject>(structureLazyLookup));
         }
 
         public void Tick()
@@ -98,12 +118,16 @@ namespace ScreepsDotNet.Native.World
             ProxyObject.Dispose();
             ProxyObject = Native_GetGameObject();
             getObjectByIdFunc = Native_Get_GetObjectByIdFunc(ProxyObject, "getObjectById");
+            CreepsObj.Dispose();
+            CreepsObj = ProxyObject.GetPropertyAsJSObject("creeps")!;
+            FlagsObj.Dispose();
+            FlagsObj = ProxyObject.GetPropertyAsJSObject("flags")!;
             RoomsObj.Dispose();
             RoomsObj = ProxyObject.GetPropertyAsJSObject("rooms")!;
             SpawnsObj.Dispose();
             SpawnsObj = ProxyObject.GetPropertyAsJSObject("spawns")!;
-            CreepsObj.Dispose();
-            CreepsObj = ProxyObject.GetPropertyAsJSObject("creeps")!;
+            StructuresObj.Dispose();
+            StructuresObj = ProxyObject.GetPropertyAsJSObject("structures")!;
             nativeCpu.ProxyObject.Dispose();
             nativeCpu.ProxyObject = ProxyObject.GetPropertyAsJSObject("cpu")!;
             int pruneCount = 0;

@@ -25,9 +25,29 @@ namespace ScreepsDotNet.API.World
         ICpu Cpu { get; }
 
         /// <summary>
+        /// A hash containing all your creeps with creep names as hash keys.
+        /// </summary>
+        IReadOnlyDictionary<string, ICreep> Creeps { get; }
+
+        /// <summary>
+        /// A hash containing all your flags with flag names as hash keys.
+        /// </summary>
+        IReadOnlyDictionary<string, IFlag> Flags { get; }
+
+        /// <summary>
         /// A hash containing all the rooms available to you with room names as hash keys. A room is visible if you have a creep or an owned structure in it.
         /// </summary>
-        IEnumerable<IRoom> Rooms { get; }
+        IReadOnlyDictionary<string, IRoom> Rooms { get; }
+
+        /// <summary>
+        /// A hash containing all your spawns with spawn names as hash keys.
+        /// </summary>
+        IReadOnlyDictionary<string, IStructureSpawn> Spawns { get; }
+
+        /// <summary>
+        /// A hash containing all your structures with structure id as hash keys.
+        /// </summary>
+        IReadOnlyDictionary<string, IStructure> Structures { get; }
 
         /// <summary>
         /// System game tick counter. It is automatically incremented on every tick.

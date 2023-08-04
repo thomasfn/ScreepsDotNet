@@ -233,11 +233,15 @@ namespace ScreepsDotNet.Native.World
 
         public int TicksToLive => ProxyObject.GetPropertyAsInt32("ticksToLive");
 
-        public NativeCreep(INativeRoot nativeRoot, JSObject proxyObject)
+        public NativeCreep(INativeRoot nativeRoot, JSObject proxyObject, string knownName)
             : base(nativeRoot, proxyObject)
         {
-            name = proxyObject.GetPropertyAsString("name")!;
+            name = knownName;
         }
+
+        public NativeCreep(INativeRoot nativeRoot, JSObject proxyObject)
+            : this(nativeRoot, proxyObject, proxyObject.GetPropertyAsString("name")!)
+        { }
 
         public override void InvalidateProxyObject()
         {

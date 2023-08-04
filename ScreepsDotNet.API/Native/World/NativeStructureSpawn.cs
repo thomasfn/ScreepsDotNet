@@ -116,11 +116,15 @@ namespace ScreepsDotNet.Native.World
 
         public IStore Store => new NativeStore(ProxyObject.GetPropertyAsJSObject("store"));
 
-        public NativeStructureSpawn(INativeRoot nativeRoot, JSObject proxyObject)
+        public NativeStructureSpawn(INativeRoot nativeRoot, JSObject proxyObject, string knownName)
             : base(nativeRoot, proxyObject)
         {
-            name = proxyObject.GetPropertyAsString("name")!;
+            name = knownName;
         }
+
+        public NativeStructureSpawn(INativeRoot nativeRoot, JSObject proxyObject)
+            : this(nativeRoot, proxyObject, proxyObject.GetPropertyAsString("name")!)
+        { }
 
         public override void InvalidateProxyObject()
         {
