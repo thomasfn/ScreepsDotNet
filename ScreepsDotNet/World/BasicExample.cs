@@ -5,8 +5,6 @@ using System.Linq;
 using ScreepsDotNet.API;
 using ScreepsDotNet.API.World;
 
-using ScreepsDotNet.SpawnAndSwamp;
-
 namespace ScreepsDotNet.World
 {
     public class BasicExample : ITutorialScript

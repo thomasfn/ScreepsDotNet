@@ -5,6 +5,7 @@ using System.Linq;
 
 using ScreepsDotNet.API;
 using ScreepsDotNet.API.World;
+using System.Runtime.InteropServices;
 
 namespace ScreepsDotNet.Native.World
 {
@@ -194,10 +195,11 @@ namespace ScreepsDotNet.Native.World
 
         #endregion
 
-        private readonly string name;
+        private readonly string name, id;
 
         private BodyType<BodyPartType>? bodyTypeCache;
         private OwnerInfo? ownerInfoCache;
+        private IMemoryObject? memoryCache;
 
         private BodyPart<BodyPartType>[]? bodyCache;
         private NativeStore? storeCache;
@@ -217,7 +219,7 @@ namespace ScreepsDotNet.Native.World
 
         public string Id => ProxyObject.GetPropertyAsString("id")!;
 
-        public object Memory => throw new NotImplementedException();
+        public IMemoryObject Memory => memoryCache ??= new NativeMemoryObject(ProxyObject.GetPropertyAsJSObject("memory")!);
 
         public bool My => ProxyObject.GetPropertyAsBoolean("my");
 
@@ -233,19 +235,24 @@ namespace ScreepsDotNet.Native.World
 
         public int TicksToLive => ProxyObject.GetPropertyAsInt32("ticksToLive");
 
-        public NativeCreep(INativeRoot nativeRoot, JSObject proxyObject, string knownName)
+        public NativeCreep(INativeRoot nativeRoot, JSObject proxyObject, string knownName, string knownId)
             : base(nativeRoot, proxyObject)
         {
             name = knownName;
+            id = knownId;
         }
 
+        public NativeCreep(INativeRoot nativeRoot, JSObject proxyObject, string knownName)
+            : this(nativeRoot, proxyObject, knownName, proxyObject.GetPropertyAsString("id")!)
+        { }
+
         public NativeCreep(INativeRoot nativeRoot, JSObject proxyObject)
-            : this(nativeRoot, proxyObject, proxyObject.GetPropertyAsString("name")!)
+            : this(nativeRoot, proxyObject, proxyObject.GetPropertyAsString("name")!, proxyObject.GetPropertyAsString("id")!)
         { }
 
         public override void InvalidateProxyObject()
         {
-            proxyObjectOrNull = nativeRoot.CreepsObj.GetPropertyAsJSObject(name);
+            proxyObjectOrNull = nativeRoot.GetObjectById(id);
             ClearNativeCache();
         }
 
@@ -267,7 +274,8 @@ namespace ScreepsDotNet.Native.World
         public CreepAttackControllerResult AttackController(IStructureController target)
             => (CreepAttackControllerResult)Native_AttackController(ProxyObject, target.ToJS());
 
-        // CreepBuildResult Build(IConstructionSite target);
+        public CreepBuildResult Build(IConstructionSite target)
+            => (CreepBuildResult)Native_Build(ProxyObject, target.ToJS());
 
         public void CancelOrder(CreepOrderType orderType)
             => Native_CancelOrder(ProxyObject, orderType.ToJS());
@@ -325,7 +333,8 @@ namespace ScreepsDotNet.Native.World
         public CreepNotifyWhenAttackedResult NotifyWhenAttacked(bool enabled)
             => (CreepNotifyWhenAttackedResult)Native_NotifyWhenAttacked(ProxyObject, enabled);
 
-        // CreepPickupResult Pickup(IResource target);
+        public CreepPickupResult Pickup(IResource target)
+            => (CreepPickupResult)Native_Pickup(ProxyObject, target.ToJS());
 
         public CreepPullResult Pull(ICreep target)
             => (CreepPullResult)Native_Pull(ProxyObject, target.ToJS());

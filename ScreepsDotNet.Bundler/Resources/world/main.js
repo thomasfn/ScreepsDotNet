@@ -45,6 +45,7 @@ function initDotNet() {
         Creep,
         Flag,
         Resource,
+        ConstructionSite,
         RoomObject,
         Room,
     };

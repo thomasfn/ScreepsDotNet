@@ -14,8 +14,8 @@ namespace ScreepsDotNet.Native.World
         #region Imports
 
         [JSImport("Room.createConstructionSite", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Object>]
-        internal static partial JSObject Native_CreateConstructionSite([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Number>] int x, [JSMarshalAs<JSType.Number>] int y, [JSMarshalAs<JSType.String>] string structureType, [JSMarshalAs<JSType.String>] string? name);
+        [return: JSMarshalAsAttribute<JSType.Number>]
+        internal static partial int Native_CreateConstructionSite([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Number>] int x, [JSMarshalAs<JSType.Number>] int y, [JSMarshalAs<JSType.String>] string structureType, [JSMarshalAs<JSType.String>] string? name);
 
         [JSImport("Room.createFlag", "game/prototypes/wrapped")]
         [return: JSMarshalAsAttribute<JSType.Object>]
@@ -60,6 +60,7 @@ namespace ScreepsDotNet.Native.World
         #endregion
 
         private NativeRoomTerrain? roomTerrainCache;
+        private IMemoryObject? memoryCache;
 
         public string Name { get; private set; }
 
@@ -71,7 +72,7 @@ namespace ScreepsDotNet.Native.World
 
         public int EnergyCapacityAvailable => ProxyObject.GetPropertyAsInt32("energyCapacityAvailable");
 
-        public object Memory => throw new NotImplementedException();
+        public IMemoryObject Memory => memoryCache ??= new NativeMemoryObject(ProxyObject.GetPropertyAsJSObject("memory")!);
 
         public IStructureStorage? Storage => NativeRoomObjectUtils.CreateWrapperForRoomObject<IStructureStorage>(nativeRoot, ProxyObject.GetPropertyAsJSObject("storage"));
 
@@ -95,10 +96,11 @@ namespace ScreepsDotNet.Native.World
             ClearNativeCache();
         }
 
-        //RoomCreateConstructionSiteResult CreateConstructionSite<T>(Position position, string? name = null) where T : class, IStructure
-        //{
-        //    throw new NotImplementedException();
-        //}
+        public RoomCreateConstructionSiteResult CreateConstructionSite<T>(Position position, string? name = null) where T : class, IStructure
+        {
+            var structureType = NativeRoomObjectPrototypes<T>.StructureConstant;
+            return (RoomCreateConstructionSiteResult)Native_CreateConstructionSite(ProxyObject, position.X, position.Y, structureType ?? "", name);
+        }
 
         public RoomCreateFlagResult CreateFlag(Position position, out string newFlagName, string? name = null, Color? color = null, Color? secondaryColor = null)
         {

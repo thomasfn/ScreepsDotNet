@@ -143,7 +143,7 @@ namespace ScreepsDotNet.API.World
         /// <summary>
         /// A shorthand to Memory.rooms[room.name]. You can use it for quick access the room’s specific memory data object.
         /// </summary>
-        object Memory { get; }
+        IMemoryObject Memory { get; }
 
         /// <summary>
         /// The name of the room.

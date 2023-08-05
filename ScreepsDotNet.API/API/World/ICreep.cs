@@ -724,7 +724,7 @@ namespace ScreepsDotNet.API.World
         /// <summary>
         /// A shorthand to Memory.creeps[creep.name]. You can use it for quick access the creep’s specific memory data object.
         /// </summary>
-        object Memory { get; }
+        IMemoryObject Memory { get; }
 
         /// <summary>
         /// Whether it is your creep or foe.
@@ -807,7 +807,7 @@ namespace ScreepsDotNet.API.World
         /// </summary>
         /// <param name="target"></param>
         /// <returns></returns>
-        // CreepBuildResult Build(IConstructionSite target);
+        CreepBuildResult Build(IConstructionSite target);
 
         /// <summary>
         /// Cancel the order given during the current game tick.
@@ -940,7 +940,7 @@ namespace ScreepsDotNet.API.World
         /// </summary>
         /// <param name="target"></param>
         /// <returns></returns>
-        // CreepPickupResult Pickup(IResource target);
+        CreepPickupResult Pickup(IResource target);
 
         /// <summary>
         /// Help another creep to follow this creep.
