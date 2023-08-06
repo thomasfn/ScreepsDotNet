@@ -22,7 +22,7 @@ namespace ScreepsDotNet.Native.World
 
         public static JSObject ToJS(this SearchPathOptions searchPathOptions)
         {
-            var obj = NativeRoomObjectUtils.CreateObject(null);
+            var obj = JSUtils.CreateObject(null);
             if (searchPathOptions.RoomCallback != null) { SetRoomCallbackOnObject(obj, "roomCallback", roomName => (searchPathOptions.RoomCallback(roomName) as NativeCostMatrix)?.ProxyObject); }
             if (searchPathOptions.PlainCost != null) { obj.SetProperty("plainCost", searchPathOptions.PlainCost.Value); }
             if (searchPathOptions.SwampCost != null) { obj.SetProperty("swampCost", searchPathOptions.SwampCost.Value); }
@@ -36,13 +36,13 @@ namespace ScreepsDotNet.Native.World
 
         public static JSObject ToJS(this FindPathOptions findPathOptions)
         {
-            var obj = NativeRoomObjectUtils.CreateObject(null);
+            var obj = JSUtils.CreateObject(null);
             if (findPathOptions.IgnoreCreeps != null) { obj.SetProperty("ignoreCreeps", findPathOptions.IgnoreCreeps.Value); }
             if (findPathOptions.IgnoreDestructibleStructures != null) { obj.SetProperty("ignoreDestructibleStructures", findPathOptions.IgnoreDestructibleStructures.Value); }
             if (findPathOptions.IgnoreRoads != null) { obj.SetProperty("ignoreRoads", findPathOptions.IgnoreRoads.Value); }
             if (findPathOptions.CostCallback != null) { SetCostCallbackOnObject(obj, "costCallback", (roomName, costMatrixJs) => (findPathOptions.CostCallback(roomName, new NativeCostMatrix(costMatrixJs)) as NativeCostMatrix)?.ProxyObject); }
-            if (findPathOptions.Ignore != null) { NativeRoomObjectUtils.SetObjectArrayOnObject(obj, "ignore", findPathOptions.Ignore.Select(x => x.ToJS()).ToArray()); }
-            if (findPathOptions.Avoid != null) { NativeRoomObjectUtils.SetObjectArrayOnObject(obj, "avoid", findPathOptions.Avoid.Select(x => x.ToJS()).ToArray()); }
+            if (findPathOptions.Ignore != null) { JSUtils.SetObjectArrayOnObject(obj, "ignore", findPathOptions.Ignore.Select(x => x.ToJS()).ToArray()); }
+            if (findPathOptions.Avoid != null) { JSUtils.SetObjectArrayOnObject(obj, "avoid", findPathOptions.Avoid.Select(x => x.ToJS()).ToArray()); }
             if (findPathOptions.MaxOps != null) { obj.SetProperty("maxOps", findPathOptions.MaxOps.Value); }
             if (findPathOptions.HeuristicWeight != null) { obj.SetProperty("heuristicWeight", findPathOptions.HeuristicWeight.Value); }
             if (findPathOptions.MaxRooms != null) { obj.SetProperty("maxRooms", findPathOptions.MaxRooms.Value); }
@@ -54,7 +54,7 @@ namespace ScreepsDotNet.Native.World
 
         public static JSObject ToJS(this Goal goal)
         {
-            var obj = NativeRoomObjectUtils.CreateObject(null);
+            var obj = JSUtils.CreateObject(null);
             using var posJs = goal.Position.ToJS();
             obj.SetProperty("pos", posJs);
             obj.SetProperty("range", goal.Range);
@@ -65,7 +65,7 @@ namespace ScreepsDotNet.Native.World
             => pathStep.Position.ToJS();
 
         public static SearchPathResult ToSearchPathResult(this JSObject obj) => new(
-                NativeRoomObjectUtils.GetObjectArrayOnObject(obj, "path")!.Select(x => x.ToRoomPosition()).ToArray(),
+                JSUtils.GetObjectArrayOnObject(obj, "path")!.Select(x => x.ToRoomPosition()).ToArray(),
                 obj.GetPropertyAsInt32("ops"),
                 obj.GetPropertyAsInt32("cost"),
                 obj.GetPropertyAsBoolean("incomplete")

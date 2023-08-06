@@ -108,28 +108,6 @@ namespace ScreepsDotNet.Native.World
         [return: JSMarshalAsAttribute<JSType.Object>]
         internal static partial JSObject CreateRoomPosition([JSMarshalAs<JSType.Number>] int x, [JSMarshalAs<JSType.Number>] int y, [JSMarshalAs<JSType.String>] string roomName);
 
-        [JSImport("getConstructorOf", "object")]
-        [return: JSMarshalAsAttribute<JSType.Object>]
-        internal static partial JSObject GetConstructorOf([JSMarshalAs<JSType.Object>] JSObject obj);
-
-        [JSImport("create", "object")]
-        [return: JSMarshalAsAttribute<JSType.Object>]
-        internal static partial JSObject CreateObject([JSMarshalAs<JSType.Object>] JSObject? prototype);
-
-        [JSImport("set", "object")]
-        internal static partial void SetObjectArrayOnObject([JSMarshalAs<JSType.Object>] JSObject obj, [JSMarshalAs<JSType.String>] string key, [JSMarshalAs<JSType.Array<JSType.Object>>] JSObject[] val);
-
-        [JSImport("get", "object")]
-        [return: JSMarshalAsAttribute<JSType.Array<JSType.Object>>]
-        internal static partial JSObject[]? GetObjectArrayOnObject([JSMarshalAs<JSType.Object>] JSObject obj, [JSMarshalAs<JSType.String>] string key);
-
-        [JSImport("set", "object")]
-        internal static partial void SetIntArrayOnObject([JSMarshalAs<JSType.Object>] JSObject obj, [JSMarshalAs<JSType.String>] string key, [JSMarshalAs<JSType.Array<JSType.Number>>] int[] val);
-
-        [JSImport("get", "object")]
-        [return: JSMarshalAsAttribute<JSType.Array<JSType.Number>>]
-        internal static partial int[]? GetIntArrayOnObject([JSMarshalAs<JSType.Object>] JSObject obj, [JSMarshalAs<JSType.String>] string key);
-
         [JSImport("interpretDateTime", "object")]
         [return: JSMarshalAsAttribute<JSType.Number>]
         internal static partial double InterpretDateTime([JSMarshalAs<JSType.Object>] JSObject obj);
@@ -175,7 +153,7 @@ namespace ScreepsDotNet.Native.World
         }
 
         internal static Type? GetWrapperTypeForObject(JSObject jsObject)
-            => GetWrapperTypeForConstructor(GetConstructorOf(jsObject));
+            => GetWrapperTypeForConstructor(JSUtils.GetConstructorOf(jsObject));
 
         internal static NativeRoomObject? CreateWrapperForRoomObject(INativeRoot nativeRoot, JSObject? proxyObject, Type expectedType)
         {

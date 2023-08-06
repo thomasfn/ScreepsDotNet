@@ -19,7 +19,7 @@ namespace ScreepsDotNet.Native.Arena
 
         public static JSObject ToJS(this Position pos)
         {
-            var obj = NativeGameObjectUtils.CreateObject(null);
+            var obj = JSUtils.CreateObject(null);
             obj.SetProperty("x", pos.X);
             obj.SetProperty("y", pos.Y);
             return obj;
@@ -27,7 +27,7 @@ namespace ScreepsDotNet.Native.Arena
 
         public static JSObject ToJS(this FractionalPosition pos)
         {
-            var obj = NativeGameObjectUtils.CreateObject(null);
+            var obj = JSUtils.CreateObject(null);
             obj.SetProperty("x", pos.X);
             obj.SetProperty("y", pos.Y);
             return obj;

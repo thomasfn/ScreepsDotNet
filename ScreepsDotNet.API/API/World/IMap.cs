@@ -144,7 +144,10 @@ namespace ScreepsDotNet.API.World
 
     public interface IMap
     {
-        // IMapVisual Visual { get; }
+        /// <summary>
+        /// Get the map visual object.
+        /// </summary>
+        IMapVisual Visual { get; }
 
         /// <summary>
         /// List all exits available from the room with the given name.

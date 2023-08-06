@@ -48,12 +48,16 @@ function initDotNet() {
         ConstructionSite,
         RoomObject,
         Room,
+        RoomVisual,
     };
+    const memory = Memory;
     dotNet.setModuleImports('game', {
         getGameObj: () => Game,
+        getMemoryObj: () => memory,
         getPrototypes: () => prototypes,
         createRoomPosition: (x, y, roomName) => new RoomPosition(x, y, roomName),
         createCostMatrix: () => new PathFinder.CostMatrix(),
+        createRoomVisual: (roomName) => new RoomVisual(roomName),
         game: {
             getObjectById: (...args) => Game.getObjectById(...args),
             notify: (...args) => Game.notify(...args),
@@ -74,6 +78,17 @@ function initDotNet() {
             setShardLimits: (...args) => Game.cpu.setShardLimits(...args),
             unlock: (...args) => Game.cpu.unlock(...args),
             generatePixel: (...args) => Game.cpu.generatePixel(...args),
+        },
+        visual: {
+            line: (...args) => Game.map.visual.line(...args),
+            circle: (...args) => Game.map.visual.circle(...args),
+            rect: (...args) => Game.map.visual.rect(...args),
+            poly: (...args) => Game.map.visual.poly(...args),
+            text: (...args) => Game.map.visual.text(...args),
+            clear: (...args) => Game.map.visual.clear(...args),
+            getSize: (...args) => Game.map.visual.getSize(...args),
+            export: (...args) => Game.map.visual.export(...args),
+            import: (...args) => Game.map.visual.import(...args),
         },
     });
     const wrappedPrototypes = buildWrappedPrototypes(prototypes);
@@ -113,6 +128,10 @@ function initDotNet() {
             }
         },
         PathFinder,
+        RoomTerrain: {
+            get: (thisObj, ...args) => thisObj.get(...args),
+            getRawBuffer: (thisObj, ...args) => thisObj.getRawBuffer(...args),
+        },
     });
     try {
         dotNet.init();
@@ -168,14 +187,8 @@ function startup() {
         dotNet.loop();
         return false;
     }
-    // if (!dotNet.ready) {
-    //     console.log(`#${Game.time} INIT: fatal error initialising runtime (was not ready at expected time, probably script exec timeout)`);
-    //     console.log(`#${Game.time} INIT: shutting down and starting again`);
-    //     //Game.cpu.halt && Game.cpu.halt();
-    //     return false;
-    // }
-    dotNetExports = dotNet.getExports();
 
+    dotNetExports = dotNet.getExports();
     console.log(`#${Game.time}: INIT SUCCESS (${Game.cpu.tickLimit - Game.cpu.getUsed()}ms remaining cpu this tick)`);
 
     return true;

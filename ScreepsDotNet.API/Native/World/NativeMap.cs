@@ -15,7 +15,7 @@ namespace ScreepsDotNet.Native.World
 
         public static JSObject ToJS(this MapFindRouteOptions mapFindRouteOptions)
         {
-            var obj = NativeRoomObjectUtils.CreateObject(null);
+            var obj = JSUtils.CreateObject(null);
             if (mapFindRouteOptions.RouteCallback != null) { SetRouteCallbackOnObject(obj, "routeCallback", mapFindRouteOptions.RouteCallback); }
             return obj;
         }
@@ -67,6 +67,10 @@ namespace ScreepsDotNet.Native.World
         internal static partial JSObject Native_GetRoomStatus([JSMarshalAs<JSType.String>] string roomName);
 
         #endregion
+
+        private NativeMapVisual? visualCache;
+
+        public IMapVisual Visual => visualCache ??= new NativeMapVisual();
 
         public RoomExits DescribeExits(string roomName)
         {

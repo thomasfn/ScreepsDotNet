@@ -60,7 +60,8 @@ namespace ScreepsDotNet.Native.World
         #endregion
 
         private NativeRoomTerrain? roomTerrainCache;
-        private IMemoryObject? memoryCache;
+        private NativeMemoryObject? memoryCache;
+        private NativeRoomVisual? visualCache;
 
         public string Name { get; private set; }
 
@@ -78,7 +79,7 @@ namespace ScreepsDotNet.Native.World
 
         public object? Terminal => throw new NotImplementedException();
 
-        public object Visual => throw new NotImplementedException();
+        public IRoomVisual Visual => visualCache ??= new NativeRoomVisual(ProxyObject.GetPropertyAsJSObject("visual")!);
 
         public NativeRoom(INativeRoot nativeRoot, JSObject proxyObject, string knownName)
             : base(nativeRoot, proxyObject)
@@ -96,13 +97,19 @@ namespace ScreepsDotNet.Native.World
             ClearNativeCache();
         }
 
+        protected override void ClearNativeCache()
+        {
+            base.ClearNativeCache();
+            visualCache = null;
+        }
+
         public RoomCreateConstructionSiteResult CreateConstructionSite<T>(Position position, string? name = null) where T : class, IStructure
         {
             var structureType = NativeRoomObjectPrototypes<T>.StructureConstant;
             return (RoomCreateConstructionSiteResult)Native_CreateConstructionSite(ProxyObject, position.X, position.Y, structureType ?? "", name);
         }
 
-        public RoomCreateFlagResult CreateFlag(Position position, out string newFlagName, string? name = null, Color? color = null, Color? secondaryColor = null)
+        public RoomCreateFlagResult CreateFlag(Position position, out string newFlagName, string? name = null, FlagColor? color = null, FlagColor? secondaryColor = null)
         {
             using var resultJs = Native_CreateFlag(ProxyObject, position.X, position.Y, name, (int?)color, (int?)secondaryColor);
             newFlagName = resultJs.GetPropertyAsString("name") ?? string.Empty;

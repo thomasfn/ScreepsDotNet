@@ -12,7 +12,7 @@ namespace ScreepsDotNet.Native.Arena
     {
         public static JSObject ToJS(this SearchPathOptions options)
         {
-            var obj = NativeGameObjectUtils.CreateObject(null);
+            var obj = JSUtils.CreateObject(null);
             if (options.CostMatrix is NativeCostMatrix nativeCostMatrix)
             {
                 obj.SetProperty("costMatrix", nativeCostMatrix.ProxyObject);
@@ -33,7 +33,7 @@ namespace ScreepsDotNet.Native.Arena
         {
             var obj = options.BaseOptions.ToJS();
             var ignore = options.Ignore.ToArray().Select(x => x.ToJS()).ToArray();
-            NativeGameObjectUtils.SetArrayOnObject(obj, "ignore", ignore);
+            JSUtils.SetObjectArrayOnObject(obj, "ignore", ignore);
             return obj;
         }
 
@@ -42,7 +42,7 @@ namespace ScreepsDotNet.Native.Arena
 
         public static JSObject ToJS(this Goal goal)
         {
-            var obj = NativeGameObjectUtils.CreateObject(null);
+            var obj = JSUtils.CreateObject(null);
             obj.SetProperty("pos", goal.Position.ToJS());
             if (goal.Range != null) { obj.SetProperty("range", goal.Range.Value); }
             return obj;
@@ -54,7 +54,7 @@ namespace ScreepsDotNet.Native.Arena
     {
         public static SearchPathResult ToSearchPathResult(this JSObject obj)
             => new(
-                    (NativeGameObjectUtils.GetArrayOnObject(obj, "path")?.Select(x => x.ToPosition()) ?? Enumerable.Empty<Position>()).ToArray(),
+                    (JSUtils.GetObjectArrayOnObject(obj, "path")?.Select(x => x.ToPosition()) ?? Enumerable.Empty<Position>()).ToArray(),
                     obj.GetPropertyAsInt32("ops"),
                     obj.GetPropertyAsDouble("cost"),
                     obj.GetPropertyAsBoolean("incomplete")

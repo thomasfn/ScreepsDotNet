@@ -205,7 +205,7 @@ namespace ScreepsDotNet.Native.World
         private NativeStore? storeCache;
 
         public IEnumerable<BodyPart<BodyPartType>> Body
-            => bodyCache ??= NativeRoomObjectUtils.GetObjectArrayOnObject(ProxyObject, "body")!
+            => bodyCache ??= JSUtils.GetObjectArrayOnObject(ProxyObject, "body")!
                 .Select(x => new BodyPart<BodyPartType>(x.GetPropertyAsString("type")!.ParseBodyPartType(), x.GetPropertyAsInt32("hits"), x.GetPropertyAsString("boost")))
                 .ToArray();
 

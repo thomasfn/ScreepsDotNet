@@ -32,13 +32,13 @@ namespace ScreepsDotNet.Native.World
 
         private readonly string name;
 
-        public Color Color => (Color)ProxyObject.GetPropertyAsInt32("color");
+        public FlagColor Color => (FlagColor)ProxyObject.GetPropertyAsInt32("color");
 
         public object Memory => throw new NotImplementedException();
 
         public string Name => name;
 
-        public Color SecondaryColor => (Color)ProxyObject.GetPropertyAsInt32("secondaryColor");
+        public FlagColor SecondaryColor => (FlagColor)ProxyObject.GetPropertyAsInt32("secondaryColor");
 
         public NativeFlag(INativeRoot nativeRoot, JSObject proxyObject, string knownName)
             : base(nativeRoot, proxyObject)
@@ -59,7 +59,7 @@ namespace ScreepsDotNet.Native.World
         public void Remove()
             => Native_Remove(ProxyObject);
 
-        public FlagSetColorResult SetColor(Color color, Color? secondaryColor = null)
+        public FlagSetColorResult SetColor(FlagColor color, FlagColor? secondaryColor = null)
             => (FlagSetColorResult)Native_SetColor(ProxyObject, (int)color, (int?)secondaryColor);
 
         public FlagSetPositionResult SetPosition(Position position)

@@ -194,7 +194,7 @@ namespace ScreepsDotNet.API.World
     {
         private readonly RoomPosition[] path;
 
-        public ReadOnlySpan<RoomPosition> Path => Path;
+        public ReadOnlySpan<RoomPosition> Path => path ?? ReadOnlySpan<RoomPosition>.Empty;
 
         /// <summary>
         /// Total number of operations performed before this path was calculated.

@@ -91,7 +91,7 @@ namespace ScreepsDotNet.Native.World
 
         public CpuSetShardLimitsResult SetShardLimits(IReadOnlyDictionary<string, double> shardLimits)
         {
-            using var obj = NativeRoomObjectUtils.CreateObject(null);
+            using var obj = JSUtils.CreateObject(null);
             foreach (var pair in shardLimits)
             {
                 obj.SetProperty(pair.Key, pair.Value);

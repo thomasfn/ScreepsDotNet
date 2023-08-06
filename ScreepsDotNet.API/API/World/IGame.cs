@@ -86,5 +86,18 @@ namespace ScreepsDotNet.API.World
         /// <param name="message">Custom text which will be sent in the message. Maximum length is 1000 characters.</param>
         /// <param name="groupInterval">If set to 0 (default), the notification will be scheduled immediately. Otherwise, it will be grouped with other notifications and mailed out later using the specified time in minutes.</param>
         void Notify(string message, int groupInterval = 0);
+
+        /// <summary>
+        /// Create a new empty cost matrix.
+        /// </summary>
+        /// <returns></returns>
+        ICostMatrix CreateCostMatrix();
+
+        /// <summary>
+        /// Create a new room visual. If the room name is not provided, the visual will be posted to all rooms simultaneously.
+        /// </summary>
+        /// <param name="roomName"></param>
+        /// <returns></returns>
+        IRoomVisual CreateRoomVisual(string? roomName = null);
     }
 }

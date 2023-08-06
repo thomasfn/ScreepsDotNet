@@ -163,7 +163,7 @@ namespace ScreepsDotNet.API.World
         /// <summary>
         /// A RoomVisual object for this room. You can use this object to draw simple shapes (lines, circles, text labels) in the room.
         /// </summary>
-        object Visual { get; }
+        IRoomVisual Visual { get; }
 
         /// <summary>
         /// Create new ConstructionSite at the specified location.
@@ -182,7 +182,7 @@ namespace ScreepsDotNet.API.World
         /// <param name="color"></param>
         /// <param name="secondaryColor"></param>
         /// <returns></returns>
-        RoomCreateFlagResult CreateFlag(Position position, out string newFlagName, string? name = null, Color? color = null, Color? secondaryColor = null);
+        RoomCreateFlagResult CreateFlag(Position position, out string newFlagName, string? name = null, FlagColor? color = null, FlagColor? secondaryColor = null);
 
         /// <summary>
         /// Find all objects of the specified type in the room.

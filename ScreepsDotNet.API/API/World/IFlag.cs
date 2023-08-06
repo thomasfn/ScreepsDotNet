@@ -2,6 +2,20 @@
 
 namespace ScreepsDotNet.API.World
 {
+    public enum FlagColor
+    {
+        Red = 1,
+        Purple = 2,
+        Blue = 3,
+        Cyan = 4,
+        Green = 5,
+        Yellow = 6,
+        Orange = 7,
+        Brown = 8,
+        Grey = 9,
+        White = 10,
+    }
+
     public enum FlagSetColorResult
     {
         /// <summary>
@@ -34,7 +48,7 @@ namespace ScreepsDotNet.API.World
         /// <summary>
         /// Flag primary color.
         /// </summary>
-        Color Color { get; }
+        FlagColor Color { get; }
 
         /// <summary>
         /// A shorthand to Memory.flags[flag.name]. You can use it for quick access the flag's specific memory data object.
@@ -49,7 +63,7 @@ namespace ScreepsDotNet.API.World
         /// <summary>
         /// Flag secondary color.
         /// </summary>
-        Color SecondaryColor { get; }
+        FlagColor SecondaryColor { get; }
 
         /// <summary>
         /// Remove the flag.
@@ -62,7 +76,7 @@ namespace ScreepsDotNet.API.World
         /// <param name="color"></param>
         /// <param name="secondaryColor"></param>
         /// <returns></returns>
-        FlagSetColorResult SetColor(Color color, Color? secondaryColor = null);
+        FlagSetColorResult SetColor(FlagColor color, FlagColor? secondaryColor = null);
 
         /// <summary>
         /// Set new position of the flag.

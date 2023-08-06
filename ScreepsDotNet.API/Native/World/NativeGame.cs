@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Runtime.InteropServices.JavaScript;
 
+using ScreepsDotNet.API;
 using ScreepsDotNet.API.World;
 
 namespace ScreepsDotNet.Native.World
@@ -180,5 +181,11 @@ namespace ScreepsDotNet.Native.World
 
         public void Notify(string message, int groupInterval = 0)
             => Native_Notify(message, groupInterval);
+
+        public ICostMatrix CreateCostMatrix()
+            => new NativeCostMatrix();
+
+        public IRoomVisual CreateRoomVisual(string? roomName = null)
+            => new NativeRoomVisual(roomName);
     }
 }

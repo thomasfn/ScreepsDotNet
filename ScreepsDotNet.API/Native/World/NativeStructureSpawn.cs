@@ -33,7 +33,7 @@ namespace ScreepsDotNet.Native.World
         public int RemainingTime => proxyObject.GetPropertyAsInt32("remainingTime");
 
         public IEnumerable<Direction> Directions =>
-            (NativeRoomObjectUtils.GetIntArrayOnObject(proxyObject, "directions") ?? Enumerable.Empty<int>())
+            (JSUtils.GetIntArrayOnObject(proxyObject, "directions") ?? Enumerable.Empty<int>())
                 .Cast<Direction>();
 
         public string Name => proxyObject.GetPropertyAsString("name")!;
@@ -66,11 +66,11 @@ namespace ScreepsDotNet.Native.World
     {
         public static JSObject ToJS(this SpawnCreepOptions spawnCreepOptions)
         {
-            var obj = NativeRoomObjectUtils.CreateObject(null);
+            var obj = JSUtils.CreateObject(null);
             // if (spawnCreepOptions.Memory != null) {  }
-            if (spawnCreepOptions.EnergyStructures != null) { NativeRoomObjectUtils.SetObjectArrayOnObject(obj, "energyStructures", spawnCreepOptions.EnergyStructures.Select(x => x.ToJS()).ToArray()); }
+            if (spawnCreepOptions.EnergyStructures != null) { JSUtils.SetObjectArrayOnObject(obj, "energyStructures", spawnCreepOptions.EnergyStructures.Select(x => x.ToJS()).ToArray()); }
             if (spawnCreepOptions.DryRun != null) { obj.SetProperty("dryRun", spawnCreepOptions.DryRun.Value); }
-            if (spawnCreepOptions.Directions != null) { NativeRoomObjectUtils.SetIntArrayOnObject(obj, "directions", spawnCreepOptions.Directions.Cast<int>().ToArray()); }
+            if (spawnCreepOptions.Directions != null) { JSUtils.SetIntArrayOnObject(obj, "directions", spawnCreepOptions.Directions.Cast<int>().ToArray()); }
             return obj;
         }
     }

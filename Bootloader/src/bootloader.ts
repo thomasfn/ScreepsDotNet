@@ -212,7 +212,7 @@ export class DotNet {
         try {
             await this.runtimeApi.runMain(this.monoConfig.mainAssemblyName!, []);
         } catch (err) {
-            error(`got error when running Program.Main(): ${err}`);
+            error(`got error when running Program.Main(): ${(err as Error).stack}`);
         }
         profiler = this.profile(profiler, 'runMain');
         this._ready = true;

@@ -151,21 +151,6 @@ namespace ScreepsDotNet.Native.Arena
         [return: JSMarshalAsAttribute<JSType.Object>]
         internal static partial JSObject GetPrototypesObject();
 
-        [JSImport("getConstructorOf", "object")]
-        [return: JSMarshalAsAttribute<JSType.Object>]
-        internal static partial JSObject GetConstructorOf([JSMarshalAs<JSType.Object>] JSObject obj);
-
-        [JSImport("create", "object")]
-        [return: JSMarshalAsAttribute<JSType.Object>]
-        internal static partial JSObject CreateObject([JSMarshalAs<JSType.Object>] JSObject? prototype);
-
-        [JSImport("set", "object")]
-        internal static partial void SetArrayOnObject([JSMarshalAs<JSType.Object>] JSObject obj, [JSMarshalAs<JSType.String>] string key, [JSMarshalAs<JSType.Array<JSType.Object>>] JSObject[] val);
-
-        [JSImport("get", "object")]
-        [return: JSMarshalAsAttribute<JSType.Array<JSType.Object>>]
-        internal static partial JSObject[]? GetArrayOnObject([JSMarshalAs<JSType.Object>] JSObject obj, [JSMarshalAs<JSType.String>] string key);
-
         internal static void RegisterPrototypeTypeMapping<TInterface, TConcrete>(string prototypeName)
             where TInterface : IGameObject
             where TConcrete : NativeGameObject
@@ -202,7 +187,7 @@ namespace ScreepsDotNet.Native.Arena
         }
 
         internal static Type? GetWrapperTypeForObject(JSObject jsObject)
-            => GetWrapperTypeForConstructor(GetConstructorOf(jsObject));
+            => GetWrapperTypeForConstructor(JSUtils.GetConstructorOf(jsObject));
 
         internal static NativeGameObject? CreateWrapperForObjectNullSafe(JSObject? proxyObject)
             => proxyObject == null ? null : CreateWrapperForObject(proxyObject);
@@ -263,7 +248,7 @@ namespace ScreepsDotNet.Native.Arena
         public static JSObject ToJS(this IPosition position)
         {
             if (position is NativeGameObject nativeGameObject) { return nativeGameObject.ProxyObject; }
-            var obj = NativeGameObjectUtils.CreateObject(null);
+            var obj = JSUtils.CreateObject(null);
             obj.SetProperty("x", position.X);
             obj.SetProperty("y", position.Y);
             return obj;
