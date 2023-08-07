@@ -51,7 +51,7 @@ namespace ScreepsDotNet.Native.World
 
         public bool TryGetBool(string key, out bool value)
         {
-            if (proxyObject.GetTypeOfProperty(key) != "number")
+            if (proxyObject.GetTypeOfProperty(key) != "boolean")
             {
                 value = default;
                 return false;

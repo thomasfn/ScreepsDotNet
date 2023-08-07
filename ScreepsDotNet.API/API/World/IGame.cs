@@ -35,6 +35,11 @@ namespace ScreepsDotNet.API.World
         IPathFinder PathFinder { get; }
 
         /// <summary>
+        /// A global object containing game constants.
+        /// </summary>
+        IConstants Constants { get; }
+
+        /// <summary>
         /// A hash containing all your creeps with creep names as hash keys.
         /// </summary>
         IReadOnlyDictionary<string, ICreep> Creeps { get; }

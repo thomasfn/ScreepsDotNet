@@ -51,11 +51,11 @@ namespace ScreepsDotNet.Native.World
 
         [JSImport("Room.lookForAt", "game/prototypes/wrapped")]
         [return: JSMarshalAsAttribute<JSType.Array<JSType.Object>>]
-        internal static partial JSObject[] Native_LookForAt([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Number>] int type, [JSMarshalAs<JSType.Number>] int x, [JSMarshalAs<JSType.Number>] int y);
+        internal static partial JSObject[] Native_LookForAt([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.String>] string type, [JSMarshalAs<JSType.Number>] int x, [JSMarshalAs<JSType.Number>] int y);
 
         [JSImport("Room.lookForAtArea", "game/prototypes/wrapped")]
         [return: JSMarshalAsAttribute<JSType.Array<JSType.Object>>]
-        internal static partial JSObject[] Native_LookForAtArea([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Number>] int type, [JSMarshalAs<JSType.Number>] int top, [JSMarshalAs<JSType.Number>] int left, [JSMarshalAs<JSType.Number>] int bottom, [JSMarshalAs<JSType.Number>] int right, [JSMarshalAs<JSType.Boolean>] bool asArray);
+        internal static partial JSObject[] Native_LookForAtArea([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.String>] string type, [JSMarshalAs<JSType.Number>] int top, [JSMarshalAs<JSType.Number>] int left, [JSMarshalAs<JSType.Number>] int bottom, [JSMarshalAs<JSType.Number>] int right, [JSMarshalAs<JSType.Boolean>] bool asArray);
 
         #endregion
 
@@ -105,8 +105,16 @@ namespace ScreepsDotNet.Native.World
 
         public RoomCreateConstructionSiteResult CreateConstructionSite<T>(Position position, string? name = null) where T : class, IStructure
         {
-            var structureType = NativeRoomObjectPrototypes<T>.StructureConstant;
-            return (RoomCreateConstructionSiteResult)Native_CreateConstructionSite(ProxyObject, position.X, position.Y, structureType ?? "", name);
+            var structureConstant = NativeRoomObjectPrototypes<T>.StructureConstant;
+            if (structureConstant == null) { throw new ArgumentException("Must be a valid structure type", nameof(T)); }
+            return (RoomCreateConstructionSiteResult)Native_CreateConstructionSite(ProxyObject, position.X, position.Y, structureConstant, name);
+        }
+
+        public RoomCreateConstructionSiteResult CreateConstructionSite(Position position, Type structureType, string? name = null)
+        {
+            var structureConstant = NativeRoomObjectUtils.GetStructureConstantForInterfaceType(structureType);
+            if (structureConstant == null) { throw new ArgumentException("Must be a valid structure type", nameof(structureType)); }
+            return (RoomCreateConstructionSiteResult)Native_CreateConstructionSite(ProxyObject, position.X, position.Y, structureConstant, name);
         }
 
         public RoomCreateFlagResult CreateFlag(Position position, out string newFlagName, string? name = null, FlagColor? color = null, FlagColor? secondaryColor = null)
@@ -184,7 +192,7 @@ namespace ScreepsDotNet.Native.World
         public IEnumerable<IRoomObject> LookAt(Position position)
 #pragma warning disable CS8619 // Nullability of reference types in value doesn't match target type.
             => Native_LookAt(ProxyObject, position.X, position.Y)
-                .Select(x => NativeRoomObjectUtils.CreateWrapperForRoomObject<IRoomObject>(nativeRoot, x))
+                .Select(x => NativeRoomObjectUtils.CreateWrapperForRoomObject<IRoomObject>(nativeRoot, InterpretLookElement(x)))
                 .Where(x => x != null)
                 .ToArray();
 #pragma warning restore CS8619 // Nullability of reference types in value doesn't match target type.
@@ -192,17 +200,17 @@ namespace ScreepsDotNet.Native.World
         public IEnumerable<IRoomObject> LookAtArea(Position min, Position max)
 #pragma warning disable CS8619 // Nullability of reference types in value doesn't match target type.
             => Native_LookAtArea(ProxyObject, min.Y, min.X, max.Y, max.X, true)
-                .Select(x => NativeRoomObjectUtils.CreateWrapperForRoomObject<IRoomObject>(nativeRoot, x))
+                .Select(x => NativeRoomObjectUtils.CreateWrapperForRoomObject<IRoomObject>(nativeRoot, InterpretLookElement(x)))
                 .Where(x => x != null)
                 .ToArray();
 #pragma warning restore CS8619 // Nullability of reference types in value doesn't match target type.
 
         public IEnumerable<T> LookForAt<T>(Position position) where T : class, IRoomObject
         {
-            var findConstant = NativeRoomObjectPrototypes<T>.FindConstant;
-            if (findConstant == null) { return Enumerable.Empty<T>(); }
-            return Native_LookForAt(ProxyObject, (int)findConstant, position.X, position.Y)
-                .Select(x => NativeRoomObjectUtils.CreateWrapperForRoomObject<IRoomObject>(nativeRoot, x))
+            var lookConstant = NativeRoomObjectPrototypes<T>.LookConstant;
+            if (lookConstant == null) { return Enumerable.Empty<T>(); }
+            return Native_LookForAt(ProxyObject, lookConstant, position.X, position.Y)
+                .Select(x => NativeRoomObjectUtils.CreateWrapperForRoomObject<IRoomObject>(nativeRoot, x.GetPropertyAsJSObject(lookConstant)))
                 .Where(x => x != null)
                 .Cast<T>()
                 .ToArray();
@@ -210,13 +218,20 @@ namespace ScreepsDotNet.Native.World
 
         public IEnumerable<T> LookForAtArea<T>(Position min, Position max) where T : class, IRoomObject
         {
-            var findConstant = NativeRoomObjectPrototypes<T>.FindConstant;
-            if (findConstant == null) { return Enumerable.Empty<T>(); }
-            return Native_LookForAtArea(ProxyObject, (int)findConstant, min.Y, min.X, max.Y, max.X, true)
-                .Select(x => NativeRoomObjectUtils.CreateWrapperForRoomObject<IRoomObject>(nativeRoot, x))
+            var lookConstant = NativeRoomObjectPrototypes<T>.LookConstant;
+            if (lookConstant == null) { return Enumerable.Empty<T>(); }
+            return Native_LookForAtArea(ProxyObject, lookConstant, min.Y, min.X, max.Y, max.X, true)
+                .Select(x => NativeRoomObjectUtils.CreateWrapperForRoomObject<IRoomObject>(nativeRoot, x.GetPropertyAsJSObject(lookConstant)))
                 .Where(x => x != null)
                 .Cast<T>()
                 .ToArray();
+        }
+
+        private JSObject? InterpretLookElement(JSObject lookElement)
+        {
+            var typeStr = lookElement.GetPropertyAsString("type")!;
+            if (lookElement.GetTypeOfProperty(typeStr) != "object") { return null; }
+            return lookElement.GetPropertyAsJSObject(typeStr);
         }
 
         public override string ToString()

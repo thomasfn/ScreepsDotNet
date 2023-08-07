@@ -60,6 +60,7 @@ namespace ScreepsDotNet.Native.World
         private readonly NativeCpu nativeCpu;
         private readonly NativeMap nativeMap;
         private readonly NativePathFinder nativePathFinder;
+        private readonly NativeConstants nativeConstants;
 
         private readonly IList<WeakReference<INativeObject>> trackedNativeObjects = new List<WeakReference<INativeObject>>();
 
@@ -87,6 +88,8 @@ namespace ScreepsDotNet.Native.World
 
         public IPathFinder PathFinder => nativePathFinder;
 
+        public IConstants Constants => nativeConstants;
+
         public IReadOnlyDictionary<string, ICreep> Creeps => creepLazyLookup;
 
         public IReadOnlyDictionary<string, IFlag> Flags => flagLazyLookup;
@@ -110,6 +113,7 @@ namespace ScreepsDotNet.Native.World
             nativeCpu = new NativeCpu(ProxyObject.GetPropertyAsJSObject("cpu")!);
             nativeMap = new NativeMap();
             nativePathFinder = new NativePathFinder();
+            nativeConstants = new NativeConstants();
             creepLazyLookup = new NativeObjectLazyLookup<ICreep>(() => CreepsObj, x => x.Name, (name, proxyObject) => new NativeCreep(this, proxyObject, name));
             flagLazyLookup = new NativeObjectLazyLookup<IFlag>(() => FlagsObj, x => x.Name, (name, proxyObject) => new NativeFlag(this, proxyObject, name));
             roomLazyLookup = new NativeObjectLazyLookup<IRoom>(() => RoomsObj, x => x.Name, (name, proxyObject) => new NativeRoom(this, proxyObject, name));

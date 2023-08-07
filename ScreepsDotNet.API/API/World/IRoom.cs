@@ -172,7 +172,16 @@ namespace ScreepsDotNet.API.World
         /// <param name="position"></param>
         /// <param name="name"></param>
         /// <returns></returns>
-        // RoomCreateConstructionSiteResult CreateConstructionSite<T>(Position position, string? name = null) where T : class, IStructure;
+        RoomCreateConstructionSiteResult CreateConstructionSite<T>(Position position, string? name = null) where T : class, IStructure;
+
+        /// <summary>
+        /// Create new ConstructionSite at the specified location.
+        /// </summary>
+        /// <param name="position"></param>
+        /// <param name="structureType"></param>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        RoomCreateConstructionSiteResult CreateConstructionSite(Position position, Type structureType, string? name = null);
 
         /// <summary>
         /// Create new Flag at the specified location.

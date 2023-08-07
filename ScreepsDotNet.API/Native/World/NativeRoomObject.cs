@@ -81,6 +81,7 @@ namespace ScreepsDotNet.Native.World
     {
         public static JSObject? ConstructorObj;
         public static FindConstant? FindConstant;
+        public static string? LookConstant;
         public static string? StructureConstant;
 
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeRoomObjectUtils))]
@@ -99,6 +100,7 @@ namespace ScreepsDotNet.Native.World
         private static readonly IList<Type> prototypeTypeMappings = new List<Type>();
         private static readonly IDictionary<Type, string> prototypeNameMappings = new Dictionary<Type, string>();
         private static readonly IDictionary<string, Type> structureConstantInterfaceMap = new Dictionary<string, Type>();
+        private static readonly IDictionary<Type, string> interfaceStructureConstantMap = new Dictionary<Type, string>();
 
         [JSImport("getPrototypes", "game")]
         [return: JSMarshalAsAttribute<JSType.Object>]
@@ -112,7 +114,7 @@ namespace ScreepsDotNet.Native.World
         [return: JSMarshalAsAttribute<JSType.Number>]
         internal static partial double InterpretDateTime([JSMarshalAs<JSType.Object>] JSObject obj);
 
-        internal static void RegisterPrototypeTypeMapping<TInterface, TConcrete>(string prototypeName, FindConstant? findConstant = null, string? structureConstant = null)
+        internal static void RegisterPrototypeTypeMapping<TInterface, TConcrete>(string prototypeName, FindConstant? findConstant = null, string? lookConstant = null, string? structureConstant = null)
             where TInterface : IRoomObject
             where TConcrete : NativeRoomObject
         {
@@ -132,13 +134,19 @@ namespace ScreepsDotNet.Native.World
             prototypeTypeMappings.Add(typeof(TConcrete));
             NativeRoomObjectPrototypes<TInterface>.ConstructorObj = constructor;
             NativeRoomObjectPrototypes<TInterface>.FindConstant = findConstant;
+            NativeRoomObjectPrototypes<TInterface>.LookConstant = lookConstant;
             NativeRoomObjectPrototypes<TInterface>.StructureConstant = structureConstant;
             NativeRoomObjectPrototypes<TConcrete>.ConstructorObj = constructor;
             NativeRoomObjectPrototypes<TConcrete>.FindConstant = findConstant;
+            NativeRoomObjectPrototypes<TConcrete>.LookConstant = lookConstant;
             NativeRoomObjectPrototypes<TConcrete>.StructureConstant = structureConstant;
             prototypeNameMappings.Add(typeof(TInterface), prototypeName);
             prototypeNameMappings.Add(typeof(TConcrete), prototypeName);
-            if (!string.IsNullOrEmpty(structureConstant)) { structureConstantInterfaceMap.Add(structureConstant, typeof(TInterface)); }
+            if (!string.IsNullOrEmpty(structureConstant))
+            {
+                structureConstantInterfaceMap.Add(structureConstant, typeof(TInterface));
+                interfaceStructureConstantMap.Add(typeof(TInterface), structureConstant);
+            }
         }
 
         internal static Type? GetWrapperTypeForConstructor(JSObject constructor)
@@ -173,6 +181,9 @@ namespace ScreepsDotNet.Native.World
         internal static Type? GetInterfaceTypeForStructureConstant(string structureConstant)
             => structureConstantInterfaceMap.TryGetValue(structureConstant, out var result) ? result : null;
 
+        internal static string? GetStructureConstantForInterfaceType(Type interfaceType)
+            => interfaceStructureConstantMap.TryGetValue(interfaceType, out var result) ? result : null;
+
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureSpawn))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureContainer))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureController))]
@@ -195,21 +206,21 @@ namespace ScreepsDotNet.Native.World
             {
                 // NOTE - order matters! We must do derived classes first and base classes last
                 // This is to avoid a nasty bug where the runtime gets objects and their prototype objects mixed up due to the tracking id being set as a property on the object
-                RegisterPrototypeTypeMapping<IStructureSpawn, NativeStructureSpawn>("StructureSpawn", FindConstant.Structures, "spawn");
-                RegisterPrototypeTypeMapping<IStructureContainer, NativeStructureContainer>("StructureContainer", FindConstant.Structures, "container");
-                RegisterPrototypeTypeMapping<IStructureController, NativeStructureController>("StructureController", FindConstant.Structures, "controller");
-                RegisterPrototypeTypeMapping<IStructureExtension, NativeStructureExtension>("StructureExtension", FindConstant.Structures, "extension");
-                RegisterPrototypeTypeMapping<IStructureStorage, NativeStructureStorage>("StructureStorage", FindConstant.Structures, "storage");
-                RegisterPrototypeTypeMapping<IStructureRampart, NativeStructureRampart>("StructureRampart", FindConstant.Structures, "rampart");
-                RegisterPrototypeTypeMapping<IOwnedStructure, NativeOwnedStructure>("OwnedStructure", FindConstant.Structures);
-                RegisterPrototypeTypeMapping<IStructureRoad, NativeStructureRoad>("StructureRoad", FindConstant.Structures, "road");
-                RegisterPrototypeTypeMapping<IStructureWall, NativeStructureWall>("StructureWall", FindConstant.Structures, "constructedWall");
-                RegisterPrototypeTypeMapping<IStructure, NativeStructure>("Structure", FindConstant.Structures);
-                RegisterPrototypeTypeMapping<ISource, NativeSource>("Source", FindConstant.Sources);
-                RegisterPrototypeTypeMapping<ICreep, NativeCreep>("Creep", FindConstant.Creeps);
-                RegisterPrototypeTypeMapping<IFlag, NativeFlag>("Flag", FindConstant.Flags);
-                RegisterPrototypeTypeMapping<IResource, NativeResource>("Resource", FindConstant.DroppedResources);
-                RegisterPrototypeTypeMapping<IConstructionSite, NativeConstructionSite>("ConstructionSite", FindConstant.ConstructionSites);
+                RegisterPrototypeTypeMapping<IStructureSpawn, NativeStructureSpawn>("StructureSpawn", FindConstant.Structures, "structure", "spawn");
+                RegisterPrototypeTypeMapping<IStructureContainer, NativeStructureContainer>("StructureContainer", FindConstant.Structures, "structure", "container");
+                RegisterPrototypeTypeMapping<IStructureController, NativeStructureController>("StructureController", FindConstant.Structures, "structure", "controller");
+                RegisterPrototypeTypeMapping<IStructureExtension, NativeStructureExtension>("StructureExtension", FindConstant.Structures, "structure", "extension");
+                RegisterPrototypeTypeMapping<IStructureStorage, NativeStructureStorage>("StructureStorage", FindConstant.Structures, "structure", "storage");
+                RegisterPrototypeTypeMapping<IStructureRampart, NativeStructureRampart>("StructureRampart", FindConstant.Structures, "structure", "rampart");
+                RegisterPrototypeTypeMapping<IOwnedStructure, NativeOwnedStructure>("OwnedStructure", FindConstant.Structures, "structure");
+                RegisterPrototypeTypeMapping<IStructureRoad, NativeStructureRoad>("StructureRoad", FindConstant.Structures, "structure", "road");
+                RegisterPrototypeTypeMapping<IStructureWall, NativeStructureWall>("StructureWall", FindConstant.Structures, "structure", "constructedWall");
+                RegisterPrototypeTypeMapping<IStructure, NativeStructure>("Structure", FindConstant.Structures, "structure");
+                RegisterPrototypeTypeMapping<ISource, NativeSource>("Source", FindConstant.Sources, "source");
+                RegisterPrototypeTypeMapping<ICreep, NativeCreep>("Creep", FindConstant.Creeps, "creep");
+                RegisterPrototypeTypeMapping<IFlag, NativeFlag>("Flag", FindConstant.Flags, "flag");
+                RegisterPrototypeTypeMapping<IResource, NativeResource>("Resource", FindConstant.DroppedResources, "resource");
+                RegisterPrototypeTypeMapping<IConstructionSite, NativeConstructionSite>("ConstructionSite", FindConstant.ConstructionSites, "constructionSite");
             }
             catch (Exception ex)
             {

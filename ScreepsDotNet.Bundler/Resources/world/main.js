@@ -54,6 +54,7 @@ function initDotNet() {
     dotNet.setModuleImports('game', {
         getGameObj: () => Game,
         getMemoryObj: () => memory,
+        getConstantsObj: () => global,
         getPrototypes: () => prototypes,
         createRoomPosition: (x, y, roomName) => new RoomPosition(x, y, roomName),
         createCostMatrix: () => new PathFinder.CostMatrix(),
@@ -125,7 +126,7 @@ function initDotNet() {
                 } else {
                     return { code: result };
                 }
-            }
+            },
         },
         PathFinder,
         RoomTerrain: {

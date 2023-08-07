@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices.JavaScript;
 
 using ScreepsDotNet.API.World;
@@ -6,7 +7,7 @@ using ScreepsDotNet.API.World;
 namespace ScreepsDotNet.Native.World
 {
     [System.Runtime.Versioning.SupportedOSPlatform("browser")]
-    internal partial class NativeSource : NativeRoomObject, ISource
+    internal partial class NativeSource : NativeRoomObject, ISource, IEquatable<NativeSource?>
     {
         private readonly string id;
 
@@ -32,5 +33,15 @@ namespace ScreepsDotNet.Native.World
 
         public override string ToString()
             => $"Source[{Position}]";
+
+        public override bool Equals(object? obj) => Equals(obj as NativeSource);
+
+        public bool Equals(NativeSource? other) => other is not null && id == other.id;
+
+        public override int GetHashCode() => HashCode.Combine(id);
+
+        public static bool operator ==(NativeSource? left, NativeSource? right) => EqualityComparer<NativeSource>.Default.Equals(left, right);
+
+        public static bool operator !=(NativeSource? left, NativeSource? right) => !(left == right);
     }
 }

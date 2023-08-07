@@ -2,6 +2,18 @@
 
 namespace ScreepsDotNet.API.World
 {
+    public enum ConstructionSiteRemoveResult
+    {
+        /// <summary>
+        /// The operation has been scheduled successfully.
+        /// </summary>
+        Ok = 0,
+        /// <summary>
+        /// You are not the owner of this construction site, and it's not in your room.
+        /// </summary>
+        NotOwner = -1,
+    }
+
     /// <summary>
     /// A site of a structure which is currently under construction.
     /// A construction site can be created using the 'Construct' button at the left of the game field or the Room.createConstructionSite method.
@@ -47,5 +59,10 @@ namespace ScreepsDotNet.API.World
         /// <returns></returns>
         bool IsStructure<T>() where T : IStructure
             => StructureType.IsAssignableTo(typeof(T));
+
+        /// <summary>
+        /// Remove the construction site.
+        /// </summary>
+        void Remove();
     }
 }

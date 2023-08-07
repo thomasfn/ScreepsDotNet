@@ -8,6 +8,14 @@ namespace ScreepsDotNet.Native.World
     [System.Runtime.Versioning.SupportedOSPlatform("browser")]
     internal partial class NativeConstructionSite : NativeRoomObject, IConstructionSite
     {
+        #region Imports
+
+        [JSImport("ConstructionSite.remove", "game/prototypes/wrapped")]
+        [return: JSMarshalAsAttribute<JSType.Number>]
+        internal static partial int Native_Remove([JSMarshalAs<JSType.Object>] JSObject proxyObject);
+
+        #endregion
+
         private readonly string id;
 
         private OwnerInfo? ownerInfoCache;
@@ -40,5 +48,8 @@ namespace ScreepsDotNet.Native.World
             proxyObjectOrNull = nativeRoot.GetObjectById(id);
             ClearNativeCache();
         }
+
+        public void Remove()
+            => Native_Remove(ProxyObject);
     }
 }
