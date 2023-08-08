@@ -20,13 +20,8 @@ namespace ScreepsDotNet.API.World
     /// To build a structure on the construction site, give a worker creep some amount of energy and perform Creep.build action.
     /// You can remove enemy construction sites by moving a creep on it.
     /// </summary>
-    public interface IConstructionSite : IRoomObject
+    public interface IConstructionSite : IRoomObject, IWithId
     {
-        /// <summary>
-        /// A unique object identificator. You can use Game.getObjectById method to retrieve an object instance by its id.
-        /// </summary>
-        string Id { get; }
-
         /// <summary>
         /// Whether this is your own construction site.
         /// </summary>

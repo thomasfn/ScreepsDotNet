@@ -15,8 +15,7 @@ namespace ScreepsDotNet.Native.World
 
         public int TicksToDecay => ProxyObject.GetPropertyAsInt32("ticksToDecay");
 
-        public NativeStructureContainer(INativeRoot nativeRoot, JSObject proxyObject)
-            : base(nativeRoot, proxyObject)
+        public NativeStructureContainer(INativeRoot nativeRoot, JSObject proxyObject, string knownId) : base(nativeRoot, proxyObject, knownId)
         { }
 
         protected override void ClearNativeCache()

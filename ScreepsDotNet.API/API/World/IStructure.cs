@@ -32,7 +32,7 @@
         InvalidArgs = -10
     }
 
-    public interface IStructure : IRoomObject
+    public interface IStructure : IRoomObject, IWithId
     {
         /// <summary>
         /// The current amount of hit points of the structure.
@@ -43,11 +43,6 @@
         /// The maximum amount of hit points of the structure.
         /// </summary>
         int HitsMax { get; }
-
-        /// <summary>
-        /// A unique object identificator. You can use Game.getObjectById method to retrieve an object instance by its id.
-        /// </summary>
-        string Id { get; }
 
         /// <summary>
         /// Destroy this structure immediately.

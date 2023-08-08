@@ -65,9 +65,7 @@ namespace ScreepsDotNet.Native.World
 
         public string Name { get; private set; }
 
-        public bool Exists => proxyObjectOrNull != null;
-
-        public IStructureController? Controller => NativeRoomObjectUtils.CreateWrapperForRoomObject<IStructureController>(nativeRoot, ProxyObject.GetPropertyAsJSObject("controller"));
+        public IStructureController? Controller => nativeRoot.GetOrCreateWrapperObject<IStructureController>(ProxyObject.GetPropertyAsJSObject("controller"));
 
         public int EnergyAvailable => ProxyObject.GetPropertyAsInt32("energyAvailable");
 
@@ -75,7 +73,7 @@ namespace ScreepsDotNet.Native.World
 
         public IMemoryObject Memory => memoryCache ??= new NativeMemoryObject(ProxyObject.GetPropertyAsJSObject("memory")!);
 
-        public IStructureStorage? Storage => NativeRoomObjectUtils.CreateWrapperForRoomObject<IStructureStorage>(nativeRoot, ProxyObject.GetPropertyAsJSObject("storage"));
+        public IStructureStorage? Storage => nativeRoot.GetOrCreateWrapperObject<IStructureStorage>(ProxyObject.GetPropertyAsJSObject("storage"));
 
         public object? Terminal => throw new NotImplementedException();
 
@@ -91,11 +89,8 @@ namespace ScreepsDotNet.Native.World
             : this(nativeRoot, proxyObject, proxyObject.GetPropertyAsString("name")!)
         { }
 
-        public override void InvalidateProxyObject()
-        {
-            proxyObjectOrNull = nativeRoot.RoomsObj.GetPropertyAsJSObject(Name);
-            ClearNativeCache();
-        }
+        public override JSObject? ReacquireProxyObject()
+            => nativeRoot.RoomsObj.GetPropertyAsJSObject(Name);
 
         protected override void ClearNativeCache()
         {
@@ -129,7 +124,7 @@ namespace ScreepsDotNet.Native.World
             var findConstant = NativeRoomObjectPrototypes<T>.FindConstant;
             if (findConstant == null) { return Enumerable.Empty<T>(); }
             return Native_Find(ProxyObject, (int)findConstant)
-                .Select(x => NativeRoomObjectUtils.CreateWrapperForRoomObject<T>(nativeRoot, x))
+                .Select(nativeRoot.GetOrCreateWrapperObject<T>)
                 .Where(x => x != null)
                 .OfType<T>()
                 .ToArray();
@@ -192,7 +187,7 @@ namespace ScreepsDotNet.Native.World
         public IEnumerable<IRoomObject> LookAt(Position position)
 #pragma warning disable CS8619 // Nullability of reference types in value doesn't match target type.
             => Native_LookAt(ProxyObject, position.X, position.Y)
-                .Select(x => NativeRoomObjectUtils.CreateWrapperForRoomObject<IRoomObject>(nativeRoot, InterpretLookElement(x)))
+                .Select(x => nativeRoot.GetOrCreateWrapperObject<IRoomObject>(InterpretLookElement(x)))
                 .Where(x => x != null)
                 .ToArray();
 #pragma warning restore CS8619 // Nullability of reference types in value doesn't match target type.
@@ -200,7 +195,7 @@ namespace ScreepsDotNet.Native.World
         public IEnumerable<IRoomObject> LookAtArea(Position min, Position max)
 #pragma warning disable CS8619 // Nullability of reference types in value doesn't match target type.
             => Native_LookAtArea(ProxyObject, min.Y, min.X, max.Y, max.X, true)
-                .Select(x => NativeRoomObjectUtils.CreateWrapperForRoomObject<IRoomObject>(nativeRoot, InterpretLookElement(x)))
+                .Select(x => nativeRoot.GetOrCreateWrapperObject<IRoomObject>(InterpretLookElement(x)))
                 .Where(x => x != null)
                 .ToArray();
 #pragma warning restore CS8619 // Nullability of reference types in value doesn't match target type.
@@ -210,7 +205,7 @@ namespace ScreepsDotNet.Native.World
             var lookConstant = NativeRoomObjectPrototypes<T>.LookConstant;
             if (lookConstant == null) { return Enumerable.Empty<T>(); }
             return Native_LookForAt(ProxyObject, lookConstant, position.X, position.Y)
-                .Select(x => NativeRoomObjectUtils.CreateWrapperForRoomObject<T>(nativeRoot, x.GetPropertyAsJSObject(lookConstant)))
+                .Select(x => nativeRoot.GetOrCreateWrapperObject<T>(x.GetPropertyAsJSObject(lookConstant)))
                 .Where(x => x != null)
                 .Cast<T>()
                 .ToArray();
@@ -221,7 +216,7 @@ namespace ScreepsDotNet.Native.World
             var lookConstant = NativeRoomObjectPrototypes<T>.LookConstant;
             if (lookConstant == null) { return Enumerable.Empty<T>(); }
             return Native_LookForAtArea(ProxyObject, lookConstant, min.Y, min.X, max.Y, max.X, true)
-                .Select(x => NativeRoomObjectUtils.CreateWrapperForRoomObject<T>(nativeRoot, x.GetPropertyAsJSObject(lookConstant)))
+                .Select(x => nativeRoot.GetOrCreateWrapperObject<T>(x.GetPropertyAsJSObject(lookConstant)))
                 .Where(x => x != null)
                 .Cast<T>()
                 .ToArray();

@@ -12,8 +12,8 @@ namespace ScreepsDotNet.Native.World
 
         public OwnerInfo Owner => new(ProxyObject.GetPropertyAsJSObject("owner")!.GetPropertyAsString("username")!);
 
-        public NativeOwnedStructure(INativeRoot nativeRoot, JSObject proxyObject)
-            : base(nativeRoot, proxyObject)
+        public NativeOwnedStructure(INativeRoot nativeRoot, JSObject proxyObject, string knownId)
+            : base(nativeRoot, proxyObject, knownId)
         { }
     }
 }

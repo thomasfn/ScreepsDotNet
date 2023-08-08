@@ -42,7 +42,7 @@ namespace ScreepsDotNet.Native.World
         {
             get
             {
-                var spawn = NativeRoomObjectUtils.CreateWrapperForRoomObject<IStructureSpawn>(nativeRoot, proxyObject.GetPropertyAsJSObject("spawn"));
+                var spawn = nativeRoot.GetOrCreateWrapperObject<IStructureSpawn>(proxyObject.GetPropertyAsJSObject("spawn"));
                 if (spawn == null) { throw new InvalidOperationException($"ISpawning failed to retrieve spawn"); }
                 return spawn;
             }
@@ -100,7 +100,9 @@ namespace ScreepsDotNet.Native.World
 
         private readonly string name;
 
-        public object Memory => throw new NotImplementedException();
+        private NativeMemoryObject? memoryCache;
+
+        public IMemoryObject Memory => memoryCache ??= new NativeMemoryObject(ProxyObject.GetPropertyAsJSObject("memory")!);
 
         public string Name => name;
 
@@ -116,20 +118,10 @@ namespace ScreepsDotNet.Native.World
 
         public IStore Store => new NativeStore(ProxyObject.GetPropertyAsJSObject("store"));
 
-        public NativeStructureSpawn(INativeRoot nativeRoot, JSObject proxyObject, string knownName)
-            : base(nativeRoot, proxyObject)
+        public NativeStructureSpawn(INativeRoot nativeRoot, JSObject proxyObject, string knownId)
+            : base(nativeRoot, proxyObject, knownId)
         {
-            name = knownName;
-        }
-
-        public NativeStructureSpawn(INativeRoot nativeRoot, JSObject proxyObject)
-            : this(nativeRoot, proxyObject, proxyObject.GetPropertyAsString("name")!)
-        { }
-
-        public override void InvalidateProxyObject()
-        {
-            proxyObjectOrNull = nativeRoot.SpawnsObj.GetPropertyAsJSObject(name);
-            ClearNativeCache();
+            name = proxyObject.GetPropertyAsString("name")!;
         }
 
         public SpawnCreepResult SpawnCreep(IEnumerable<BodyPartType> body, string name, SpawnCreepOptions? opts = null)

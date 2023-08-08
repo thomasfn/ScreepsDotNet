@@ -9,8 +9,7 @@ namespace ScreepsDotNet.Native.World
     {
         public int TicksToDecay => ProxyObject.GetPropertyAsInt32("ticksToDecay");
 
-        public NativeStructureRoad(INativeRoot nativeRoot, JSObject proxyObject)
-            : base(nativeRoot, proxyObject)
+        public NativeStructureRoad(INativeRoot nativeRoot, JSObject proxyObject, string knownId) : base(nativeRoot, proxyObject, knownId)
         { }
     }
 }

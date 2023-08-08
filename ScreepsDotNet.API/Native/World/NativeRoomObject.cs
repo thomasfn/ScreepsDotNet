@@ -14,8 +14,6 @@ namespace ScreepsDotNet.Native.World
     {
         private RoomPosition? positionCache;
 
-        public bool Exists => proxyObjectOrNull != null;
-
         public IEnumerable<Effect> Effects => throw new NotImplementedException();
 
         public RoomPosition RoomPosition => positionCache ??= ProxyObject.GetPropertyAsJSObject("pos")!.ToRoomPosition();
@@ -39,9 +37,6 @@ namespace ScreepsDotNet.Native.World
             base.ClearNativeCache();
             positionCache = null;
         }
-
-        public override string ToString()
-            => $"NativeRoomObject[{proxyObjectOrNull}]";
     }
 
     internal enum FindConstant
@@ -172,8 +167,14 @@ namespace ScreepsDotNet.Native.World
             return (Activator.CreateInstance(wrapperType, new object[] { nativeRoot, proxyObject }) as NativeRoomObject)!;
         }
 
-        internal static T? CreateWrapperForRoomObject<T>(INativeRoot nativeRoot, JSObject? proxyObject) where T : class, IRoomObject
-            => CreateWrapperForRoomObject(nativeRoot, proxyObject, typeof(T)) as T;
+        internal static NativeRoomObject? CreateWrapperForRoomObject(INativeRoot nativeRoot, JSObject? proxyObject, Type expectedType, string knownId)
+        {
+            if (proxyObject == null) { return null; }
+            var wrapperType = GetWrapperTypeForObject(proxyObject);
+            if (wrapperType == null) { return null; }
+            if (!wrapperType.IsAssignableTo(expectedType)) { return null; }
+            return (Activator.CreateInstance(wrapperType, new object[] { nativeRoot, proxyObject, knownId }) as NativeRoomObject)!;
+        }
 
         internal static string GetPrototypeName(Type type)
             => prototypeNameMappings[type];
@@ -190,6 +191,7 @@ namespace ScreepsDotNet.Native.World
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureExtension))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureStorage))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureRampart))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureTower))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeOwnedStructure))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureRoad))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureWall))]
@@ -199,6 +201,7 @@ namespace ScreepsDotNet.Native.World
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeFlag))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeResource))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeConstructionSite))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeTombstone))]
         static NativeRoomObjectUtils()
         {
             prototypesObject = GetPrototypesObject();
@@ -212,6 +215,7 @@ namespace ScreepsDotNet.Native.World
                 RegisterPrototypeTypeMapping<IStructureExtension, NativeStructureExtension>("StructureExtension", FindConstant.Structures, "structure", "extension");
                 RegisterPrototypeTypeMapping<IStructureStorage, NativeStructureStorage>("StructureStorage", FindConstant.Structures, "structure", "storage");
                 RegisterPrototypeTypeMapping<IStructureRampart, NativeStructureRampart>("StructureRampart", FindConstant.Structures, "structure", "rampart");
+                RegisterPrototypeTypeMapping<IStructureTower, NativeStructureTower>("StructureTower", FindConstant.Structures, "structure", "tower");
                 RegisterPrototypeTypeMapping<IOwnedStructure, NativeOwnedStructure>("OwnedStructure", FindConstant.Structures, "structure");
                 RegisterPrototypeTypeMapping<IStructureRoad, NativeStructureRoad>("StructureRoad", FindConstant.Structures, "structure", "road");
                 RegisterPrototypeTypeMapping<IStructureWall, NativeStructureWall>("StructureWall", FindConstant.Structures, "structure", "constructedWall");
@@ -221,6 +225,7 @@ namespace ScreepsDotNet.Native.World
                 RegisterPrototypeTypeMapping<IFlag, NativeFlag>("Flag", FindConstant.Flags, "flag");
                 RegisterPrototypeTypeMapping<IResource, NativeResource>("Resource", FindConstant.DroppedResources, "resource");
                 RegisterPrototypeTypeMapping<IConstructionSite, NativeConstructionSite>("ConstructionSite", FindConstant.ConstructionSites, "constructionSite");
+                RegisterPrototypeTypeMapping<ITombstone, NativeTombstone>("Tombstone", FindConstant.Tombstones, "tombstone");
             }
             catch (Exception ex)
             {

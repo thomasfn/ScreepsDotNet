@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+
 using System.Runtime.InteropServices.JavaScript;
 
 using ScreepsDotNet.API;
@@ -32,9 +33,11 @@ namespace ScreepsDotNet.Native.World
 
         private readonly string name;
 
+        private IMemoryObject? memoryCache;
+
         public FlagColor Color => (FlagColor)ProxyObject.GetPropertyAsInt32("color");
 
-        public object Memory => throw new NotImplementedException();
+        public IMemoryObject Memory => memoryCache ??= new NativeMemoryObject(ProxyObject.GetPropertyAsJSObject("memory")!);
 
         public string Name => name;
 
@@ -50,11 +53,8 @@ namespace ScreepsDotNet.Native.World
             : this(nativeRoot, proxyObject, proxyObject.GetPropertyAsString("name")!)
         { }
 
-        public override void InvalidateProxyObject()
-        {
-            proxyObjectOrNull = nativeRoot.FlagsObj.GetPropertyAsJSObject(name);
-            ClearNativeCache();
-        }
+        public override JSObject? ReacquireProxyObject()
+            => nativeRoot.FlagsObj.GetPropertyAsJSObject(name);
 
         public void Remove()
             => Native_Remove(ProxyObject);

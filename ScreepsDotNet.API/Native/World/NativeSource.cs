@@ -19,17 +19,14 @@ namespace ScreepsDotNet.Native.World
 
         public int TicksToRegeneration => ProxyObject.GetPropertyAsInt32("ticksToRegeneration");
 
-        public NativeSource(INativeRoot nativeRoot, JSObject proxyObject)
+        public NativeSource(INativeRoot nativeRoot, JSObject proxyObject, string knownId)
             : base(nativeRoot, proxyObject)
         {
-            id = proxyObject.GetPropertyAsString("id")!;
+            id = knownId;
         }
 
-        public override void InvalidateProxyObject()
-        {
-            proxyObjectOrNull = nativeRoot.GetObjectById(id);
-            ClearNativeCache();
-        }
+        public override JSObject? ReacquireProxyObject()
+            => nativeRoot.GetProxyObjectById(id);
 
         public override string ToString()
             => $"Source[{RoomPosition}]";

@@ -116,7 +116,7 @@ namespace ScreepsDotNet.API.World
     /// It can be used to look around, find paths, etc.
     /// Every RoomObject in the room contains its linked Room instance in the room property.
     /// </summary>
-    public interface IRoom
+    public interface IRoom : IWithName
     {
         /// <summary>
         /// Gets if this room still exists and is visible.
@@ -144,11 +144,6 @@ namespace ScreepsDotNet.API.World
         /// A shorthand to Memory.rooms[room.name]. You can use it for quick access the room’s specific memory data object.
         /// </summary>
         IMemoryObject Memory { get; }
-
-        /// <summary>
-        /// The name of the room.
-        /// </summary>
-        string Name { get; }
 
         /// <summary>
         /// The Storage structure of this room, if present, otherwise undefined.

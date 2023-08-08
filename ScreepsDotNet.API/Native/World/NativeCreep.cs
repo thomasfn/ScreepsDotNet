@@ -250,11 +250,8 @@ namespace ScreepsDotNet.Native.World
             : this(nativeRoot, proxyObject, proxyObject.GetPropertyAsString("name")!, proxyObject.GetPropertyAsString("id")!)
         { }
 
-        public override void InvalidateProxyObject()
-        {
-            proxyObjectOrNull = nativeRoot.GetObjectById(id);
-            ClearNativeCache();
-        }
+        public override JSObject? ReacquireProxyObject()
+            => nativeRoot.GetProxyObjectById(id);
 
         protected override void ClearNativeCache()
         {
@@ -382,7 +379,8 @@ namespace ScreepsDotNet.Native.World
         public CreepWithdrawResult Withdraw(IStructure target, ResourceType resourceType, int? amount = null)
             => (CreepWithdrawResult)Native_Withdraw(ProxyObject, target.ToJS(), resourceType.ToJS(), amount);
 
-        // CreepWithdrawResult Withdraw(ITombstone target, ResourceType resourceType, int? amount = null);
+        public CreepWithdrawResult Withdraw(ITombstone target, ResourceType resourceType, int? amount = null)
+            => (CreepWithdrawResult)Native_Withdraw(ProxyObject, target.ToJS(), resourceType.ToJS(), amount);
 
         // CreepWithdrawResult Withdraw(IRuin target, ResourceType resourceType, int? amount = null);
 

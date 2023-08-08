@@ -8,7 +8,7 @@ using System.Linq;
 namespace ScreepsDotNet.Native.World
 {
     [System.Runtime.Versioning.SupportedOSPlatform("browser")]
-    internal partial class NativeObjectLazyLookup<T> : IReadOnlyDictionary<string, T>, INativeObject where T : class
+    internal partial class NativeObjectLazyLookup<TConcrete, TInterface> : IReadOnlyDictionary<string, TInterface> where TInterface : class where TConcrete : class, INativeObject, TInterface
     {
         #region Imports
 
@@ -19,25 +19,25 @@ namespace ScreepsDotNet.Native.World
         #endregion
 
         private readonly Func<JSObject> proxyObjectReacquireFn;
-        private readonly Func<T, string> getObjectKeyFn;
-        private readonly Func<string, JSObject, T?> constructObjectFn;
+        private readonly Func<TConcrete, string> getObjectKeyFn;
+        private readonly Func<string, JSObject, TConcrete?> constructObjectFn;
 
         private JSObject proxyObject;
 
         private ISet<string>? keysCache;
-        private readonly IDictionary<string, T> mapCache = new Dictionary<string, T>();
+        private readonly IDictionary<string, TConcrete> mapCache = new Dictionary<string, TConcrete>();
 
         private ISet<string> KeySet => keysCache ??= new HashSet<string>(Native_GetKeysOf(proxyObject));
 
-        public T this[string key] => throw new NotImplementedException();
+        public TInterface this[string key] => TryGetValue(key, out var value) ? value : throw new KeyNotFoundException();
 
         public IEnumerable<string> Keys => KeySet;
 
-        public IEnumerable<T> Values => this.Select(pair => pair.Value);
+        public IEnumerable<TInterface> Values => this.Select(pair => pair.Value);
 
         public int Count => KeySet.Count;
 
-        public NativeObjectLazyLookup(Func<JSObject> proxyObjectReacquireFn, Func<T, string> getObjectKeyFn, Func<string, JSObject, T?> constructObjectFn)
+        public NativeObjectLazyLookup(Func<JSObject> proxyObjectReacquireFn, Func<TConcrete, string> getObjectKeyFn, Func<string, JSObject, TConcrete?> constructObjectFn)
         {
             this.proxyObjectReacquireFn = proxyObjectReacquireFn;
             this.getObjectKeyFn = getObjectKeyFn;
@@ -48,10 +48,10 @@ namespace ScreepsDotNet.Native.World
         public bool ContainsKey(string key)
             => KeySet.Contains(key);
 
-        public IEnumerator<KeyValuePair<string, T>> GetEnumerator()
+        public IEnumerator<KeyValuePair<string, TInterface>> GetEnumerator()
 #pragma warning disable CS8604 // Possible null reference argument.
             => KeySet
-                .Select(key => new KeyValuePair<string, T>(key, TryGetValue(key, out var value) ? value : null))
+                .Select(key => new KeyValuePair<string, TInterface>(key, TryGetValue(key, out var value) ? value : null))
                 .Where(pair => pair.Value != null)
                 .GetEnumerator();
 #pragma warning restore CS8604 // Possible null reference argument.
@@ -60,17 +60,22 @@ namespace ScreepsDotNet.Native.World
         {
             proxyObject = proxyObjectReacquireFn();
             keysCache = null;
+            // TODO: Instead of clearing the whole cache, go through and remove any where Exists == false
             mapCache.Clear();
         }
 
-        public bool TryGetValue(string key, [MaybeNullWhen(false)] out T value)
+        public bool TryGetValue(string key, [MaybeNullWhen(false)] out TInterface value)
         {
             if (!KeySet.Contains(key))
             {
                 value = null;
                 return false;
             }
-            if (mapCache.TryGetValue(key, out value)) { return true; }
+            if (mapCache.TryGetValue(key, out var cachedObj))
+            {
+                value = cachedObj;
+                return true;
+            }
             var obj = proxyObject.GetPropertyAsJSObject(key);
             if (obj == null)
             {

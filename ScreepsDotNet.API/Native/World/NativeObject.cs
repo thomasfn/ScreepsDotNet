@@ -9,34 +9,69 @@ namespace ScreepsDotNet.Native.World
     {
         protected readonly INativeRoot nativeRoot;
 
-        protected JSObject? proxyObjectOrNull;
+        private bool isDead = false;
+        private int proxyObjectValidAsOf;
+        private JSObject? proxyObject;
 
         public JSObject ProxyObject
         {
             get
             {
-                if (proxyObjectOrNull == null) { throw new NativeObjectNoLongerExistsException(); }
-                return proxyObjectOrNull;
+                if (isDead) { throw new NativeObjectNoLongerExistsException(); }
+                if (proxyObjectValidAsOf < nativeRoot.TickIndex)
+                {
+                    proxyObject = ReacquireProxyObject();
+                    ClearNativeCache();
+                    if (proxyObject == null)
+                    {
+                        isDead = true;
+                    }
+                    else
+                    {
+                        proxyObjectValidAsOf = nativeRoot.TickIndex;
+                    }
+                }
+                if (proxyObject == null) { throw new NativeObjectNoLongerExistsException(); }
+                return proxyObject;
             }
-            set
+        }
+
+        public bool Exists
+        {
+            get
             {
-                proxyObjectOrNull = value;
-                ClearNativeCache();
+                if (isDead) { return false; }
+                if (proxyObjectValidAsOf < nativeRoot.TickIndex)
+                {
+                    proxyObject = ReacquireProxyObject();
+                    ClearNativeCache();
+                    if (proxyObject == null)
+                    {
+                        isDead = true;
+                        return false;
+                    }
+                    else
+                    {
+                        proxyObjectValidAsOf = nativeRoot.TickIndex;
+                        return true;
+                    }
+                }
+                return proxyObject != null;
             }
         }
 
         public NativeObject(INativeRoot nativeRoot, JSObject proxyObject)
         {
             this.nativeRoot = nativeRoot;
-            proxyObjectOrNull = proxyObject;
-            nativeRoot.BeginTracking(this);
+            this.proxyObject = proxyObject;
+            proxyObjectValidAsOf = nativeRoot.TickIndex;
         }
 
         protected virtual void ClearNativeCache() { }
 
-        public abstract void InvalidateProxyObject();
+        public abstract JSObject? ReacquireProxyObject();
 
         public override string ToString()
-            => $"NativeObject[{proxyObjectOrNull}]";
+            => $"{GetType().Name}[{(isDead ? "DEAD" : ProxyObject?.ToString())}]";
     }
 }

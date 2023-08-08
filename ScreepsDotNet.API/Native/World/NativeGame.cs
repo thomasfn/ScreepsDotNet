@@ -9,7 +9,9 @@ namespace ScreepsDotNet.Native.World
 {
     internal interface INativeObject
     {
-        void InvalidateProxyObject();
+        bool Exists { get; }
+
+        JSObject? ReacquireProxyObject();
     }
 
     internal interface INativeRoot
@@ -26,11 +28,15 @@ namespace ScreepsDotNet.Native.World
 
         JSObject StructuresObj { get; }
 
-        void BeginTracking(INativeObject nativeObject);
+        int TickIndex { get; }
 
-        void EndTracking(INativeObject nativeObject);
+        JSObject GetProxyObjectById(string id);
 
-        JSObject GetObjectById(string id);
+        IWithId? GetExistingWrapperObjectById(string id);
+
+        T? GetExistingWrapperObjectById<T>(string id) where T : class, INativeObject, IWithId;
+
+        T? GetOrCreateWrapperObject<T>(JSObject? proxyObject) where T : class, IRoomObject;
     }
 
     [System.Runtime.Versioning.SupportedOSPlatform("browser")]
@@ -62,13 +68,13 @@ namespace ScreepsDotNet.Native.World
         private readonly NativePathFinder nativePathFinder;
         private readonly NativeConstants nativeConstants;
 
-        private readonly IList<WeakReference<INativeObject>> trackedNativeObjects = new List<WeakReference<INativeObject>>();
+        private readonly IDictionary<string, WeakReference<IWithId>> objectsByIdCache = new Dictionary<string, WeakReference<IWithId>>();
 
-        private readonly NativeObjectLazyLookup<ICreep> creepLazyLookup;
-        private readonly NativeObjectLazyLookup<IFlag> flagLazyLookup;
-        private readonly NativeObjectLazyLookup<IRoom> roomLazyLookup;
-        private readonly NativeObjectLazyLookup<IStructureSpawn> spawnLazyLookup;
-        private readonly NativeObjectLazyLookup<IStructure> structureLazyLookup;
+        private readonly NativeObjectLazyLookup<NativeCreep, ICreep> creepLazyLookup;
+        private readonly NativeObjectLazyLookup<NativeFlag, IFlag> flagLazyLookup;
+        private readonly NativeObjectLazyLookup<NativeRoom, IRoom> roomLazyLookup;
+        private readonly NativeObjectLazyLookup<NativeStructureSpawn, IStructureSpawn> spawnLazyLookup;
+        private readonly NativeObjectLazyLookup<NativeStructure, IStructure> structureLazyLookup;
 
         public JSObject GameObj => ProxyObject;
 
@@ -81,6 +87,8 @@ namespace ScreepsDotNet.Native.World
         public JSObject SpawnsObj { get; private set; }
 
         public JSObject StructuresObj { get; private set; }
+
+        public int TickIndex { get; private set; }
 
         public ICpu Cpu => nativeCpu;
 
@@ -114,20 +122,17 @@ namespace ScreepsDotNet.Native.World
             nativeMap = new NativeMap();
             nativePathFinder = new NativePathFinder();
             nativeConstants = new NativeConstants();
-            creepLazyLookup = new NativeObjectLazyLookup<ICreep>(() => CreepsObj, x => x.Name, (name, proxyObject) => new NativeCreep(this, proxyObject, name));
-            flagLazyLookup = new NativeObjectLazyLookup<IFlag>(() => FlagsObj, x => x.Name, (name, proxyObject) => new NativeFlag(this, proxyObject, name));
-            roomLazyLookup = new NativeObjectLazyLookup<IRoom>(() => RoomsObj, x => x.Name, (name, proxyObject) => new NativeRoom(this, proxyObject, name));
-            spawnLazyLookup = new NativeObjectLazyLookup<IStructureSpawn>(() => SpawnsObj, x => x.Name, (name, proxyObject) => new NativeStructureSpawn(this, proxyObject, name));
-            structureLazyLookup = new NativeObjectLazyLookup<IStructure>(() => StructuresObj, x => x.Id, (name, proxyObject) => NativeRoomObjectUtils.CreateWrapperForRoomObject<IStructure>(this, proxyObject));
-            trackedNativeObjects.Add(new WeakReference<INativeObject>(creepLazyLookup));
-            trackedNativeObjects.Add(new WeakReference<INativeObject>(flagLazyLookup));
-            trackedNativeObjects.Add(new WeakReference<INativeObject>(roomLazyLookup));
-            trackedNativeObjects.Add(new WeakReference<INativeObject>(spawnLazyLookup));
-            trackedNativeObjects.Add(new WeakReference<INativeObject>(structureLazyLookup));
+            var nativeRoot = this as INativeRoot;
+            creepLazyLookup = new NativeObjectLazyLookup<NativeCreep, ICreep>(() => CreepsObj, x => x.Name, (name, proxyObject) => nativeRoot.GetOrCreateWrapperObject<NativeCreep>(proxyObject));
+            flagLazyLookup = new NativeObjectLazyLookup<NativeFlag, IFlag>(() => FlagsObj, x => x.Name, (name, proxyObject) => nativeRoot.GetOrCreateWrapperObject<NativeFlag>(proxyObject));
+            roomLazyLookup = new NativeObjectLazyLookup<NativeRoom, IRoom>(() => RoomsObj, x => x.Name, (name, proxyObject) => new NativeRoom(this, proxyObject, name));
+            spawnLazyLookup = new NativeObjectLazyLookup<NativeStructureSpawn, IStructureSpawn>(() => SpawnsObj, x => x.Name, (name, proxyObject) => nativeRoot.GetOrCreateWrapperObject<NativeStructureSpawn>(proxyObject));
+            structureLazyLookup = new NativeObjectLazyLookup<NativeStructure, IStructure>(() => StructuresObj, x => x.Id, (name, proxyObject) => nativeRoot.GetOrCreateWrapperObject<NativeStructure>(proxyObject));
         }
 
         public void Tick()
         {
+            ++TickIndex;
             ProxyObject.Dispose();
             ProxyObject = Native_GetGameObject();
             CreepsObj.Dispose();
@@ -142,46 +147,32 @@ namespace ScreepsDotNet.Native.World
             StructuresObj = ProxyObject.GetPropertyAsJSObject("structures")!;
             nativeCpu.ProxyObject.Dispose();
             nativeCpu.ProxyObject = ProxyObject.GetPropertyAsJSObject("cpu")!;
-            int pruneCount = 0;
-            int totalCount = trackedNativeObjects.Count;
-            for (int i = totalCount - 1; i >= 0; --i)
+            if (TickIndex % 10 == 0)
             {
-                if (trackedNativeObjects[i].TryGetTarget(out var nativeObject) && nativeObject != null)
-                {
-                    nativeObject.InvalidateProxyObject();
-                }
-                else
-                {
-                    trackedNativeObjects.RemoveAt(i);
-                    ++pruneCount;
-                }
-            }
-            if (pruneCount > 0)
-            {
-                Console.WriteLine($"NativeGame: pruned {pruneCount} of {totalCount} objects from the internal tracking list");
+                // TODO: Do we want a more sophisticated way of doing this, e.g. detect when a GC happened?
+                PruneObjectsByIdCache();
             }
         }
 
-        void INativeRoot.BeginTracking(INativeObject nativeObject)
-            => trackedNativeObjects.Add(new WeakReference<INativeObject>(nativeObject));
-
-        void INativeRoot.EndTracking(INativeObject nativeObject)
+        private void PruneObjectsByIdCache()
         {
-            for (int i = 0; i < trackedNativeObjects.Count; i++)
+            var pendingRemoval = new HashSet<string>();
+            foreach (var (name, obj) in objectsByIdCache)
             {
-                if (trackedNativeObjects[i].TryGetTarget(out var target) && ReferenceEquals(target, nativeObject))
-                {
-                    trackedNativeObjects.RemoveAt(i);
-                    return;
-                }
+                if (!obj.TryGetTarget(out _)) { pendingRemoval.Add(name); }
+            }
+            if (pendingRemoval.Count > 0)
+            {
+                Console.WriteLine($"NativeGame: pruning {pendingRemoval.Count} of {objectsByIdCache.Count} objects from the objects-by-id cache");
+            }
+            foreach (var key in pendingRemoval)
+            {
+                objectsByIdCache.Remove(key);
             }
         }
-
-        JSObject INativeRoot.GetObjectById(string id)
-            => Native_GetObjectById(id);
 
         public T? GetObjectById<T>(string id) where T : class, IRoomObject
-            => NativeRoomObjectUtils.CreateWrapperForRoomObject<T>(this, Native_GetObjectById(id));
+            => (this as INativeRoot).GetOrCreateWrapperObject<T>(Native_GetObjectById(id)) as T;
 
         public void Notify(string message, int groupInterval = 0)
             => Native_Notify(message, groupInterval);
@@ -191,5 +182,32 @@ namespace ScreepsDotNet.Native.World
 
         public IRoomVisual CreateRoomVisual(string? roomName = null)
             => new NativeRoomVisual(roomName);
+
+        JSObject INativeRoot.GetProxyObjectById(string id)
+            => Native_GetObjectById(id);
+
+        IWithId? INativeRoot.GetExistingWrapperObjectById(string id)
+            => (objectsByIdCache.TryGetValue(id, out var objRef) && objRef.TryGetTarget(out var obj)) ? obj : null;
+
+        T? INativeRoot.GetExistingWrapperObjectById<T>(string id) where T : class
+            => (this as INativeRoot).GetExistingWrapperObjectById(id) as T;
+
+        T? INativeRoot.GetOrCreateWrapperObject<T>(JSObject? proxyObject) where T : class
+        {
+            if (proxyObject == null) { return null; }
+            if (typeof(T).IsAssignableTo(typeof(IWithId)))
+            {
+                var id = proxyObject.GetPropertyAsString("id");
+                if (id != null)
+                {
+                    var existingObj = (this as INativeRoot).GetExistingWrapperObjectById(id);
+                    if (existingObj is T existingObjT) { return existingObjT; }
+                    if (NativeRoomObjectUtils.CreateWrapperForRoomObject(this, proxyObject, typeof(T), id) is not T newObj) { return null; }
+                    if (newObj is IWithId newObjWithId) { objectsByIdCache[newObjWithId.Id] = new WeakReference<IWithId>(newObjWithId); }
+                    return newObj;
+                }
+            }
+            return NativeRoomObjectUtils.CreateWrapperForRoomObject(this, proxyObject, typeof(T)) as T;
+        }
     }
 }

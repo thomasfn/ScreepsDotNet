@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices.JavaScript;
+
 using ScreepsDotNet.API;
 using ScreepsDotNet.API.World;
 
@@ -12,8 +13,8 @@ namespace ScreepsDotNet.Native.World
     {
         #region Imports
 
-        [JSImport("set", "object")]
-        internal static partial void SetRoomCallbackOnObject([JSMarshalAs<JSType.Object>] JSObject obj, [JSMarshalAs<JSType.String>] string key, [JSMarshalAs<JSType.Function<JSType.String, JSType.Object>>] Func<string, JSObject?> fn);
+        [JSImport("PathFinder.compileRoomCallback", "game/prototypes/wrapped")]
+        internal static partial void Native_CompileRoomCallback([JSMarshalAs<JSType.Object>] JSObject obj, [JSMarshalAs<JSType.Object>] JSObject roomCostMapObj);
 
         [JSImport("set", "object")]
         internal static partial void SetCostCallbackOnObject([JSMarshalAs<JSType.Object>] JSObject obj, [JSMarshalAs<JSType.String>] string key, [JSMarshalAs<JSType.Function<JSType.String, JSType.Object, JSType.Object>>] Func<string, JSObject, JSObject?> fn);
@@ -23,7 +24,27 @@ namespace ScreepsDotNet.Native.World
         public static JSObject ToJS(this SearchPathOptions searchPathOptions)
         {
             var obj = JSUtils.CreateObject(null);
-            if (searchPathOptions.RoomCallback != null) { SetRoomCallbackOnObject(obj, "roomCallback", roomName => (searchPathOptions.RoomCallback(roomName) as NativeCostMatrix)?.ProxyObject); }
+            if (searchPathOptions.RoomCostMap != null)
+            {
+                using var roomCostMapObj = JSUtils.CreateObject(null);
+                foreach (var (roomName, spec) in searchPathOptions.RoomCostMap)
+                {
+                    if (spec.SpecificationType == RoomCostSpecificationType.UseDefaultCostMatrix)
+                    {
+                        roomCostMapObj.SetProperty(roomName, true);
+                    }
+                    else if (spec.SpecificationType == RoomCostSpecificationType.DoNotPathThroughRoom)
+                    {
+                        roomCostMapObj.SetProperty(roomName, false);
+                    }
+                    else
+                    {
+                        roomCostMapObj.SetProperty(roomName, (spec.CostMatrix as NativeCostMatrix)!.ProxyObject);
+                    }
+                }
+                roomCostMapObj.SetProperty("allowUnspecifiedRooms", searchPathOptions.AllowUnspecifiedRooms ?? true);
+                Native_CompileRoomCallback(obj, roomCostMapObj);
+            }
             if (searchPathOptions.PlainCost != null) { obj.SetProperty("plainCost", searchPathOptions.PlainCost.Value); }
             if (searchPathOptions.SwampCost != null) { obj.SetProperty("swampCost", searchPathOptions.SwampCost.Value); }
             if (searchPathOptions.Flee != null) { obj.SetProperty("flee", searchPathOptions.Flee.Value); }

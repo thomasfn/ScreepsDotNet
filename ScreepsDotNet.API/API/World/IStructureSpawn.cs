@@ -212,27 +212,17 @@ namespace ScreepsDotNet.API.World
     /// All your spawns are accessible through Game.spawns hash list.
     /// Spawns auto-regenerate a little amount of energy each tick, so that you can easily recover even if all your creeps died.
     /// </summary>
-    public interface IStructureSpawn : IOwnedStructure
+    public interface IStructureSpawn : IOwnedStructure, IWithStore, IWithName
     {
         /// <summary>
         /// A shorthand to Memory.spawns[spawn.name]. You can use it for quick access the spawn’s specific memory data object.
         /// </summary>
-        object Memory { get; }
-
-        /// <summary>
-        /// Spawn’s name. You choose the name upon creating a new spawn, and it cannot be changed later. This name is a hash key to access the spawn via the Game.spawns object.
-        /// </summary>
-        string Name { get; }
+        IMemoryObject Memory { get; }
 
         /// <summary>
         /// If the spawn is in process of spawning a new creep, this object will contain a StructureSpawn.Spawning object, or null otherwise.
         /// </summary>
         ISpawning? Spawning { get; }
-
-        /// <summary>
-        /// A Store object that contains cargo of this structure.
-        /// </summary>
-        IStore Store { get; }
 
         /// <summary>
         /// Start the creep spawning process. The required energy amount can be withdrawn from all spawns and extensions in the room.

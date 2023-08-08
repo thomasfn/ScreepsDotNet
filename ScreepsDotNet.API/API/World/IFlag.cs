@@ -43,7 +43,7 @@ namespace ScreepsDotNet.API.World
     /// <summary>
     /// A flag. Flags can be used to mark particular spots in a room. Flags are visible to their owners only. You cannot have more than 10,000 flags.
     /// </summary>
-    public interface IFlag : IRoomObject
+    public interface IFlag : IRoomObject, IWithName
     {
         /// <summary>
         /// Flag primary color.
@@ -53,12 +53,7 @@ namespace ScreepsDotNet.API.World
         /// <summary>
         /// A shorthand to Memory.flags[flag.name]. You can use it for quick access the flag's specific memory data object.
         /// </summary>
-        object Memory { get; }
-
-        /// <summary>
-        /// Flag’s name. You can choose the name while creating a new flag, and it cannot be changed later. This name is a hash key to access the flag via the Game.flags object. The maximum name length is 100 charactes.
-        /// </summary>
-        string Name { get; }
+        IMemoryObject Memory { get; }
 
         /// <summary>
         /// Flag secondary color.

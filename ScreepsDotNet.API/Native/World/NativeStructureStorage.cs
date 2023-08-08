@@ -12,8 +12,7 @@ namespace ScreepsDotNet.Native.World
 
         public IStore Store => storeCache ??= new NativeStore(ProxyObject.GetPropertyAsJSObject("store"));
 
-        public NativeStructureStorage(INativeRoot nativeRoot, JSObject proxyObject)
-            : base(nativeRoot, proxyObject)
+        public NativeStructureStorage(INativeRoot nativeRoot, JSObject proxyObject, string knownId) : base(nativeRoot, proxyObject, knownId)
         { }
 
         protected override void ClearNativeCache()

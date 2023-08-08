@@ -689,7 +689,7 @@ namespace ScreepsDotNet.API.World
     /// <summary>
     /// Creeps are your units. Creeps can move, harvest energy, construct structures, attack another creeps, and perform other actions. Each creep consists of up to 50 body parts.
     /// </summary>
-    public interface ICreep : IRoomObject
+    public interface ICreep : IRoomObject, IWithId, IWithName, IWithStore
     {
         /// <summary>
         /// An array describing the creep’s body.
@@ -717,11 +717,6 @@ namespace ScreepsDotNet.API.World
         int HitsMax { get; }
 
         /// <summary>
-        /// A unique object identificator. You can use Game.getObjectById method to retrieve an object instance by its id.
-        /// </summary>
-        string Id { get; }
-
-        /// <summary>
         /// A shorthand to Memory.creeps[creep.name]. You can use it for quick access the creep’s specific memory data object.
         /// </summary>
         IMemoryObject Memory { get; }
@@ -730,11 +725,6 @@ namespace ScreepsDotNet.API.World
         /// Whether it is your creep or foe.
         /// </summary>
         bool My { get; }
-
-        /// <summary>
-        /// Creep’s name. You can choose the name while creating a new creep, and it cannot be changed later. This name is a hash key to access the creep via the Game.creeps object.
-        /// </summary>
-        string Name { get; }
 
         /// <summary>
         /// An object with the creep’s owner info.
@@ -750,11 +740,6 @@ namespace ScreepsDotNet.API.World
         /// Whether this creep is still being spawned.
         /// </summary>
         bool Spawning { get; }
-
-        /// <summary>
-        /// A Store object that contains cargo of this creep.
-        /// </summary>
-        IStore Store { get; }
 
         /// <summary>
         /// The remaining amount of game ticks after which the creep will die.
@@ -1092,7 +1077,7 @@ namespace ScreepsDotNet.API.World
         CreepUpgradeControllerResult UpgradeController(IStructureController target);
 
         /// <summary>
-        /// Withdraw resources from a structure or tombstone.
+        /// Withdraw resources from a structure.
         /// The target has to be at adjacent square to the creep.
         /// Multiple creeps can withdraw from the same object in the same tick.
         /// Your creeps can withdraw resources from hostile structures/tombstones as well, in case if there is no hostile rampart on top of it.
@@ -1106,7 +1091,7 @@ namespace ScreepsDotNet.API.World
         CreepWithdrawResult Withdraw(IStructure target, ResourceType resourceType, int? amount = null);
 
         /// <summary>
-        /// Withdraw resources from a structure or tombstone.
+        /// Withdraw resources from a tombstone.
         /// The target has to be at adjacent square to the creep.
         /// Multiple creeps can withdraw from the same object in the same tick.
         /// Your creeps can withdraw resources from hostile structures/tombstones as well, in case if there is no hostile rampart on top of it.
@@ -1117,10 +1102,10 @@ namespace ScreepsDotNet.API.World
         /// <param name="resourceType"></param>
         /// <param name="amount"></param>
         /// <returns></returns>
-        // CreepWithdrawResult Withdraw(ITombstone target, ResourceType resourceType, int? amount = null);
+        CreepWithdrawResult Withdraw(ITombstone target, ResourceType resourceType, int? amount = null);
 
         /// <summary>
-        /// Withdraw resources from a structure or tombstone.
+        /// Withdraw resources from a ruin.
         /// The target has to be at adjacent square to the creep.
         /// Multiple creeps can withdraw from the same object in the same tick.
         /// Your creeps can withdraw resources from hostile structures/tombstones as well, in case if there is no hostile rampart on top of it.

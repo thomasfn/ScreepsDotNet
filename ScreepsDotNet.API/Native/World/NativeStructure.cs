@@ -33,17 +33,14 @@ namespace ScreepsDotNet.Native.World
 
         public string Id => id;
 
-        public NativeStructure(INativeRoot nativeRoot, JSObject proxyObject)
+        public NativeStructure(INativeRoot nativeRoot, JSObject proxyObject, string knownId)
             : base(nativeRoot, proxyObject)
         {
-            id = proxyObject.GetPropertyAsString("id")!;
+            id = knownId;
         }
 
-        public override void InvalidateProxyObject()
-        {
-            proxyObjectOrNull = nativeRoot.GetObjectById(id);
-            ClearNativeCache();
-        }
+        public override JSObject? ReacquireProxyObject()
+            => nativeRoot.GetProxyObjectById(id);
 
         public StructureDestroyResult Destroy()
             => (StructureDestroyResult)Native_Destroy(ProxyObject);

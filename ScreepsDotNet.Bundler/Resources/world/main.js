@@ -37,6 +37,7 @@ function initDotNet() {
         StructureExtension,
         StructureStorage,
         StructureRampart,
+        StructureTower,
         OwnedStructure,
         StructureRoad,
         StructureWall,
@@ -46,6 +47,7 @@ function initDotNet() {
         Flag,
         Resource,
         ConstructionSite,
+        Tombstone,
         RoomObject,
         Room,
         RoomVisual,
@@ -128,7 +130,21 @@ function initDotNet() {
                 }
             },
         },
-        PathFinder,
+        PathFinder: {
+            ...PathFinder,
+            compileRoomCallback: (opts, roomCostMap) => {
+                opts.roomCallback = (roomName) => {
+                    const val = roomCostMap[roomName];
+                    if (val === true) { return undefined; }
+                    if (val === false) { return false; }
+                    if (val == null) { return roomCostMap.allowUnspecifiedRooms ? undefined : false; }
+                    return val;
+                };
+            },
+            search: (origin, goal, opts) => {
+                return PathFinder.search(origin, goal, opts);
+            },
+        },
         RoomTerrain: {
             get: (thisObj, ...args) => thisObj.get(...args),
             getRawBuffer: (thisObj, ...args) => thisObj.getRawBuffer(...args),

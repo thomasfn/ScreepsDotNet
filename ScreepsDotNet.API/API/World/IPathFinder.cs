@@ -23,6 +23,38 @@ namespace ScreepsDotNet.API.World
         }
     }
 
+    public enum RoomCostSpecificationType
+    {
+        /// <summary>
+        /// Use the default cached cost matrix.
+        /// </summary>
+        UseDefaultCostMatrix,
+        /// <summary>
+        /// Consider the room off-limits for pathing.
+        /// </summary>
+        DoNotPathThroughRoom,
+        /// <summary>
+        /// Use the cost matrix provided.
+        /// </summary>
+        UseProvidedCostMatrix
+    }
+
+    public readonly struct RoomCostSpecification
+    {
+        public static readonly RoomCostSpecification UseDefaultCostMatrix = new(RoomCostSpecificationType.UseDefaultCostMatrix, null);
+        public static readonly RoomCostSpecification DoNotPathThroughRoom = new(RoomCostSpecificationType.DoNotPathThroughRoom, null);
+        public static RoomCostSpecification UseProvidedCostMatrix(ICostMatrix costMatrix) => new(RoomCostSpecificationType.UseProvidedCostMatrix, costMatrix);
+
+        public readonly RoomCostSpecificationType SpecificationType;
+        public readonly ICostMatrix? CostMatrix;
+
+        public RoomCostSpecification(RoomCostSpecificationType specificationType, ICostMatrix? costMatrix)
+        {
+            SpecificationType = specificationType;
+            CostMatrix = costMatrix;
+        }
+    }
+
     public readonly struct FindPathOptions
     {
         /// <summary>
@@ -124,14 +156,15 @@ namespace ScreepsDotNet.API.World
     public readonly struct SearchPathOptions
     {
         /// <summary>
-        /// Request from the pathfinder to generate a CostMatrix for a certain room.
-        /// The callback accepts one argument, roomName.
-        /// This callback will only be called once per room per search.
-        /// If you are running multiple pathfinding operations in a single room and in a single tick you may consider caching your CostMatrix to speed up your code.
-        /// Please read the CostMatrix documentation below for more information on CostMatrix.
-        /// If you return null from the callback the requested room will not be searched, and it won't count against maxRooms
+        /// Overrides which cost matrix is used from which room.
+        /// Analogous to roomCallback from the js api.
         /// </summary>
-        public readonly Func<string, ICostMatrix?>? RoomCallback;
+        public readonly IReadOnlyDictionary<string, RoomCostSpecification>? RoomCostMap;
+
+        /// <summary>
+        /// If true, any rooms not mentioned in the RoomCostMap are considered off-limits.
+        /// </summary>
+        public readonly bool? AllowUnspecifiedRooms;
 
         /// <summary>
         /// Cost for walking on plain positions. The default is 1.
@@ -169,7 +202,8 @@ namespace ScreepsDotNet.API.World
         public readonly double? HeuristicWeight;
 
         public SearchPathOptions(
-            Func<string, ICostMatrix?>? roomCallback = null,
+            IReadOnlyDictionary<string, RoomCostSpecification>? roomCostMap = null,
+            bool? allowUnspecifiedRooms = null,
             int? plainCost = null,
             int? swampCost = null,
             bool? flee = null,
@@ -179,7 +213,8 @@ namespace ScreepsDotNet.API.World
             double? heuristicWeight = null
         )
         {
-            RoomCallback = roomCallback;
+            RoomCostMap = roomCostMap;
+            AllowUnspecifiedRooms = allowUnspecifiedRooms;
             PlainCost = plainCost;
             SwampCost = swampCost;
             Flee = flee;

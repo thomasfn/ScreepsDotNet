@@ -27,11 +27,8 @@ namespace ScreepsDotNet.Native.World
             : this(nativeRoot, proxyObject, proxyObject.GetPropertyAsString("id")!)
         { }
 
-        public override void InvalidateProxyObject()
-        {
-            proxyObjectOrNull = nativeRoot.GetObjectById(id);
-            ClearNativeCache();
-        }
+        public override JSObject? ReacquireProxyObject()
+            => nativeRoot.GetProxyObjectById(id);
 
         public override bool Equals(object? obj) => Equals(obj as NativeResource);
 
