@@ -41,7 +41,7 @@ namespace ScreepsDotNet.Native.World
 
         public override void InvalidateProxyObject()
         {
-            proxyObjectOrNull = nativeRoot.StructuresObj.GetPropertyAsJSObject(id);
+            proxyObjectOrNull = nativeRoot.GetObjectById(id);
             ClearNativeCache();
         }
 

@@ -67,5 +67,8 @@ namespace ScreepsDotNet.Native.World
 
         public ControllerUnclaimResult Unclaim()
             => (ControllerUnclaimResult)Native_Unclaim(ProxyObject);
+
+        public override string ToString()
+            => $"StructureController[{Id}]";
     }
 }

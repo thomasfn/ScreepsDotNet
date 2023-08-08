@@ -210,7 +210,7 @@ namespace ScreepsDotNet.Native.World
             var lookConstant = NativeRoomObjectPrototypes<T>.LookConstant;
             if (lookConstant == null) { return Enumerable.Empty<T>(); }
             return Native_LookForAt(ProxyObject, lookConstant, position.X, position.Y)
-                .Select(x => NativeRoomObjectUtils.CreateWrapperForRoomObject<IRoomObject>(nativeRoot, x.GetPropertyAsJSObject(lookConstant)))
+                .Select(x => NativeRoomObjectUtils.CreateWrapperForRoomObject<T>(nativeRoot, x.GetPropertyAsJSObject(lookConstant)))
                 .Where(x => x != null)
                 .Cast<T>()
                 .ToArray();
@@ -221,7 +221,7 @@ namespace ScreepsDotNet.Native.World
             var lookConstant = NativeRoomObjectPrototypes<T>.LookConstant;
             if (lookConstant == null) { return Enumerable.Empty<T>(); }
             return Native_LookForAtArea(ProxyObject, lookConstant, min.Y, min.X, max.Y, max.X, true)
-                .Select(x => NativeRoomObjectUtils.CreateWrapperForRoomObject<IRoomObject>(nativeRoot, x.GetPropertyAsJSObject(lookConstant)))
+                .Select(x => NativeRoomObjectUtils.CreateWrapperForRoomObject<T>(nativeRoot, x.GetPropertyAsJSObject(lookConstant)))
                 .Where(x => x != null)
                 .Cast<T>()
                 .ToArray();

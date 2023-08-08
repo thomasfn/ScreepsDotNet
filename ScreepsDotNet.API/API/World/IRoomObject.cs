@@ -78,9 +78,14 @@ namespace ScreepsDotNet.API.World
         IEnumerable<Effect> Effects { get; }
 
         /// <summary>
-        /// An object representing the position of this object in the room.
+        /// An object representing the global position of this object.
         /// </summary>
-        RoomPosition Position { get; }
+        RoomPosition RoomPosition { get; }
+
+        /// <summary>
+        /// An object representing the local position of this object within the room.
+        /// </summary>
+        Position LocalPosition => RoomPosition.Position;
 
         /// <summary>
         /// The link to the Room object. May be undefined in case if an object is a flag or a construction site and is placed in a room that is not visible to you.

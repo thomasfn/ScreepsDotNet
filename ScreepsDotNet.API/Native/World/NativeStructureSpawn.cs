@@ -155,6 +155,6 @@ namespace ScreepsDotNet.Native.World
             => (RenewCreepResult)Native_RenewCreep(ProxyObject, target.ToJS());
 
         public override string ToString()
-            => $"NativeStructureSpawn[{name}]";
+            => $"StructureSpawn[{name}]";
     }
 }

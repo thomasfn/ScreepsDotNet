@@ -387,7 +387,7 @@ namespace ScreepsDotNet.Native.World
         // CreepWithdrawResult Withdraw(IRuin target, ResourceType resourceType, int? amount = null);
 
         public override string ToString()
-            => $"Creep['{name}']({(Exists ? $"{Position}" : "DEAD")})";
+            => $"Creep['{name}']({(Exists ? $"{RoomPosition}" : "DEAD")})";
 
         public override bool Equals(object? obj) => Equals(obj as NativeCreep);
 

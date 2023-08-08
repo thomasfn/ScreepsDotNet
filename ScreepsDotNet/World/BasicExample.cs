@@ -184,12 +184,12 @@ namespace ScreepsDotNet.World
             {
                 // There is space for more energy
                 if (!sources.Any()) { return; }
-                var source = sources.Best(x => -x.Position.Position.LinearDistanceTo(creep.Position.Position));
+                var source = sources.Best(x => -x.LocalPosition.LinearDistanceTo(creep.LocalPosition));
                 if (source == null) { return; }
                 var harvestResult = creep.Harvest(source);
                 if (harvestResult == CreepHarvestResult.NotInRange)
                 {
-                    creep.MoveTo(source.Position);
+                    creep.MoveTo(source.RoomPosition);
                 }
                 else if (harvestResult != CreepHarvestResult.Ok)
                 {
@@ -200,12 +200,12 @@ namespace ScreepsDotNet.World
             {
                 // We're full, go to drop off
                 if (!spawns.Any()) { return; }
-                var spawn = spawns.Best(x => -x.Position.Position.LinearDistanceTo(creep.Position.Position));
+                var spawn = spawns.Best(x => -x.LocalPosition.LinearDistanceTo(creep.LocalPosition));
                 if (spawn == null) { return; }
                 var transferResult = creep.Transfer(spawn, ResourceType.Energy);
                 if (transferResult == CreepTransferResult.NotInRange)
                 {
-                    creep.MoveTo(spawn.Position);
+                    creep.MoveTo(spawn.RoomPosition);
                 }
                 else if (transferResult != CreepTransferResult.Ok)
                 {
@@ -223,7 +223,7 @@ namespace ScreepsDotNet.World
                 var upgradeResult = creep.UpgradeController(roomController);
                 if (upgradeResult == CreepUpgradeControllerResult.NotInRange)
                 {
-                    creep.MoveTo(roomController.Position);
+                    creep.MoveTo(roomController.RoomPosition);
                 }
                 else if (upgradeResult != CreepUpgradeControllerResult.Ok)
                 {
@@ -234,12 +234,12 @@ namespace ScreepsDotNet.World
             {
                 // We're empty, go to pick up
                 if (!spawns.Any()) { return; }
-                var spawn = spawns.Best(x => -x.Position.Position.LinearDistanceTo(creep.Position.Position));
+                var spawn = spawns.Best(x => -x.LocalPosition.LinearDistanceTo(creep.LocalPosition));
                 if (spawn == null) { return; }
                 var withdrawResult = creep.Withdraw(spawn, ResourceType.Energy);
                 if (withdrawResult == CreepWithdrawResult.NotInRange)
                 {
-                    creep.MoveTo(spawn.Position);
+                    creep.MoveTo(spawn.RoomPosition);
                 }
                 else if (withdrawResult != CreepWithdrawResult.Ok)
                 {

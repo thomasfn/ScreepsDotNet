@@ -15,6 +15,10 @@ namespace ScreepsDotNet.Native
         [return: JSMarshalAsAttribute<JSType.Object>]
         internal static partial JSObject GetConstructorOf([JSMarshalAs<JSType.Object>] JSObject obj);
 
+        [JSImport("getKeysOf", "object")]
+        [return: JSMarshalAsAttribute<JSType.Array<JSType.String>>]
+        internal static partial string[] GetKeysOf([JSMarshalAs<JSType.Object>] JSObject obj);
+
         [JSImport("create", "object")]
         [return: JSMarshalAsAttribute<JSType.Object>]
         internal static partial JSObject CreateObject([JSMarshalAs<JSType.Object>] JSObject? prototype);

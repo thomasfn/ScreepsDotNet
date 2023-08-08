@@ -32,7 +32,7 @@ namespace ScreepsDotNet.Native.World
         }
 
         public override string ToString()
-            => $"Source[{Position}]";
+            => $"Source[{RoomPosition}]";
 
         public override bool Equals(object? obj) => Equals(obj as NativeSource);
 

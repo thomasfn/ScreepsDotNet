@@ -18,7 +18,7 @@ namespace ScreepsDotNet.Native.World
 
         public IEnumerable<Effect> Effects => throw new NotImplementedException();
 
-        public RoomPosition Position => positionCache ??= ProxyObject.GetPropertyAsJSObject("pos")!.ToRoomPosition();
+        public RoomPosition RoomPosition => positionCache ??= ProxyObject.GetPropertyAsJSObject("pos")!.ToRoomPosition();
 
         public IRoom? Room
         {

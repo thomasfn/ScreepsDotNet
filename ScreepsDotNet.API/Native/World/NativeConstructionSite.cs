@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices.JavaScript;
 
 using ScreepsDotNet.API.World;
@@ -6,7 +7,7 @@ using ScreepsDotNet.API.World;
 namespace ScreepsDotNet.Native.World
 {
     [System.Runtime.Versioning.SupportedOSPlatform("browser")]
-    internal partial class NativeConstructionSite : NativeRoomObject, IConstructionSite
+    internal partial class NativeConstructionSite : NativeRoomObject, IConstructionSite, IEquatable<NativeConstructionSite?>
     {
         #region Imports
 
@@ -51,5 +52,18 @@ namespace ScreepsDotNet.Native.World
 
         public void Remove()
             => Native_Remove(ProxyObject);
+
+        public override bool Equals(object? obj) => Equals(obj as NativeConstructionSite);
+
+        public bool Equals(NativeConstructionSite? other) => other is not null && id == other.id;
+
+        public override int GetHashCode() => HashCode.Combine(id);
+
+        public static bool operator ==(NativeConstructionSite? left, NativeConstructionSite? right) => EqualityComparer<NativeConstructionSite>.Default.Equals(left, right);
+
+        public static bool operator !=(NativeConstructionSite? left, NativeConstructionSite? right) => !(left == right);
+
+        public override string ToString()
+            => $"ConstructionSite[{id}]";
     }
 }

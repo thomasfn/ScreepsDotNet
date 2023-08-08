@@ -25,5 +25,7 @@ namespace ScreepsDotNet.Native.World
             storeCache = null;
         }
 
+        public override string ToString()
+            => $"StructureContainer[{Id}]";
     }
 }
