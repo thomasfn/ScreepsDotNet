@@ -11,14 +11,19 @@ namespace ScreepsDotNet.Native.World
             => resourceType switch
             {
                 ResourceType.Energy => "energy",
-                _ => throw new NotImplementedException($"Unknown resource type '{resourceType}'"),
-            };
-
-        public static string? ToJS(this ResourceType? resourceType)
-            => resourceType switch
-            {
-                null => null,
-                ResourceType.Energy => "energy",
+                ResourceType.Power => "power",
+                ResourceType.Hydrogen => "H",
+                ResourceType.Oxygen => "O",
+                ResourceType.Utrium => "U",
+                ResourceType.Lemergium => "L",
+                ResourceType.Keanium => "K",
+                ResourceType.Zynthium => "Z",
+                ResourceType.Catalyst => "X",
+                ResourceType.Ghodium => "G",
+                ResourceType.Silicon => "silicon",
+                ResourceType.Metal => "metal",
+                ResourceType.Biomass => "biomass",
+                ResourceType.Mist => "mist",
                 _ => throw new NotImplementedException($"Unknown resource type '{resourceType}'"),
             };
 
@@ -26,6 +31,19 @@ namespace ScreepsDotNet.Native.World
             => str switch
             {
                 "energy" => ResourceType.Energy,
+                "power" => ResourceType.Power,
+                "H" => ResourceType.Hydrogen,
+                "O" => ResourceType.Oxygen,
+                "U" => ResourceType.Utrium,
+                "L" => ResourceType.Lemergium,
+                "K" => ResourceType.Keanium,
+                "Z" => ResourceType.Zynthium,
+                "X" => ResourceType.Catalyst,
+                "G" => ResourceType.Ghodium,
+                "silicon" => ResourceType.Silicon,
+                "metal" => ResourceType.Metal,
+                "biomass" => ResourceType.Biomass,
+                "mist" => ResourceType.Mist,
                 _ => throw new NotImplementedException($"Unknown resource type '{str}'"),
             };
     }
@@ -59,12 +77,12 @@ namespace ScreepsDotNet.Native.World
         public int this[ResourceType resourceType] => ProxyObject?.GetPropertyAsInt32(resourceType.ToJS()) ?? 0;
 
         public int? GetCapacity(ResourceType? resourceType = null)
-            => ProxyObject != null ? Native_GetCapacity(ProxyObject, resourceType.ToJS()) : null;
+            => ProxyObject != null ? Native_GetCapacity(ProxyObject, resourceType?.ToJS()) : null;
 
         public int? GetFreeCapacity(ResourceType? resourceType = null)
-            => ProxyObject != null ? Native_GetFreeCapacity(ProxyObject, resourceType.ToJS()) : null;
+            => ProxyObject != null ? Native_GetFreeCapacity(ProxyObject, resourceType?.ToJS()) : null;
 
         public int? GetUsedCapacity(ResourceType? resourceType = null)
-            => ProxyObject != null ? Native_GetUsedCapacity(ProxyObject, resourceType.ToJS()) : null;
+            => ProxyObject != null ? Native_GetUsedCapacity(ProxyObject, resourceType?.ToJS()) : null;
     }
 }

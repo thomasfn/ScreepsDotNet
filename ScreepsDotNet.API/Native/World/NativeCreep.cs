@@ -209,7 +209,7 @@ namespace ScreepsDotNet.Native.World
                 .Select(x => new BodyPart<BodyPartType>(x.GetPropertyAsString("type")!.ParseBodyPartType(), x.GetPropertyAsInt32("hits"), x.GetPropertyAsString("boost")))
                 .ToArray();
 
-        public BodyType<BodyPartType> BodyType => bodyTypeCache ??= new(Body.Select(x => x.Type));
+        public BodyType<BodyPartType> BodyType => CachePerTick(ref bodyTypeCache) ??= new(Body.Select(x => x.Type));
 
         public int Fatigue => ProxyObject.GetPropertyAsInt32("fatigue");
 
@@ -231,23 +231,19 @@ namespace ScreepsDotNet.Native.World
 
         public bool Spawning => ProxyObject.GetPropertyAsBoolean("spawning");
 
-        public IStore Store => storeCache ??= new NativeStore(ProxyObject.GetPropertyAsJSObject("store"));
+        public IStore Store => CachePerTick(ref storeCache) ??= new NativeStore(ProxyObject.GetPropertyAsJSObject("store"));
 
         public int TicksToLive => ProxyObject.GetPropertyAsInt32("ticksToLive");
 
-        public NativeCreep(INativeRoot nativeRoot, JSObject proxyObject, string knownName, string knownId)
+        public NativeCreep(INativeRoot nativeRoot, JSObject proxyObject, string knownId)
             : base(nativeRoot, proxyObject)
         {
-            name = knownName;
             id = knownId;
+            name = proxyObject.GetPropertyAsString("name")!;
         }
 
-        public NativeCreep(INativeRoot nativeRoot, JSObject proxyObject, string knownName)
-            : this(nativeRoot, proxyObject, knownName, proxyObject.GetPropertyAsString("id")!)
-        { }
-
         public NativeCreep(INativeRoot nativeRoot, JSObject proxyObject)
-            : this(nativeRoot, proxyObject, proxyObject.GetPropertyAsString("name")!, proxyObject.GetPropertyAsString("id")!)
+            : this(nativeRoot, proxyObject, proxyObject.GetPropertyAsString("id")!)
         { }
 
         public override JSObject? ReacquireProxyObject()

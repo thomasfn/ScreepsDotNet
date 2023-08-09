@@ -17,20 +17,7 @@ namespace ScreepsDotNet.Native.World
         {
             get
             {
-                if (isDead) { throw new NativeObjectNoLongerExistsException(); }
-                if (proxyObjectValidAsOf < nativeRoot.TickIndex)
-                {
-                    proxyObject = ReacquireProxyObject();
-                    ClearNativeCache();
-                    if (proxyObject == null)
-                    {
-                        isDead = true;
-                    }
-                    else
-                    {
-                        proxyObjectValidAsOf = nativeRoot.TickIndex;
-                    }
-                }
+                TouchProxyObject();
                 if (proxyObject == null) { throw new NativeObjectNoLongerExistsException(); }
                 return proxyObject;
             }
@@ -65,6 +52,31 @@ namespace ScreepsDotNet.Native.World
             this.nativeRoot = nativeRoot;
             this.proxyObject = proxyObject;
             proxyObjectValidAsOf = nativeRoot.TickIndex;
+        }
+
+        protected void TouchProxyObject()
+        {
+            if (isDead) { throw new NativeObjectNoLongerExistsException(); }
+            if (proxyObjectValidAsOf < nativeRoot.TickIndex)
+            {
+                proxyObject = ReacquireProxyObject();
+                ClearNativeCache();
+                if (proxyObject == null)
+                {
+                    isDead = true;
+                    throw new NativeObjectNoLongerExistsException();
+                }
+                else
+                {
+                    proxyObjectValidAsOf = nativeRoot.TickIndex;
+                }
+            }
+        }
+
+        protected ref T CachePerTick<T>(ref T cachedObj)
+        {
+            TouchProxyObject();
+            return ref cachedObj;
         }
 
         protected virtual void ClearNativeCache() { }

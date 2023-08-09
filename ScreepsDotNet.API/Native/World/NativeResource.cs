@@ -30,6 +30,9 @@ namespace ScreepsDotNet.Native.World
         public override JSObject? ReacquireProxyObject()
             => nativeRoot.GetProxyObjectById(id);
 
+        public override string ToString()
+            => $"Resource[{(Exists ? RoomPosition.ToString() : "DEAD")}]";
+
         public override bool Equals(object? obj) => Equals(obj as NativeResource);
 
         public bool Equals(NativeResource? other) => other is not null && id == other.id;

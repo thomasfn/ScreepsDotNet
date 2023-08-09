@@ -20,14 +20,13 @@ namespace ScreepsDotNet.Native.World
 
         public string Id => id;
 
-        public IStore Store => storeCache ??= new NativeStore(ProxyObject.GetPropertyAsJSObject("store"));
+        public IStore Store => CachePerTick(ref storeCache) ??= new NativeStore(ProxyObject.GetPropertyAsJSObject("store"));
 
         public int TicksToDecay => ProxyObject.GetPropertyAsInt32("ticksToDecay");
 
-        public NativeTombstone(INativeRoot nativeRoot, JSObject proxyObject)
-            : base(nativeRoot, proxyObject)
+        public NativeTombstone(INativeRoot nativeRoot, JSObject proxyObject, string knownId) : base(nativeRoot, proxyObject)
         {
-            id = proxyObject.GetPropertyAsString("id")!;
+            id = knownId;
         }
 
         public override JSObject? ReacquireProxyObject()
@@ -40,7 +39,7 @@ namespace ScreepsDotNet.Native.World
         }
 
         public override string ToString()
-            => $"Tombstone[{RoomPosition}]";
+            => $"Tombstone[{(Exists ? RoomPosition.ToString() : "DEAD")}]";
 
         public override bool Equals(object? obj) => Equals(obj as NativeTombstone);
 

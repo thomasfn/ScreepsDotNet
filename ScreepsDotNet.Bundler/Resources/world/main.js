@@ -43,6 +43,7 @@ function initDotNet() {
         StructureWall,
         Structure,
         Source,
+        Mineral,
         Creep,
         Flag,
         Resource,

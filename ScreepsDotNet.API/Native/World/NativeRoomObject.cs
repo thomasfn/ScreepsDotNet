@@ -16,7 +16,7 @@ namespace ScreepsDotNet.Native.World
 
         public IEnumerable<Effect> Effects => throw new NotImplementedException();
 
-        public RoomPosition RoomPosition => positionCache ??= ProxyObject.GetPropertyAsJSObject("pos")!.ToRoomPosition();
+        public RoomPosition RoomPosition => CachePerTick(ref positionCache) ??= ProxyObject.GetPropertyAsJSObject("pos")!.ToRoomPosition();
 
         public IRoom? Room
         {
@@ -197,6 +197,7 @@ namespace ScreepsDotNet.Native.World
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureWall))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructure))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeSource))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeMineral))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeCreep))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeFlag))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeResource))]
@@ -221,6 +222,7 @@ namespace ScreepsDotNet.Native.World
                 RegisterPrototypeTypeMapping<IStructureWall, NativeStructureWall>("StructureWall", FindConstant.Structures, "structure", "constructedWall");
                 RegisterPrototypeTypeMapping<IStructure, NativeStructure>("Structure", FindConstant.Structures, "structure");
                 RegisterPrototypeTypeMapping<ISource, NativeSource>("Source", FindConstant.Sources, "source");
+                RegisterPrototypeTypeMapping<IMineral, NativeMineral>("Mineral", FindConstant.Minerals, "mineral");
                 RegisterPrototypeTypeMapping<ICreep, NativeCreep>("Creep", FindConstant.Creeps, "creep");
                 RegisterPrototypeTypeMapping<IFlag, NativeFlag>("Flag", FindConstant.Flags, "flag");
                 RegisterPrototypeTypeMapping<IResource, NativeResource>("Resource", FindConstant.DroppedResources, "resource");

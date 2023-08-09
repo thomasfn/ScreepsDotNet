@@ -101,6 +101,7 @@ namespace ScreepsDotNet.Native.World
         private readonly string name;
 
         private NativeMemoryObject? memoryCache;
+        private NativeStore? storeCache;
 
         public IMemoryObject Memory => memoryCache ??= new NativeMemoryObject(ProxyObject.GetPropertyAsJSObject("memory")!);
 
@@ -116,12 +117,18 @@ namespace ScreepsDotNet.Native.World
             }
         }
 
-        public IStore Store => new NativeStore(ProxyObject.GetPropertyAsJSObject("store"));
+        public IStore Store => CachePerTick(ref storeCache) ??= new NativeStore(ProxyObject.GetPropertyAsJSObject("store"));
 
         public NativeStructureSpawn(INativeRoot nativeRoot, JSObject proxyObject, string knownId)
             : base(nativeRoot, proxyObject, knownId)
         {
             name = proxyObject.GetPropertyAsString("name")!;
+        }
+
+        protected override void ClearNativeCache()
+        {
+            base.ClearNativeCache();
+            storeCache = null;
         }
 
         public SpawnCreepResult SpawnCreep(IEnumerable<BodyPartType> body, string name, SpawnCreepOptions? opts = null)
@@ -147,6 +154,6 @@ namespace ScreepsDotNet.Native.World
             => (RenewCreepResult)Native_RenewCreep(ProxyObject, target.ToJS());
 
         public override string ToString()
-            => $"StructureSpawn[{name}]";
+            => $"StructureSpawn['{name}']";
     }
 }

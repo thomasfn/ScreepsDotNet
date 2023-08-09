@@ -11,5 +11,8 @@ namespace ScreepsDotNet.Native.World
 
         public NativeStructureRoad(INativeRoot nativeRoot, JSObject proxyObject, string knownId) : base(nativeRoot, proxyObject, knownId)
         { }
+
+        public override string ToString()
+            => $"StructureRoad[{(Exists ? RoomPosition.ToString() : "DEAD")}]";
     }
 }

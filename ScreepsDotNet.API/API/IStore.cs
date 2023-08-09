@@ -2,7 +2,22 @@
 {
     public enum ResourceType
     {
-        Energy
+        Energy,
+        Power,
+
+        Hydrogen,
+        Oxygen,
+        Utrium,
+        Lemergium,
+        Keanium,
+        Zynthium,
+        Catalyst,
+        Ghodium,
+
+        Silicon,
+        Metal,
+        Biomass,
+        Mist
     }
 
     /// <summary>

@@ -147,6 +147,11 @@ namespace ScreepsDotNet.Native.World
             StructuresObj = ProxyObject.GetPropertyAsJSObject("structures")!;
             nativeCpu.ProxyObject.Dispose();
             nativeCpu.ProxyObject = ProxyObject.GetPropertyAsJSObject("cpu")!;
+            creepLazyLookup.InvalidateProxyObject();
+            flagLazyLookup.InvalidateProxyObject();
+            roomLazyLookup.InvalidateProxyObject();
+            spawnLazyLookup.InvalidateProxyObject();
+            structureLazyLookup.InvalidateProxyObject();
             if (TickIndex % 10 == 0)
             {
                 // TODO: Do we want a more sophisticated way of doing this, e.g. detect when a GC happened?
