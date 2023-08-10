@@ -57,6 +57,20 @@ namespace ScreepsDotNet.API
         public static bool IsStraight(this Direction direction)
             => direction == Direction.Top || direction == Direction.Right || direction == Direction.Bottom || direction == Direction.Left;
 
+        public static string ToEmoji(this Direction direction)
+            => direction switch
+            {
+                Direction.Top => "⬆️",
+                Direction.TopRight => "↗️",
+                Direction.Right => "➡️",
+                Direction.BottomRight => "↘️",
+                Direction.Bottom => "⬇️",
+                Direction.BottomLeft => "↙️",
+                Direction.Left => "⬅️",
+                Direction.TopLeft => "↖️",
+                _ => "❓",
+            };
+
         private static int Wrap(int value, int min, int max)
         {
             int range = (max - min) + 1;

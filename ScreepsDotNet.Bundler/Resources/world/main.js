@@ -22,6 +22,15 @@ function initDotNet() {
     dotNet = new bootloader.DotNet(bundle, 'world');
     dotNet.setPerfFn(function() { return getCpuTime() * 1000000; });
     dotNet.setVerboseLogging(false);
+    function fixupArray(obj) {
+        if (obj == null) { return null; }
+        if (Array.isArray(obj)) { return obj; }
+        const arr = new Array(obj.length ?? 0);
+        for (let i = 0; i < arr.length; ++i) {
+            arr[i] = obj[i];
+        }
+        return arr;
+    }
     dotNet.setModuleImports('object', {
         getConstructorOf: (x) => Object.getPrototypeOf(x).constructor,
         getKeysOf: (x) => Object.keys(x),
@@ -29,6 +38,8 @@ function initDotNet() {
         create: Object.create,
         set: (obj, key, val) => obj[key] = val,
         get: (obj, key) => obj[key],
+        fixupArray,
+        fixupArrayOnObject: (obj, key) => obj[key] = fixupArray(obj[key]),
     });
     const prototypes = {
         StructureSpawn,
@@ -38,6 +49,7 @@ function initDotNet() {
         StructureStorage,
         StructureRampart,
         StructureTower,
+        StructureLink,
         OwnedStructure,
         StructureRoad,
         StructureWall,

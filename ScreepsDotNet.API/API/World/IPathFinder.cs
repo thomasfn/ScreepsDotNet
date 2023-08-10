@@ -265,6 +265,9 @@ namespace ScreepsDotNet.API.World
             Position = position;
             Range = range;
         }
+
+        public override string ToString()
+            => $"Goal[<= {Range} of {Position}]";
     }
 
     /// <summary>

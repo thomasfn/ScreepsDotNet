@@ -199,8 +199,8 @@ namespace ScreepsDotNet.Native.World
 
         private BodyType<BodyPartType>? bodyTypeCache;
         private OwnerInfo? ownerInfoCache;
-        private IMemoryObject? memoryCache;
 
+        private IMemoryObject? memoryCache;
         private BodyPart<BodyPartType>[]? bodyCache;
         private NativeStore? storeCache;
 
@@ -219,7 +219,7 @@ namespace ScreepsDotNet.Native.World
 
         public string Id => ProxyObject.GetPropertyAsString("id")!;
 
-        public IMemoryObject Memory => memoryCache ??= new NativeMemoryObject(ProxyObject.GetPropertyAsJSObject("memory")!);
+        public IMemoryObject Memory => CachePerTick(ref memoryCache) ??= new NativeMemoryObject(ProxyObject.GetPropertyAsJSObject("memory")!);
 
         public bool My => ProxyObject.GetPropertyAsBoolean("my");
 
@@ -252,6 +252,7 @@ namespace ScreepsDotNet.Native.World
         protected override void ClearNativeCache()
         {
             base.ClearNativeCache();
+            memoryCache = null;
             bodyCache = null;
             storeCache = null;
         }

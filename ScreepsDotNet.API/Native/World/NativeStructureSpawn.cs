@@ -70,7 +70,11 @@ namespace ScreepsDotNet.Native.World
             // if (spawnCreepOptions.Memory != null) {  }
             if (spawnCreepOptions.EnergyStructures != null) { JSUtils.SetObjectArrayOnObject(obj, "energyStructures", spawnCreepOptions.EnergyStructures.Select(x => x.ToJS()).ToArray()); }
             if (spawnCreepOptions.DryRun != null) { obj.SetProperty("dryRun", spawnCreepOptions.DryRun.Value); }
-            if (spawnCreepOptions.Directions != null) { JSUtils.SetIntArrayOnObject(obj, "directions", spawnCreepOptions.Directions.Cast<int>().ToArray()); }
+            if (spawnCreepOptions.Directions != null)
+            {
+                JSUtils.SetIntArrayOnObject(obj, "directions", spawnCreepOptions.Directions.Cast<int>().ToArray());
+                JSUtils.FixupArrayOnObject(obj, "directions");
+            }
             return obj;
         }
     }
@@ -103,7 +107,7 @@ namespace ScreepsDotNet.Native.World
         private NativeMemoryObject? memoryCache;
         private NativeStore? storeCache;
 
-        public IMemoryObject Memory => memoryCache ??= new NativeMemoryObject(ProxyObject.GetPropertyAsJSObject("memory")!);
+        public IMemoryObject Memory => CachePerTick(ref memoryCache) ??= new NativeMemoryObject(ProxyObject.GetPropertyAsJSObject("memory")!);
 
         public string Name => name;
 
@@ -128,6 +132,7 @@ namespace ScreepsDotNet.Native.World
         protected override void ClearNativeCache()
         {
             base.ClearNativeCache();
+            memoryCache = null;
             storeCache = null;
         }
 

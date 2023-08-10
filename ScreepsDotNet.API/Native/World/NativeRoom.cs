@@ -71,7 +71,7 @@ namespace ScreepsDotNet.Native.World
 
         public int EnergyCapacityAvailable => ProxyObject.GetPropertyAsInt32("energyCapacityAvailable");
 
-        public IMemoryObject Memory => memoryCache ??= new NativeMemoryObject(ProxyObject.GetPropertyAsJSObject("memory")!);
+        public IMemoryObject Memory => CachePerTick(ref memoryCache) ??= new NativeMemoryObject(ProxyObject.GetPropertyAsJSObject("memory")!);
 
         public IStructureStorage? Storage => nativeRoot.GetOrCreateWrapperObject<IStructureStorage>(ProxyObject.GetPropertyAsJSObject("storage"));
 
@@ -95,6 +95,7 @@ namespace ScreepsDotNet.Native.World
         protected override void ClearNativeCache()
         {
             base.ClearNativeCache();
+            memoryCache = null;
             visualCache = null;
         }
 
