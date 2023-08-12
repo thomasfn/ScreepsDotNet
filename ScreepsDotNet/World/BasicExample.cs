@@ -153,13 +153,10 @@ namespace ScreepsDotNet.World
 
         private void OnCreepDied(ICreep creep)
         {
-            // Check the body type and remove it from all tracking lists
-            if (creep.BodyType == workerBodyType)
-            {
-                minerCreeps.Remove(creep);
-                upgraderCreeps.Remove(creep);
-                Console.WriteLine($"{this}: {creep} died");
-            }
+            // Remove it from all tracking lists
+            minerCreeps.Remove(creep);
+            upgraderCreeps.Remove(creep);
+            Console.WriteLine($"{this}: {creep} died");
         }
 
         private void TickSpawn(IStructureSpawn spawn)
