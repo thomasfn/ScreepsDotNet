@@ -197,12 +197,18 @@ namespace ScreepsDotNet.Native.World
 
         private readonly string name, id;
 
-        private BodyType<BodyPartType>? bodyTypeCache;
-        private OwnerInfo? ownerInfoCache;
-
-        private IMemoryObject? memoryCache;
         private BodyPart<BodyPartType>[]? bodyCache;
+        private BodyType<BodyPartType>? bodyTypeCache;
+        private int? fatigueCache;
+        private int? hitsCache;
+        private int? hitsMaxCache;
+        private IMemoryObject? memoryCache;
+        private bool? myCache;
+        private OwnerInfo? ownerInfoCache;
         private NativeStore? storeCache;
+        private int? ticksToLiveCache;
+
+        protected override bool CanMove { get => true; }
 
         public IEnumerable<BodyPart<BodyPartType>> Body
             => bodyCache ??= JSUtils.GetObjectArrayOnObject(ProxyObject, "body")!
@@ -211,21 +217,21 @@ namespace ScreepsDotNet.Native.World
 
         public BodyType<BodyPartType> BodyType => CachePerTick(ref bodyTypeCache) ??= new(Body.Select(x => x.Type));
 
-        public int Fatigue => ProxyObject.GetPropertyAsInt32("fatigue");
+        public int Fatigue => CachePerTick(ref fatigueCache) ??= ProxyObject.GetPropertyAsInt32("fatigue");
 
-        public int Hits => ProxyObject.GetPropertyAsInt32("hits");
+        public int Hits => CachePerTick(ref hitsCache) ??= ProxyObject.GetPropertyAsInt32("hits");
 
-        public int HitsMax => ProxyObject.GetPropertyAsInt32("hitsMax");
+        public int HitsMax => CachePerTick(ref hitsMaxCache) ??= ProxyObject.GetPropertyAsInt32("hitsMax");
 
-        public string Id => ProxyObject.GetPropertyAsString("id")!;
+        public string Id => id;
 
         public IMemoryObject Memory => CachePerTick(ref memoryCache) ??= new NativeMemoryObject(ProxyObject.GetPropertyAsJSObject("memory")!);
 
-        public bool My => ProxyObject.GetPropertyAsBoolean("my");
+        public bool My => CacheLifetime(ref myCache) ??= ProxyObject.GetPropertyAsBoolean("my");
 
         public string Name => name;
 
-        public OwnerInfo Owner => ownerInfoCache ??= new(ProxyObject.GetPropertyAsJSObject("owner")!.GetPropertyAsString("username")!);
+        public OwnerInfo Owner => CacheLifetime(ref ownerInfoCache) ??= new(ProxyObject.GetPropertyAsJSObject("owner")!.GetPropertyAsString("username")!);
 
         public string? Saying => ProxyObject.GetPropertyAsString("saying")!;
 
@@ -233,7 +239,7 @@ namespace ScreepsDotNet.Native.World
 
         public IStore Store => CachePerTick(ref storeCache) ??= new NativeStore(ProxyObject.GetPropertyAsJSObject("store"));
 
-        public int TicksToLive => ProxyObject.GetPropertyAsInt32("ticksToLive");
+        public int TicksToLive => CachePerTick(ref ticksToLiveCache) ??= ProxyObject.GetPropertyAsInt32("ticksToLive");
 
         public NativeCreep(INativeRoot nativeRoot, JSObject proxyObject, string knownId)
             : base(nativeRoot, proxyObject)
@@ -252,9 +258,13 @@ namespace ScreepsDotNet.Native.World
         protected override void ClearNativeCache()
         {
             base.ClearNativeCache();
-            memoryCache = null;
             bodyCache = null;
+            fatigueCache = null;
+            hitsCache = null;
+            hitsMaxCache = null;
+            memoryCache = null;
             storeCache = null;
+            ticksToLiveCache = null;
         }
 
         public CreepAttackResult Attack(ICreep target)

@@ -27,9 +27,12 @@ namespace ScreepsDotNet.Native.World
 
         private readonly string id;
 
-        public int Hits => ProxyObject.GetPropertyAsInt32("hits");
+        private int? hitsCache;
+        private int? hitsMaxCache;
 
-        public int HitsMax => ProxyObject.GetPropertyAsInt32("hitsMax");
+        public int Hits => CachePerTick(ref hitsCache) ??= ProxyObject.GetPropertyAsInt32("hits");
+
+        public int HitsMax => CachePerTick(ref hitsMaxCache) ??= ProxyObject.GetPropertyAsInt32("hitsMax");
 
         public string Id => id;
 
@@ -41,6 +44,13 @@ namespace ScreepsDotNet.Native.World
 
         public override JSObject? ReacquireProxyObject()
             => nativeRoot.GetProxyObjectById(id);
+
+        protected override void ClearNativeCache()
+        {
+            base.ClearNativeCache();
+            hitsCache = null;
+            hitsMaxCache = null;
+        }
 
         public StructureDestroyResult Destroy()
             => (StructureDestroyResult)Native_Destroy(ProxyObject);

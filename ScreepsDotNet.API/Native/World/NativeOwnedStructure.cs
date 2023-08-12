@@ -8,9 +8,12 @@ namespace ScreepsDotNet.Native.World
     [System.Runtime.Versioning.SupportedOSPlatform("browser")]
     internal partial class NativeOwnedStructure : NativeStructure, IOwnedStructure
     {
-        public bool My => ProxyObject.GetPropertyAsBoolean("my");
+        private bool? myCache;
+        private OwnerInfo? ownerInfoCache;
 
-        public OwnerInfo Owner => new(ProxyObject.GetPropertyAsJSObject("owner")!.GetPropertyAsString("username")!);
+        public bool My => CacheLifetime(ref myCache) ??= ProxyObject.GetPropertyAsBoolean("my");
+
+        public OwnerInfo Owner => CacheLifetime(ref ownerInfoCache) ??= new(ProxyObject.GetPropertyAsJSObject("owner")!.GetPropertyAsString("username")!);
 
         public NativeOwnedStructure(INativeRoot nativeRoot, JSObject proxyObject, string knownId)
             : base(nativeRoot, proxyObject, knownId)

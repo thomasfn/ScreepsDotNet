@@ -87,8 +87,8 @@ namespace ScreepsDotNet.Native.World
 
         public static SearchPathResult ToSearchPathResult(this JSObject obj) => new(
                 JSUtils.GetObjectArrayOnObject(obj, "path")!.Select(x => x.ToRoomPosition()).ToArray(),
-                obj.GetPropertyAsInt32("ops"),
-                obj.GetPropertyAsInt32("cost"),
+                (int)obj.GetPropertyAsDouble("ops"),
+                (int)obj.GetPropertyAsDouble("cost"),
                 obj.GetPropertyAsBoolean("incomplete")
             );
 

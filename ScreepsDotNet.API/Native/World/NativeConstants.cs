@@ -25,6 +25,7 @@ namespace ScreepsDotNet.Native.World
         private readonly IDictionary<string, double> doubleCache = new Dictionary<string, double>();
 
         private readonly int?[] bodyPartCostCache = new int?[Enum.GetValues<BodyPartType>().Length];
+        private int[]? rampartHitsMaxCache;
 
         private readonly IDictionary<Type, int> structureCostCache = new Dictionary<Type, int>();
 
@@ -73,6 +74,9 @@ namespace ScreepsDotNet.Native.World
             structureCostCache.Add(structureType, result);
             return result;
         }
+
+        public int GetRampartHitsMax(int rcl)
+            => (rampartHitsMaxCache ??= InterpretArrayLikeLookupTableInt(constantsObj.GetPropertyAsJSObject("RAMPART_HITS_MAX")!, 2))[rcl];
 
         public int GetAsInt(string key)
         {

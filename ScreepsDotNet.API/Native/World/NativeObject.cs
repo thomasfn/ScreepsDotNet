@@ -79,6 +79,11 @@ namespace ScreepsDotNet.Native.World
             return ref cachedObj;
         }
 
+        protected ref T CacheLifetime<T>(ref T cachedObj)
+        {
+            return ref cachedObj;
+        }
+
         protected virtual void ClearNativeCache() { }
 
         public abstract JSObject? ReacquireProxyObject();

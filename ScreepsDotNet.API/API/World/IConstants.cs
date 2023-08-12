@@ -55,6 +55,8 @@ namespace ScreepsDotNet.API.World
 
         int GetConstructionCost(Type structureType);
 
+        int GetRampartHitsMax(int rcl);
+
         int GetAsInt(string key);
 
         double GetAsDouble(string key);

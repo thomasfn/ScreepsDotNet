@@ -14,9 +14,24 @@ namespace ScreepsDotNet.Native.World
     {
         private RoomPosition? positionCache;
 
+        protected virtual bool CanMove { get => false; }
+
         public IEnumerable<Effect> Effects => throw new NotImplementedException();
 
-        public RoomPosition RoomPosition => CachePerTick(ref positionCache) ??= ProxyObject.GetPropertyAsJSObject("pos")!.ToRoomPosition();
+        public RoomPosition RoomPosition
+        {
+            get
+            {
+                if (CanMove)
+                {
+                    return CachePerTick(ref positionCache) ??= ProxyObject.GetPropertyAsJSObject("pos")!.ToRoomPosition();
+                }
+                else
+                {
+                    return CacheLifetime(ref positionCache) ??= ProxyObject.GetPropertyAsJSObject("pos")!.ToRoomPosition();
+                }
+            }
+        }
 
         public IRoom? Room
         {
@@ -35,7 +50,10 @@ namespace ScreepsDotNet.Native.World
         protected override void ClearNativeCache()
         {
             base.ClearNativeCache();
-            positionCache = null;
+            if (CanMove)
+            {
+                positionCache = null;
+            }
         }
     }
 
