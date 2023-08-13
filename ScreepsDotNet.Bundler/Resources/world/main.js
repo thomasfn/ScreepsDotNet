@@ -25,7 +25,7 @@ function initDotNet() {
     function fixupArray(obj) {
         if (obj == null) { return null; }
         if (Array.isArray(obj)) { return obj; }
-        const arr = new Array(obj.length ?? 0);
+        const arr = new Array(obj.length || 0);
         for (let i = 0; i < arr.length; ++i) {
             arr[i] = obj[i];
         }
@@ -160,7 +160,7 @@ function initDotNet() {
         },
         RoomTerrain: {
             get: (thisObj, ...args) => thisObj.get(...args),
-            getRawBuffer: (thisObj, ...args) => thisObj.getRawBuffer(...args),
+            getRawBuffer: (thisObj, memoryView) => memoryView.set(thisObj.getRawBuffer()),
         },
     });
     try {
