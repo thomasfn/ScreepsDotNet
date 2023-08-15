@@ -2,6 +2,7 @@ console.log(`#${Game.time}: INIT state refreshed, beginning init sequence`);
 
 var bootloader, bundle, dotNet, dotNetExports, startupComplete;
 var accumCpuTime = 0;
+var lastCheckIn = Game.time;
 
 function getCpuTime() {
     return accumCpuTime + Game.cpu.getUsed();
@@ -67,9 +68,11 @@ function initDotNet() {
     };
     const memory = Memory;
     dotNet.setModuleImports('game', {
+        checkIn: () => lastCheckIn = Game.time,
         getGameObj: () => Game,
         getMemoryObj: () => memory,
         getConstantsObj: () => global,
+        getRawMemoryObj: () => RawMemory,
         getPrototypes: () => prototypes,
         createRoomPosition: (x, y, roomName) => new RoomPosition(x, y, roomName),
         createCostMatrix: () => new PathFinder.CostMatrix(),
@@ -94,6 +97,14 @@ function initDotNet() {
             setShardLimits: (...args) => Game.cpu.setShardLimits(...args),
             unlock: (...args) => Game.cpu.unlock(...args),
             generatePixel: (...args) => Game.cpu.generatePixel(...args),
+        },
+        rawMemory: {
+            get: (...args) => RawMemory.get(...args),
+            set: (...args) => RawMemory.set(...args),
+            setActiveSegments: (...args) => RawMemory.setActiveSegments(...args),
+            setActiveForeignSegment: (...args) => RawMemory.setActiveForeignSegment(...args),
+            setDefaultPublicSegment: (...args) => RawMemory.setDefaultPublicSegment(...args),
+            setPublicSegments: (...args) => RawMemory.setPublicSegments(...args),
         },
         visual: {
             line: (...args) => Game.map.visual.line(...args),

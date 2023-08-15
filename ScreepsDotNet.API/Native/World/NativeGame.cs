@@ -44,13 +44,16 @@ namespace ScreepsDotNet.Native.World
     {
         #region Imports
 
+        [JSImport("checkIn", "game")]
+        internal static partial void Native_CheckIn();
+
         [JSImport("getGameObj", "game")]
         [return: JSMarshalAsAttribute<JSType.Object>]
         internal static partial JSObject Native_GetGameObject();
 
-        [JSImport("getKeysOf", "object")]
-        [return: JSMarshalAsAttribute<JSType.Array<JSType.String>>]
-        internal static partial string[] Native_GetKeysOf([JSMarshalAs<JSType.Object>] JSObject obj);
+        [JSImport("getRawMemoryObj", "game")]
+        [return: JSMarshalAsAttribute<JSType.Object>]
+        internal static partial JSObject Native_GetRawMemoryObj();
 
         [JSImport("game.getObjectById", "game")]
         [return: JSMarshalAsAttribute<JSType.Object>]
@@ -67,6 +70,7 @@ namespace ScreepsDotNet.Native.World
         private readonly NativeMap nativeMap;
         private readonly NativePathFinder nativePathFinder;
         private readonly NativeConstants nativeConstants;
+        private readonly NativeRawMemory nativeRawMemory;
 
         private readonly IDictionary<string, WeakReference<IWithId>> objectsByIdCache = new Dictionary<string, WeakReference<IWithId>>();
 
@@ -75,6 +79,8 @@ namespace ScreepsDotNet.Native.World
         private readonly NativeObjectLazyLookup<NativeRoom, IRoom> roomLazyLookup;
         private readonly NativeObjectLazyLookup<NativeStructureSpawn, IStructureSpawn> spawnLazyLookup;
         private readonly NativeObjectLazyLookup<NativeStructure, IStructure> structureLazyLookup;
+
+        private long? timeCache;
 
         public JSObject GameObj => ProxyObject;
 
@@ -98,6 +104,8 @@ namespace ScreepsDotNet.Native.World
 
         public IConstants Constants => nativeConstants;
 
+        public IRawMemory RawMemory => nativeRawMemory;
+
         public IReadOnlyDictionary<string, ICreep> Creeps => creepLazyLookup;
 
         public IReadOnlyDictionary<string, IFlag> Flags => flagLazyLookup;
@@ -108,7 +116,7 @@ namespace ScreepsDotNet.Native.World
 
         public IReadOnlyDictionary<string, IStructure> Structures => structureLazyLookup;
 
-        public long Time => ProxyObject.GetPropertyAsInt32("time");
+        public long Time => timeCache ??= ProxyObject.GetPropertyAsInt32("time");
 
         public NativeGame()
         {
@@ -122,6 +130,7 @@ namespace ScreepsDotNet.Native.World
             nativeMap = new NativeMap();
             nativePathFinder = new NativePathFinder();
             nativeConstants = new NativeConstants();
+            nativeRawMemory = new NativeRawMemory(Native_GetRawMemoryObj());
             var nativeRoot = this as INativeRoot;
             creepLazyLookup = new NativeObjectLazyLookup<NativeCreep, ICreep>(() => CreepsObj, x => x.Name, (name, proxyObject) => nativeRoot.GetOrCreateWrapperObject<NativeCreep>(proxyObject));
             flagLazyLookup = new NativeObjectLazyLookup<NativeFlag, IFlag>(() => FlagsObj, x => x.Name, (name, proxyObject) => nativeRoot.GetOrCreateWrapperObject<NativeFlag>(proxyObject));
@@ -147,29 +156,31 @@ namespace ScreepsDotNet.Native.World
             StructuresObj = ProxyObject.GetPropertyAsJSObject("structures")!;
             nativeCpu.ProxyObject.Dispose();
             nativeCpu.ProxyObject = ProxyObject.GetPropertyAsJSObject("cpu")!;
+            nativeRawMemory.ProxyObject.Dispose();
+            nativeRawMemory.ProxyObject = Native_GetRawMemoryObj();
             creepLazyLookup.InvalidateProxyObject();
             flagLazyLookup.InvalidateProxyObject();
             roomLazyLookup.InvalidateProxyObject();
             spawnLazyLookup.InvalidateProxyObject();
             structureLazyLookup.InvalidateProxyObject();
+            timeCache = null;
             if (TickIndex % 10 == 0)
             {
                 // TODO: Do we want a more sophisticated way of doing this, e.g. detect when a GC happened?
                 PruneObjectsByIdCache();
             }
+            Native_CheckIn();
         }
 
         private void PruneObjectsByIdCache()
         {
-            var pendingRemoval = new HashSet<string>();
+            IList<string>? pendingRemoval = null;
             foreach (var (name, obj) in objectsByIdCache)
             {
-                if (!obj.TryGetTarget(out _)) { pendingRemoval.Add(name); }
+                if (!obj.TryGetTarget(out _)) { (pendingRemoval ??= new List<string>()).Add(name); }
             }
-            if (pendingRemoval.Count > 0)
-            {
-                Console.WriteLine($"NativeGame: pruning {pendingRemoval.Count} of {objectsByIdCache.Count} objects from the objects-by-id cache");
-            }
+            if (pendingRemoval == null) { return; }
+            Console.WriteLine($"NativeGame: pruning {pendingRemoval.Count} of {objectsByIdCache.Count} objects from the objects-by-id cache");
             foreach (var key in pendingRemoval)
             {
                 objectsByIdCache.Remove(key);

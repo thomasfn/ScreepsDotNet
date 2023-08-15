@@ -40,6 +40,11 @@ namespace ScreepsDotNet.API.World
         IConstants Constants { get; }
 
         /// <summary>
+        /// A global object providing raw memory functionality.
+        /// </summary>
+        IRawMemory RawMemory { get; }
+
+        /// <summary>
         /// A hash containing all your creeps with creep names as hash keys.
         /// </summary>
         IReadOnlyDictionary<string, ICreep> Creeps { get; }
