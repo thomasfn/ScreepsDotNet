@@ -131,17 +131,17 @@ namespace ScreepsDotNet.Native.World
                 .ToArray();
         }
 
-        public IEnumerable<Position> FindExits(RoomExitDirection? exitFilter = null)
+        public IEnumerable<Position> FindExits(ExitDirection? exitFilter = null)
         {
             FindConstant findConstant = FindConstant.Exit;
             if (exitFilter != null)
             {
                 switch (exitFilter.Value)
                 {
-                    case RoomExitDirection.Top: findConstant = FindConstant.ExitTop; break;
-                    case RoomExitDirection.Right: findConstant = FindConstant.ExitRight; break;
-                    case RoomExitDirection.Bottom: findConstant = FindConstant.ExitBottom; break;
-                    case RoomExitDirection.Left: findConstant = FindConstant.ExitLeft; break;
+                    case ExitDirection.Top: findConstant = FindConstant.ExitTop; break;
+                    case ExitDirection.Right: findConstant = FindConstant.ExitRight; break;
+                    case ExitDirection.Bottom: findConstant = FindConstant.ExitBottom; break;
+                    case ExitDirection.Left: findConstant = FindConstant.ExitLeft; break;
                 }
             }
             return Native_Find(ProxyObject, (int)findConstant)

@@ -51,26 +51,6 @@ namespace ScreepsDotNet.API.World
         InvalidArgs = -10
     }
 
-    public enum RoomExitDirection
-    {
-        /// <summary>
-        /// Exit at top of room.
-        /// </summary>
-        Top = 1,
-        /// <summary>
-        /// Exit to right of room.
-        /// </summary>
-        Right = 3,
-        /// <summary>
-        /// Exit at bottom of room.
-        /// </summary>
-        Bottom = 5,
-        /// <summary>
-        /// Exit to left of room.
-        /// </summary>
-        Left = 7
-    }
-
     public enum RoomFindExitResult
     {
         /// <summary>
@@ -101,12 +81,12 @@ namespace ScreepsDotNet.API.World
 
     public static class RoomExitExtensions
     {
-        public static RoomExitDirection? ToExitDirection(this RoomFindExitResult roomFindExitResult) => roomFindExitResult switch
+        public static ExitDirection? ToExitDirection(this RoomFindExitResult roomFindExitResult) => roomFindExitResult switch
         {
-            RoomFindExitResult.Top => (RoomExitDirection?)RoomExitDirection.Top,
-            RoomFindExitResult.Right => (RoomExitDirection?)RoomExitDirection.Right,
-            RoomFindExitResult.Bottom => (RoomExitDirection?)RoomExitDirection.Bottom,
-            RoomFindExitResult.Left => (RoomExitDirection?)RoomExitDirection.Left,
+            RoomFindExitResult.Top => (ExitDirection?)ExitDirection.Top,
+            RoomFindExitResult.Right => (ExitDirection?)ExitDirection.Right,
+            RoomFindExitResult.Bottom => (ExitDirection?)ExitDirection.Bottom,
+            RoomFindExitResult.Left => (ExitDirection?)ExitDirection.Left,
             _ => null,
         };
     }
@@ -200,7 +180,7 @@ namespace ScreepsDotNet.API.World
         /// </summary>
         /// <param name="exitFilter">Filter by a specific exit direction</param>
         /// <returns></returns>
-        IEnumerable<Position> FindExits(RoomExitDirection? exitFilter = null);
+        IEnumerable<Position> FindExits(ExitDirection? exitFilter = null);
 
         /// <summary>
         /// Find the exit direction en route to another room. Please note that this method is not required for inter-room movement, you can simply pass the target in another room into Creep.moveTo method.
