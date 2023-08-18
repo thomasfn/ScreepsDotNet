@@ -51,6 +51,10 @@ namespace ScreepsDotNet.Native.World
         [return: JSMarshalAsAttribute<JSType.Object>]
         internal static partial JSObject Native_GetGameObject();
 
+        [JSImport("getMemoryObj", "game")]
+        [return: JSMarshalAsAttribute<JSType.Object>]
+        internal static partial JSObject Native_GetMemoryObj();
+
         [JSImport("getRawMemoryObj", "game")]
         [return: JSMarshalAsAttribute<JSType.Object>]
         internal static partial JSObject Native_GetRawMemoryObj();
@@ -103,6 +107,8 @@ namespace ScreepsDotNet.Native.World
         public IPathFinder PathFinder => nativePathFinder;
 
         public IConstants Constants => nativeConstants;
+
+        public IMemoryObject Memory => new NativeMemoryObject(Native_GetMemoryObj());
 
         public IRawMemory RawMemory => nativeRawMemory;
 

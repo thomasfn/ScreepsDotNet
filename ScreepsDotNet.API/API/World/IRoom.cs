@@ -133,7 +133,7 @@ namespace ScreepsDotNet.API.World
         /// <summary>
         /// The Terminal structure of this room, if present, otherwise undefined.
         /// </summary>
-        object? Terminal { get; }
+        IStructureTerminal? Terminal { get; }
 
         /// <summary>
         /// A RoomVisual object for this room. You can use this object to draw simple shapes (lines, circles, text labels) in the room.

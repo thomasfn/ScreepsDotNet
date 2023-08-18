@@ -40,6 +40,11 @@ namespace ScreepsDotNet.API.World
         IConstants Constants { get; }
 
         /// <summary>
+        /// A global object containing memory that persists between ticks.
+        /// </summary>
+        IMemoryObject Memory { get; }
+
+        /// <summary>
         /// A global object providing raw memory functionality.
         /// </summary>
         IRawMemory RawMemory { get; }

@@ -18,8 +18,8 @@
 		<Title>ScreepsDotNet Bundler</Title>
 		<Authors>thomasfn</Authors>
 		<Description>An MSBuild task that bundles wasm apps for Screeps Arena environment</Description>
-		<Version>1.0.11</Version>
-		<PackageVersion>1.0.11</PackageVersion>
+		<Version>1.1.0</Version>
+		<PackageVersion>1.1.0</PackageVersion>
 		<PackageProjectUrl>https://github.com/thomasfn/ScreepsDotNet</PackageProjectUrl>
 		<PackageLicenseFile>LICENSE</PackageLicenseFile>
 		<PackageTags>screeps world arena bundler msbuild</PackageTags>

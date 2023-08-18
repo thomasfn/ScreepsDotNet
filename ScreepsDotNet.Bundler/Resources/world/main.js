@@ -41,6 +41,7 @@ function initDotNet() {
         get: (obj, key) => obj[key],
         fixupArray,
         fixupArrayOnObject: (obj, key) => obj[key] = fixupArray(obj[key]),
+        deleteOnObject: (obj, key) => delete obj[key],
     });
     const prototypes = {
         StructureSpawn,
@@ -51,6 +52,7 @@ function initDotNet() {
         StructureRampart,
         StructureTower,
         StructureLink,
+        StructureTerminal,
         OwnedStructure,
         StructureRoad,
         StructureWall,
@@ -66,11 +68,10 @@ function initDotNet() {
         Room,
         RoomVisual,
     };
-    const memory = Memory;
     dotNet.setModuleImports('game', {
         checkIn: () => lastCheckIn = Game.time,
         getGameObj: () => Game,
-        getMemoryObj: () => memory,
+        getMemoryObj: () => Memory,
         getConstantsObj: () => global,
         getRawMemoryObj: () => RawMemory,
         getPrototypes: () => prototypes,

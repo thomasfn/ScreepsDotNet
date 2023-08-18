@@ -75,7 +75,7 @@ namespace ScreepsDotNet.Native.World
 
         public IStructureStorage? Storage => nativeRoot.GetOrCreateWrapperObject<IStructureStorage>(ProxyObject.GetPropertyAsJSObject("storage"));
 
-        public object? Terminal => throw new NotImplementedException();
+        public IStructureTerminal? Terminal => nativeRoot.GetOrCreateWrapperObject<IStructureTerminal>(ProxyObject.GetPropertyAsJSObject("terminal"));
 
         public IRoomVisual Visual => visualCache ??= new NativeRoomVisual(ProxyObject.GetPropertyAsJSObject("visual")!);
 
