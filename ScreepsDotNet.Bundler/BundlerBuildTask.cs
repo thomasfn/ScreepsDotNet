@@ -2,12 +2,15 @@
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Text;
 using System.Collections.Generic;
 
 using Newtonsoft.Json;
 
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
+
+using Kzrnm.Convert.Base32768;
 
 namespace ScreepsDotNet.Bundler
 {
@@ -25,6 +28,9 @@ namespace ScreepsDotNet.Bundler
         [Required]
         public bool CompressWasm { get; set; } = true;
 
+        [Required]
+        public string Encoding { get; set; } = null!;
+
         [Output]
         public string[] BundleFilePaths { get; set; } = null!;
 
@@ -33,14 +39,16 @@ namespace ScreepsDotNet.Bundler
             public readonly string Path;
             public readonly int OriginalSize;
             public readonly bool Compressed;
-            public readonly string B64;
+            public readonly string Encoding;
+            public readonly string Encoded;
 
-            public BundledAsset(string path, int originalSize, bool compressed, string b64)
+            public BundledAsset(string path, int originalSize, bool compressed, string encoding, string encoded)
             {
                 Path = path;
                 OriginalSize = originalSize;
                 Compressed = compressed;
-                B64 = b64;
+                Encoding = encoding;
+                Encoded = encoded;
             }
         }
 
@@ -69,14 +77,12 @@ namespace ScreepsDotNet.Bundler
                         fileStream.CopyTo(deflateStream);
                         originalSize = (int)fileStream.Position;
                     }
-                    var b64 = Convert.ToBase64String(memoryStream.ToArray());
-                    bundledAssets.Add(new BundledAsset(localPath.Replace('\\', '/'), originalSize, true, b64));
+                    bundledAssets.Add(new BundledAsset(localPath.Replace('\\', '/'), originalSize, true, Encoding, Encode(memoryStream.ToArray())));
                 }
                 else
                 {
                     byte[] data = File.ReadAllBytes(sourcePath);
-                    var b64 = Convert.ToBase64String(data);
-                    bundledAssets.Add(new BundledAsset(localPath.Replace('\\', '/'), data.Length, false, b64));
+                    bundledAssets.Add(new BundledAsset(localPath.Replace('\\', '/'), data.Length, false, Encoding, Encode(data)));
                 }
             }
 
@@ -91,6 +97,20 @@ namespace ScreepsDotNet.Bundler
             return !Log.HasLoggedErrors;
         }
 
+        private string Encode(byte[] data) => Encoding switch
+        {
+            "b64" => Convert.ToBase64String(data),
+            "b32768" => Base32768.Encode(data),
+            _ => throw new InvalidOperationException($"Encoding '{Encoding}' is unsupported")
+        };
+
+        private Encoding GetOutputEncoding() => Encoding switch
+        {
+            "b64" => System.Text.Encoding.UTF8,
+            "b32768" => System.Text.Encoding.Unicode,
+            _ => throw new InvalidOperationException($"Encoding '{Encoding}' is unsupported")
+        };
+
         private IEnumerable<string> BuildArena(string path, MonoConfig monoConfig, IEnumerable<BundledAsset> bundledAssets)
         {
             Directory.CreateDirectory(path);
@@ -99,12 +119,12 @@ namespace ScreepsDotNet.Bundler
             using (var output = File.Open(bundleFilePath, FileMode.OpenOrCreate))
             {
                 output.SetLength(0);
-                using var writer = new StreamWriter(output);
+                using var writer = new StreamWriter(output, GetOutputEncoding());
                 writer.WriteLine($"export const manifest = [");
                 foreach (var bundledAsset in bundledAssets)
                 {
-                    writer.Write($"  {{ path: './{bundledAsset.Path}', originalSize: {bundledAsset.OriginalSize}, compressed: {(bundledAsset.Compressed ? "true" : "false")}, b64: '");
-                    writer.Write(bundledAsset.B64);
+                    writer.Write($"  {{ path: './{bundledAsset.Path}', originalSize: {bundledAsset.OriginalSize}, compressed: {(bundledAsset.Compressed ? "true" : "false")}, {bundledAsset.Encoding}: '");
+                    writer.Write(bundledAsset.Encoded);
                     writer.WriteLine($"' }},");
                 }
                 writer.WriteLine($"];");
@@ -134,12 +154,12 @@ namespace ScreepsDotNet.Bundler
             using (var output = File.Open(bundleFilePath, FileMode.OpenOrCreate))
             {
                 output.SetLength(0);
-                using var writer = new StreamWriter(output);
+                using var writer = new StreamWriter(output, GetOutputEncoding());
                 writer.WriteLine($"const manifest = [");
                 foreach (var bundledAsset in bundledAssets)
                 {
-                    writer.Write($"  {{ path: './{bundledAsset.Path}', originalSize: {bundledAsset.OriginalSize}, compressed: {(bundledAsset.Compressed ? "true" : "false")}, b64: '");
-                    writer.Write(bundledAsset.B64);
+                    writer.Write($"  {{ path: './{bundledAsset.Path}', originalSize: {bundledAsset.OriginalSize}, compressed: {(bundledAsset.Compressed ? "true" : "false")}, {bundledAsset.Encoding}: '");
+                    writer.Write(bundledAsset.Encoded);
                     writer.WriteLine($"' }},");
                 }
                 writer.WriteLine($"];");

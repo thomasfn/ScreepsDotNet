@@ -1,20 +1,22 @@
 import * as fflate from 'fflate';
 import './polyfill-fromentries';
 import './polyfill-textencoder';
-import { toBytes } from 'fast-base64/js';
+import { toBytes as decodeB64 } from 'fast-base64/js';
+import { decode as decodeB32768 } from 'base32768'
 import { debug, error, log, setSuppressedLogMode } from './logging';
 
 import type { MonoConfig, RuntimeAPI } from './dotnet';
 import createDotnetRuntime from './dotnet'
 
-import { advanceFrame, cancelAdvanceFrame, setImmediate } from './timeouts';
+import { advanceFrame, cancelAdvanceFrame } from './timeouts';
 import Promise from 'promise-polyfill';
 
 export interface ManifestEntry {
     path: string;
     originalSize: number;
     compressed: boolean;
-    b64: string;
+    b64?: string;
+    b32768?: string;
 }
 
 export interface Manifest {
@@ -109,7 +111,15 @@ export class DotNet {
         let totalBytes = 0;
         for (const entry of this.manifest) {
             const profilerB64Marker = this.profile();
-            const fileDataRaw = toBytes(entry.b64);
+            let fileDataRaw: Uint8Array;
+            if ('b64' in entry) {
+                fileDataRaw = decodeB64(entry.b64!);
+            } else if ('b32768' in entry) {
+                fileDataRaw = decodeB32768(entry.b32768!);
+            } else {
+                log(`entry '${entry.path}' does not contain b64 or b32768 data`);
+                continue;
+            }
             profilerB64 += this.profileAccum(profilerB64Marker);
             if (entry.compressed) {
                 const profilerInflateMarker = this.profile();

@@ -14,5 +14,6 @@
 	<PropertyGroup>
 		<ScreepsCompressAssemblies>true</ScreepsCompressAssemblies>
 		<ScreepsCompressWasm>true</ScreepsCompressWasm>
+		<ScreepsEncoding>b64</ScreepsEncoding>
 	</PropertyGroup>
 </Project>

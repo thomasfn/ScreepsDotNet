@@ -4,12 +4,6 @@
 		<TargetFrameworks>netstandard2.0;net7.0</TargetFrameworks>
 		<LangVersion>8.0</LangVersion>
 		<Nullable>enable</Nullable>
-		<TargetsForTfmSpecificBuildOutput>
-			$(TargetsForTfmSpecificBuildOutput);CopyProjectReferencesToPackage
-		</TargetsForTfmSpecificBuildOutput>
-		<BuildOutputTargetFolder>tasks</BuildOutputTargetFolder>
-		<NoWarn>NU5100</NoWarn>
-		<GenerateDependencyFile>true</GenerateDependencyFile>
 		<DebugType>embedded</DebugType>
 		<IsPackable>true</IsPackable>
 	</PropertyGroup>
@@ -27,15 +21,25 @@
 		<Copyright>Copyright (c) thomasfn 2023</Copyright>
 	</PropertyGroup>
 
+	<PropertyGroup>
+		<TargetsForTfmSpecificBuildOutput>
+			$(TargetsForTfmSpecificBuildOutput);CopyProjectReferencesToPackage
+		</TargetsForTfmSpecificBuildOutput>
+		<BuildOutputTargetFolder>tasks</BuildOutputTargetFolder>
+		<NoWarn>NU5100</NoWarn>
+		<GenerateDependencyFile>true</GenerateDependencyFile>
+	</PropertyGroup>
+
 	<ItemGroup>
 		<Content Include="..\LICENSE" PackagePath="\" />
 		<Content Include="..\README.md" PackagePath="\" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.Build.Framework" Version="17.6.3" PrivateAssets="all" />
+		<PackageReference Include="Base32768" Version="2.0.2" PrivateAssets="all" CopyLocal="true" />
+		<PackageReference Include="Microsoft.Build.Framework" Version="17.6.3" PrivateAssets="all" ExcludeAssets="Runtime" />
 		<PackageReference Include="Microsoft.Build.Utilities.Core" Version="17.6.3" PrivateAssets="all" ExcludeAssets="Runtime" />
-		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" PrivateAssets="all" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -58,14 +62,19 @@
 		</EmbeddedResource>
 	</ItemGroup>
 
-	<Target Name="CopyProjectReferencesToPackage" DependsOnTargets="ResolveReferences">
+	<Target Name="CopyProjectReferencesToPackage" AfterTargets="ResolveAssemblyReferences">
+		<PropertyGroup>
+			<CopyLocalPackageReferences Condition="'%(PackageReference.CopyLocal)' == 'true'">;@(PackageReference);</CopyLocalPackageReferences>
+		</PropertyGroup>
 		<ItemGroup>
-			<BuildOutputInPackage Include="@(ReferenceCopyLocalPaths)" TargetPath="%(ReferenceCopyLocalPaths.DestinationSubPath)" />
+			<LocalPackageToCopy Include="@(ReferencePath)" Condition="$(CopyLocalPackageReferences.Contains(';%(ReferencePath.NuGetPackageId);'))"/>
+		</ItemGroup>
+		<ItemGroup>
+			<BuildOutputInPackage Include="@(LocalPackageToCopy)" TargetPath="%(LocalPackageToCopy.DestinationSubPath)" />
 		</ItemGroup>
 	</Target>
 
-	<Target Name="AddBuildDependencyFileToBuiltProjectOutputGroupOutput" BeforeTargets="BuiltProjectOutputGroup" Condition=" '$(GenerateDependencyFile)' == 'true'">
-
+	<Target Name="AddBuildDependencyFileToBuiltProjectOutputGroupOutput" BeforeTargets="BuiltProjectOutputGroup" Condition="'$(GenerateDependencyFile)' == 'true'">
 		<ItemGroup>
 			<BuiltProjectOutputGroupOutput Include="$(ProjectDepsFilePath)" TargetPath="$(ProjectDepsFileName)" FinalOutputPath="$(ProjectDepsFilePath)" />
 		</ItemGroup>
