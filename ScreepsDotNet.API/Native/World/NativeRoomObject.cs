@@ -10,8 +10,16 @@ using ScreepsDotNet.API.World;
 namespace ScreepsDotNet.Native.World
 {
     [System.Runtime.Versioning.SupportedOSPlatform("browser")]
-    internal abstract class NativeRoomObject : NativeObject, IRoomObject
+    internal abstract partial class NativeRoomObject : NativeObject, IRoomObject
     {
+        #region Imports
+
+        [JSImport("RoomObject.getEncodedRoomPosition", "game/prototypes/wrapped")]
+        [return: JSMarshalAsAttribute<JSType.Number>]
+        internal static partial int Native_GetEncodedRoomPosition([JSMarshalAs<JSType.Object>] JSObject proxyObject);
+
+        #endregion
+
         private RoomPosition? positionCache;
 
         protected virtual bool CanMove { get => false; }
@@ -24,11 +32,11 @@ namespace ScreepsDotNet.Native.World
             {
                 if (CanMove)
                 {
-                    return CachePerTick(ref positionCache) ??= ProxyObject.GetPropertyAsJSObject("pos")!.ToRoomPosition();
+                    return CachePerTick(ref positionCache) ??= RoomPosition.FromEncodedInt(Native_GetEncodedRoomPosition(ProxyObject));
                 }
                 else
                 {
-                    return CacheLifetime(ref positionCache) ??= ProxyObject.GetPropertyAsJSObject("pos")!.ToRoomPosition();
+                    return CacheLifetime(ref positionCache) ??= RoomPosition.FromEncodedInt(Native_GetEncodedRoomPosition(ProxyObject));
                 }
             }
         }

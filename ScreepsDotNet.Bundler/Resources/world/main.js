@@ -32,6 +32,74 @@ function initDotNet() {
         }
         return arr;
     }
+    const wChr = 'W'.charCodeAt(0);
+    const eChr = 'E'.charCodeAt(0);
+    const sChr = 'S'.charCodeAt(0);
+    const nChr = 'N'.charCodeAt(0);
+    const _0Chr = '0'.charCodeAt(0);
+    const _9Chr = '9'.charCodeAt(0);
+    function encodeRoomPosition({x, y, roomName}) {
+        // bit 0-0   (1): sim room
+        // bit 1-7   (7): room x
+        // bit 8-14  (7): room y
+        // bit 15-20 (6): local x
+        // bit 21-26 (6): local y
+        let result = 0;
+        if (roomName == "sim") {
+            result |= 1;
+        } else {
+            let roomX, roomY;
+            let ptr = 0;
+            let _0, _1, _2;
+            _0 = roomName.charCodeAt(ptr), _1 = roomName.charCodeAt(ptr + 1), _2 = roomName.charCodeAt(ptr + 2);
+            if (_0 == wChr) {
+                if (roomName.length > ptr + 2 && _2 >= _0Chr && _2 <= _9Chr) {
+                    roomX = -((_1 - _0Chr) * 10 + (_2 - _0Chr) + 1);
+                    ptr += 3;
+                } else {
+                    roomX = -(_1 - _0Chr + 1);
+                    ptr += 2;
+                }
+            } else if (_0 == eChr) {
+                if (roomName.length > ptr + 2 && _2 >= _0Chr && _2 <= _9Chr) {
+                    roomX = (_1 - _0Chr) * 10 + (_2 - _0Chr);
+                    ptr += 3;
+                } else {
+                    roomX = _1 - _0Chr;
+                    ptr += 2;
+                }
+            } else {
+                throw new Error(`Room name '${roomName}' does not follow standard pattern`);
+            }
+
+            _0 = roomName.charCodeAt(ptr), _1 = roomName.charCodeAt(ptr + 1), _2 = roomName.charCodeAt(ptr + 2);
+            if (_0 == sChr) {
+                if (roomName.length > ptr + 2 && _2 >= _0Chr && _2 <= _9Chr) {
+                    roomY = -((_1 - _0Chr) * 10 + (_2 - _0Chr) + 1);
+                    ptr += 3;
+                } else {
+                    roomY = -(_1 - _0Chr + 1);
+                    ptr += 2;
+                }
+            } else if (_0 == nChr) {
+                if (roomName.length > ptr + 2 && _2 >= _0Chr && _2 <= _9Chr) {
+                    roomY = (_1 - _0Chr) * 10 + (_2 - _0Chr);
+                    ptr += 3;
+                } else {
+                    roomY = _1 - _0Chr;
+                    ptr += 2;
+                }
+            } else {
+                throw new Error(`Room name '${roomName}' does not follow standard pattern`);
+            }
+
+            result |= (roomX + 64) << 1;
+            result |= (roomY + 64) << 8;
+        }
+        result |= x << 15;
+        result |= y << 21;
+        return result;
+    }
     dotNet.setModuleImports('object', {
         getConstructorOf: (x) => Object.getPrototypeOf(x).constructor,
         getKeysOf: (x) => Object.keys(x),
@@ -102,10 +170,10 @@ function initDotNet() {
         rawMemory: {
             get: (...args) => RawMemory.get(...args),
             set: (...args) => RawMemory.set(...args),
-            setActiveSegments: (...args) => RawMemory.setActiveSegments(...args),
+            setActiveSegments: (ids) => RawMemory.setActiveSegments(fixupArray(ids)),
             setActiveForeignSegment: (...args) => RawMemory.setActiveForeignSegment(...args),
             setDefaultPublicSegment: (...args) => RawMemory.setDefaultPublicSegment(...args),
-            setPublicSegments: (...args) => RawMemory.setPublicSegments(...args),
+            setPublicSegments: (ids) => RawMemory.setPublicSegments(fixupArray(ids)),
         },
         visual: {
             line: (...args) => Game.map.visual.line(...args),
@@ -122,6 +190,10 @@ function initDotNet() {
     const wrappedPrototypes = buildWrappedPrototypes(prototypes);
     dotNet.setModuleImports('game/prototypes/wrapped', {
         ...wrappedPrototypes,
+        RoomObject: {
+            ...wrappedPrototypes.RoomObject,
+            getEncodedRoomPosition: (thisObj) => encodeRoomPosition(thisObj.pos),
+        },
         Spawning: buildWrappedPrototype(StructureSpawn.Spawning),
         Store: {
             getCapacity: (thisObj, resourceType) => thisObj.getCapacity(resourceType),

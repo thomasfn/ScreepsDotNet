@@ -56,6 +56,165 @@ namespace ScreepsDotNet.API.World
 
         public static bool operator !=(RoomPosition left, RoomPosition right) => !(left == right);
 
+        public static RoomPosition FromEncodedInt(int encodedInt)
+        {
+            // bit 0-0   (1): sim room
+            // bit 1-7   (7): room x
+            // bit 8-14  (7): room y
+            // bit 15-20 (6): local x
+            // bit 21-26 (6): local y
+            bool isSimRoom = (encodedInt & 1) != 0;
+            int roomX = ((encodedInt >> 1) & 127) - 64;
+            int roomY = ((encodedInt >> 8) & 127) - 64;
+            int localX = (encodedInt >> 15) & 63;
+            int localY = (encodedInt >> 21) & 63;
+            Span<char> roomName = stackalloc char[6];
+            int ptr = 0;
+            if (isSimRoom)
+            {
+                "sim".CopyTo(roomName);
+                ptr = 3;
+            }
+            else
+            {
+                if (roomX < -10)
+                {
+                    roomName[ptr++] = 'W';
+                    roomName[ptr++] = (char)('0' - ((roomX + 1) / 10));
+                    roomName[ptr++] = (char)('0' - ((roomX + 1) % 10));
+                }
+                else if (roomX < 0)
+                {
+                    roomName[ptr++] = 'W';
+                    roomName[ptr++] = (char)('0' - ((roomX + 1) % 10));
+                }
+                else if (roomX > 9)
+                {
+                    roomName[ptr++] = 'E';
+                    roomName[ptr++] = (char)('0' + (roomX / 10));
+                    roomName[ptr++] = (char)('0' + (roomX % 10));
+                }
+                else
+                {
+                    roomName[ptr++] = 'E';
+                    roomName[ptr++] = (char)('0' + (roomX % 10));
+                }
+                if (roomY < -10)
+                {
+                    roomName[ptr++] = 'S';
+                    roomName[ptr++] = (char)('0' - ((roomY + 1) / 10));
+                    roomName[ptr++] = (char)('0' - ((roomY + 1) % 10));
+                }
+                else if (roomY < 0)
+                {
+                    roomName[ptr++] = 'S';
+                    roomName[ptr++] = (char)('0' - ((roomY + 1) % 10));
+                }
+                else if (roomY > 9)
+                {
+                    roomName[ptr++] = 'N';
+                    roomName[ptr++] = (char)('0' + (roomY / 10));
+                    roomName[ptr++] = (char)('0' + (roomY % 10));
+                }
+                else
+                {
+                    roomName[ptr++] = 'N';
+                    roomName[ptr++] = (char)('0' + (roomY % 10));
+                }
+            }
+            return new(new(localX, localY), roomName[0..ptr].ToString());
+
+        }
+
+        public int ToEncodedInt()
+        {
+            // bit 0-0   (1): sim room
+            // bit 1-7   (7): room x
+            // bit 8-14  (7): room y
+            // bit 15-20 (6): local x
+            // bit 21-26 (6): local y
+            int result = 0;
+            if (RoomName == "sim")
+            {
+                result |= 1;
+            }
+            else
+            {
+                int roomX, roomY;
+                int ptr = 0;
+
+                if (RoomName[ptr] == 'W')
+                {
+                    if (RoomName.Length > ptr + 2 && char.IsDigit(RoomName[ptr + 2]))
+                    {
+                        roomX = -((RoomName[ptr + 1] - '0') * 10 + (RoomName[ptr + 2] - '0') + 1);
+                        ptr += 3;
+                    }
+                    else
+                    {
+                        roomX = -(RoomName[ptr + 1] - '0' + 1);
+                        ptr += 2;
+                    }
+                    
+                }
+                else if (RoomName[ptr] == 'E')
+                {
+                    if (RoomName.Length > ptr + 2 && char.IsDigit(RoomName[ptr + 2]))
+                    {
+                        roomX = (RoomName[ptr + 1] - '0') * 10 + (RoomName[ptr + 2] - '0');
+                        ptr += 3;
+                    }
+                    else
+                    {
+                        roomX = RoomName[ptr + 1] - '0';
+                        ptr += 2;
+                    }
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Room name '{RoomName}' does not follow standard pattern");
+                }
+
+                if (RoomName[ptr] == 'S')
+                {
+                    if (RoomName.Length > ptr + 2 && char.IsDigit(RoomName[ptr + 2]))
+                    {
+                        roomY = -((RoomName[ptr + 1] - '0') * 10 + (RoomName[ptr + 2] - '0') + 1);
+                        ptr += 3;
+                    }
+                    else
+                    {
+                        roomY = -(RoomName[ptr + 1] - '0' + 1);
+                        ptr += 2;
+                    }
+
+                }
+                else if (RoomName[ptr] == 'N')
+                {
+                    if (RoomName.Length > ptr + 2 && char.IsDigit(RoomName[ptr + 2]))
+                    {
+                        roomY = (RoomName[ptr + 1] - '0') * 10 + (RoomName[ptr + 2] - '0');
+                        ptr += 3;
+                    }
+                    else
+                    {
+                        roomY = RoomName[ptr + 1] - '0';
+                        ptr += 2;
+                    }
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Room name '{RoomName}' does not follow standard pattern");
+                }
+
+                result |= (roomX + 64) << 1;
+                result |= (roomY + 64) << 8;
+            }
+            result |= Position.X << 15;
+            result |= Position.Y << 21;
+            return result;
+        }
+
         public override string ToString()
             => $"[{Position.X},{Position.Y}:{RoomName}]";
     }
