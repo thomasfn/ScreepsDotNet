@@ -18,7 +18,15 @@ namespace ScreepsDotNet.Native.World
 
         private readonly IDictionary<int, string?> segmentCache = new Dictionary<int, string?>();
 
-        public string this[int key] { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string this[int key]
+        {
+            get => (segmentCache.TryGetValue(key, out var segment) ? segment : null) ?? throw new InvalidOperationException($"Can't read raw segment that was not requested previous tick.");
+            set
+            {
+                segmentCache[key] = value;
+                proxyObject.SetProperty(key.ToString(), value);
+            }
+        }
 
         public ICollection<int> Keys => throw new NotImplementedException();
 
