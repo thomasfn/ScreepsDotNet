@@ -846,7 +846,7 @@ namespace ScreepsDotNet.API.World
         int GetActiveBodyparts(BodyPartType type);
 
         /// <summary>
-        /// Harvest energy from the source or resources from minerals and deposits.
+        /// Harvest energy from the source.
         /// Requires the WORK body part.
         /// If the creep has an empty CARRY body part, the harvested resource is put into it; otherwise it is dropped on the ground.
         /// The target has to be at an adjacent square to the creep.
@@ -855,7 +855,15 @@ namespace ScreepsDotNet.API.World
         /// <returns></returns>
         CreepHarvestResult Harvest(ISource source);
 
-        //CreepHarvestResult Harvest(IMineral source);
+        /// <summary>
+        /// Harvest resources from minerals and deposits.
+        /// Requires the WORK body part.
+        /// If the creep has an empty CARRY body part, the harvested resource is put into it; otherwise it is dropped on the ground.
+        /// The target has to be at an adjacent square to the creep.
+        /// </summary>
+        /// <param name="mineral"></param>
+        /// <returns></returns>
+        CreepHarvestResult Harvest(IMineral mineral);
 
         //CreepHarvestResult Harvest(IDeposit source);
 

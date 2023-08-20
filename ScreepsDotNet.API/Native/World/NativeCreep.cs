@@ -308,7 +308,8 @@ namespace ScreepsDotNet.Native.World
         public CreepHarvestResult Harvest(ISource source)
             => (CreepHarvestResult)Native_Harvest(ProxyObject, source.ToJS());
 
-        //CreepHarvestResult Harvest(IMineral source);
+        public CreepHarvestResult Harvest(IMineral mineral)
+            => (CreepHarvestResult)Native_Harvest(ProxyObject, mineral.ToJS());
 
         //CreepHarvestResult Harvest(IDeposit source);
 
