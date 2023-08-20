@@ -102,14 +102,14 @@ namespace ScreepsDotNet.Native.World
 
         #endregion
 
-        private readonly string name;
+        private string? nameCache;
 
         private NativeMemoryObject? memoryCache;
         private NativeStore? storeCache;
 
         public IMemoryObject Memory => CachePerTick(ref memoryCache) ??= new NativeMemoryObject(ProxyObject.GetPropertyAsJSObject("memory")!);
 
-        public string Name => name;
+        public string Name => CacheLifetime(ref nameCache) ??= ProxyObject.GetPropertyAsString("name")!;
 
         public ISpawning? Spawning
         {
@@ -125,9 +125,11 @@ namespace ScreepsDotNet.Native.World
 
         public NativeStructureSpawn(INativeRoot nativeRoot, JSObject proxyObject, string knownId)
             : base(nativeRoot, proxyObject, knownId)
-        {
-            name = proxyObject.GetPropertyAsString("name")!;
-        }
+        { }
+
+        public NativeStructureSpawn(INativeRoot nativeRoot, string id, RoomPosition? roomPos)
+            : base(nativeRoot, id, roomPos)
+        { }
 
         protected override void ClearNativeCache()
         {
@@ -159,6 +161,6 @@ namespace ScreepsDotNet.Native.World
             => (RenewCreepResult)Native_RenewCreep(ProxyObject, target.ToJS());
 
         public override string ToString()
-            => $"StructureSpawn['{name}']";
+            => $"StructureSpawn['{nameCache}']";
     }
 }

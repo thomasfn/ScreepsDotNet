@@ -18,5 +18,9 @@ namespace ScreepsDotNet.Native.World
         public NativeOwnedStructure(INativeRoot nativeRoot, JSObject proxyObject, string knownId)
             : base(nativeRoot, proxyObject, knownId)
         { }
+
+        public NativeOwnedStructure(INativeRoot nativeRoot, string id, RoomPosition? roomPos)
+            : base(nativeRoot, id, roomPos)
+        { }
     }
 }

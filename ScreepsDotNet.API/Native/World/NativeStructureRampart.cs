@@ -22,6 +22,10 @@ namespace ScreepsDotNet.Native.World
         public NativeStructureRampart(INativeRoot nativeRoot, JSObject proxyObject, string knownId) : base(nativeRoot, proxyObject, knownId)
         { }
 
+        public NativeStructureRampart(INativeRoot nativeRoot, string id, RoomPosition? roomPos)
+            : base(nativeRoot, id, roomPos)
+        { }
+
         public RampartSetPublicResult SetPublic(bool isPublic)
             => (RampartSetPublicResult)Native_SetPublic(ProxyObject, isPublic);
     }

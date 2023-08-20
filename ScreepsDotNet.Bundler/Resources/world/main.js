@@ -100,6 +100,48 @@ function initDotNet() {
         result |= y << 21;
         return result;
     }
+    const copyBuffer = new ArrayBuffer(1024 * 1024);
+    const copyBufferU8 = new Uint8Array(copyBuffer);
+    const copyBufferI32 = new Int32Array(copyBuffer);
+    let copyBufferHead = 0;
+
+    /** @param buffer {Uint8Array} */
+    function encodeRoomObjectArray(arr) {
+        // room object packet (40b):
+        // - id (32b)
+        // - type id (4b)
+        // - encoded position (4b)
+        copyBufferHead = 0;
+        for (let i = 0; i < arr.length; ++i) {
+            if (copyBufferHead + 40 > copyBuffer.byteLength) {
+                console.log(`BUFFER OVERFLOW in encodeRoomObjectArray (trying to encode ${arr.length} room objects but only space for ${(copyBuffer.byteLength / 40)|0})`);
+                break;
+            }
+            const obj = arr[i];
+            const id = obj.id;
+            for (let j = 0; j < 32; ++j) {
+                copyBufferU8[copyBufferHead + j] = id ? id.charCodeAt(j) : 0;
+            }
+            copyBufferHead += 32;
+            copyBufferI32[copyBufferHead >> 2] = Object.getPrototypeOf(obj).constructor.__dotnet_typeId || 0;
+            copyBufferHead += 4;
+            copyBufferI32[copyBufferHead >> 2] = obj.pos ? encodeRoomPosition(obj.pos) : 0;
+            copyBufferHead += 4;
+        }
+    }
+    dotNet.setModuleImports('copybuffer', {
+        getMaxSize: () => copyBuffer.byteLength,
+        read: (memoryView) => {
+            memoryView.set(copyBufferU8);
+            return copyBufferHead;
+        },
+        write: (memoryView) => {
+            memoryView.copyTo(copyBufferU8);
+            memoryView.dispose();
+            copyBufferHead = Math.min(copyBuffer.byteLength, memoryView.byteLength);
+            return copyBufferHead;
+        },
+    });
     dotNet.setModuleImports('object', {
         getConstructorOf: (x) => Object.getPrototypeOf(x).constructor,
         getKeysOf: (x) => Object.keys(x),
@@ -121,6 +163,7 @@ function initDotNet() {
         StructureTower,
         StructureLink,
         StructureTerminal,
+        StructureExtractor,
         OwnedStructure,
         StructureRoad,
         StructureWall,
@@ -225,6 +268,11 @@ function initDotNet() {
                 } else {
                     return { code: result };
                 }
+            },
+            findFast: (thisObj, ...args) => {
+                const result = thisObj.find(...args);
+                encodeRoomObjectArray(result);
+                return result.length;
             },
         },
         PathFinder: {

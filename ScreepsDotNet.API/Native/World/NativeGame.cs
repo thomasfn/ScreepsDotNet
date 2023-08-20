@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using System.Runtime.InteropServices.JavaScript;
 
 using ScreepsDotNet.API;
@@ -37,6 +39,8 @@ namespace ScreepsDotNet.Native.World
         T? GetExistingWrapperObjectById<T>(string id) where T : class, INativeObject, IWithId;
 
         T? GetOrCreateWrapperObject<T>(JSObject? proxyObject) where T : class, IRoomObject;
+
+        IEnumerable<T> GetWrapperObjectsFromCopyBuffer<T>(int cnt) where T : class, IRoomObject;
     }
 
     [System.Runtime.Versioning.SupportedOSPlatform("browser")]
@@ -230,6 +234,47 @@ namespace ScreepsDotNet.Native.World
                 }
             }
             return NativeRoomObjectUtils.CreateWrapperForRoomObject(this, proxyObject, typeof(T)) as T;
+        }
+
+        public IEnumerable<T> GetWrapperObjectsFromCopyBuffer<T>(int cnt) where T : class, IRoomObject
+        {
+            const int DataPacketSize = 32;
+            ReadOnlySpan<byte> roomObjectData = NativeCopyBuffer.ReadFromJS();
+            if (roomObjectData.Length / DataPacketSize < cnt)
+            {
+                Console.WriteLine($"NativeGame.GetWrapperObjectsFromCopyBuffer: expecting {cnt} objects but copy buffer only contained {roomObjectData.Length / DataPacketSize} worth of data");
+                cnt = roomObjectData.Length / DataPacketSize;
+            }
+            if (cnt == 0) { return Enumerable.Empty<T>(); }
+            var result = new List<T>();
+            int noIdCnt = 0, existingCnt = 0, newCnt = 0;
+            for (int i = 0; i < cnt; ++i)
+            {
+                ReadOnlySpan<byte> dataPacket = roomObjectData[(i * DataPacketSize)..((i + 1) * DataPacketSize)];
+                string? id = dataPacket[0] > 0 ? Encoding.ASCII.GetString(dataPacket[0..24]) : null;
+                if (string.IsNullOrEmpty(id))
+                {
+                    ++noIdCnt;
+                    continue;
+                }
+                if (objectsByIdCache.TryGetValue(id, out var weakRef) && weakRef.TryGetTarget(out var existingObj) && existingObj is T existingObjT)
+                {
+                    ++existingCnt;
+                    result.Add(existingObjT);
+                    continue;
+                }
+                var roomObject = NativeRoomObjectUtils.CreateWrapperForRoomObject<T>(this, dataPacket);
+                if (roomObject != null)
+                {
+                    ++newCnt;
+                    result.Add(roomObject);
+                    if (roomObject is IWithId withId)
+                    {
+                        objectsByIdCache.TryAdd(id, new WeakReference<IWithId>(withId));
+                    }
+                }
+            }
+            return result;
         }
     }
 }

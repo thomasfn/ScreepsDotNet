@@ -42,6 +42,13 @@ namespace ScreepsDotNet.Native.World
             id = knownId;
         }
 
+        public NativeStructure(INativeRoot nativeRoot, string id, RoomPosition? roomPos)
+            : base(nativeRoot, null)
+        {
+            this.id = id;
+            positionCache = roomPos;
+        }
+
         public override JSObject? ReacquireProxyObject()
             => nativeRoot.GetProxyObjectById(id);
 

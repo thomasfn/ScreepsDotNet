@@ -47,11 +47,11 @@ namespace ScreepsDotNet.Native.World
             }
         }
 
-        public NativeObject(INativeRoot nativeRoot, JSObject proxyObject)
+        public NativeObject(INativeRoot nativeRoot, JSObject? proxyObject)
         {
             this.nativeRoot = nativeRoot;
             this.proxyObject = proxyObject;
-            proxyObjectValidAsOf = nativeRoot.TickIndex;
+            proxyObjectValidAsOf = proxyObject != null ? nativeRoot.TickIndex : -1;
         }
 
         protected void TouchProxyObject()
@@ -59,6 +59,7 @@ namespace ScreepsDotNet.Native.World
             if (isDead) { throw new NativeObjectNoLongerExistsException(); }
             if (proxyObjectValidAsOf < nativeRoot.TickIndex)
             {
+                proxyObject?.Dispose();
                 proxyObject = ReacquireProxyObject();
                 ClearNativeCache();
                 if (proxyObject == null)

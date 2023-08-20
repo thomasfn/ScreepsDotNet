@@ -11,6 +11,19 @@ namespace ScreepsDotNet.API.World
         Left = 7
     }
 
+    public static class ExitDirectionExtensions
+    {
+        public static (int dx, int dy) ToLinear(this ExitDirection exitDirection)
+            => exitDirection switch
+            {
+                ExitDirection.Top => (0, 1),
+                ExitDirection.Right => (1, 0),
+                ExitDirection.Bottom => (0, -1),
+                ExitDirection.Left => (-1, 0),
+                _ => throw new ArgumentException("Unknown exit direction", nameof(exitDirection)),
+            };
+    }
+
     public readonly struct RoomExits
     {
         private readonly string? top;

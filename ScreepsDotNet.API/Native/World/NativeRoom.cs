@@ -25,6 +25,10 @@ namespace ScreepsDotNet.Native.World
         [return: JSMarshalAsAttribute<JSType.Array<JSType.Object>>]
         internal static partial JSObject[] Native_Find([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Number>] int type);
 
+        [JSImport("Room.findFast", "game/prototypes/wrapped")]
+        [return: JSMarshalAsAttribute<JSType.Number>]
+        internal static partial int Native_FindFast([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Number>] int type);
+
         [JSImport("Room.findExitTo", "game/prototypes/wrapped")]
         [return: JSMarshalAsAttribute<JSType.Number>]
         internal static partial int Native_FindExitTo([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.String>] string room);
@@ -65,6 +69,8 @@ namespace ScreepsDotNet.Native.World
 
         public string Name { get; private set; }
 
+        public RoomCoord Coord { get; }
+
         public IStructureController? Controller => nativeRoot.GetOrCreateWrapperObject<IStructureController>(ProxyObject.GetPropertyAsJSObject("controller"));
 
         public int EnergyAvailable => ProxyObject.GetPropertyAsInt32("energyAvailable");
@@ -79,14 +85,15 @@ namespace ScreepsDotNet.Native.World
 
         public IRoomVisual Visual => visualCache ??= new NativeRoomVisual(ProxyObject.GetPropertyAsJSObject("visual")!);
 
-        public NativeRoom(INativeRoot nativeRoot, JSObject proxyObject, string knownName)
+        public NativeRoom(INativeRoot nativeRoot, JSObject proxyObject, string? knownName)
             : base(nativeRoot, proxyObject)
         {
             Name = knownName ?? proxyObject.GetPropertyAsString("name")!;
+            Coord = new(Name);
         }
 
         public NativeRoom(INativeRoot nativeRoot, JSObject proxyObject)
-            : this(nativeRoot, proxyObject, proxyObject.GetPropertyAsString("name")!)
+            : this(nativeRoot, proxyObject, proxyObject.GetPropertyAsString("name"))
         { }
 
         public override JSObject? ReacquireProxyObject()
@@ -124,6 +131,11 @@ namespace ScreepsDotNet.Native.World
         {
             var findConstant = NativeRoomObjectPrototypes<T>.FindConstant;
             if (findConstant == null) { return Enumerable.Empty<T>(); }
+            if (typeof(T).IsAssignableTo(typeof(IWithId)))
+            {
+                int cnt = Native_FindFast(ProxyObject, (int)findConstant);
+                return nativeRoot.GetWrapperObjectsFromCopyBuffer<T>(cnt);
+            }
             return Native_Find(ProxyObject, (int)findConstant)
                 .Select(nativeRoot.GetOrCreateWrapperObject<T>)
                 .Where(x => x != null)

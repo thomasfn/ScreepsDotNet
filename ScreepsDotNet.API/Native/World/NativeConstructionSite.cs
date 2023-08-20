@@ -40,6 +40,13 @@ namespace ScreepsDotNet.Native.World
             id = knownId;
         }
 
+        public NativeConstructionSite(INativeRoot nativeRoot, string id, RoomPosition? roomPos)
+            : base(nativeRoot, null)
+        {
+            this.id = id;
+            positionCache = roomPos;
+        }
+
         public NativeConstructionSite(INativeRoot nativeRoot, JSObject proxyObject)
             : this(nativeRoot, proxyObject, proxyObject.GetPropertyAsString("id")!)
         { }

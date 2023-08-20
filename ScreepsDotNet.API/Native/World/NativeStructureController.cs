@@ -62,6 +62,10 @@ namespace ScreepsDotNet.Native.World
             : base(nativeRoot, proxyObject, knownId)
         { }
 
+        public NativeStructureController(INativeRoot nativeRoot, string id, RoomPosition? roomPos)
+            : base(nativeRoot, id, roomPos)
+        { }
+
         public ControllerActivateSafeModeResult ActivateSafeMode()
             => (ControllerActivateSafeModeResult)Native_ActivateSafeMode(ProxyObject);
 

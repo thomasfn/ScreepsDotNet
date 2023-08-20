@@ -9,5 +9,9 @@ namespace ScreepsDotNet.Native.World
     {
         public NativeStructureWall(INativeRoot nativeRoot, JSObject proxyObject, string knownId) : base(nativeRoot, proxyObject, knownId)
         { }
+
+        public NativeStructureWall(INativeRoot nativeRoot, string id, RoomPosition? roomPos)
+            : base(nativeRoot, id, roomPos)
+        { }
     }
 }

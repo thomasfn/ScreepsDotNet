@@ -2,8 +2,9 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.JavaScript;
-
+using System.Text;
 using ScreepsDotNet.API;
 using ScreepsDotNet.API.World;
 
@@ -20,7 +21,7 @@ namespace ScreepsDotNet.Native.World
 
         #endregion
 
-        private RoomPosition? positionCache;
+        protected RoomPosition? positionCache;
 
         protected virtual bool CanMove { get => false; }
 
@@ -51,7 +52,7 @@ namespace ScreepsDotNet.Native.World
             }
         }
 
-        public NativeRoomObject(INativeRoot nativeRoot, JSObject proxyObject)
+        public NativeRoomObject(INativeRoot nativeRoot, JSObject? proxyObject)
             : base(nativeRoot, proxyObject)
         { }
 
@@ -100,6 +101,7 @@ namespace ScreepsDotNet.Native.World
     [System.Runtime.Versioning.SupportedOSPlatform("browser")]
     internal static class NativeRoomObjectPrototypes<T> where T : IRoomObject
     {
+        public static int TypeId;
         public static JSObject? ConstructorObj;
         public static FindConstant? FindConstant;
         public static string? LookConstant;
@@ -109,6 +111,44 @@ namespace ScreepsDotNet.Native.World
         static NativeRoomObjectPrototypes()
         {
             RuntimeHelpers.RunClassConstructor(typeof(NativeRoomObjectUtils).TypeHandle);
+        }
+    }
+
+    internal static partial class NativeCopyBuffer
+    {
+        #region Imports
+
+        [JSImport("getMaxSize", "copybuffer")]
+        [return: JSMarshalAsAttribute<JSType.Number>]
+        internal static partial int Native_GetMaxSize();
+
+        [JSImport("read", "copybuffer")]
+        [return: JSMarshalAsAttribute<JSType.Number>]
+        internal static partial int Native_Read([JSMarshalAs<JSType.MemoryView>] Span<byte> data);
+
+        [JSImport("write", "copybuffer")]
+        [return: JSMarshalAsAttribute<JSType.Number>]
+        internal static partial int Native_Write([JSMarshalAs<JSType.MemoryView>] Span<byte> data);
+
+        #endregion
+
+        private static readonly byte[] copyBuffer;
+
+        static NativeCopyBuffer()
+        {
+            copyBuffer = new byte[Native_GetMaxSize()];
+        }
+
+        public static ReadOnlySpan<byte> ReadFromJS()
+        {
+            int len = Native_Read(copyBuffer);
+            return copyBuffer.AsSpan()[..len];
+        }
+
+        public static void WriteToJS(ReadOnlySpan<byte> data)
+        {
+            data.CopyTo(copyBuffer);
+            Native_Write(copyBuffer);
         }
     }
 
@@ -123,6 +163,8 @@ namespace ScreepsDotNet.Native.World
         private static readonly IDictionary<string, Type> structureConstantInterfaceMap = new Dictionary<string, Type>();
         private static readonly IDictionary<Type, string> interfaceStructureConstantMap = new Dictionary<Type, string>();
 
+        #region Imports
+
         [JSImport("getPrototypes", "game")]
         [return: JSMarshalAsAttribute<JSType.Object>]
         internal static partial JSObject GetPrototypesObject();
@@ -134,6 +176,8 @@ namespace ScreepsDotNet.Native.World
         [JSImport("interpretDateTime", "object")]
         [return: JSMarshalAsAttribute<JSType.Number>]
         internal static partial double InterpretDateTime([JSMarshalAs<JSType.Object>] JSObject obj);
+
+        #endregion
 
         internal static void RegisterPrototypeTypeMapping<TInterface, TConcrete>(string prototypeName, FindConstant? findConstant = null, string? lookConstant = null, string? structureConstant = null)
             where TInterface : IRoomObject
@@ -153,10 +197,12 @@ namespace ScreepsDotNet.Native.World
             int typeId = prototypeTypeMappings.Count;
             constructor.SetProperty(TypeIdKey, typeId + 1);
             prototypeTypeMappings.Add(typeof(TConcrete));
+            NativeRoomObjectPrototypes<TInterface>.TypeId = typeId;
             NativeRoomObjectPrototypes<TInterface>.ConstructorObj = constructor;
             NativeRoomObjectPrototypes<TInterface>.FindConstant = findConstant;
             NativeRoomObjectPrototypes<TInterface>.LookConstant = lookConstant;
             NativeRoomObjectPrototypes<TInterface>.StructureConstant = structureConstant;
+            NativeRoomObjectPrototypes<TConcrete>.TypeId = typeId;
             NativeRoomObjectPrototypes<TConcrete>.ConstructorObj = constructor;
             NativeRoomObjectPrototypes<TConcrete>.FindConstant = findConstant;
             NativeRoomObjectPrototypes<TConcrete>.LookConstant = lookConstant;
@@ -202,6 +248,23 @@ namespace ScreepsDotNet.Native.World
             return (Activator.CreateInstance(wrapperType, new object[] { nativeRoot, proxyObject, knownId }) as NativeRoomObject)!;
         }
 
+        internal static T? CreateWrapperForRoomObject<T>(INativeRoot nativeRoot, ReadOnlySpan<byte> dataPacket) where T : class, IRoomObject
+            => CreateWrapperForRoomObject(nativeRoot, dataPacket, typeof(T)) as T;
+
+        internal static NativeRoomObject? CreateWrapperForRoomObject(INativeRoot nativeRoot, ReadOnlySpan<byte> dataPacket, Type expectedType)
+        {
+            if (dataPacket.Length < 32) { throw new ArgumentException($"Span must be 32 bytes long", nameof(dataPacket)); }
+            if (dataPacket[0] == 0) { return null; }
+            int typeId = MemoryMarshal.Cast<byte, int>(dataPacket[24..])[0] - 1;
+            if (typeId < 0) { return null; }
+            Type wrapperType = prototypeTypeMappings[typeId];
+            if (!wrapperType.IsAssignableTo(expectedType)) { return null; }
+            string id = Encoding.ASCII.GetString(dataPacket[0..24]);
+            int encodedRoomPos = MemoryMarshal.Cast<byte, int>(dataPacket[28..])[0];
+            RoomPosition? roomPos = encodedRoomPos != 0 ? RoomPosition.FromEncodedInt(encodedRoomPos) : null;
+            return (Activator.CreateInstance(wrapperType, new object?[] { nativeRoot, id, roomPos }) as NativeRoomObject)!;
+        }
+
         internal static string GetPrototypeName(Type type)
             => prototypeNameMappings[type];
 
@@ -220,6 +283,7 @@ namespace ScreepsDotNet.Native.World
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureTower))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureLink))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureTerminal))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureExtractor))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeOwnedStructure))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureRoad))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureWall))]
@@ -247,6 +311,7 @@ namespace ScreepsDotNet.Native.World
                 RegisterPrototypeTypeMapping<IStructureTower, NativeStructureTower>("StructureTower", FindConstant.Structures, "structure", "tower");
                 RegisterPrototypeTypeMapping<IStructureLink, NativeStructureLink>("StructureLink", FindConstant.Structures, "structure", "link");
                 RegisterPrototypeTypeMapping<IStructureTerminal, NativeStructureTerminal>("StructureTerminal", FindConstant.Structures, "structure", "terminal");
+                RegisterPrototypeTypeMapping<IStructureExtractor, NativeStructureExtractor>("StructureExtractor", FindConstant.Structures, "structure", "extractor");
                 RegisterPrototypeTypeMapping<IOwnedStructure, NativeOwnedStructure>("OwnedStructure", FindConstant.Structures, "structure");
                 RegisterPrototypeTypeMapping<IStructureRoad, NativeStructureRoad>("StructureRoad", FindConstant.Structures, "structure", "road");
                 RegisterPrototypeTypeMapping<IStructureWall, NativeStructureWall>("StructureWall", FindConstant.Structures, "structure", "constructedWall");

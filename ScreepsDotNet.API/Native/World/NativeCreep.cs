@@ -5,7 +5,6 @@ using System.Linq;
 
 using ScreepsDotNet.API;
 using ScreepsDotNet.API.World;
-using System.Runtime.InteropServices;
 
 namespace ScreepsDotNet.Native.World
 {
@@ -195,7 +194,7 @@ namespace ScreepsDotNet.Native.World
 
         #endregion
 
-        private readonly string name, id;
+        private readonly string id;
 
         private BodyPart<BodyPartType>[]? bodyCache;
         private BodyType<BodyPartType>? bodyTypeCache;
@@ -204,6 +203,7 @@ namespace ScreepsDotNet.Native.World
         private int? hitsMaxCache;
         private IMemoryObject? memoryCache;
         private bool? myCache;
+        private string? nameCache;
         private OwnerInfo? ownerInfoCache;
         private NativeStore? storeCache;
         private int? ticksToLiveCache;
@@ -229,7 +229,7 @@ namespace ScreepsDotNet.Native.World
 
         public bool My => CacheLifetime(ref myCache) ??= ProxyObject.GetPropertyAsBoolean("my");
 
-        public string Name => name;
+        public string Name => CacheLifetime(ref nameCache) ??= ProxyObject.GetPropertyAsString("name")!;
 
         public OwnerInfo Owner => CacheLifetime(ref ownerInfoCache) ??= new(ProxyObject.GetPropertyAsJSObject("owner")!.GetPropertyAsString("username")!);
 
@@ -245,12 +245,18 @@ namespace ScreepsDotNet.Native.World
             : base(nativeRoot, proxyObject)
         {
             id = knownId;
-            name = proxyObject.GetPropertyAsString("name")!;
         }
 
         public NativeCreep(INativeRoot nativeRoot, JSObject proxyObject)
             : this(nativeRoot, proxyObject, proxyObject.GetPropertyAsString("id")!)
         { }
+
+        public NativeCreep(INativeRoot nativeRoot, string id, RoomPosition? roomPos)
+            : base(nativeRoot, null)
+        {
+            this.id = id;
+            positionCache = roomPos;
+        }
 
         public override JSObject? ReacquireProxyObject()
             => nativeRoot.GetProxyObjectById(id);
@@ -392,13 +398,13 @@ namespace ScreepsDotNet.Native.World
         // CreepWithdrawResult Withdraw(IRuin target, ResourceType resourceType, int? amount = null);
 
         public override string ToString()
-            => $"Creep['{name}']({(Exists ? $"{RoomPosition}" : "DEAD")})";
+            => $"Creep['{nameCache ?? id}']({(Exists ? $"{RoomPosition}" : "DEAD")})";
 
         public override bool Equals(object? obj) => Equals(obj as NativeCreep);
 
-        public bool Equals(NativeCreep? other) => other is not null && name == other.name;
+        public bool Equals(NativeCreep? other) => other is not null && id == other.id;
 
-        public override int GetHashCode() => HashCode.Combine(name);
+        public override int GetHashCode() => HashCode.Combine(id);
 
         public static bool operator ==(NativeCreep? left, NativeCreep? right) => EqualityComparer<NativeCreep>.Default.Equals(left, right);
 

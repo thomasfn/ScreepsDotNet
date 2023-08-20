@@ -23,9 +23,12 @@ namespace ScreepsDotNet.Native.World
             id = knownId;
         }
 
-        public NativeResource(INativeRoot nativeRoot, JSObject proxyObject)
-            : this(nativeRoot, proxyObject, proxyObject.GetPropertyAsString("id")!)
-        { }
+        public NativeResource(INativeRoot nativeRoot, string id, RoomPosition? roomPos)
+            : base(nativeRoot, null)
+        {
+            this.id = id;
+            positionCache = roomPos;
+        }
 
         public override JSObject? ReacquireProxyObject()
             => nativeRoot.GetProxyObjectById(id);

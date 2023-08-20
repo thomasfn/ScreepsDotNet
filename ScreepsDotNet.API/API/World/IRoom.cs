@@ -106,6 +106,11 @@ namespace ScreepsDotNet.API.World
         bool Exists { get; }
 
         /// <summary>
+        /// Gets the coordinate of this room within the world map.
+        /// </summary>
+        RoomCoord Coord { get; }
+
+        /// <summary>
         /// The Controller structure of this room, if present, otherwise undefined.
         /// </summary>
         IStructureController? Controller { get; }

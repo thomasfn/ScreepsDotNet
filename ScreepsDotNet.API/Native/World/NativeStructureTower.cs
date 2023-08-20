@@ -31,6 +31,10 @@ namespace ScreepsDotNet.Native.World
         public NativeStructureTower(INativeRoot nativeRoot, JSObject proxyObject, string knownId) : base(nativeRoot, proxyObject, knownId)
         { }
 
+        public NativeStructureTower(INativeRoot nativeRoot, string id, RoomPosition? roomPos)
+            : base(nativeRoot, id, roomPos)
+        { }
+
         protected override void ClearNativeCache()
         {
             base.ClearNativeCache();
