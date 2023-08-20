@@ -32,6 +32,7 @@ namespace ScreepsDotNet.API.World
                 Y = int.MaxValue;
                 return;
             }
+            if (roomName.Length < 4) { throw new ArgumentException($"Invalid room name '{roomName}'", nameof(roomName)); }
             int ptr = 0;
             if (roomName[ptr] == 'W')
             {
