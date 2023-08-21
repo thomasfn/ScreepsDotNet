@@ -107,22 +107,22 @@ function initDotNet() {
 
     /** @param buffer {Uint8Array} */
     function encodeRoomObjectArray(arr) {
-        // room object packet (40b):
-        // - id (32b)
+        // room object packet (32b):
+        // - id (24b)
         // - type id (4b)
         // - encoded position (4b)
         copyBufferHead = 0;
         for (let i = 0; i < arr.length; ++i) {
-            if (copyBufferHead + 40 > copyBuffer.byteLength) {
-                console.log(`BUFFER OVERFLOW in encodeRoomObjectArray (trying to encode ${arr.length} room objects but only space for ${(copyBuffer.byteLength / 40)|0})`);
+            if (copyBufferHead + 32 > copyBuffer.byteLength) {
+                console.log(`BUFFER OVERFLOW in encodeRoomObjectArray (trying to encode ${arr.length} room objects but only space for ${(copyBuffer.byteLength / 32)|0})`);
                 break;
             }
             const obj = arr[i];
             const id = obj.id;
-            for (let j = 0; j < 32; ++j) {
+            for (let j = 0; j < 24; ++j) {
                 copyBufferU8[copyBufferHead + j] = id ? id.charCodeAt(j) : 0;
             }
-            copyBufferHead += 32;
+            copyBufferHead += 24;
             copyBufferI32[copyBufferHead >> 2] = Object.getPrototypeOf(obj).constructor.__dotnet_typeId || 0;
             copyBufferHead += 4;
             copyBufferI32[copyBufferHead >> 2] = obj.pos ? encodeRoomPosition(obj.pos) : 0;
@@ -132,7 +132,7 @@ function initDotNet() {
     dotNet.setModuleImports('copybuffer', {
         getMaxSize: () => copyBuffer.byteLength,
         read: (memoryView) => {
-            memoryView.set(copyBufferU8);
+            memoryView.set(copyBufferU8.slice(0, copyBufferHead));
             return copyBufferHead;
         },
         write: (memoryView) => {
@@ -359,6 +359,9 @@ function startup() {
 function loop() {
     if (!startupComplete) {
         startupComplete = startup();
+        if (startupComplete) {
+            dotNetExports.ScreepsDotNet.Program.Init && dotNetExports.ScreepsDotNet.Program.Init();
+        }
     }
     if (startupComplete && dotNetExports) {
         dotNet.loop(() => { dotNetExports.ScreepsDotNet.Program.Loop(); });

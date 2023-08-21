@@ -255,7 +255,7 @@ namespace ScreepsDotNet.API.World
         }
     }
 
-    public readonly struct Goal
+    public readonly struct Goal : IEquatable<Goal>
     {
         public readonly RoomPosition Position;
         public readonly int Range;
@@ -266,8 +266,18 @@ namespace ScreepsDotNet.API.World
             Range = range;
         }
 
+        public override bool Equals(object? obj) => obj is Goal goal && Equals(goal);
+
+        public bool Equals(Goal other) => Position.Equals(other.Position) && Range == other.Range;
+
+        public override int GetHashCode() => HashCode.Combine(Position, Range);
+
         public override string ToString()
             => $"Goal[<= {Range} of {Position}]";
+
+        public static bool operator ==(Goal left, Goal right) => left.Equals(right);
+
+        public static bool operator !=(Goal left, Goal right) => !(left == right);
     }
 
     /// <summary>

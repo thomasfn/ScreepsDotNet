@@ -218,7 +218,7 @@ namespace ScreepsDotNet.Native.World
             var lookConstant = NativeRoomObjectPrototypes<T>.LookConstant;
             if (lookConstant == null) { return Enumerable.Empty<T>(); }
             return Native_LookForAt(ProxyObject, lookConstant, position.X, position.Y)
-                .Select(x => nativeRoot.GetOrCreateWrapperObject<T>(x.GetPropertyAsJSObject(lookConstant)))
+                .Select(x => nativeRoot.GetOrCreateWrapperObject<T>(x))
                 .Where(x => x != null)
                 .Cast<T>()
                 .ToArray();
