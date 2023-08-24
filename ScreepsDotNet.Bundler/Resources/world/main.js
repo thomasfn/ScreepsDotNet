@@ -105,15 +105,23 @@ function initDotNet() {
     const copyBufferI32 = new Int32Array(copyBuffer);
     let copyBufferHead = 0;
 
+    const packetSizeInBytes = 44;
+
+    const PACKET_FLAG_MY = (1 << 0);
+
     /** @param buffer {Uint8Array} */
     function encodeRoomObjectArray(arr) {
-        // room object packet (32b):
-        // - id (24b)
-        // - type id (4b)
-        // - encoded position (4b)
+        // room object packet (44b):
+        // - id (0..24)
+        // - type id (24..28)
+        // - flags (28..32)
+        // - encoded position (32..36)
+        // - hits/progress/energy/mineralAmount (36..40)
+        // - hitsMax/progressTotal/energyCapacity/density (40..44)
+
         copyBufferHead = 0;
         for (let i = 0; i < arr.length; ++i) {
-            if (copyBufferHead + 32 > copyBuffer.byteLength) {
+            if (copyBufferHead + packetSizeInBytes > copyBuffer.byteLength) {
                 console.log(`BUFFER OVERFLOW in encodeRoomObjectArray (trying to encode ${arr.length} room objects but only space for ${(copyBuffer.byteLength / 32)|0})`);
                 break;
             }
@@ -122,11 +130,13 @@ function initDotNet() {
             for (let j = 0; j < 24; ++j) {
                 copyBufferU8[copyBufferHead + j] = id ? id.charCodeAt(j) : 0;
             }
-            copyBufferHead += 24;
-            copyBufferI32[copyBufferHead >> 2] = Object.getPrototypeOf(obj).constructor.__dotnet_typeId || 0;
-            copyBufferHead += 4;
-            copyBufferI32[copyBufferHead >> 2] = obj.pos ? encodeRoomPosition(obj.pos) : 0;
-            copyBufferHead += 4;
+            const copyBufferHeadI32 = copyBufferHead >> 2;
+            copyBufferI32[copyBufferHeadI32 + 6] = Object.getPrototypeOf(obj).constructor.__dotnet_typeId || 0;
+            copyBufferI32[copyBufferHeadI32 + 7] = obj.my ? PACKET_FLAG_MY : 0;
+            copyBufferI32[copyBufferHeadI32 + 8] = obj.pos ? encodeRoomPosition(obj.pos) : 0;
+            copyBufferI32[copyBufferHeadI32 + 9] = obj.hits || obj.progress || obj.energy || obj.mineralAmount || 0;
+            copyBufferI32[copyBufferHeadI32 + 10] = obj.hitsMax || obj.progressTotal || obj.energyCapacity || obj.density || 0;
+            copyBufferHead += packetSizeInBytes;
         }
     }
     dotNet.setModuleImports('copybuffer', {

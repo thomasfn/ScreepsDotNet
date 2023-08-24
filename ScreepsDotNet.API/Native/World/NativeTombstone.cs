@@ -10,7 +10,7 @@ namespace ScreepsDotNet.Native.World
     [System.Runtime.Versioning.SupportedOSPlatform("browser")]
     internal partial class NativeTombstone : NativeRoomObject, ITombstone, IEquatable<NativeTombstone?>
     {
-        private readonly string id;
+        private readonly ObjectId id;
 
         private NativeStore? storeCache;
 
@@ -18,22 +18,16 @@ namespace ScreepsDotNet.Native.World
 
         public int DeathTime => ProxyObject.GetPropertyAsInt32("deathTime");
 
-        public string Id => id;
+        public ObjectId Id => id;
 
         public IStore Store => CachePerTick(ref storeCache) ??= new NativeStore(ProxyObject.GetPropertyAsJSObject("store"));
 
         public int TicksToDecay => ProxyObject.GetPropertyAsInt32("ticksToDecay");
 
-        public NativeTombstone(INativeRoot nativeRoot, JSObject proxyObject, string knownId) : base(nativeRoot, proxyObject)
-        {
-            id = knownId;
-        }
-
-        public NativeTombstone(INativeRoot nativeRoot, string id, RoomPosition? roomPos)
-            : base(nativeRoot, null)
+        public NativeTombstone(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
+            : base(nativeRoot, proxyObject)
         {
             this.id = id;
-            positionCache = roomPos;
         }
 
         public override JSObject? ReacquireProxyObject()

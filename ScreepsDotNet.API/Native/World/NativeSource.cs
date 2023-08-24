@@ -9,27 +9,31 @@ namespace ScreepsDotNet.Native.World
     [System.Runtime.Versioning.SupportedOSPlatform("browser")]
     internal partial class NativeSource : NativeRoomObject, ISource, IEquatable<NativeSource?>
     {
-        private readonly string id;
+        private readonly ObjectId id;
 
-        public int Energy => ProxyObject.GetPropertyAsInt32("energy");
+        private int? energyCache;
+        private int? energyCapacityCache;
+        private int? ticksToRegenerationCache;
 
-        public int EnergyCapacity => ProxyObject.GetPropertyAsInt32("energyCapacity");
+        public int Energy => CachePerTick(ref energyCache) ??= ProxyObject.GetPropertyAsInt32("energy");
 
-        public string Id => id;
+        public int EnergyCapacity => CachePerTick(ref energyCapacityCache) ??= ProxyObject.GetPropertyAsInt32("energyCapacity");
 
-        public int TicksToRegeneration => ProxyObject.GetPropertyAsInt32("ticksToRegeneration");
+        public ObjectId Id => id;
 
-        public NativeSource(INativeRoot nativeRoot, JSObject proxyObject, string knownId)
+        public int TicksToRegeneration => CachePerTick(ref ticksToRegenerationCache) ??= ProxyObject.GetPropertyAsInt32("ticksToRegeneration");
+
+        public NativeSource(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
             : base(nativeRoot, proxyObject)
         {
-            id = knownId;
+            this.id = id;
         }
 
-        public NativeSource(INativeRoot nativeRoot, string id, RoomPosition? roomPos)
-            : base(nativeRoot, null)
+        public override void UpdateFromDataPacket(RoomObjectDataPacket dataPacket)
         {
-            this.id = id;
-            positionCache = roomPos;
+            base.UpdateFromDataPacket(dataPacket);
+            energyCache = dataPacket.Hits;
+            energyCapacityCache = dataPacket.HitsMax;
         }
 
         public override JSObject? ReacquireProxyObject()

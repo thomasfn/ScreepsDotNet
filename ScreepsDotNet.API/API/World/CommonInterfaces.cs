@@ -5,7 +5,7 @@
         /// <summary>
         /// A unique object identificator. You can use Game.getObjectById method to retrieve an object instance by its id.
         /// </summary>
-        string Id { get; }
+        ObjectId Id { get; }
     }
 
     public interface IWithName

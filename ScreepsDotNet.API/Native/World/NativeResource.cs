@@ -9,25 +9,21 @@ namespace ScreepsDotNet.Native.World
     [System.Runtime.Versioning.SupportedOSPlatform("browser")]
     internal partial class NativeResource : NativeRoomObject, IResource, IEquatable<NativeResource?>
     {
-        private readonly string id;
+        private readonly ObjectId id;
 
-        public int Amount => ProxyObject.GetPropertyAsInt32("amount");
+        private int? amountCache;
+        private ResourceType? resourceTypeCache;
 
-        public string Id => id;
+        public int Amount => CachePerTick(ref amountCache) ??= ProxyObject.GetPropertyAsInt32("amount");
 
-        public ResourceType ResourceType => ProxyObject.GetPropertyAsString("resourceType")!.ParseResourceType();
+        public ObjectId Id => id;
 
-        public NativeResource(INativeRoot nativeRoot, JSObject proxyObject, string knownId)
+        public ResourceType ResourceType => CacheLifetime(ref resourceTypeCache) ??= ProxyObject.GetPropertyAsString("resourceType")!.ParseResourceType();
+
+        public NativeResource(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
             : base(nativeRoot, proxyObject)
         {
-            id = knownId;
-        }
-
-        public NativeResource(INativeRoot nativeRoot, string id, RoomPosition? roomPos)
-            : base(nativeRoot, null)
-        {
             this.id = id;
-            positionCache = roomPos;
         }
 
         public override JSObject? ReacquireProxyObject()

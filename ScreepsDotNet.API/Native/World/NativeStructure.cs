@@ -25,7 +25,7 @@ namespace ScreepsDotNet.Native.World
 
         #endregion
 
-        private readonly string id;
+        private readonly ObjectId id;
 
         private int? hitsCache;
         private int? hitsMaxCache;
@@ -34,19 +34,19 @@ namespace ScreepsDotNet.Native.World
 
         public int HitsMax => CachePerTick(ref hitsMaxCache) ??= ProxyObject.GetPropertyAsInt32("hitsMax");
 
-        public string Id => id;
+        public ObjectId Id => id;
 
-        public NativeStructure(INativeRoot nativeRoot, JSObject proxyObject, string knownId)
+        public NativeStructure(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
             : base(nativeRoot, proxyObject)
         {
-            id = knownId;
+            this.id = id;
         }
 
-        public NativeStructure(INativeRoot nativeRoot, string id, RoomPosition? roomPos)
-            : base(nativeRoot, null)
+        public override void UpdateFromDataPacket(RoomObjectDataPacket dataPacket)
         {
-            this.id = id;
-            positionCache = roomPos;
+            base.UpdateFromDataPacket(dataPacket);
+            hitsCache = dataPacket.Hits;
+            hitsMaxCache = dataPacket.HitsMax;
         }
 
         public override JSObject? ReacquireProxyObject()

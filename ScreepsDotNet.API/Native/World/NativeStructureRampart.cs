@@ -19,11 +19,8 @@ namespace ScreepsDotNet.Native.World
 
         public int TicksToDecay => ProxyObject.GetPropertyAsInt32("ticksToDecay");
 
-        public NativeStructureRampart(INativeRoot nativeRoot, JSObject proxyObject, string knownId) : base(nativeRoot, proxyObject, knownId)
-        { }
-
-        public NativeStructureRampart(INativeRoot nativeRoot, string id, RoomPosition? roomPos)
-            : base(nativeRoot, id, roomPos)
+        public NativeStructureRampart(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
+            : base(nativeRoot, proxyObject, id)
         { }
 
         public RampartSetPublicResult SetPublic(bool isPublic)

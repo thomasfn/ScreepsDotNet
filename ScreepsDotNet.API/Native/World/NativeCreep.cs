@@ -194,7 +194,7 @@ namespace ScreepsDotNet.Native.World
 
         #endregion
 
-        private readonly string id;
+        private readonly ObjectId id;
 
         private BodyPart<BodyPartType>[]? bodyCache;
         private BodyType<BodyPartType>? bodyTypeCache;
@@ -223,7 +223,7 @@ namespace ScreepsDotNet.Native.World
 
         public int HitsMax => CachePerTick(ref hitsMaxCache) ??= ProxyObject.GetPropertyAsInt32("hitsMax");
 
-        public string Id => id;
+        public ObjectId Id => id;
 
         public IMemoryObject Memory => CachePerTick(ref memoryCache) ??= new NativeMemoryObject(ProxyObject.GetPropertyAsJSObject("memory")!);
 
@@ -241,21 +241,18 @@ namespace ScreepsDotNet.Native.World
 
         public int TicksToLive => CachePerTick(ref ticksToLiveCache) ??= ProxyObject.GetPropertyAsInt32("ticksToLive");
 
-        public NativeCreep(INativeRoot nativeRoot, JSObject proxyObject, string knownId)
+        public NativeCreep(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
             : base(nativeRoot, proxyObject)
         {
-            id = knownId;
+            this.id = id;
         }
 
-        public NativeCreep(INativeRoot nativeRoot, JSObject proxyObject)
-            : this(nativeRoot, proxyObject, proxyObject.GetPropertyAsString("id")!)
-        { }
-
-        public NativeCreep(INativeRoot nativeRoot, string id, RoomPosition? roomPos)
-            : base(nativeRoot, null)
+        public override void UpdateFromDataPacket(RoomObjectDataPacket dataPacket)
         {
-            this.id = id;
-            positionCache = roomPos;
+            base.UpdateFromDataPacket(dataPacket);
+            myCache = dataPacket.My;
+            hitsCache = dataPacket.Hits;
+            hitsMaxCache = dataPacket.HitsMax;
         }
 
         public override JSObject? ReacquireProxyObject()
@@ -399,7 +396,7 @@ namespace ScreepsDotNet.Native.World
         // CreepWithdrawResult Withdraw(IRuin target, ResourceType resourceType, int? amount = null);
 
         public override string ToString()
-            => $"Creep['{nameCache ?? id}']({(Exists ? $"{RoomPosition}" : "DEAD")})";
+            => $"Creep[{(Exists ? $"'{Name}'" : id.ToString())}]({(Exists ? $"{RoomPosition}" : "DEAD")})";
 
         public override bool Equals(object? obj) => Equals(obj as NativeCreep);
 

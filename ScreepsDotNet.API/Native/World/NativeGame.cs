@@ -32,11 +32,13 @@ namespace ScreepsDotNet.Native.World
 
         int TickIndex { get; }
 
-        JSObject GetProxyObjectById(string id);
+        double CpuTime { get; }
 
-        IWithId? GetExistingWrapperObjectById(string id);
+        JSObject GetProxyObjectById(ObjectId id);
 
-        T? GetExistingWrapperObjectById<T>(string id) where T : class, INativeObject, IWithId;
+        IWithId? GetExistingWrapperObjectById(ObjectId id);
+
+        T? GetExistingWrapperObjectById<T>(ObjectId id) where T : class, INativeObject, IWithId;
 
         T? GetOrCreateWrapperObject<T>(JSObject? proxyObject) where T : class, IRoomObject;
 
@@ -80,7 +82,7 @@ namespace ScreepsDotNet.Native.World
         private readonly NativeConstants nativeConstants;
         private readonly NativeRawMemory nativeRawMemory;
 
-        private readonly IDictionary<string, WeakReference<IWithId>> objectsByIdCache = new Dictionary<string, WeakReference<IWithId>>();
+        private readonly IDictionary<ObjectId, WeakReference<IWithId>> objectsByIdCache = new Dictionary<ObjectId, WeakReference<IWithId>>();
 
         private readonly NativeObjectLazyLookup<NativeCreep, ICreep> creepLazyLookup;
         private readonly NativeObjectLazyLookup<NativeFlag, IFlag> flagLazyLookup;
@@ -103,6 +105,8 @@ namespace ScreepsDotNet.Native.World
         public JSObject StructuresObj { get; private set; }
 
         public int TickIndex { get; private set; }
+
+        public double CpuTime => nativeCpu.GetUsed();
 
         public ICpu Cpu => nativeCpu;
 
@@ -184,10 +188,10 @@ namespace ScreepsDotNet.Native.World
 
         private void PruneObjectsByIdCache()
         {
-            IList<string>? pendingRemoval = null;
-            foreach (var (name, obj) in objectsByIdCache)
+            IList<ObjectId>? pendingRemoval = null;
+            foreach (var (id, obj) in objectsByIdCache)
             {
-                if (!obj.TryGetTarget(out _)) { (pendingRemoval ??= new List<string>()).Add(name); }
+                if (!obj.TryGetTarget(out _)) { (pendingRemoval ??= new List<ObjectId>()).Add(id); }
             }
             if (pendingRemoval == null) { return; }
             Console.WriteLine($"NativeGame: pruning {pendingRemoval.Count} of {objectsByIdCache.Count} objects from the objects-by-id cache");
@@ -200,6 +204,9 @@ namespace ScreepsDotNet.Native.World
         public T? GetObjectById<T>(string id) where T : class, IRoomObject
             => (this as INativeRoot).GetOrCreateWrapperObject<T>(Native_GetObjectById(id)) as T;
 
+        public T? GetObjectById<T>(ObjectId id) where T : class, IRoomObject
+            => GetObjectById<T>((string)id);
+
         public void Notify(string message, int groupInterval = 0)
             => Native_Notify(message, groupInterval);
 
@@ -209,13 +216,13 @@ namespace ScreepsDotNet.Native.World
         public IRoomVisual CreateRoomVisual(string? roomName = null)
             => new NativeRoomVisual(roomName);
 
-        JSObject INativeRoot.GetProxyObjectById(string id)
+        JSObject INativeRoot.GetProxyObjectById(ObjectId id)
             => Native_GetObjectById(id);
 
-        IWithId? INativeRoot.GetExistingWrapperObjectById(string id)
+        IWithId? INativeRoot.GetExistingWrapperObjectById(ObjectId id)
             => (objectsByIdCache.TryGetValue(id, out var objRef) && objRef.TryGetTarget(out var obj)) ? obj : null;
 
-        T? INativeRoot.GetExistingWrapperObjectById<T>(string id) where T : class
+        T? INativeRoot.GetExistingWrapperObjectById<T>(ObjectId id) where T : class
             => (this as INativeRoot).GetExistingWrapperObjectById(id) as T;
 
         T? INativeRoot.GetOrCreateWrapperObject<T>(JSObject? proxyObject) where T : class
@@ -224,12 +231,13 @@ namespace ScreepsDotNet.Native.World
             if (typeof(T).IsAssignableTo(typeof(IWithId)))
             {
                 var id = proxyObject.GetPropertyAsString("id");
-                if (id != null)
+                if (!string.IsNullOrEmpty(id))
                 {
-                    var existingObj = (this as INativeRoot).GetExistingWrapperObjectById(id);
+                    var objId = new ObjectId(id);
+                    var existingObj = (this as INativeRoot).GetExistingWrapperObjectById(objId);
                     if (existingObj is T existingObjT) { return existingObjT; }
-                    if (NativeRoomObjectUtils.CreateWrapperForRoomObject(this, proxyObject, typeof(T), id) is not T newObj) { return null; }
-                    if (newObj is IWithId newObjWithId) { objectsByIdCache[newObjWithId.Id] = new WeakReference<IWithId>(newObjWithId); }
+                    if (NativeRoomObjectUtils.CreateWrapperForRoomObject(this, proxyObject, typeof(T), objId) is not T newObj) { return null; }
+                    if (newObj is IWithId newObjWithId) { objectsByIdCache[objId] = new WeakReference<IWithId>(newObjWithId); }
                     return newObj;
                 }
             }
@@ -238,29 +246,31 @@ namespace ScreepsDotNet.Native.World
 
         public IEnumerable<T> GetWrapperObjectsFromCopyBuffer<T>(int cnt) where T : class, IRoomObject
         {
-            const int DataPacketSize = 32;
             ReadOnlySpan<byte> roomObjectData = NativeCopyBuffer.ReadFromJS();
-            if (roomObjectData.Length / DataPacketSize < cnt)
+            if (roomObjectData.Length / RoomObjectDataPacket.SizeInBytes < cnt)
             {
-                Console.WriteLine($"NativeGame.GetWrapperObjectsFromCopyBuffer: expecting {cnt} objects but copy buffer only contained {roomObjectData.Length / DataPacketSize} worth of data");
-                cnt = roomObjectData.Length / DataPacketSize;
+                Console.WriteLine($"NativeGame.GetWrapperObjectsFromCopyBuffer: expecting {cnt} objects but copy buffer only contained {roomObjectData.Length / RoomObjectDataPacket.SizeInBytes} worth of data");
+                cnt = roomObjectData.Length / RoomObjectDataPacket.SizeInBytes;
             }
             if (cnt == 0) { return Enumerable.Empty<T>(); }
             var result = new List<T>();
             int noIdCnt = 0, existingCnt = 0, newCnt = 0;
+            var sb = new StringBuilder();
             for (int i = 0; i < cnt; ++i)
             {
-                ReadOnlySpan<byte> dataPacket = roomObjectData[(i * DataPacketSize)..((i + 1) * DataPacketSize)];
-                string? id = dataPacket[0] > 0 ? Encoding.ASCII.GetString(dataPacket[0..24]) : null;
-                if (string.IsNullOrEmpty(id))
+                ReadOnlySpan<byte> dataPacketRaw = roomObjectData[(i * RoomObjectDataPacket.SizeInBytes)..((i + 1) * RoomObjectDataPacket.SizeInBytes)];
+                var dataPacket = new RoomObjectDataPacket(dataPacketRaw);
+                sb.Append($"[{dataPacket.ObjectId} typeId={dataPacket.TypeId}, my={dataPacket.My}, pos={dataPacket.EncodedRoomPos}, hits={dataPacket.Hits}, hitsMax={dataPacket.HitsMax}],");
+                if (!dataPacket.ObjectId.IsValid)
                 {
                     ++noIdCnt;
                     continue;
                 }
-                if (objectsByIdCache.TryGetValue(id, out var weakRef) && weakRef.TryGetTarget(out var existingObj) && existingObj is T existingObjT)
+                if (objectsByIdCache.TryGetValue(dataPacket.ObjectId, out var weakRef) && weakRef.TryGetTarget(out var existingObj) && existingObj is T existingObjT)
                 {
                     ++existingCnt;
                     result.Add(existingObjT);
+                    if (existingObjT is NativeObject nativeObject) { nativeObject.UpdateFromDataPacket(dataPacket); }
                     continue;
                 }
                 var roomObject = NativeRoomObjectUtils.CreateWrapperForRoomObject<T>(this, dataPacket);
@@ -270,10 +280,11 @@ namespace ScreepsDotNet.Native.World
                     result.Add(roomObject);
                     if (roomObject is IWithId withId)
                     {
-                        objectsByIdCache.TryAdd(id, new WeakReference<IWithId>(withId));
+                        objectsByIdCache.TryAdd(dataPacket.ObjectId, new WeakReference<IWithId>(withId));
                     }
                 }
             }
+            Console.WriteLine(sb.ToString());
             return result;
         }
     }

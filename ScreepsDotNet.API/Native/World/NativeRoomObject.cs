@@ -56,6 +56,12 @@ namespace ScreepsDotNet.Native.World
             : base(nativeRoot, proxyObject)
         { }
 
+        public override void UpdateFromDataPacket(RoomObjectDataPacket dataPacket)
+        {
+            base.UpdateFromDataPacket(dataPacket);
+            positionCache = dataPacket.RoomPos;
+        }
+
         protected override void ClearNativeCache()
         {
             base.ClearNativeCache();
@@ -152,6 +158,40 @@ namespace ScreepsDotNet.Native.World
         }
     }
 
+    internal readonly struct RoomObjectDataPacket // 44b
+    {
+        public const int SizeInBytes = 44;
+
+        public readonly ObjectId ObjectId; // 0..24
+        public readonly int TypeId; // 24..28
+        public readonly int Flags; // 28..32
+        public readonly int EncodedRoomPos; // 32..36
+        public readonly int Hits; // 36..40
+        public readonly int HitsMax; // 40..44
+
+        public RoomPosition? RoomPos => EncodedRoomPos != 0 ? RoomPosition.FromEncodedInt(EncodedRoomPos) : null;
+
+        public bool My => (Flags & 1) == 1;
+
+        public RoomObjectDataPacket(ReadOnlySpan<byte> dataPacket)
+        {
+            if (dataPacket[0] == 0)
+            {
+                ObjectId = default; 
+            }
+            else
+            {
+                ObjectId = new(dataPacket[0..24]);
+            }
+            ReadOnlySpan<int> i32 = MemoryMarshal.Cast<byte, int>(dataPacket);
+            TypeId = i32[6];
+            Flags = i32[7];
+            EncodedRoomPos = i32[8];
+            Hits = i32[9];
+            HitsMax = i32[10];
+        }
+    }
+
     [System.Runtime.Versioning.SupportedOSPlatform("browser")]
     internal static partial class NativeRoomObjectUtils
     {
@@ -236,33 +276,41 @@ namespace ScreepsDotNet.Native.World
             var wrapperType = GetWrapperTypeForObject(proxyObject);
             if (wrapperType == null) { return null; }
             if (!wrapperType.IsAssignableTo(expectedType)) { return null; }
-            return (Activator.CreateInstance(wrapperType, new object[] { nativeRoot, proxyObject }) as NativeRoomObject)!;
+            if (wrapperType.IsAssignableTo(typeof(IWithId)))
+            {
+                var id = proxyObject.GetPropertyAsString("id");
+                if (string.IsNullOrEmpty(id)) { return null; }
+                return (Activator.CreateInstance(wrapperType, new object[] { nativeRoot, proxyObject, new ObjectId(id) }) as NativeRoomObject)!;
+            }
+            else
+            {
+                return (Activator.CreateInstance(wrapperType, new object[] { nativeRoot, proxyObject }) as NativeRoomObject)!;
+            }
         }
 
-        internal static NativeRoomObject? CreateWrapperForRoomObject(INativeRoot nativeRoot, JSObject? proxyObject, Type expectedType, string knownId)
+        internal static NativeRoomObject? CreateWrapperForRoomObject(INativeRoot nativeRoot, JSObject? proxyObject, Type expectedType, ObjectId id)
         {
             if (proxyObject == null) { return null; }
             var wrapperType = GetWrapperTypeForObject(proxyObject);
             if (wrapperType == null) { return null; }
             if (!wrapperType.IsAssignableTo(expectedType)) { return null; }
-            return (Activator.CreateInstance(wrapperType, new object[] { nativeRoot, proxyObject, knownId }) as NativeRoomObject)!;
+            return (Activator.CreateInstance(wrapperType, new object[] { nativeRoot, proxyObject, id }) as NativeRoomObject)!;
         }
 
-        internal static T? CreateWrapperForRoomObject<T>(INativeRoot nativeRoot, ReadOnlySpan<byte> dataPacket) where T : class, IRoomObject
+        internal static T? CreateWrapperForRoomObject<T>(INativeRoot nativeRoot, in RoomObjectDataPacket dataPacket) where T : class, IRoomObject
             => CreateWrapperForRoomObject(nativeRoot, dataPacket, typeof(T)) as T;
 
-        internal static NativeRoomObject? CreateWrapperForRoomObject(INativeRoot nativeRoot, ReadOnlySpan<byte> dataPacket, Type expectedType)
+        internal static NativeRoomObject? CreateWrapperForRoomObject(INativeRoot nativeRoot, in RoomObjectDataPacket dataPacket, Type expectedType)
         {
-            if (dataPacket.Length < 32) { throw new ArgumentException($"Span must be 32 bytes long", nameof(dataPacket)); }
-            if (dataPacket[0] == 0) { return null; }
-            int typeId = MemoryMarshal.Cast<byte, int>(dataPacket[24..])[0] - 1;
+            if (!dataPacket.ObjectId.IsValid) { return null; }
+            int typeId = dataPacket.TypeId - 1;
             if (typeId < 0) { return null; }
             Type wrapperType = prototypeTypeMappings[typeId];
             if (!wrapperType.IsAssignableTo(expectedType)) { return null; }
-            string id = Encoding.ASCII.GetString(dataPacket[0..24]);
-            int encodedRoomPos = MemoryMarshal.Cast<byte, int>(dataPacket[28..])[0];
-            RoomPosition? roomPos = encodedRoomPos != 0 ? RoomPosition.FromEncodedInt(encodedRoomPos) : null;
-            return (Activator.CreateInstance(wrapperType, new object?[] { nativeRoot, id, roomPos }) as NativeRoomObject)!;
+            var obj = Activator.CreateInstance(wrapperType, new object?[] { nativeRoot, null, dataPacket.ObjectId }) as NativeRoomObject;
+            if (obj == null) { return null; }
+            obj.UpdateFromDataPacket(dataPacket);
+            return obj;
         }
 
         internal static string GetPrototypeName(Type type)

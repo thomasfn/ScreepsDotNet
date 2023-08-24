@@ -17,39 +17,39 @@ namespace ScreepsDotNet.Native.World
 
         #endregion
 
-        private readonly string id;
+        private readonly ObjectId id;
 
+        private bool? myCache;
         private OwnerInfo? ownerInfoCache;
         private Type? structureTypeCache;
+        private int? progressCache;
+        private int? progressTotalCache;
 
-        public string Id => id;
+        public ObjectId Id => id;
 
-        public bool My => ProxyObject.GetPropertyAsBoolean("my");
+        public bool My => CacheLifetime(ref myCache) ??= ProxyObject.GetPropertyAsBoolean("my");
 
-        public OwnerInfo Owner => ownerInfoCache ??= new(ProxyObject.GetPropertyAsJSObject("owner")!.GetPropertyAsString("username")!);
+        public OwnerInfo Owner => CacheLifetime(ref ownerInfoCache) ??= new(ProxyObject.GetPropertyAsJSObject("owner")!.GetPropertyAsString("username")!);
 
-        public int Progress => ProxyObject.GetPropertyAsInt32("progress");
+        public int Progress => CachePerTick(ref progressCache) ??= ProxyObject.GetPropertyAsInt32("progress");
 
-        public int ProgressTotal => ProxyObject.GetPropertyAsInt32("progressTotal");
+        public int ProgressTotal => CachePerTick(ref progressTotalCache) ??= ProxyObject.GetPropertyAsInt32("progressTotal");
 
-        public Type StructureType => structureTypeCache ??= (NativeRoomObjectUtils.GetInterfaceTypeForStructureConstant(ProxyObject.GetPropertyAsString("structureType")!) ?? typeof(IStructure));
+        public Type StructureType => CacheLifetime(ref structureTypeCache) ??= (NativeRoomObjectUtils.GetInterfaceTypeForStructureConstant(ProxyObject.GetPropertyAsString("structureType")!) ?? typeof(IStructure));
 
-        public NativeConstructionSite(INativeRoot nativeRoot, JSObject proxyObject, string knownId)
+        public NativeConstructionSite(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
             : base(nativeRoot, proxyObject)
         {
-            id = knownId;
-        }
-
-        public NativeConstructionSite(INativeRoot nativeRoot, string id, RoomPosition? roomPos)
-            : base(nativeRoot, null)
-        {
             this.id = id;
-            positionCache = roomPos;
         }
 
-        public NativeConstructionSite(INativeRoot nativeRoot, JSObject proxyObject)
-            : this(nativeRoot, proxyObject, proxyObject.GetPropertyAsString("id")!)
-        { }
+        public override void UpdateFromDataPacket(RoomObjectDataPacket dataPacket)
+        {
+            base.UpdateFromDataPacket(dataPacket);
+            progressCache = dataPacket.Hits;
+            progressTotalCache = dataPacket.HitsMax;
+            myCache = dataPacket.My;
+        }
 
         public override JSObject? ReacquireProxyObject()
             => nativeRoot.GetProxyObjectById(id);

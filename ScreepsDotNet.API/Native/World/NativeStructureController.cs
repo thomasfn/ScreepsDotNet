@@ -58,12 +58,8 @@ namespace ScreepsDotNet.Native.World
 
         public int UpgradeBlocked => ProxyObject.GetPropertyAsInt32("upgradeBlocked");
 
-        public NativeStructureController(INativeRoot nativeRoot, JSObject proxyObject, string knownId)
-            : base(nativeRoot, proxyObject, knownId)
-        { }
-
-        public NativeStructureController(INativeRoot nativeRoot, string id, RoomPosition? roomPos)
-            : base(nativeRoot, id, roomPos)
+        public NativeStructureController(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
+            : base(nativeRoot, proxyObject, id)
         { }
 
         public ControllerActivateSafeModeResult ActivateSafeMode()

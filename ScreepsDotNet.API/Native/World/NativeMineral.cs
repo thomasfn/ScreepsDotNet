@@ -10,29 +10,34 @@ namespace ScreepsDotNet.Native.World
     [System.Runtime.Versioning.SupportedOSPlatform("browser")]
     internal partial class NativeMineral : NativeRoomObject, IMineral, IEquatable<NativeMineral?>
     {
-        private readonly string id;
+        private readonly ObjectId id;
 
-        public int Density => ProxyObject.GetPropertyAsInt32("density");
+        private int? densityCache;
+        private int? mineralAmountCache;
+        private ResourceType? mineralTypeCache;
+        private int? ticksToRegenerationCache;
 
-        public int MineralAmount => ProxyObject.GetPropertyAsInt32("mineralAmount");
+        public int Density => CacheLifetime(ref densityCache) ??= ProxyObject.GetPropertyAsInt32("density");
 
-        public ResourceType MineralType => ProxyObject.GetPropertyAsString("mineralType")!.ParseResourceType();
+        public int MineralAmount => CachePerTick(ref mineralAmountCache) ??= ProxyObject.GetPropertyAsInt32("mineralAmount");
 
-        public string Id => id;
+        public ResourceType MineralType => CacheLifetime(ref mineralTypeCache) ??= ProxyObject.GetPropertyAsString("mineralType")!.ParseResourceType();
 
-        public int TicksToRegeneration => ProxyObject.GetPropertyAsInt32("ticksToRegeneration");
+        public ObjectId Id => id;
 
-        public NativeMineral(INativeRoot nativeRoot, JSObject proxyObject, string knownId)
+        public int TicksToRegeneration => CacheLifetime(ref ticksToRegenerationCache) ??= ProxyObject.GetPropertyAsInt32("ticksToRegeneration");
+
+        public NativeMineral(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
             : base(nativeRoot, proxyObject)
         {
-            id = knownId;
+            this.id = id;
         }
 
-        public NativeMineral(INativeRoot nativeRoot, string id, RoomPosition? roomPos)
-            : base(nativeRoot, null)
+        public override void UpdateFromDataPacket(RoomObjectDataPacket dataPacket)
         {
-            this.id = id;
-            positionCache = roomPos;
+            base.UpdateFromDataPacket(dataPacket);
+            mineralAmountCache = dataPacket.Hits;
+            densityCache = dataPacket.HitsMax;
         }
 
         public override JSObject? ReacquireProxyObject()

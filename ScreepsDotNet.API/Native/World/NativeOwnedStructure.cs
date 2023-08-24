@@ -15,12 +15,14 @@ namespace ScreepsDotNet.Native.World
 
         public OwnerInfo Owner => CacheLifetime(ref ownerInfoCache) ??= new(ProxyObject.GetPropertyAsJSObject("owner")!.GetPropertyAsString("username")!);
 
-        public NativeOwnedStructure(INativeRoot nativeRoot, JSObject proxyObject, string knownId)
-            : base(nativeRoot, proxyObject, knownId)
+        public NativeOwnedStructure(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
+            : base(nativeRoot, proxyObject, id)
         { }
 
-        public NativeOwnedStructure(INativeRoot nativeRoot, string id, RoomPosition? roomPos)
-            : base(nativeRoot, id, roomPos)
-        { }
+        public override void UpdateFromDataPacket(RoomObjectDataPacket dataPacket)
+        {
+            base.UpdateFromDataPacket(dataPacket);
+            myCache = dataPacket.My;
+        }
     }
 }

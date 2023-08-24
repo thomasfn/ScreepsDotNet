@@ -12,11 +12,8 @@ namespace ScreepsDotNet.Native.World
 
         public IStore Store => CachePerTick(ref storeCache) ??= new NativeStore(ProxyObject.GetPropertyAsJSObject("store"));
 
-        public NativeStructureStorage(INativeRoot nativeRoot, JSObject proxyObject, string knownId) : base(nativeRoot, proxyObject, knownId)
-        { }
-
-        public NativeStructureStorage(INativeRoot nativeRoot, string id, RoomPosition? roomPos)
-            : base(nativeRoot, id, roomPos)
+        public NativeStructureStorage(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
+            : base(nativeRoot, proxyObject, id)
         { }
 
         protected override void ClearNativeCache()
