@@ -25,7 +25,7 @@ namespace ScreepsDotNet.Native.World
 
         public ObjectId Id => id;
 
-        public int TicksToRegeneration => CacheLifetime(ref ticksToRegenerationCache) ??= ProxyObject.GetPropertyAsInt32("ticksToRegeneration");
+        public int TicksToRegeneration => CachePerTick(ref ticksToRegenerationCache) ??= ProxyObject.GetPropertyAsInt32("ticksToRegeneration");
 
         public NativeMineral(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
             : base(nativeRoot, proxyObject)
@@ -42,6 +42,13 @@ namespace ScreepsDotNet.Native.World
 
         public override JSObject? ReacquireProxyObject()
             => nativeRoot.GetProxyObjectById(id);
+
+        protected override void ClearNativeCache()
+        {
+            base.ClearNativeCache();
+            mineralAmountCache = null;
+            ticksToRegenerationCache = null;
+        }
 
         public override string ToString()
             => $"Mineral[{RoomPosition}]";

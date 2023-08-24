@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace ScreepsDotNet.API.World
 {
@@ -29,27 +31,30 @@ namespace ScreepsDotNet.API.World
             h = HashCode.Combine(a, b, c);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static int DecodeHexDigit(int digit)
+            => digit >= 97 ? 10 + (digit - 97) : digit - 48;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static int Decode4HexDigits(int digits)
+            => (DecodeHexDigit(digits & 255) << 12) | (DecodeHexDigit((digits >> 8) & 255) << 8) | (DecodeHexDigit((digits >> 16) & 255) << 4) | DecodeHexDigit(digits >> 24);
+
         public ObjectId(ReadOnlySpan<byte> idBytes)
+            : this(MemoryMarshal.Cast<byte, int>(idBytes))
+        { }
+
+        public ObjectId(ReadOnlySpan<int> idInts)
         {
-            if (idBytes.Length != 24) { throw new ArgumentException("Span must be 24 long", nameof(idBytes)); }
-            Span<int> idI32 = stackalloc int[3];
-            for (int i = 0; i < 24; i += 2)
-            {
-                var left = idBytes[i];
-                int leftNibble = left >= 97 ? 10 + (left - 97) : left - 48;
-                var right = idBytes[i + 1];
-                int rightNibble = right >= 97 ? 10 + (right - 97) : right - 48;
-                idI32[i >> 3] = (idI32[i >> 3] << 8) | (leftNibble << 4) | rightNibble;
-            }
-            a = idI32[0];
-            b = idI32[1];
-            c = idI32[2];
+            if (idInts.Length != 6) { throw new ArgumentException("Span must be 3 long", nameof(idInts)); }
+            a = (Decode4HexDigits(idInts[0]) << 16) | Decode4HexDigits(idInts[1]);
+            b = (Decode4HexDigits(idInts[2]) << 16) | Decode4HexDigits(idInts[3]);
+            c = (Decode4HexDigits(idInts[4]) << 16) | Decode4HexDigits(idInts[5]);
             h = HashCode.Combine(a, b, c);
         }
 
         public override bool Equals(object? obj) => obj is ObjectId id && Equals(id);
 
-        public bool Equals(ObjectId other) => a == other.a && b == other.b && c == other.c;
+        public bool Equals(ObjectId other) => h == other.h && a == other.a && b == other.b && c == other.c;
 
         public override int GetHashCode() => h;
 

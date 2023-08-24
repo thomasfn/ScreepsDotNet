@@ -54,6 +54,13 @@ namespace ScreepsDotNet.Native.World
         public override JSObject? ReacquireProxyObject()
             => nativeRoot.GetProxyObjectById(id);
 
+        protected override void ClearNativeCache()
+        {
+            base.ClearNativeCache();
+            progressCache = null;
+            progressTotalCache = null;
+        }
+
         public void Remove()
             => Native_Remove(ProxyObject);
 

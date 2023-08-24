@@ -174,21 +174,25 @@ namespace ScreepsDotNet.Native.World
         public bool My => (Flags & 1) == 1;
 
         public RoomObjectDataPacket(ReadOnlySpan<byte> dataPacket)
+            : this(MemoryMarshal.Cast<byte, int>(dataPacket))
+        { }
+
+        public RoomObjectDataPacket(ReadOnlySpan<int> dataPacketI32)
         {
-            if (dataPacket[0] == 0)
+            if (dataPacketI32.Length < 11) { throw new ArgumentException($"Span must be 11 long"); }
+            if (dataPacketI32[0] == 0)
             {
                 ObjectId = default; 
             }
             else
             {
-                ObjectId = new(dataPacket[0..24]);
+                ObjectId = new(dataPacketI32[0..6]);
             }
-            ReadOnlySpan<int> i32 = MemoryMarshal.Cast<byte, int>(dataPacket);
-            TypeId = i32[6];
-            Flags = i32[7];
-            EncodedRoomPos = i32[8];
-            Hits = i32[9];
-            HitsMax = i32[10];
+            TypeId = dataPacketI32[6];
+            Flags = dataPacketI32[7];
+            EncodedRoomPos = dataPacketI32[8];
+            Hits = dataPacketI32[9];
+            HitsMax = dataPacketI32[10];
         }
     }
 

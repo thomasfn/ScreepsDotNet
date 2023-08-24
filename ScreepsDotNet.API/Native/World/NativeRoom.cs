@@ -63,27 +63,33 @@ namespace ScreepsDotNet.Native.World
 
         #endregion
 
-        private NativeRoomTerrain? roomTerrainCache;
+        private IStructureController? controllerCache;
+        private int? energyAvailableCache;
+        private int? energyCapacityAvailableCache;
         private NativeMemoryObject? memoryCache;
+        private IStructureStorage? storageCache;
+        private IStructureTerminal? terminalCache;
         private NativeRoomVisual? visualCache;
+
+        private NativeRoomTerrain? roomTerrainCache;
 
         public string Name { get; private set; }
 
         public RoomCoord Coord { get; }
 
-        public IStructureController? Controller => nativeRoot.GetOrCreateWrapperObject<IStructureController>(ProxyObject.GetPropertyAsJSObject("controller"));
+        public IStructureController? Controller => CachePerTick(ref controllerCache) ??= nativeRoot.GetOrCreateWrapperObject<IStructureController>(ProxyObject.GetPropertyAsJSObject("controller"));
 
-        public int EnergyAvailable => ProxyObject.GetPropertyAsInt32("energyAvailable");
+        public int EnergyAvailable => CachePerTick(ref energyAvailableCache) ??= ProxyObject.GetPropertyAsInt32("energyAvailable");
 
-        public int EnergyCapacityAvailable => ProxyObject.GetPropertyAsInt32("energyCapacityAvailable");
+        public int EnergyCapacityAvailable => CachePerTick(ref energyCapacityAvailableCache) ??= ProxyObject.GetPropertyAsInt32("energyCapacityAvailable");
 
         public IMemoryObject Memory => CachePerTick(ref memoryCache) ??= new NativeMemoryObject(ProxyObject.GetPropertyAsJSObject("memory")!);
 
-        public IStructureStorage? Storage => nativeRoot.GetOrCreateWrapperObject<IStructureStorage>(ProxyObject.GetPropertyAsJSObject("storage"));
+        public IStructureStorage? Storage => CachePerTick(ref storageCache) ??= nativeRoot.GetOrCreateWrapperObject<IStructureStorage>(ProxyObject.GetPropertyAsJSObject("storage"));
 
-        public IStructureTerminal? Terminal => nativeRoot.GetOrCreateWrapperObject<IStructureTerminal>(ProxyObject.GetPropertyAsJSObject("terminal"));
+        public IStructureTerminal? Terminal => CachePerTick(ref terminalCache) ??= nativeRoot.GetOrCreateWrapperObject<IStructureTerminal>(ProxyObject.GetPropertyAsJSObject("terminal"));
 
-        public IRoomVisual Visual => visualCache ??= new NativeRoomVisual(ProxyObject.GetPropertyAsJSObject("visual")!);
+        public IRoomVisual Visual => CachePerTick(ref visualCache) ??= new NativeRoomVisual(ProxyObject.GetPropertyAsJSObject("visual")!);
 
         public NativeRoom(INativeRoot nativeRoot, JSObject proxyObject, string? knownName)
             : base(nativeRoot, proxyObject)
@@ -102,7 +108,12 @@ namespace ScreepsDotNet.Native.World
         protected override void ClearNativeCache()
         {
             base.ClearNativeCache();
+            controllerCache = null;
+            energyAvailableCache = null;
+            energyCapacityAvailableCache = null;
             memoryCache = null;
+            storageCache = null;
+            terminalCache = null;
             visualCache = null;
         }
 

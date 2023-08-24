@@ -31,7 +31,6 @@ namespace ScreepsDotNet.Native.World
                 if (proxyObjectValidAsOf < nativeRoot.TickIndex)
                 {
                     proxyObject = ReacquireProxyObject();
-                    ClearNativeCache();
                     if (proxyObject == null)
                     {
                         isDead = true;
@@ -39,11 +38,12 @@ namespace ScreepsDotNet.Native.World
                     }
                     else
                     {
+                        ClearNativeCache();
                         proxyObjectValidAsOf = nativeRoot.TickIndex;
                         return true;
                     }
                 }
-                return proxyObject != null;
+                return true;
             }
         }
 

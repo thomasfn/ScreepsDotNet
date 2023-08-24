@@ -6,6 +6,7 @@ using System.Runtime.InteropServices.JavaScript;
 
 using ScreepsDotNet.API;
 using ScreepsDotNet.API.World;
+using System.Runtime.InteropServices;
 
 namespace ScreepsDotNet.Native.World
 {
@@ -252,15 +253,15 @@ namespace ScreepsDotNet.Native.World
                 Console.WriteLine($"NativeGame.GetWrapperObjectsFromCopyBuffer: expecting {cnt} objects but copy buffer only contained {roomObjectData.Length / RoomObjectDataPacket.SizeInBytes} worth of data");
                 cnt = roomObjectData.Length / RoomObjectDataPacket.SizeInBytes;
             }
+            ReadOnlySpan<int> roomObjectDataI32 = MemoryMarshal.Cast<byte, int>(roomObjectData);
             if (cnt == 0) { return Enumerable.Empty<T>(); }
             var result = new List<T>();
             int noIdCnt = 0, existingCnt = 0, newCnt = 0;
-            var sb = new StringBuilder();
             for (int i = 0; i < cnt; ++i)
             {
-                ReadOnlySpan<byte> dataPacketRaw = roomObjectData[(i * RoomObjectDataPacket.SizeInBytes)..((i + 1) * RoomObjectDataPacket.SizeInBytes)];
-                var dataPacket = new RoomObjectDataPacket(dataPacketRaw);
-                sb.Append($"[{dataPacket.ObjectId} typeId={dataPacket.TypeId}, my={dataPacket.My}, pos={dataPacket.EncodedRoomPos}, hits={dataPacket.Hits}, hitsMax={dataPacket.HitsMax}],");
+                int offset = (i * RoomObjectDataPacket.SizeInBytes) >> 2;
+                ReadOnlySpan<int> dataPacketRawI32 = roomObjectDataI32[offset..(offset + (RoomObjectDataPacket.SizeInBytes >> 2))];
+                var dataPacket = new RoomObjectDataPacket(dataPacketRawI32);
                 if (!dataPacket.ObjectId.IsValid)
                 {
                     ++noIdCnt;
@@ -284,7 +285,6 @@ namespace ScreepsDotNet.Native.World
                     }
                 }
             }
-            Console.WriteLine(sb.ToString());
             return result;
         }
     }

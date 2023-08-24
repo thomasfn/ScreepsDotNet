@@ -37,7 +37,7 @@ namespace ScreepsDotNet.Native.World
 
         public FlagColor Color => (FlagColor)ProxyObject.GetPropertyAsInt32("color");
 
-        public IMemoryObject Memory => memoryCache ??= new NativeMemoryObject(ProxyObject.GetPropertyAsJSObject("memory")!);
+        public IMemoryObject Memory => CachePerTick(ref memoryCache) ??= new NativeMemoryObject(ProxyObject.GetPropertyAsJSObject("memory")!);
 
         public string Name => name;
 
@@ -51,6 +51,12 @@ namespace ScreepsDotNet.Native.World
 
         public override JSObject? ReacquireProxyObject()
             => nativeRoot.FlagsObj.GetPropertyAsJSObject(name);
+
+        protected override void ClearNativeCache()
+        {
+            base.ClearNativeCache();
+            memoryCache = null;
+        }
 
         public void Remove()
             => Native_Remove(ProxyObject);

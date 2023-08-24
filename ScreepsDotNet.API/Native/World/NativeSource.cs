@@ -39,6 +39,14 @@ namespace ScreepsDotNet.Native.World
         public override JSObject? ReacquireProxyObject()
             => nativeRoot.GetProxyObjectById(id);
 
+        protected override void ClearNativeCache()
+        {
+            base.ClearNativeCache();
+            energyCache = null;
+            energyCapacityCache = null;
+            ticksToRegenerationCache = null;
+        }
+
         public override string ToString()
             => $"Source[{RoomPosition}]";
 

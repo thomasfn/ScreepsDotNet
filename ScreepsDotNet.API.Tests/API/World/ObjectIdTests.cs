@@ -11,7 +11,7 @@ namespace ScreepsDotNet.API.World.Tests
         public void ToStringTheory(string idStr)
         {
             var objId = new ObjectId(idStr);
-            Assert.Equal(objId, objId.ToString());
+            Assert.Equal(idStr, objId.ToString());
         }
 
         [Theory]
@@ -20,7 +20,7 @@ namespace ScreepsDotNet.API.World.Tests
         {
             var bytes = Encoding.ASCII.GetBytes(idStr);
             var objId = new ObjectId(bytes);
-            Assert.Equal(objId, objId.ToString());
+            Assert.Equal(idStr, objId.ToString());
         }
 
         public static IEnumerable<object[]> ToStringTheoryData
