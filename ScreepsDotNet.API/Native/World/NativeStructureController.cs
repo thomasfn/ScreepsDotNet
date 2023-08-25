@@ -50,7 +50,7 @@ namespace ScreepsDotNet.Native.World
             {
                 var obj = ProxyObject.GetPropertyAsJSObject("sign");
                 if (obj == null) { return null; }
-                return new(obj.GetPropertyAsString("username")!, obj.GetPropertyAsString("text")!, obj.GetPropertyAsInt32("time"), obj.GetPropertyAsJSObject("dateTime")!.ToDateTime());
+                return new(obj.GetPropertyAsString("username")!, obj.GetPropertyAsString("text")!, obj.GetPropertyAsInt32("time"), obj.GetPropertyAsJSObject("datetime")!.ToDateTime());
             }
         }
 
