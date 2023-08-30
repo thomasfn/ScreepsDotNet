@@ -16,6 +16,10 @@ namespace ScreepsDotNet.World
         public BasicExample(IGame game)
         {
             this.game = game;
+
+            // Clean memory once on startup
+            // Since our IVM will reset periodically, this will run frequently enough without us needing to schedule it properly
+            CleanMemory();
         }
 
         public void Loop()
@@ -43,6 +47,21 @@ namespace ScreepsDotNet.World
                 roomManager.Tick();
             }
             
+        }
+
+        private void CleanMemory()
+        {
+            if (!game.Memory.TryGetObject("creeps", out var creepsObj)) { return; }
+            int clearCnt = 0;
+            foreach (var creepName in creepsObj.Keys)
+            {
+                if (!game.Creeps.ContainsKey(creepName))
+                {
+                    creepsObj.ClearValue(creepName);
+                    ++clearCnt;
+                }
+            }
+            if (clearCnt > 0) { Console.WriteLine($"Cleared {clearCnt} dead creeps from memory"); }
         }
     }
 

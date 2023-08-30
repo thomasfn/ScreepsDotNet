@@ -49,17 +49,33 @@ namespace ScreepsDotNet.Native.World
         [return: JSMarshalAsAttribute<JSType.Array<JSType.Object>>]
         internal static partial JSObject[] Native_LookAt([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Number>] int x, [JSMarshalAs<JSType.Number>] int y);
 
+        [JSImport("Room.lookAtFast", "game/prototypes/wrapped")]
+        [return: JSMarshalAsAttribute<JSType.Number>]
+        internal static partial int Native_LookAtFast([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Number>] int x, [JSMarshalAs<JSType.Number>] int y);
+
         [JSImport("Room.lookAtArea", "game/prototypes/wrapped")]
         [return: JSMarshalAsAttribute<JSType.Array<JSType.Object>>]
         internal static partial JSObject[] Native_LookAtArea([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Number>] int top, [JSMarshalAs<JSType.Number>] int left, [JSMarshalAs<JSType.Number>] int bottom, [JSMarshalAs<JSType.Number>] int right, [JSMarshalAs<JSType.Boolean>] bool asArray);
+
+        [JSImport("Room.lookAtAreaFast", "game/prototypes/wrapped")]
+        [return: JSMarshalAsAttribute<JSType.Number>]
+        internal static partial int Native_LookAtAreaFast([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Number>] int top, [JSMarshalAs<JSType.Number>] int left, [JSMarshalAs<JSType.Number>] int bottom, [JSMarshalAs<JSType.Number>] int right);
 
         [JSImport("Room.lookForAt", "game/prototypes/wrapped")]
         [return: JSMarshalAsAttribute<JSType.Array<JSType.Object>>]
         internal static partial JSObject[] Native_LookForAt([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.String>] string type, [JSMarshalAs<JSType.Number>] int x, [JSMarshalAs<JSType.Number>] int y);
 
+        [JSImport("Room.lookForAtFast", "game/prototypes/wrapped")]
+        [return: JSMarshalAsAttribute<JSType.Number>]
+        internal static partial int Native_LookForAtFast([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.String>] string type, [JSMarshalAs<JSType.Number>] int x, [JSMarshalAs<JSType.Number>] int y);
+
         [JSImport("Room.lookForAtArea", "game/prototypes/wrapped")]
         [return: JSMarshalAsAttribute<JSType.Array<JSType.Object>>]
         internal static partial JSObject[] Native_LookForAtArea([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.String>] string type, [JSMarshalAs<JSType.Number>] int top, [JSMarshalAs<JSType.Number>] int left, [JSMarshalAs<JSType.Number>] int bottom, [JSMarshalAs<JSType.Number>] int right, [JSMarshalAs<JSType.Boolean>] bool asArray);
+
+        [JSImport("Room.lookForAtAreaFast", "game/prototypes/wrapped")]
+        [return: JSMarshalAsAttribute<JSType.Number>]
+        internal static partial int Native_LookForAtAreaFast([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.String>] string type, [JSMarshalAs<JSType.Number>] int top, [JSMarshalAs<JSType.Number>] int left, [JSMarshalAs<JSType.Number>] int bottom, [JSMarshalAs<JSType.Number>] int right);
 
         #endregion
 
@@ -209,41 +225,23 @@ namespace ScreepsDotNet.Native.World
             => roomTerrainCache ??= new NativeRoomTerrain(Native_GetTerrain(ProxyObject));
 
         public IEnumerable<IRoomObject> LookAt(Position position)
-#pragma warning disable CS8619 // Nullability of reference types in value doesn't match target type.
-            => Native_LookAt(ProxyObject, position.X, position.Y)
-                .Select(x => nativeRoot.GetOrCreateWrapperObject<IRoomObject>(InterpretLookElement(x)))
-                .Where(x => x != null)
-                .ToArray();
-#pragma warning restore CS8619 // Nullability of reference types in value doesn't match target type.
+            => nativeRoot.GetWrapperObjectsFromCopyBuffer<IRoomObject>(Native_LookAtFast(ProxyObject, position.X, position.Y));
 
         public IEnumerable<IRoomObject> LookAtArea(Position min, Position max)
-#pragma warning disable CS8619 // Nullability of reference types in value doesn't match target type.
-            => Native_LookAtArea(ProxyObject, min.Y, min.X, max.Y, max.X, true)
-                .Select(x => nativeRoot.GetOrCreateWrapperObject<IRoomObject>(InterpretLookElement(x)))
-                .Where(x => x != null)
-                .ToArray();
-#pragma warning restore CS8619 // Nullability of reference types in value doesn't match target type.
+            => nativeRoot.GetWrapperObjectsFromCopyBuffer<IRoomObject>(Native_LookAtAreaFast(ProxyObject, min.Y, min.X, max.Y, max.X));
 
         public IEnumerable<T> LookForAt<T>(Position position) where T : class, IRoomObject
         {
             var lookConstant = NativeRoomObjectPrototypes<T>.LookConstant;
             if (lookConstant == null) { return Enumerable.Empty<T>(); }
-            return Native_LookForAt(ProxyObject, lookConstant, position.X, position.Y)
-                .Select(x => nativeRoot.GetOrCreateWrapperObject<T>(x))
-                .Where(x => x != null)
-                .Cast<T>()
-                .ToArray();
+            return nativeRoot.GetWrapperObjectsFromCopyBuffer<T>(Native_LookForAtFast(ProxyObject, lookConstant, position.X, position.Y));
         }
 
         public IEnumerable<T> LookForAtArea<T>(Position min, Position max) where T : class, IRoomObject
         {
             var lookConstant = NativeRoomObjectPrototypes<T>.LookConstant;
             if (lookConstant == null) { return Enumerable.Empty<T>(); }
-            return Native_LookForAtArea(ProxyObject, lookConstant, min.Y, min.X, max.Y, max.X, true)
-                .Select(x => nativeRoot.GetOrCreateWrapperObject<T>(x.GetPropertyAsJSObject(lookConstant)))
-                .Where(x => x != null)
-                .Cast<T>()
-                .ToArray();
+            return nativeRoot.GetWrapperObjectsFromCopyBuffer<T>(Native_LookForAtAreaFast(ProxyObject, lookConstant, min.Y, min.X, max.Y, max.X));
         }
 
         private JSObject? InterpretLookElement(JSObject lookElement)

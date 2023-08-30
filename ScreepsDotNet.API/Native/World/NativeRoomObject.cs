@@ -17,7 +17,7 @@ namespace ScreepsDotNet.Native.World
 
         [JSImport("RoomObject.getEncodedRoomPosition", "game/prototypes/wrapped")]
         [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_GetEncodedRoomPosition([JSMarshalAs<JSType.Object>] JSObject proxyObject);
+        internal static partial int Native_GetEncodedRoomPosition([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Number>] IntPtr outPtr);
 
         #endregion
 
@@ -33,11 +33,11 @@ namespace ScreepsDotNet.Native.World
             {
                 if (CanMove)
                 {
-                    return CachePerTick(ref positionCache) ??= RoomPosition.FromEncodedInt(Native_GetEncodedRoomPosition(ProxyObject));
+                    return CachePerTick(ref positionCache) ??= FetchRoomPosition();
                 }
                 else
                 {
-                    return CacheLifetime(ref positionCache) ??= RoomPosition.FromEncodedInt(Native_GetEncodedRoomPosition(ProxyObject));
+                    return CacheLifetime(ref positionCache) ??= FetchRoomPosition();
                 }
             }
         }
@@ -69,6 +69,20 @@ namespace ScreepsDotNet.Native.World
             {
                 positionCache = null;
             }
+        }
+
+        private RoomPosition FetchRoomPosition()
+        {
+            Span<byte> buffer = stackalloc byte[32];
+            unsafe
+            {
+                fixed (byte* p = buffer)
+                {
+                    Native_GetEncodedRoomPosition(ProxyObject, (IntPtr)p);
+                    ScreepsDotNet_Native.DecodeRoomPosition(p, p + 16);
+                }
+            }
+            return MemoryMarshal.Cast<byte, RoomPosition>(buffer[16..])[0];
         }
     }
 
@@ -158,42 +172,30 @@ namespace ScreepsDotNet.Native.World
         }
     }
 
-    internal readonly struct RoomObjectDataPacket // 44b
+    [StructLayout(LayoutKind.Sequential, Pack = 0, Size = 48)]
+    internal readonly struct RoomObjectDataPacket
     {
-        public const int SizeInBytes = 44;
+        public const int SizeInBytes = 48;
 
-        public readonly ObjectId ObjectId; // 0..24
-        public readonly int TypeId; // 24..28
-        public readonly int Flags; // 28..32
-        public readonly int EncodedRoomPos; // 32..36
-        public readonly int Hits; // 36..40
-        public readonly int HitsMax; // 40..44
+        static RoomObjectDataPacket()
+        {
+            if (Marshal.SizeOf<RoomObjectDataPacket>() != SizeInBytes)
+            {
+                throw new Exception($"Expected size of RoomObjectDataPacket to be {SizeInBytes}b, got {Marshal.SizeOf<RoomObjectDataPacket>()}b");
+            }
+        }
 
-        public RoomPosition? RoomPos => EncodedRoomPos != 0 ? RoomPosition.FromEncodedInt(EncodedRoomPos) : null;
+        public readonly ObjectId ObjectId;
+        public readonly int TypeId;
+        public readonly int Flags;
+        public readonly int Hits;
+        public readonly int HitsMax;
+        public readonly RoomPosition RoomPos;
 
         public bool My => (Flags & 1) == 1;
 
-        public RoomObjectDataPacket(ReadOnlySpan<byte> dataPacket)
-            : this(MemoryMarshal.Cast<byte, int>(dataPacket))
-        { }
-
-        public RoomObjectDataPacket(ReadOnlySpan<int> dataPacketI32)
-        {
-            if (dataPacketI32.Length < 11) { throw new ArgumentException($"Span must be 11 long"); }
-            if (dataPacketI32[0] == 0)
-            {
-                ObjectId = default; 
-            }
-            else
-            {
-                ObjectId = new(dataPacketI32[0..6]);
-            }
-            TypeId = dataPacketI32[6];
-            Flags = dataPacketI32[7];
-            EncodedRoomPos = dataPacketI32[8];
-            Hits = dataPacketI32[9];
-            HitsMax = dataPacketI32[10];
-        }
+        public override string ToString()
+            => $"({ObjectId}, {TypeId}, {Flags}, {Hits}, {HitsMax}, {RoomPos})";
     }
 
     [System.Runtime.Versioning.SupportedOSPlatform("browser")]

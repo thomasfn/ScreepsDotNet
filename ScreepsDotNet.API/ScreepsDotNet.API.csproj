@@ -24,8 +24,16 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<None Remove="build\ScreepsDotNet.API.props" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<Content Include="..\LICENSE" PackagePath="\" />
 		<Content Include="..\README.md" PackagePath="\" />
+		
+		<Content Include="build\ScreepsDotNet.API.props" PackagePath="build\" />
+
+		<Content Include="Native\world.c" PackagePath="Native\" />
 	</ItemGroup>
 
 </Project>

@@ -247,21 +247,32 @@ namespace ScreepsDotNet.Native.World
 
         public IEnumerable<T> GetWrapperObjectsFromCopyBuffer<T>(int cnt) where T : class, IRoomObject
         {
-            ReadOnlySpan<byte> roomObjectData = NativeCopyBuffer.ReadFromJS();
-            if (roomObjectData.Length / RoomObjectDataPacket.SizeInBytes < cnt)
+            if (cnt == 0)
             {
-                Console.WriteLine($"NativeGame.GetWrapperObjectsFromCopyBuffer: expecting {cnt} objects but copy buffer only contained {roomObjectData.Length / RoomObjectDataPacket.SizeInBytes} worth of data");
-                cnt = roomObjectData.Length / RoomObjectDataPacket.SizeInBytes;
+                //Console.WriteLine($"GetWrapperObjectsFromCopyBuffer({typeof(T).Name}): []");
+                return Enumerable.Empty<T>();
             }
-            ReadOnlySpan<int> roomObjectDataI32 = MemoryMarshal.Cast<byte, int>(roomObjectData);
-            if (cnt == 0) { return Enumerable.Empty<T>(); }
+            Span<byte> dataPacketsRaw = stackalloc byte[RoomObjectDataPacket.SizeInBytes * cnt];
+            unsafe
+            {
+                fixed (byte* p = dataPacketsRaw)
+                {
+                    ScreepsDotNet_Native.DecodeRoomObjectListFromCopyBuffer(p, cnt);
+                }
+            }
+            Span<RoomObjectDataPacket> dataPackets = MemoryMarshal.Cast<byte, RoomObjectDataPacket>(dataPacketsRaw);
+            //var sb = new StringBuilder();
+            //foreach (var packet in dataPackets)
+            //{
+            //    sb.Append(packet.ToString());
+            //    sb.Append(", ");
+            //}
+            //Console.WriteLine($"GetWrapperObjectsFromCopyBuffer({typeof(T).Name}): [{sb}]");
             var result = new List<T>();
             int noIdCnt = 0, existingCnt = 0, newCnt = 0;
             for (int i = 0; i < cnt; ++i)
             {
-                int offset = (i * RoomObjectDataPacket.SizeInBytes) >> 2;
-                ReadOnlySpan<int> dataPacketRawI32 = roomObjectDataI32[offset..(offset + (RoomObjectDataPacket.SizeInBytes >> 2))];
-                var dataPacket = new RoomObjectDataPacket(dataPacketRawI32);
+                ref RoomObjectDataPacket dataPacket = ref dataPackets[i];
                 if (!dataPacket.ObjectId.IsValid)
                 {
                     ++noIdCnt;

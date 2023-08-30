@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 
 namespace ScreepsDotNet.API.World
 {
@@ -179,6 +180,16 @@ namespace ScreepsDotNet.API.World
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
         IEnumerable<T> Find<T>() where T : class, IRoomObject;
+
+        /// <summary>
+        /// Find all objects of the specified type in the room.
+        /// This overload filters the results on a specific condition, however only certain expressions are supported.
+        /// The type T and the filter must be combinable in a way that results in a valid Screeps FIND constant.
+        /// For example, <c>room.Find&lt;ICreep&gt;(x =&gt; x.My)</c> is valid as it can be mapped to FIND_MY_CREEPS, however <c>room.Find&lt;IStructure&gt;(x =&gt; x.Hits &lt; x.HitsMax)</c> is not valid as it can't be mapped to a FIND constant.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        // IEnumerable<T> Find<T>(Expression<Func<T, bool>> filter) where T : class, IRoomObject;
 
         /// <summary>
         /// Find all exits in the room.

@@ -19,16 +19,28 @@ namespace ScreepsDotNet.API.World
             this.a = a;
             this.b = b;
             this.c = c;
-            h = HashCode.Combine(a, b, c);
+            h = ((17 * 31 + a) * 31 + b) * 31 + c;
         }
 
         public ObjectId(ReadOnlySpan<char> idStr)
         {
-            if (idStr.Length != 24) { throw new ArgumentException("Span must be 24 long", nameof(idStr)); }
-            a = int.Parse(idStr[0..8], System.Globalization.NumberStyles.AllowHexSpecifier);
-            b = int.Parse(idStr[8..16], System.Globalization.NumberStyles.AllowHexSpecifier);
-            c = int.Parse(idStr[16..24], System.Globalization.NumberStyles.AllowHexSpecifier);
-            h = HashCode.Combine(a, b, c);
+            if (idStr.Length < 24)
+            {
+                Span<char> tmp = stackalloc char[24];
+                idStr.CopyTo(tmp);
+                tmp[idStr.Length..].Fill('0');
+                a = int.Parse(tmp[0..8], System.Globalization.NumberStyles.AllowHexSpecifier);
+                b = int.Parse(tmp[8..16], System.Globalization.NumberStyles.AllowHexSpecifier);
+                c = int.Parse(tmp[16..24], System.Globalization.NumberStyles.AllowHexSpecifier);
+            }
+            else
+            {
+                a = int.Parse(idStr[0..8], System.Globalization.NumberStyles.AllowHexSpecifier);
+                b = int.Parse(idStr[8..16], System.Globalization.NumberStyles.AllowHexSpecifier);
+                c = int.Parse(idStr[16..24], System.Globalization.NumberStyles.AllowHexSpecifier);
+            }
+            h = ((17 * 31 + a) * 31 + b) * 31 + c;
+            h = (h & ~31) | idStr.Length;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -40,16 +52,24 @@ namespace ScreepsDotNet.API.World
             => (DecodeHexDigit(digits & 255) << 12) | (DecodeHexDigit((digits >> 8) & 255) << 8) | (DecodeHexDigit((digits >> 16) & 255) << 4) | DecodeHexDigit(digits >> 24);
 
         public ObjectId(ReadOnlySpan<byte> idBytes)
-            : this(MemoryMarshal.Cast<byte, int>(idBytes))
-        { }
-
-        public ObjectId(ReadOnlySpan<int> idInts)
         {
-            if (idInts.Length != 6) { throw new ArgumentException("Span must be 3 long", nameof(idInts)); }
+            int len;
+            Span<byte> tmp = stackalloc byte[24];
+            idBytes.CopyTo(tmp);
+            for (len = 0; len < 24; ++len)
+            {
+                if (tmp[len] == 0) { break; }
+            }
+            for (int i = len; i < 24; ++i)
+            {
+                tmp[len] = (byte)'0';
+            }
+            var idInts = MemoryMarshal.Cast<byte, int>(tmp);
             a = (Decode4HexDigits(idInts[0]) << 16) | Decode4HexDigits(idInts[1]);
             b = (Decode4HexDigits(idInts[2]) << 16) | Decode4HexDigits(idInts[3]);
             c = (Decode4HexDigits(idInts[4]) << 16) | Decode4HexDigits(idInts[5]);
-            h = HashCode.Combine(a, b, c);
+            h = ((17 * 31 + a) * 31 + b) * 31 + c;
+            h = (h & ~31) | len;
         }
 
         public override bool Equals(object? obj) => obj is ObjectId id && Equals(id);
@@ -64,19 +84,21 @@ namespace ScreepsDotNet.API.World
 
         public static implicit operator string(in ObjectId objectId) => objectId.ToString();
 
-        public void ToString(Span<char> outString)
+        public int ToString(Span<char> outString)
         {
-            if (outString.Length != 24) { throw new ArgumentException("Span must be 24 long", nameof(outString)); }
-            a.TryFormat(outString[0..8], out _, "x8");
-            b.TryFormat(outString[8..16], out _, "x8");
-            c.TryFormat(outString[16..24], out _, "x8");
+            Span<char> tmp = stackalloc char[24];
+            a.TryFormat(tmp[0..8], out _, "x8");
+            b.TryFormat(tmp[8..16], out _, "x8");
+            c.TryFormat(tmp[16..24], out _, "x8");
+            int len = h & 31;
+            tmp[..len].CopyTo(outString);
+            return len;
         }
 
         public override string ToString()
         {
             Span<char> str = stackalloc char[24];
-            ToString(str);
-            return str.ToString();
+            return str[0..ToString(str)].ToString();
         }
     }
 }

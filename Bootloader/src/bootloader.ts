@@ -40,6 +40,7 @@ export class DotNet {
     private _ready: boolean = false;
     private startSetupRuntime: boolean = false;
     private pendingError?: Error;
+    private readonly customRuntimeSetupFnList: ((runtime: RuntimeAPI) => void)[] = [];
 
     public get ready() { return this._ready; }
 
@@ -62,6 +63,10 @@ export class DotNet {
 
     public setPerfFn(perfFn: () => number): void {
         this.perfFn = perfFn;
+    }
+
+    public addCustomRuntimeSetupFunction(setupFn: (runtime: RuntimeAPI) => void) {
+        this.customRuntimeSetupFnList.push(setupFn);
     }
 
     public getExports(): Record<string, any> | undefined {
@@ -208,6 +213,9 @@ export class DotNet {
         this.startSetupRuntime = true;
         let profiler = this.profile();
         debug(`setting up dotnet runtime...`);
+        for (const setupFn of this.customRuntimeSetupFnList) {
+            setupFn(this.runtimeApi);
+          }
         for (const moduleName in this.imports) {
             this.runtimeApi.setModuleImports(moduleName, this.imports[moduleName]);
         }

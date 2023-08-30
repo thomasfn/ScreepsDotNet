@@ -12819,11 +12819,23 @@ var bootloader = (function (exports) {
         Module["___wasm_call_ctors"] = function () {
           return (Module["___wasm_call_ctors"] = Module["asm"]["__wasm_call_ctors"]).apply(null, arguments);
         };
+        Module["_ScreepsDotNet_InitNative_World"] = function () {
+          return (Module["_ScreepsDotNet_InitNative_World"] = Module["asm"]["ScreepsDotNet_InitNative_World"]).apply(null, arguments);
+        };
+        var _malloc = Module["_malloc"] = function () {
+          return (_malloc = Module["_malloc"] = Module["asm"]["malloc"]).apply(null, arguments);
+        };
         Module["_mono_wasm_register_root"] = function () {
           return (Module["_mono_wasm_register_root"] = Module["asm"]["mono_wasm_register_root"]).apply(null, arguments);
         };
         Module["_mono_wasm_deregister_root"] = function () {
           return (Module["_mono_wasm_deregister_root"] = Module["asm"]["mono_wasm_deregister_root"]).apply(null, arguments);
+        };
+        Module["_mono_wasm_typed_array_new_ref"] = function () {
+          return (Module["_mono_wasm_typed_array_new_ref"] = Module["asm"]["mono_wasm_typed_array_new_ref"]).apply(null, arguments);
+        };
+        Module["_mono_wasm_unbox_enum"] = function () {
+          return (Module["_mono_wasm_unbox_enum"] = Module["asm"]["mono_wasm_unbox_enum"]).apply(null, arguments);
         };
         Module["_mono_wasm_add_assembly"] = function () {
           return (Module["_mono_wasm_add_assembly"] = Module["asm"]["mono_wasm_add_assembly"]).apply(null, arguments);
@@ -12845,9 +12857,6 @@ var bootloader = (function (exports) {
         };
         Module["_mono_wasm_load_runtime"] = function () {
           return (Module["_mono_wasm_load_runtime"] = Module["asm"]["mono_wasm_load_runtime"]).apply(null, arguments);
-        };
-        var _malloc = Module["_malloc"] = function () {
-          return (_malloc = Module["_malloc"] = Module["asm"]["malloc"]).apply(null, arguments);
         };
         Module["_mono_wasm_assembly_load"] = function () {
           return (Module["_mono_wasm_assembly_load"] = Module["asm"]["mono_wasm_assembly_load"]).apply(null, arguments);
@@ -12977,12 +12986,6 @@ var bootloader = (function (exports) {
         };
         Module["_mono_wasm_f64_to_i52"] = function () {
           return (Module["_mono_wasm_f64_to_i52"] = Module["asm"]["mono_wasm_f64_to_i52"]).apply(null, arguments);
-        };
-        Module["_mono_wasm_typed_array_new_ref"] = function () {
-          return (Module["_mono_wasm_typed_array_new_ref"] = Module["asm"]["mono_wasm_typed_array_new_ref"]).apply(null, arguments);
-        };
-        Module["_mono_wasm_unbox_enum"] = function () {
-          return (Module["_mono_wasm_unbox_enum"] = Module["asm"]["mono_wasm_unbox_enum"]).apply(null, arguments);
         };
         Module["_mono_wasm_send_dbg_command_with_parms"] = function () {
           return (Module["_mono_wasm_send_dbg_command_with_parms"] = Module["asm"]["mono_wasm_send_dbg_command_with_parms"]).apply(null, arguments);
@@ -13267,6 +13270,7 @@ var bootloader = (function (exports) {
         this.verboseLogging = false;
         this._ready = false;
         this.startSetupRuntime = false;
+        this.customRuntimeSetupFnList = [];
         this.manifest = manifest.manifest;
         this.monoConfig = manifest.config;
         this.isArena = env === 'arena';
@@ -13280,6 +13284,9 @@ var bootloader = (function (exports) {
       }
       setPerfFn(perfFn) {
         this.perfFn = perfFn;
+      }
+      addCustomRuntimeSetupFunction(setupFn) {
+        this.customRuntimeSetupFnList.push(setupFn);
       }
       getExports() {
         return this.exports;
@@ -13438,6 +13445,9 @@ var bootloader = (function (exports) {
           _this.startSetupRuntime = true;
           let profiler = _this.profile();
           debug(`setting up dotnet runtime...`);
+          for (const setupFn of _this.customRuntimeSetupFnList) {
+            setupFn(_this.runtimeApi);
+          }
           for (const moduleName in _this.imports) {
             _this.runtimeApi.setModuleImports(moduleName, _this.imports[moduleName]);
           }

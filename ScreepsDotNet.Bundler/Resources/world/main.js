@@ -20,9 +20,19 @@ function loadJs() {
 // ~310ms
 function initDotNet() {
     const before = Game.cpu.getUsed();
+    let copyBufferPtr, copyBufferSize;
     dotNet = new bootloader.DotNet(bundle, 'world');
     dotNet.setPerfFn(function() { return getCpuTime() * 1000000; });
     dotNet.setVerboseLogging(false);
+    dotNet.addCustomRuntimeSetupFunction(function(runtime) {
+        const entrypointFn = runtime.Module['asm']['ScreepsDotNet_InitNative_World'];
+        if (!entrypointFn) {
+          console.log(`failed to call 'ScreepsDotNet_InitNative_World' (not found in wasm exports)`);
+          return;
+        }
+        copyBufferSize = 1024 * 1024;
+        copyBufferPtr = entrypointFn(copyBufferSize);
+    });
     function fixupArray(obj) {
         if (obj == null) { return null; }
         if (Array.isArray(obj)) { return obj; }
@@ -32,126 +42,82 @@ function initDotNet() {
         }
         return arr;
     }
-    const wChr = 'W'.charCodeAt(0);
-    const eChr = 'E'.charCodeAt(0);
-    const sChr = 'S'.charCodeAt(0);
-    const nChr = 'N'.charCodeAt(0);
-    const _0Chr = '0'.charCodeAt(0);
-    const _9Chr = '9'.charCodeAt(0);
-    function encodeRoomPosition({x, y, roomName}) {
-        // bit 0-0   (1): sim room
-        // bit 1-7   (7): room x
-        // bit 8-14  (7): room y
-        // bit 15-20 (6): local x
-        // bit 21-26 (6): local y
-        let result = 0;
-        if (roomName == "sim") {
-            result |= 1;
+    function encodeRoomPosition({x, y, roomName}, outPtr) {
+        const { HEAP32, HEAPU8 } = dotNet.runtimeApi.Module;
+        // X:i32(4), y:i32(4), roomName:6i8(6), padding:2i8(2) total=16
+        HEAP32[(outPtr + 0) >>> 2] = x;
+        HEAP32[(outPtr + 4) >>> 2] = y;
+        if (roomName.length < 4) {
+            HEAPU8[outPtr + 8] = 0;
         } else {
-            let roomX, roomY;
-            let ptr = 0;
-            let _0, _1, _2;
-            _0 = roomName.charCodeAt(ptr), _1 = roomName.charCodeAt(ptr + 1), _2 = roomName.charCodeAt(ptr + 2);
-            if (_0 == wChr) {
-                if (roomName.length > ptr + 2 && _2 >= _0Chr && _2 <= _9Chr) {
-                    roomX = -((_1 - _0Chr) * 10 + (_2 - _0Chr) + 1);
-                    ptr += 3;
-                } else {
-                    roomX = -(_1 - _0Chr + 1);
-                    ptr += 2;
-                }
-            } else if (_0 == eChr) {
-                if (roomName.length > ptr + 2 && _2 >= _0Chr && _2 <= _9Chr) {
-                    roomX = (_1 - _0Chr) * 10 + (_2 - _0Chr);
-                    ptr += 3;
-                } else {
-                    roomX = _1 - _0Chr;
-                    ptr += 2;
-                }
-            } else {
-                throw new Error(`Room name '${roomName}' does not follow standard pattern`);
-            }
-
-            _0 = roomName.charCodeAt(ptr), _1 = roomName.charCodeAt(ptr + 1), _2 = roomName.charCodeAt(ptr + 2);
-            if (_0 == sChr) {
-                if (roomName.length > ptr + 2 && _2 >= _0Chr && _2 <= _9Chr) {
-                    roomY = -((_1 - _0Chr) * 10 + (_2 - _0Chr) + 1);
-                    ptr += 3;
-                } else {
-                    roomY = -(_1 - _0Chr + 1);
-                    ptr += 2;
-                }
-            } else if (_0 == nChr) {
-                if (roomName.length > ptr + 2 && _2 >= _0Chr && _2 <= _9Chr) {
-                    roomY = (_1 - _0Chr) * 10 + (_2 - _0Chr);
-                    ptr += 3;
-                } else {
-                    roomY = _1 - _0Chr;
-                    ptr += 2;
-                }
-            } else {
-                throw new Error(`Room name '${roomName}' does not follow standard pattern`);
-            }
-
-            result |= (roomX + 64) << 1;
-            result |= (roomY + 64) << 8;
+            HEAPU8[outPtr + 8] = roomName.charCodeAt(0);
+            HEAPU8[outPtr + 9] = roomName.charCodeAt(1);
+            HEAPU8[outPtr + 10] = roomName.charCodeAt(2);
+            HEAPU8[outPtr + 11] = roomName.charCodeAt(3);
+            HEAPU8[outPtr + 12] = roomName.length >= 5 ? roomName.charCodeAt(4) : 0;
+            HEAPU8[outPtr + 13] = roomName.length >= 6 ? roomName.charCodeAt(5) : 0;
+            HEAPU8[outPtr + 14] = 0;
+            HEAPU8[outPtr + 15] = 0;
         }
-        result |= x << 15;
-        result |= y << 21;
-        return result;
     }
-    const copyBuffer = new ArrayBuffer(1024 * 1024);
-    const copyBufferU8 = new Uint8Array(copyBuffer);
-    const copyBufferI32 = new Int32Array(copyBuffer);
-    let copyBufferHead = 0;
-
-    const packetSizeInBytes = 44;
-
+    function encodeObjectId(id, outPtr) {
+        const { HEAP32, HEAPU8 } = dotNet.runtimeApi.Module;
+        if (id) {
+            const l = id.length;
+            for (let j = 0; j < l; ++j) {
+                HEAPU8[outPtr + j] = id.charCodeAt(j);
+            }
+            for (let j = l; j < 24; ++j) {
+                HEAPU8[outPtr + j] = 0;
+            }
+        } else {
+            for (let j = 0; j < 6; ++j) {
+                HEAP32[copyBufferHeadI32 + j] = 0;
+            }
+        }
+    }
+    const packetSizeInBytes = 56;
     const PACKET_FLAG_MY = (1 << 0);
 
     /** @param buffer {Uint8Array} */
-    function encodeRoomObjectArray(arr) {
-        // room object packet (44b):
+    function encodeRoomObjectArray(arr, key) {
+        const { HEAP32, HEAPU8 } = dotNet.runtimeApi.Module;
+        if (copyBufferPtr == null) { throw new Error(`encodeRoomObjectArray failed as copy buffer was not allocated`); }
+        // room object packet (54b):
         // - id (0..24)
         // - type id (24..28)
         // - flags (28..32)
-        // - encoded position (32..36)
-        // - hits/progress/energy/mineralAmount (36..40)
-        // - hitsMax/progressTotal/energyCapacity/density (40..44)
+        // - hits/progress/energy/mineralAmount (32..36)
+        // - hitsMax/progressTotal/energyCapacity/density (36..40)
+        // - roomPosition (40..54)
 
-        copyBufferHead = 0;
+        let copyBufferHead = copyBufferPtr;
+        let numEncoded = 0;
         for (let i = 0; i < arr.length; ++i) {
-            if (copyBufferHead + packetSizeInBytes > copyBuffer.byteLength) {
-                console.log(`BUFFER OVERFLOW in encodeRoomObjectArray (trying to encode ${arr.length} room objects but only space for ${(copyBuffer.byteLength / 32)|0})`);
+            if (copyBufferHead + packetSizeInBytes > copyBufferPtr + copyBufferSize) {
+                console.log(`BUFFER OVERFLOW in encodeRoomObjectArray (trying to encode ${arr.length} room objects but only space for ${(copyBufferSize / packetSizeInBytes)|0})`);
                 break;
             }
-            const obj = arr[i];
-            const id = obj.id;
-            for (let j = 0; j < 24; ++j) {
-                copyBufferU8[copyBufferHead + j] = id ? id.charCodeAt(j) : 0;
+            const copyBufferHeadI32 = copyBufferHead >>> 2;
+            let obj = arr[i];
+            if (key) {
+                obj = obj[key];
             }
-            const copyBufferHeadI32 = copyBufferHead >> 2;
-            copyBufferI32[copyBufferHeadI32 + 6] = Object.getPrototypeOf(obj).constructor.__dotnet_typeId || 0;
-            copyBufferI32[copyBufferHeadI32 + 7] = obj.my ? PACKET_FLAG_MY : 0;
-            copyBufferI32[copyBufferHeadI32 + 8] = obj.pos ? encodeRoomPosition(obj.pos) : 0;
-            copyBufferI32[copyBufferHeadI32 + 9] = obj.hits || obj.progress || obj.energy || obj.mineralAmount || 0;
-            copyBufferI32[copyBufferHeadI32 + 10] = obj.hitsMax || obj.progressTotal || obj.energyCapacity || obj.density || 0;
+            if (!(obj instanceof RoomObject) && obj.type) {
+                obj = obj[obj.type];
+            }
+            if (!(obj instanceof RoomObject)) { continue; }
+            ++numEncoded;
+            encodeObjectId(obj.id, copyBufferHead);
+            HEAP32[copyBufferHeadI32 + 6] = Object.getPrototypeOf(obj).constructor.__dotnet_typeId || 0;
+            HEAP32[copyBufferHeadI32 + 7] = obj.my ? PACKET_FLAG_MY : 0;
+            HEAP32[copyBufferHeadI32 + 8] = obj.hits || obj.progress || obj.energy || obj.mineralAmount || 0;
+            HEAP32[copyBufferHeadI32 + 9] = obj.hitsMax || obj.progressTotal || obj.energyCapacity || obj.density || 0;
+            encodeRoomPosition(obj.pos, copyBufferHead + 40);
             copyBufferHead += packetSizeInBytes;
         }
+        return numEncoded;
     }
-    dotNet.setModuleImports('copybuffer', {
-        getMaxSize: () => copyBuffer.byteLength,
-        read: (memoryView) => {
-            memoryView.set(copyBufferU8.slice(0, copyBufferHead));
-            return copyBufferHead;
-        },
-        write: (memoryView) => {
-            memoryView.copyTo(copyBufferU8);
-            memoryView.dispose();
-            copyBufferHead = Math.min(copyBuffer.byteLength, memoryView.byteLength);
-            return copyBufferHead;
-        },
-    });
     dotNet.setModuleImports('object', {
         getConstructorOf: (x) => Object.getPrototypeOf(x).constructor,
         getKeysOf: (x) => Object.keys(x),
@@ -245,7 +211,7 @@ function initDotNet() {
         ...wrappedPrototypes,
         RoomObject: {
             ...wrappedPrototypes.RoomObject,
-            getEncodedRoomPosition: (thisObj) => encodeRoomPosition(thisObj.pos),
+            getEncodedRoomPosition: (thisObj, outPtr) => encodeRoomPosition(thisObj.pos, outPtr),
         },
         Spawning: buildWrappedPrototype(StructureSpawn.Spawning),
         Store: {
@@ -279,11 +245,11 @@ function initDotNet() {
                     return { code: result };
                 }
             },
-            findFast: (thisObj, ...args) => {
-                const result = thisObj.find(...args);
-                encodeRoomObjectArray(result);
-                return result.length;
-            },
+            findFast: (thisObj, type) => encodeRoomObjectArray(thisObj.find(type)),
+            lookAtFast: (thisObj, x, y) => encodeRoomObjectArray(thisObj.lookAt(x, y)),
+            lookAtAreaFast: (thisObj, top, left, bottom, right) => encodeRoomObjectArray(thisObj.lookAtArea(top, left, bottom, right, true)),
+            lookForAtFast: (thisObj, type, x, y) => encodeRoomObjectArray(thisObj.lookForAt(type, x, y)),
+            lookForAtAreaFast: (thisObj, type, top, left, bottom, right) => encodeRoomObjectArray(thisObj.lookForAtArea(type, top, left, bottom, right, true), type),
         },
         PathFinder: {
             ...PathFinder,
