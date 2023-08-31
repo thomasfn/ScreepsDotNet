@@ -17,7 +17,9 @@
         Silicon,
         Metal,
         Biomass,
-        Mist
+        Mist,
+
+        Unknown
     }
 
     /// <summary>

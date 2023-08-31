@@ -30,6 +30,11 @@ namespace ScreepsDotNet.API.World
         IMap Map { get; }
 
         /// <summary>
+        /// A global object representing the in-game market. You can use this object to track resource transactions to/from your terminals, and your buy/sell orders.
+        /// </summary>
+        IMarket Market { get; }
+
+        /// <summary>
         /// A global object providing path finding functionality.
         /// </summary>
         IPathFinder PathFinder { get; }

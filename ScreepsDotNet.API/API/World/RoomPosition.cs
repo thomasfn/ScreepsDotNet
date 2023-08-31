@@ -98,6 +98,9 @@ namespace ScreepsDotNet.API.World
             }
         }
 
+        public static RoomCoord? ParseNullSafe(string? roomName)
+            => string.IsNullOrEmpty(roomName) ? null : new(roomName);
+
         public int LinearDistanceTo(RoomCoord other)
             => Math.Max(Math.Abs(X - other.X), Math.Abs(Y - other.Y));
 

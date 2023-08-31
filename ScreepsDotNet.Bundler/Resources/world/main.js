@@ -178,6 +178,17 @@ function initDotNet() {
             getWorldSize: (...args) => Game.map.getWorldSize(...args),
             getRoomStatus: (...args) => Game.map.getRoomStatus(...args),
         },
+        market: {
+            calcTransactionCost: (...args) => Game.market.calcTransactionCost(...args),
+            cancelOrder: (...args) => Game.market.cancelOrder(...args),
+            changeOrderPrice: (...args) => Game.market.changeOrderPrice(...args),
+            createOrder: (...args) => Game.market.createOrder(...args),
+            deal: (...args) => Game.market.deal(...args),
+            extendOrder: (...args) => Game.market.extendOrder(...args),
+            getAllOrders: (...args) => Game.market.getAllOrders(...args),
+            getHistory: (...args) => Game.market.getHistory(...args),
+            getOrderById: (...args) => Game.market.getOrderById(...args),
+        },
         cpu: {
             getHeapStatistics: (...args) => Game.cpu.getHeapStatistics(...args),
             getUsed: (...args) => Game.cpu.getUsed(...args),

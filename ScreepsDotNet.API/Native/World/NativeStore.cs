@@ -44,7 +44,7 @@ namespace ScreepsDotNet.Native.World
                 "metal" => ResourceType.Metal,
                 "biomass" => ResourceType.Biomass,
                 "mist" => ResourceType.Mist,
-                _ => throw new NotImplementedException($"Unknown resource type '{str}'"),
+                _ => ResourceType.Unknown,
             };
     }
 
