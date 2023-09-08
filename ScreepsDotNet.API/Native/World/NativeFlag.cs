@@ -33,6 +33,8 @@ namespace ScreepsDotNet.Native.World
 
         private readonly string name;
 
+        protected override bool CanMove => true;
+
         private IMemoryObject? memoryCache;
 
         public FlagColor Color => (FlagColor)ProxyObject.GetPropertyAsInt32("color");
