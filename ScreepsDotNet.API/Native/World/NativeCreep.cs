@@ -308,7 +308,8 @@ namespace ScreepsDotNet.Native.World
         public CreepHarvestResult Harvest(IMineral mineral)
             => (CreepHarvestResult)Native_Harvest(ProxyObject, mineral.ToJS());
 
-        //CreepHarvestResult Harvest(IDeposit source);
+        public CreepHarvestResult Harvest(IDeposit deposit)
+            => (CreepHarvestResult) Native_Harvest(ProxyObject, deposit.ToJS());
 
         public CreepHealResult Heal(ICreep target)
             => (CreepHealResult)Native_Heal(ProxyObject, target.ToJS());
@@ -393,7 +394,8 @@ namespace ScreepsDotNet.Native.World
         public CreepWithdrawResult Withdraw(ITombstone target, ResourceType resourceType, int? amount = null)
             => (CreepWithdrawResult)Native_Withdraw(ProxyObject, target.ToJS(), resourceType.ToJS(), amount);
 
-        // CreepWithdrawResult Withdraw(IRuin target, ResourceType resourceType, int? amount = null);
+        public CreepWithdrawResult Withdraw(IRuin target, ResourceType resourceType, int? amount = null)
+            => (CreepWithdrawResult)Native_Withdraw(ProxyObject, target.ToJS(), resourceType.ToJS(), amount);
 
         public override string ToString()
             => $"Creep[{(Exists ? $"'{Name}'" : id.ToString())}]({(Exists ? $"{RoomPosition}" : "DEAD")})";

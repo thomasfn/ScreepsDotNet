@@ -24,10 +24,10 @@ namespace ScreepsDotNet.Native.World
 
         private JSObject proxyObject;
 
-        private ISet<string>? keysCache;
-        private readonly IDictionary<string, TConcrete> mapCache = new Dictionary<string, TConcrete>();
+        private HashSet<string>? keysCache;
+        private readonly Dictionary<string, TConcrete> mapCache = new();
 
-        private ISet<string> KeySet => keysCache ??= new HashSet<string>(Native_GetKeysOf(proxyObject));
+        private HashSet<string> KeySet => keysCache ??= new HashSet<string>(Native_GetKeysOf(proxyObject));
 
         public TInterface this[string key] => TryGetValue(key, out var value) ? value : throw new KeyNotFoundException();
 

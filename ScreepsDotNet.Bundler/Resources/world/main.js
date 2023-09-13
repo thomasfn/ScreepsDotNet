@@ -3,6 +3,8 @@ console.log(`#${Game.time}: INIT state refreshed, beginning init sequence`);
 var bootloader, bundle, dotNet, dotNetExports, startupComplete;
 var accumCpuTime = 0;
 var lastCheckIn = Game.time;
+var memoryCache = Memory;
+memoryCache = RawMemory._parsed;
 
 function getCpuTime() {
     return accumCpuTime + Game.cpu.getUsed();
@@ -130,35 +132,48 @@ function initDotNet() {
         deleteOnObject: (obj, key) => delete obj[key],
     });
     const prototypes = {
-        StructureSpawn,
+        
         StructureContainer,
         StructureController,
         StructureExtension,
-        StructureStorage,
-        StructureRampart,
-        StructureTower,
-        StructureLink,
-        StructureTerminal,
         StructureExtractor,
-        OwnedStructure,
+        StructureFactory,
+        StructureInvaderCore,
+        StructureKeeperLair,
+        StructureLab,
+        StructureLink,
+        StructureNuker,
+        StructureObserver,
+        StructurePowerBank,
+        StructurePowerSpawn,
+        StructurePortal,
+        StructureRampart,
         StructureRoad,
+        StructureSpawn,
+        StructureStorage,
+        StructureTerminal,
+        StructureTower,
         StructureWall,
+        OwnedStructure,
         Structure,
         Source,
         Mineral,
+        Deposit,
         Creep,
         Flag,
         Resource,
         ConstructionSite,
         Tombstone,
+        Ruin,
         RoomObject,
         Room,
         RoomVisual,
+        Nuke,
     };
     dotNet.setModuleImports('game', {
         checkIn: () => lastCheckIn = Game.time,
         getGameObj: () => Game,
-        getMemoryObj: () => Memory,
+        getMemoryObj: () => memoryCache,
         getConstantsObj: () => global,
         getRawMemoryObj: () => RawMemory,
         getPrototypes: () => prototypes,
@@ -344,6 +359,9 @@ function startup() {
 }
 
 function loop() {
+    delete global.Memory;
+    global.Memory = memoryCache;
+    RawMemory._parsed = memoryCache;
     if (!startupComplete) {
         startupComplete = startup();
         if (startupComplete) {

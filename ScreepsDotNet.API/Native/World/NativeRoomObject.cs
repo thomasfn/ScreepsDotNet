@@ -4,8 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.JavaScript;
-using System.Text;
-using ScreepsDotNet.API;
+
 using ScreepsDotNet.API.World;
 
 namespace ScreepsDotNet.Native.World
@@ -48,7 +47,7 @@ namespace ScreepsDotNet.Native.World
             {
                 var roomObj = ProxyObject.GetPropertyAsJSObject("room");
                 if (roomObj == null) { return null; }
-                return new NativeRoom(nativeRoot, roomObj);
+                return nativeRoot.GetRoomByProxyObject(roomObj);
             }
         }
 
@@ -313,8 +312,7 @@ namespace ScreepsDotNet.Native.World
             if (typeId < 0) { return null; }
             Type wrapperType = prototypeTypeMappings[typeId];
             if (!wrapperType.IsAssignableTo(expectedType)) { return null; }
-            var obj = Activator.CreateInstance(wrapperType, new object?[] { nativeRoot, null, dataPacket.ObjectId }) as NativeRoomObject;
-            if (obj == null) { return null; }
+            if (Activator.CreateInstance(wrapperType, new object?[] { nativeRoot, null, dataPacket.ObjectId }) is not NativeRoomObject obj) { return null; }
             obj.UpdateFromDataPacket(dataPacket);
             return obj;
         }
@@ -338,17 +336,29 @@ namespace ScreepsDotNet.Native.World
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureLink))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureTerminal))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureExtractor))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureFactory))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureInvaderCore))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureKeeperLair))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureLab))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureNuker))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureObserver))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructurePowerBank))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructurePowerSpawn))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructurePortal))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeOwnedStructure))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureRoad))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureWall))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructure))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeSource))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeMineral))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeDeposit))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeNuke))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeCreep))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeFlag))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeResource))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeConstructionSite))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeTombstone))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeRuin))]
         static NativeRoomObjectUtils()
         {
             prototypesObject = GetPrototypesObject();
@@ -366,17 +376,29 @@ namespace ScreepsDotNet.Native.World
                 RegisterPrototypeTypeMapping<IStructureLink, NativeStructureLink>("StructureLink", FindConstant.Structures, "structure", "link");
                 RegisterPrototypeTypeMapping<IStructureTerminal, NativeStructureTerminal>("StructureTerminal", FindConstant.Structures, "structure", "terminal");
                 RegisterPrototypeTypeMapping<IStructureExtractor, NativeStructureExtractor>("StructureExtractor", FindConstant.Structures, "structure", "extractor");
+                RegisterPrototypeTypeMapping<IStructureFactory, NativeStructureFactory>("StructureFactory", FindConstant.Structures, "structure", "factory");
+                RegisterPrototypeTypeMapping<IStructureInvaderCore, NativeStructureInvaderCore>("StructureInvaderCore", FindConstant.Structures, "structure", "invaderCore");
+                RegisterPrototypeTypeMapping<IStructureKeeperLair, NativeStructureKeeperLair>("StructureKeeperLair", FindConstant.Structures, "structure", "keeperLair");
+                RegisterPrototypeTypeMapping<IStructureLab, NativeStructureLab>("StructureLab", FindConstant.Structures, "structure", "lab");
+                RegisterPrototypeTypeMapping<IStructureNuker, NativeStructureNuker>("StructureNuker", FindConstant.Structures, "structure", "nuker");
+                RegisterPrototypeTypeMapping<IStructureObserver, NativeStructureObserver>("StructureObserver", FindConstant.Structures, "structure", "observer");
+                RegisterPrototypeTypeMapping<IStructurePowerBank, NativeStructurePowerBank>("StructurePowerBank", FindConstant.Structures, "structure", "powerBank");
+                RegisterPrototypeTypeMapping<IStructurePowerSpawn, NativeStructurePowerSpawn>("StructurePowerSpawn", FindConstant.Structures, "structure", "powerSpawn");
+                RegisterPrototypeTypeMapping<IStructurePortal, NativeStructurePortal>("StructurePortal", FindConstant.Structures, "structure", "portal");
                 RegisterPrototypeTypeMapping<IOwnedStructure, NativeOwnedStructure>("OwnedStructure", FindConstant.Structures, "structure");
                 RegisterPrototypeTypeMapping<IStructureRoad, NativeStructureRoad>("StructureRoad", FindConstant.Structures, "structure", "road");
                 RegisterPrototypeTypeMapping<IStructureWall, NativeStructureWall>("StructureWall", FindConstant.Structures, "structure", "constructedWall");
                 RegisterPrototypeTypeMapping<IStructure, NativeStructure>("Structure", FindConstant.Structures, "structure");
                 RegisterPrototypeTypeMapping<ISource, NativeSource>("Source", FindConstant.Sources, "source");
                 RegisterPrototypeTypeMapping<IMineral, NativeMineral>("Mineral", FindConstant.Minerals, "mineral");
+                RegisterPrototypeTypeMapping<IDeposit, NativeDeposit>("Deposit", FindConstant.Deposits, "deposit");
+                RegisterPrototypeTypeMapping<INuke, NativeNuke>("Nuke", FindConstant.Nukes, "nuke");
                 RegisterPrototypeTypeMapping<ICreep, NativeCreep>("Creep", FindConstant.Creeps, "creep");
                 RegisterPrototypeTypeMapping<IFlag, NativeFlag>("Flag", FindConstant.Flags, "flag");
                 RegisterPrototypeTypeMapping<IResource, NativeResource>("Resource", FindConstant.DroppedResources, "resource");
                 RegisterPrototypeTypeMapping<IConstructionSite, NativeConstructionSite>("ConstructionSite", FindConstant.ConstructionSites, "constructionSite");
                 RegisterPrototypeTypeMapping<ITombstone, NativeTombstone>("Tombstone", FindConstant.Tombstones, "tombstone");
+                RegisterPrototypeTypeMapping<IRuin, NativeRuin>("Ruin", FindConstant.Ruins, "ruin");
             }
             catch (Exception ex)
             {

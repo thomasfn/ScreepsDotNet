@@ -856,7 +856,7 @@ namespace ScreepsDotNet.API.World
         CreepHarvestResult Harvest(ISource source);
 
         /// <summary>
-        /// Harvest resources from minerals and deposits.
+        /// Harvest resources from minerals.
         /// Requires the WORK body part.
         /// If the creep has an empty CARRY body part, the harvested resource is put into it; otherwise it is dropped on the ground.
         /// The target has to be at an adjacent square to the creep.
@@ -865,7 +865,15 @@ namespace ScreepsDotNet.API.World
         /// <returns></returns>
         CreepHarvestResult Harvest(IMineral mineral);
 
-        //CreepHarvestResult Harvest(IDeposit source);
+        /// <summary>
+        /// Harvest resources from deposits.
+        /// Requires the WORK body part.
+        /// If the creep has an empty CARRY body part, the harvested resource is put into it; otherwise it is dropped on the ground.
+        /// The target has to be at an adjacent square to the creep.
+        /// </summary>
+        /// <param name="deposit"></param>
+        /// <returns></returns>
+        CreepHarvestResult Harvest(IDeposit deposit);
 
         /// <summary>
         /// Heal self or another creep.
