@@ -247,6 +247,9 @@ namespace ScreepsDotNet.Native.World
         public IRoomVisual CreateRoomVisual(string? roomName = null)
             => new NativeRoomVisual(roomName);
 
+        public IMemoryObject CreateMemoryObject()
+            => new NativeMemoryObject(JSUtils.CreateObject(null));
+
         JSObject INativeRoot.GetProxyObjectById(ObjectId id)
             => Native_GetObjectById(id);
 

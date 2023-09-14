@@ -67,7 +67,7 @@ namespace ScreepsDotNet.Native.World
         public static JSObject ToJS(this SpawnCreepOptions spawnCreepOptions)
         {
             var obj = JSUtils.CreateObject(null);
-            // if (spawnCreepOptions.Memory != null) {  }
+            if (spawnCreepOptions.Memory != null) { obj.SetProperty("memory", spawnCreepOptions.Memory.ToJS()); }
             if (spawnCreepOptions.EnergyStructures != null) { JSUtils.SetObjectArrayOnObject(obj, "energyStructures", spawnCreepOptions.EnergyStructures.Select(x => x.ToJS()).ToArray()); }
             if (spawnCreepOptions.DryRun != null) { obj.SetProperty("dryRun", spawnCreepOptions.DryRun.Value); }
             if (spawnCreepOptions.Directions != null)

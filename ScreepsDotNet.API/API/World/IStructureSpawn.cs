@@ -133,7 +133,7 @@ namespace ScreepsDotNet.API.World
         /// <summary>
         /// Memory of the new creep. If provided, it will be immediately stored into Memory.creeps[name].
         /// </summary>
-        public readonly object? Memory;
+        public readonly IMemoryObject? Memory;
 
         /// <summary>
         /// Array of spawns/extensions from which to draw energy for the spawning process. Structures will be used according to the array order.
@@ -151,7 +151,7 @@ namespace ScreepsDotNet.API.World
         public readonly IEnumerable<Direction>? Directions;
 
         public SpawnCreepOptions(
-            object? memory = null,
+            IMemoryObject? memory = null,
             IEnumerable<IOwnedStructure>? energyStructures = null,
             bool? dryRun = null,
             IEnumerable<Direction>? directions = null

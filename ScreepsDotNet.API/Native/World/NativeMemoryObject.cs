@@ -17,68 +17,68 @@ namespace ScreepsDotNet.Native.World
 
         #endregion
 
-        private readonly JSObject proxyObject;
+        internal readonly JSObject ProxyObject;
 
-        public IEnumerable<string> Keys => JSUtils.GetKeysOf(proxyObject);
+        public IEnumerable<string> Keys => JSUtils.GetKeysOf(ProxyObject);
 
         public NativeMemoryObject(JSObject proxyObject)
         {
-            this.proxyObject = proxyObject;
+            this.ProxyObject = proxyObject;
         }
 
         public bool TryGetInt(string key, out int value)
         {
-            if (proxyObject.GetTypeOfProperty(key) != "number")
+            if (ProxyObject.GetTypeOfProperty(key) != "number")
             {
                 value = default;
                 return false;
             }
-            value = proxyObject.GetPropertyAsInt32(key);
+            value = ProxyObject.GetPropertyAsInt32(key);
             return true;
         }
 
         public bool TryGetString(string key, out string value)
         {
-            if (proxyObject.GetTypeOfProperty(key) != "string")
+            if (ProxyObject.GetTypeOfProperty(key) != "string")
             {
                 value = string.Empty;
                 return false;
             }
-            var str = proxyObject.GetPropertyAsString(key);
+            var str = ProxyObject.GetPropertyAsString(key);
             value = str ?? string.Empty;
             return str != null;
         }
 
         public bool TryGetDouble(string key, out double value)
         {
-            if (proxyObject.GetTypeOfProperty(key) != "number")
+            if (ProxyObject.GetTypeOfProperty(key) != "number")
             {
                 value = default;
                 return false;
             }
-            value = proxyObject.GetPropertyAsDouble(key);
+            value = ProxyObject.GetPropertyAsDouble(key);
             return true;
         }
 
         public bool TryGetBool(string key, out bool value)
         {
-            if (proxyObject.GetTypeOfProperty(key) != "boolean")
+            if (ProxyObject.GetTypeOfProperty(key) != "boolean")
             {
                 value = default;
                 return false;
             }
-            value = proxyObject.GetPropertyAsBoolean(key);
+            value = ProxyObject.GetPropertyAsBoolean(key);
             return true;
         }
 
         public bool TryGetObject(string key, [MaybeNullWhen(false)] out IMemoryObject value)
         {
-            if (proxyObject.GetTypeOfProperty(key) != "object")
+            if (ProxyObject.GetTypeOfProperty(key) != "object")
             {
                 value = default;
                 return false;
             }
-            var obj = proxyObject.GetPropertyAsJSObject(key);
+            var obj = ProxyObject.GetPropertyAsJSObject(key);
             if (obj == null)
             {
                 value = default;
@@ -89,27 +89,36 @@ namespace ScreepsDotNet.Native.World
         }
 
         public void SetValue(string key, int value)
-            => proxyObject.SetProperty(key, value);
+            => ProxyObject.SetProperty(key, value);
 
         public void SetValue(string key, string value)
-            => proxyObject.SetProperty(key, value);
+            => ProxyObject.SetProperty(key, value);
 
         public void SetValue(string key, double value)
-            => proxyObject.SetProperty(key, value);
+            => ProxyObject.SetProperty(key, value);
 
         public void SetValue(string key, bool value)
-            => proxyObject.SetProperty(key, value);
+            => ProxyObject.SetProperty(key, value);
 
         public IMemoryObject GetOrCreateObject(string key)
         {
-            var obj = proxyObject.GetPropertyAsJSObject(key);
+            var obj = ProxyObject.GetPropertyAsJSObject(key);
             if (obj != null) { return new NativeMemoryObject(obj); }
             obj = JSUtils.CreateObject(null);
-            proxyObject.SetProperty(key, obj);
+            ProxyObject.SetProperty(key, obj);
             return new NativeMemoryObject(obj);
         }
 
         public void ClearValue(string key)
-            => Native_DeleteOnObject(proxyObject, key);
+            => Native_DeleteOnObject(ProxyObject, key);
+    }
+
+    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    internal static class NativeMemoryObjectExtensions
+    {
+        public static JSObject ToJS(this IMemoryObject roomObject)
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
+            => (roomObject as NativeMemoryObject).ProxyObject;
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
     }
 }

@@ -127,5 +127,11 @@ namespace ScreepsDotNet.API.World
         /// <param name="roomName"></param>
         /// <returns></returns>
         IRoomVisual CreateRoomVisual(string? roomName = null);
+
+        /// <summary>
+        /// Create a new memory object. This can be populated and passed to IStructureSpawn.SpawnCreep via SpawnCreepOptions.
+        /// </summary>
+        /// <returns></returns>
+        IMemoryObject CreateMemoryObject();
     }
 }
