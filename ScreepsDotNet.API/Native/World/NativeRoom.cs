@@ -256,9 +256,9 @@ namespace ScreepsDotNet.Native.World
 
         public override bool Equals(object? obj) => Equals(obj as NativeRoom);
 
-        public bool Equals(NativeRoom? other) => other is not null && Name == other.Name;
+        public bool Equals(NativeRoom? other) => other is not null && Coord == other.Coord;
 
-        public override int GetHashCode() => Name.GetHashCode();
+        public override int GetHashCode() => Coord.GetHashCode();
 
         public static bool operator ==(NativeRoom? left, NativeRoom? right) => EqualityComparer<NativeRoom>.Default.Equals(left, right);
 

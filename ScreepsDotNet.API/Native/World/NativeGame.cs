@@ -222,7 +222,7 @@ namespace ScreepsDotNet.Native.World
             List<RoomCoord>? pendingRemoval = null;
             foreach (var (coord, objRef) in roomsByCoordCache)
             {
-                if (!objRef.TryGetTarget(out _)) { (pendingRemoval ??= new()).Add(coord); }
+                if (!objRef.TryGetTarget(out var room) || !room.Exists) { (pendingRemoval ??= new()).Add(coord); }
             }
             if (pendingRemoval == null) { return; }
             Console.WriteLine($"NativeGame: pruning {pendingRemoval.Count} of {roomsByCoordCache.Count} objects from the rooms-by-coord cache");
@@ -260,7 +260,7 @@ namespace ScreepsDotNet.Native.World
             => (this as INativeRoot).GetExistingWrapperObjectById(id) as T;
 
         NativeRoom? INativeRoot.GetExistingRoomByCoord(RoomCoord coord)
-            => (roomsByCoordCache.TryGetValue(coord, out var objRef) && objRef.TryGetTarget(out var obj)) ? obj : null;
+            => (roomsByCoordCache.TryGetValue(coord, out var objRef) && objRef.TryGetTarget(out var obj) && obj.Exists) ? obj : null;
 
         NativeRoom? INativeRoot.GetRoomByCoord(RoomCoord coord)
         {
@@ -269,7 +269,7 @@ namespace ScreepsDotNet.Native.World
             var proxyObject = RoomsObj.GetPropertyAsJSObject(coord.ToString());
             if (proxyObject == null) { return null; }
             room = new NativeRoom(this, proxyObject);
-            roomsByCoordCache.Add(coord, new WeakReference<NativeRoom>(room));
+            roomsByCoordCache[coord] = new WeakReference<NativeRoom>(room);
             return room;
         }
 
@@ -280,7 +280,7 @@ namespace ScreepsDotNet.Native.World
             var room = (this as INativeRoot).GetExistingRoomByCoord(coord);
             if (room != null) { return room; }
             room = new NativeRoom(this, proxyObject);
-            roomsByCoordCache.Add(coord, new WeakReference<NativeRoom>(room));
+            roomsByCoordCache[coord] = new WeakReference<NativeRoom>(room);
             return room;
         }
 
