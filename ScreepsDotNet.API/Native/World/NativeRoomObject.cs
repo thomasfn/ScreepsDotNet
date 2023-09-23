@@ -123,6 +123,8 @@ namespace ScreepsDotNet.Native.World
         public static int TypeId;
         public static JSObject? ConstructorObj;
         public static FindConstant? FindConstant;
+        public static FindConstant? MyFindConstant;
+        public static FindConstant? HostileFindConstant;
         public static string? LookConstant;
         public static string? StructureConstant;
 
@@ -224,7 +226,7 @@ namespace ScreepsDotNet.Native.World
 
         #endregion
 
-        internal static void RegisterPrototypeTypeMapping<TInterface, TConcrete>(string prototypeName, FindConstant? findConstant = null, string? lookConstant = null, string? structureConstant = null)
+        internal static void RegisterPrototypeTypeMapping<TInterface, TConcrete>(string prototypeName, FindConstant? findConstant = null, FindConstant? myFindConstant = null, FindConstant? hostileFindConstant = null, string? lookConstant = null, string? structureConstant = null)
             where TInterface : IRoomObject
             where TConcrete : NativeRoomObject
         {
@@ -245,11 +247,15 @@ namespace ScreepsDotNet.Native.World
             NativeRoomObjectPrototypes<TInterface>.TypeId = typeId;
             NativeRoomObjectPrototypes<TInterface>.ConstructorObj = constructor;
             NativeRoomObjectPrototypes<TInterface>.FindConstant = findConstant;
+            NativeRoomObjectPrototypes<TInterface>.MyFindConstant = myFindConstant;
+            NativeRoomObjectPrototypes<TInterface>.HostileFindConstant = hostileFindConstant;
             NativeRoomObjectPrototypes<TInterface>.LookConstant = lookConstant;
             NativeRoomObjectPrototypes<TInterface>.StructureConstant = structureConstant;
             NativeRoomObjectPrototypes<TConcrete>.TypeId = typeId;
             NativeRoomObjectPrototypes<TConcrete>.ConstructorObj = constructor;
             NativeRoomObjectPrototypes<TConcrete>.FindConstant = findConstant;
+            NativeRoomObjectPrototypes<TConcrete>.MyFindConstant = myFindConstant;
+            NativeRoomObjectPrototypes<TConcrete>.HostileFindConstant = hostileFindConstant;
             NativeRoomObjectPrototypes<TConcrete>.LookConstant = lookConstant;
             NativeRoomObjectPrototypes<TConcrete>.StructureConstant = structureConstant;
             prototypeNameMappings.Add(typeof(TInterface), prototypeName);
@@ -366,39 +372,39 @@ namespace ScreepsDotNet.Native.World
             {
                 // NOTE - order matters! We must do derived classes first and base classes last
                 // This is to avoid a nasty bug where the runtime gets objects and their prototype objects mixed up due to the tracking id being set as a property on the object
-                RegisterPrototypeTypeMapping<IStructureSpawn, NativeStructureSpawn>("StructureSpawn", FindConstant.Structures, "structure", "spawn");
-                RegisterPrototypeTypeMapping<IStructureContainer, NativeStructureContainer>("StructureContainer", FindConstant.Structures, "structure", "container");
-                RegisterPrototypeTypeMapping<IStructureController, NativeStructureController>("StructureController", FindConstant.Structures, "structure", "controller");
-                RegisterPrototypeTypeMapping<IStructureExtension, NativeStructureExtension>("StructureExtension", FindConstant.Structures, "structure", "extension");
-                RegisterPrototypeTypeMapping<IStructureStorage, NativeStructureStorage>("StructureStorage", FindConstant.Structures, "structure", "storage");
-                RegisterPrototypeTypeMapping<IStructureRampart, NativeStructureRampart>("StructureRampart", FindConstant.Structures, "structure", "rampart");
-                RegisterPrototypeTypeMapping<IStructureTower, NativeStructureTower>("StructureTower", FindConstant.Structures, "structure", "tower");
-                RegisterPrototypeTypeMapping<IStructureLink, NativeStructureLink>("StructureLink", FindConstant.Structures, "structure", "link");
-                RegisterPrototypeTypeMapping<IStructureTerminal, NativeStructureTerminal>("StructureTerminal", FindConstant.Structures, "structure", "terminal");
-                RegisterPrototypeTypeMapping<IStructureExtractor, NativeStructureExtractor>("StructureExtractor", FindConstant.Structures, "structure", "extractor");
-                RegisterPrototypeTypeMapping<IStructureFactory, NativeStructureFactory>("StructureFactory", FindConstant.Structures, "structure", "factory");
-                RegisterPrototypeTypeMapping<IStructureInvaderCore, NativeStructureInvaderCore>("StructureInvaderCore", FindConstant.Structures, "structure", "invaderCore");
-                RegisterPrototypeTypeMapping<IStructureKeeperLair, NativeStructureKeeperLair>("StructureKeeperLair", FindConstant.Structures, "structure", "keeperLair");
-                RegisterPrototypeTypeMapping<IStructureLab, NativeStructureLab>("StructureLab", FindConstant.Structures, "structure", "lab");
-                RegisterPrototypeTypeMapping<IStructureNuker, NativeStructureNuker>("StructureNuker", FindConstant.Structures, "structure", "nuker");
-                RegisterPrototypeTypeMapping<IStructureObserver, NativeStructureObserver>("StructureObserver", FindConstant.Structures, "structure", "observer");
-                RegisterPrototypeTypeMapping<IStructurePowerBank, NativeStructurePowerBank>("StructurePowerBank", FindConstant.Structures, "structure", "powerBank");
-                RegisterPrototypeTypeMapping<IStructurePowerSpawn, NativeStructurePowerSpawn>("StructurePowerSpawn", FindConstant.Structures, "structure", "powerSpawn");
-                RegisterPrototypeTypeMapping<IStructurePortal, NativeStructurePortal>("StructurePortal", FindConstant.Structures, "structure", "portal");
-                RegisterPrototypeTypeMapping<IOwnedStructure, NativeOwnedStructure>("OwnedStructure", FindConstant.Structures, "structure");
-                RegisterPrototypeTypeMapping<IStructureRoad, NativeStructureRoad>("StructureRoad", FindConstant.Structures, "structure", "road");
-                RegisterPrototypeTypeMapping<IStructureWall, NativeStructureWall>("StructureWall", FindConstant.Structures, "structure", "constructedWall");
-                RegisterPrototypeTypeMapping<IStructure, NativeStructure>("Structure", FindConstant.Structures, "structure");
-                RegisterPrototypeTypeMapping<ISource, NativeSource>("Source", FindConstant.Sources, "source");
-                RegisterPrototypeTypeMapping<IMineral, NativeMineral>("Mineral", FindConstant.Minerals, "mineral");
-                RegisterPrototypeTypeMapping<IDeposit, NativeDeposit>("Deposit", FindConstant.Deposits, "deposit");
-                RegisterPrototypeTypeMapping<INuke, NativeNuke>("Nuke", FindConstant.Nukes, "nuke");
-                RegisterPrototypeTypeMapping<ICreep, NativeCreep>("Creep", FindConstant.Creeps, "creep");
-                RegisterPrototypeTypeMapping<IFlag, NativeFlag>("Flag", FindConstant.Flags, "flag");
-                RegisterPrototypeTypeMapping<IResource, NativeResource>("Resource", FindConstant.DroppedResources, "resource");
-                RegisterPrototypeTypeMapping<IConstructionSite, NativeConstructionSite>("ConstructionSite", FindConstant.ConstructionSites, "constructionSite");
-                RegisterPrototypeTypeMapping<ITombstone, NativeTombstone>("Tombstone", FindConstant.Tombstones, "tombstone");
-                RegisterPrototypeTypeMapping<IRuin, NativeRuin>("Ruin", FindConstant.Ruins, "ruin");
+                RegisterPrototypeTypeMapping<IStructureSpawn, NativeStructureSpawn>("StructureSpawn", FindConstant.Structures, FindConstant.MySpawns, FindConstant.HostileSpawns, "structure", "spawn");
+                RegisterPrototypeTypeMapping<IStructureContainer, NativeStructureContainer>("StructureContainer", FindConstant.Structures, FindConstant.MyStructures, FindConstant.HostileStructures, "structure", "container");
+                RegisterPrototypeTypeMapping<IStructureController, NativeStructureController>("StructureController", FindConstant.Structures, FindConstant.MyStructures, FindConstant.HostileStructures, "structure", "controller");
+                RegisterPrototypeTypeMapping<IStructureExtension, NativeStructureExtension>("StructureExtension", FindConstant.Structures, FindConstant.MyStructures, FindConstant.HostileStructures, "structure", "extension");
+                RegisterPrototypeTypeMapping<IStructureStorage, NativeStructureStorage>("StructureStorage", FindConstant.Structures, FindConstant.MyStructures, FindConstant.HostileStructures, "structure", "storage");
+                RegisterPrototypeTypeMapping<IStructureRampart, NativeStructureRampart>("StructureRampart", FindConstant.Structures, FindConstant.MyStructures, FindConstant.HostileStructures, "structure", "rampart");
+                RegisterPrototypeTypeMapping<IStructureTower, NativeStructureTower>("StructureTower", FindConstant.Structures, FindConstant.MyStructures, FindConstant.HostileStructures, "structure", "tower");
+                RegisterPrototypeTypeMapping<IStructureLink, NativeStructureLink>("StructureLink", FindConstant.Structures, FindConstant.MyStructures, FindConstant.HostileStructures, "structure", "link");
+                RegisterPrototypeTypeMapping<IStructureTerminal, NativeStructureTerminal>("StructureTerminal", FindConstant.Structures, FindConstant.MyStructures, FindConstant.HostileStructures, "structure", "terminal");
+                RegisterPrototypeTypeMapping<IStructureExtractor, NativeStructureExtractor>("StructureExtractor", FindConstant.Structures, FindConstant.MyStructures, FindConstant.HostileStructures, "structure", "extractor");
+                RegisterPrototypeTypeMapping<IStructureFactory, NativeStructureFactory>("StructureFactory", FindConstant.Structures, FindConstant.MyStructures, FindConstant.HostileStructures, "structure", "factory");
+                RegisterPrototypeTypeMapping<IStructureInvaderCore, NativeStructureInvaderCore>("StructureInvaderCore", FindConstant.Structures, FindConstant.MyStructures, FindConstant.HostileStructures, "structure", "invaderCore");
+                RegisterPrototypeTypeMapping<IStructureKeeperLair, NativeStructureKeeperLair>("StructureKeeperLair", FindConstant.Structures, FindConstant.MyStructures, FindConstant.HostileStructures, "structure", "keeperLair");
+                RegisterPrototypeTypeMapping<IStructureLab, NativeStructureLab>("StructureLab", FindConstant.Structures, FindConstant.MyStructures, FindConstant.HostileStructures, "structure", "lab");
+                RegisterPrototypeTypeMapping<IStructureNuker, NativeStructureNuker>("StructureNuker", FindConstant.Structures, FindConstant.MyStructures, FindConstant.HostileStructures, "structure", "nuker");
+                RegisterPrototypeTypeMapping<IStructureObserver, NativeStructureObserver>("StructureObserver", FindConstant.Structures, FindConstant.MyStructures, FindConstant.HostileStructures, "structure", "observer");
+                RegisterPrototypeTypeMapping<IStructurePowerBank, NativeStructurePowerBank>("StructurePowerBank", FindConstant.Structures, FindConstant.MyStructures, FindConstant.HostileStructures, "structure", "powerBank");
+                RegisterPrototypeTypeMapping<IStructurePowerSpawn, NativeStructurePowerSpawn>("StructurePowerSpawn", FindConstant.Structures, FindConstant.MyStructures, FindConstant.HostileStructures, "structure", "powerSpawn");
+                RegisterPrototypeTypeMapping<IStructurePortal, NativeStructurePortal>("StructurePortal", FindConstant.Structures, FindConstant.MyStructures, FindConstant.HostileStructures, "structure", "portal");
+                RegisterPrototypeTypeMapping<IOwnedStructure, NativeOwnedStructure>("OwnedStructure", FindConstant.Structures, FindConstant.MyStructures, FindConstant.HostileStructures, "structure");
+                RegisterPrototypeTypeMapping<IStructureRoad, NativeStructureRoad>("StructureRoad", FindConstant.Structures, FindConstant.MyStructures, FindConstant.HostileStructures, "structure", "road");
+                RegisterPrototypeTypeMapping<IStructureWall, NativeStructureWall>("StructureWall", FindConstant.Structures, FindConstant.MyStructures, FindConstant.HostileStructures, "structure", "constructedWall");
+                RegisterPrototypeTypeMapping<IStructure, NativeStructure>("Structure", FindConstant.Structures, FindConstant.MyStructures, FindConstant.HostileStructures, "structure");
+                RegisterPrototypeTypeMapping<ISource, NativeSource>("Source", FindConstant.Sources, null, null, "source");
+                RegisterPrototypeTypeMapping<IMineral, NativeMineral>("Mineral", FindConstant.Minerals, null, null, "mineral");
+                RegisterPrototypeTypeMapping<IDeposit, NativeDeposit>("Deposit", FindConstant.Deposits, null, null, "deposit");
+                RegisterPrototypeTypeMapping<INuke, NativeNuke>("Nuke", FindConstant.Nukes, null, null, "nuke");
+                RegisterPrototypeTypeMapping<ICreep, NativeCreep>("Creep", FindConstant.Creeps, FindConstant.MyCreeps, FindConstant.HostileCreeps, "creep");
+                RegisterPrototypeTypeMapping<IFlag, NativeFlag>("Flag", FindConstant.Flags, null, null, "flag");
+                RegisterPrototypeTypeMapping<IResource, NativeResource>("Resource", FindConstant.DroppedResources, null, null, "resource");
+                RegisterPrototypeTypeMapping<IConstructionSite, NativeConstructionSite>("ConstructionSite", FindConstant.ConstructionSites, FindConstant.MyConstructionSites, FindConstant.HostileConstructionSites, "constructionSite");
+                RegisterPrototypeTypeMapping<ITombstone, NativeTombstone>("Tombstone", FindConstant.Tombstones, null, null, "tombstone");
+                RegisterPrototypeTypeMapping<IRuin, NativeRuin>("Ruin", FindConstant.Ruins, null, null, "ruin");
             }
             catch (Exception ex)
             {

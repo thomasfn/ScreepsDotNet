@@ -154,9 +154,9 @@ namespace ScreepsDotNet.Native.World
             return (RoomCreateFlagResult)resultJs.GetPropertyAsInt32("code");
         }
 
-        public IEnumerable<T> Find<T>() where T : class, IRoomObject
+        public IEnumerable<T> Find<T>(bool? my = null) where T : class, IRoomObject
         {
-            var findConstant = NativeRoomObjectPrototypes<T>.FindConstant;
+            var findConstant = (my == true ? NativeRoomObjectPrototypes<T>.MyFindConstant : my == false ? NativeRoomObjectPrototypes<T>.HostileFindConstant : null) ?? NativeRoomObjectPrototypes<T>.FindConstant;
             if (findConstant == null) { return Enumerable.Empty<T>(); }
             if (typeof(T).IsAssignableTo(typeof(IWithId)))
             {

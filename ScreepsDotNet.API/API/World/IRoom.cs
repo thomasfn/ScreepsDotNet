@@ -178,8 +178,9 @@ namespace ScreepsDotNet.API.World
         /// Find all objects of the specified type in the room.
         /// </summary>
         /// <typeparam name="T"></typeparam>
+        /// <param name="my">If set, filter objects based on ownership. Does nothing for object types that don't have an ownership.</param>
         /// <returns></returns>
-        IEnumerable<T> Find<T>() where T : class, IRoomObject;
+        IEnumerable<T> Find<T>(bool? my = null) where T : class, IRoomObject;
 
         /// <summary>
         /// Find all objects of the specified type in the room.
