@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices.JavaScript;
+using System.Linq;
 
 using ScreepsDotNet.API.World;
+using ScreepsDotNet.API;
 
 namespace ScreepsDotNet.Native.World
 {
@@ -21,15 +23,19 @@ namespace ScreepsDotNet.Native.World
         private readonly JSObject bodypartCostObj;
         private readonly JSObject structureCostObj;
 
-        private readonly IDictionary<string, int> intCache = new Dictionary<string, int>();
-        private readonly IDictionary<string, double> doubleCache = new Dictionary<string, double>();
+        private readonly Dictionary<string, int> intCache = new();
+        private readonly Dictionary<string, double> doubleCache = new();
 
         private readonly int?[] bodyPartCostCache = new int?[Enum.GetValues<BodyPartType>().Length];
         private int[]? rampartHitsMaxCache;
 
-        private readonly IDictionary<Type, int> structureCostCache = new Dictionary<Type, int>();
+        private readonly Dictionary<Type, int> structureCostCache = new();
+        private readonly Dictionary<ResourceType, int?> reactionTimeCache = new();
+        private readonly HashSet<string> obstacleObjectTypes = new();
 
         private ControllerConstants? controllerConstantsCache;
+        private CreepConstants? creepConstantsCache;
+        private Dictionary<(ResourceType, ResourceType), ResourceType>? reactionsCache;
 
         public ControllerConstants Controller
             => controllerConstantsCache ??= new(
@@ -50,6 +56,29 @@ namespace ScreepsDotNet.Native.World
                 nukeBlockedUpgrade: GetAsInt("CONTROLLER_NUKE_BLOCKED_UPGRADE")
             );
 
+        public CreepConstants Creep
+            => creepConstantsCache ??= new(
+                creepLifeTime: GetAsInt("CREEP_LIFE_TIME"),
+                creepClaimLifeTime: GetAsInt("CREEP_CLAIM_LIFE_TIME"),
+                creepCorpseRate: GetAsDouble("CREEP_CORPSE_RATE"),
+                creepPartMaxEnergy: GetAsInt("CREEP_PART_MAX_ENERGY"),
+                carryCapacity: GetAsInt("CARRY_CAPACITY"),
+                harvestPower: GetAsInt("HARVEST_POWER"),
+                harvestMineralPower: GetAsInt("HARVEST_MINERAL_POWER"),
+                harvestDepositPower: GetAsInt("HARVEST_DEPOSIT_POWER"),
+                repairPower: GetAsInt("REPAIR_POWER"),
+                dismantlePower: GetAsInt("DISMANTLE_POWER"),
+                buildPower: GetAsInt("BUILD_POWER"),
+                attackPower: GetAsInt("ATTACK_POWER"),
+                upgradeControllerPower: GetAsInt("UPGRADE_CONTROLLER_POWER"),
+                rangedAttackPower: GetAsInt("RANGED_ATTACK_POWER"),
+                healPower: GetAsInt("HEAL_POWER"),
+                rangedHealPower: GetAsInt("RANGED_HEAL_POWER"),
+                repairCost: GetAsDouble("REPAIR_COST"),
+                dismantleCost: GetAsDouble("DISMANTLE_COST")
+            );
+
+        public IReadOnlyDictionary<(ResourceType, ResourceType), ResourceType> Reactions => reactionsCache ??= GetReactions();
 
         public NativeConstants()
         {
@@ -78,6 +107,16 @@ namespace ScreepsDotNet.Native.World
         public int GetRampartHitsMax(int rcl)
             => (rampartHitsMaxCache ??= InterpretArrayLikeLookupTableInt(constantsObj.GetPropertyAsJSObject("RAMPART_HITS_MAX")!, 2))[rcl];
 
+        public int? GetReactionTime(ResourceType product)
+        {
+            if (reactionTimeCache.TryGetValue(product, out var value)) { return value; }
+            using var reactionTimeObj = constantsObj.GetPropertyAsJSObject("REACTION_TIME")!;
+            int? reactionTime = reactionTimeObj.GetPropertyAsInt32(product.ToJS());
+            if (reactionTime == 0) { reactionTime = null; }
+            reactionTimeCache.Add(product, reactionTime);
+            return reactionTime;
+        }
+
         public int GetAsInt(string key)
         {
             if (intCache.TryGetValue(key, out var value)) { return value; }
@@ -92,6 +131,54 @@ namespace ScreepsDotNet.Native.World
             value = constantsObj.GetPropertyAsDouble(key);
             doubleCache.Add(key, value);
             return value;
+        }
+
+        public bool IsObjectObstacle<T>() where T : IRoomObject
+        {
+            CheckCacheObstacleObjectTypes();
+            var structureConstant = NativeRoomObjectPrototypes<T>.StructureConstant;
+            if (string.IsNullOrEmpty(structureConstant)) { return false; }
+            return obstacleObjectTypes.Contains(structureConstant);
+        }
+
+        public bool IsObjectObstacle(Type objectType)
+        {
+            CheckCacheObstacleObjectTypes();
+            var structureConstant = NativeRoomObjectUtils.GetStructureConstantForInterfaceType(objectType);
+            if (string.IsNullOrEmpty(structureConstant)) { return false; }
+            return obstacleObjectTypes.Contains(structureConstant);
+        }
+
+        private void CheckCacheObstacleObjectTypes()
+        {
+            if (obstacleObjectTypes.Count > 0) { return; }
+            var arrObj = JSUtils.GetStringArrayOnObject(constantsObj, "OBSTACLE_OBJECT_TYPES");
+            if (arrObj == null) { return; }
+            foreach (var str in arrObj)
+            {
+                obstacleObjectTypes.Add(str);
+            }
+        }
+
+        private Dictionary<(ResourceType, ResourceType), ResourceType> GetReactions()
+        {
+            var result = new Dictionary<(ResourceType, ResourceType), ResourceType>();
+            using var reactionsObj = constantsObj.GetPropertyAsJSObject("REACTIONS")!;
+            var topLevelKeys = JSUtils.GetKeysOf(reactionsObj);
+            foreach (var res1Raw in topLevelKeys)
+            {
+                var res1 = res1Raw.ParseResourceType();
+                using var subObj = reactionsObj.GetPropertyAsJSObject(res1Raw)!;
+                var subKeys = JSUtils.GetKeysOf(subObj);
+                foreach (var res2Raw in subKeys)
+                {
+                    var res2 = res2Raw.ParseResourceType();
+                    var productRaw = subObj.GetPropertyAsString(res2Raw)!;
+                    var product = productRaw.ParseResourceType();
+                    result.Add((res1, res2), product);
+                }
+            }
+            return result;
         }
 
         private double[] InterpretArrayLikeLookupTableDouble(JSObject obj, int firstIndex = 0)

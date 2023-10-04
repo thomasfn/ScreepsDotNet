@@ -205,10 +205,10 @@ namespace ScreepsDotNet.Native.World
         private const string TypeIdKey = "__dotnet_typeId";
 
         private static readonly JSObject prototypesObject;
-        private static readonly IList<Type> prototypeTypeMappings = new List<Type>();
-        private static readonly IDictionary<Type, string> prototypeNameMappings = new Dictionary<Type, string>();
-        private static readonly IDictionary<string, Type> structureConstantInterfaceMap = new Dictionary<string, Type>();
-        private static readonly IDictionary<Type, string> interfaceStructureConstantMap = new Dictionary<Type, string>();
+        private static readonly List<Type> prototypeTypeMappings = new();
+        private static readonly Dictionary<Type, string> prototypeNameMappings = new();
+        private static readonly Dictionary<string, Type> structureConstantInterfaceMap = new();
+        private static readonly Dictionary<Type, string> interfaceStructureConstantMap = new();
 
         #region Imports
 
@@ -395,11 +395,11 @@ namespace ScreepsDotNet.Native.World
                 RegisterPrototypeTypeMapping<IStructureRoad, NativeStructureRoad>("StructureRoad", FindConstant.Structures, FindConstant.MyStructures, FindConstant.HostileStructures, "structure", "road");
                 RegisterPrototypeTypeMapping<IStructureWall, NativeStructureWall>("StructureWall", FindConstant.Structures, FindConstant.MyStructures, FindConstant.HostileStructures, "structure", "constructedWall");
                 RegisterPrototypeTypeMapping<IStructure, NativeStructure>("Structure", FindConstant.Structures, FindConstant.MyStructures, FindConstant.HostileStructures, "structure");
-                RegisterPrototypeTypeMapping<ISource, NativeSource>("Source", FindConstant.Sources, null, null, "source");
-                RegisterPrototypeTypeMapping<IMineral, NativeMineral>("Mineral", FindConstant.Minerals, null, null, "mineral");
-                RegisterPrototypeTypeMapping<IDeposit, NativeDeposit>("Deposit", FindConstant.Deposits, null, null, "deposit");
+                RegisterPrototypeTypeMapping<ISource, NativeSource>("Source", FindConstant.Sources, null, null, "source", "source");
+                RegisterPrototypeTypeMapping<IMineral, NativeMineral>("Mineral", FindConstant.Minerals, null, null, "mineral", "mineral");
+                RegisterPrototypeTypeMapping<IDeposit, NativeDeposit>("Deposit", FindConstant.Deposits, null, null, "deposit", "deposit");
                 RegisterPrototypeTypeMapping<INuke, NativeNuke>("Nuke", FindConstant.Nukes, null, null, "nuke");
-                RegisterPrototypeTypeMapping<ICreep, NativeCreep>("Creep", FindConstant.Creeps, FindConstant.MyCreeps, FindConstant.HostileCreeps, "creep");
+                RegisterPrototypeTypeMapping<ICreep, NativeCreep>("Creep", FindConstant.Creeps, FindConstant.MyCreeps, FindConstant.HostileCreeps, "creep", "creep");
                 RegisterPrototypeTypeMapping<IFlag, NativeFlag>("Flag", FindConstant.Flags, null, null, "flag");
                 RegisterPrototypeTypeMapping<IResource, NativeResource>("Resource", FindConstant.DroppedResources, null, null, "resource");
                 RegisterPrototypeTypeMapping<IConstructionSite, NativeConstructionSite>("ConstructionSite", FindConstant.ConstructionSites, FindConstant.MyConstructionSites, FindConstant.HostileConstructionSites, "constructionSite");

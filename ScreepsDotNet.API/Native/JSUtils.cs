@@ -37,6 +37,13 @@ namespace ScreepsDotNet.Native
         [return: JSMarshalAsAttribute<JSType.Array<JSType.Number>>]
         internal static partial int[]? GetIntArrayOnObject([JSMarshalAs<JSType.Object>] JSObject obj, [JSMarshalAs<JSType.String>] string key);
 
+        [JSImport("set", "object")]
+        internal static partial void SetStringArrayOnObject([JSMarshalAs<JSType.Object>] JSObject obj, [JSMarshalAs<JSType.String>] string key, [JSMarshalAs<JSType.Array<JSType.String>>] string[] val);
+
+        [JSImport("get", "object")]
+        [return: JSMarshalAsAttribute<JSType.Array<JSType.String>>]
+        internal static partial string[]? GetStringArrayOnObject([JSMarshalAs<JSType.Object>] JSObject obj, [JSMarshalAs<JSType.String>] string key);
+
         [JSImport("fixupArray", "object")]
         [return: JSMarshalAsAttribute<JSType.Object>]
         internal static partial JSObject FixupArray([JSMarshalAs<JSType.Object>] JSObject obj);

@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Immutable;
+using System.Collections.Generic;
 using System.Runtime.InteropServices.JavaScript;
 
 using ScreepsDotNet.API;
@@ -7,45 +9,39 @@ namespace ScreepsDotNet.Native.World
 {
     internal static class ResourceTypeExtensions
     {
-        public static string ToJS(this ResourceType resourceType)
-            => resourceType switch
+        private static readonly ImmutableArray<string> resourceStrings = new string[]
+        {
+            "energy", "power",
+            "H", "O", "U", "L", "K", "Z", "X", "G",
+            "silicon", "metal", "biomass", "mist",
+            "OH", "ZK", "UL", "UH", "UO", "KH", "KO", "LH", "LO", "ZH", "ZO", "GH", "GO",
+            "UH2O", "UHO2", "KH2O", "KHO2", "LH2O", "LHO2", "ZH2O", "ZHO2", "GH2O", "GHO2",
+            "XUH2O", "XUHO2", "XKH2O", "XKHO2", "XLH2O", "XLHO2", "XZH2O", "XZHO2", "XGH2O", "XGHO2",
+            "ops",
+            "utrium_bar", "lemergium_bar", "zynthium_bar", "keanium_bar", "ghodium_melt", "oxidant", "reductant", "purifier", "battery",
+            "composite", "crystal", "liquid",
+            "wire", "switch", "transistor", "microchip", "circuit", "device",
+            "cell", "phlegm", "tissue", "muscle", "organoid", "organism",
+            "alloy", "tube", "fixtures", "frame", "hydraulics", "machine",
+            "condensate", "concentrate", "extract", "spirit", "emanation", "essence",
+            ""
+        }.ToImmutableArray();
+
+        private static readonly Dictionary<string, ResourceType> stringResources = new();
+
+        static ResourceTypeExtensions()
+        {
+            for (int i = 0; i < resourceStrings.Length; ++i)
             {
-                ResourceType.Energy => "energy",
-                ResourceType.Power => "power",
-                ResourceType.Hydrogen => "H",
-                ResourceType.Oxygen => "O",
-                ResourceType.Utrium => "U",
-                ResourceType.Lemergium => "L",
-                ResourceType.Keanium => "K",
-                ResourceType.Zynthium => "Z",
-                ResourceType.Catalyst => "X",
-                ResourceType.Ghodium => "G",
-                ResourceType.Silicon => "silicon",
-                ResourceType.Metal => "metal",
-                ResourceType.Biomass => "biomass",
-                ResourceType.Mist => "mist",
-                _ => throw new NotImplementedException($"Unknown resource type '{resourceType}'"),
-            };
+                stringResources.Add(resourceStrings[i], (ResourceType)i);
+            }
+        }
+
+        public static string ToJS(this ResourceType resourceType)
+            => resourceStrings[(int)resourceType];
 
         public static ResourceType ParseResourceType(this string str)
-            => str switch
-            {
-                "energy" => ResourceType.Energy,
-                "power" => ResourceType.Power,
-                "H" => ResourceType.Hydrogen,
-                "O" => ResourceType.Oxygen,
-                "U" => ResourceType.Utrium,
-                "L" => ResourceType.Lemergium,
-                "K" => ResourceType.Keanium,
-                "Z" => ResourceType.Zynthium,
-                "X" => ResourceType.Catalyst,
-                "G" => ResourceType.Ghodium,
-                "silicon" => ResourceType.Silicon,
-                "metal" => ResourceType.Metal,
-                "biomass" => ResourceType.Biomass,
-                "mist" => ResourceType.Mist,
-                _ => ResourceType.Unknown,
-            };
+            => stringResources.TryGetValue(str, out var resourceType) ? resourceType : ResourceType.Unknown;
     }
 
     [System.Runtime.Versioning.SupportedOSPlatform("browser")]
