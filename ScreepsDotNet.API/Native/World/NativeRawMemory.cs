@@ -42,10 +42,10 @@ namespace ScreepsDotNet.Native.World
         }
 
         public void Add(int key, string value)
-            => throw new InvalidOperationException($"New segments can't be added, they must be requested first");
+            => throw new InvalidOperationException($"Segments can't be added - try setting via the indexer instead");
 
         public void Add(KeyValuePair<int, string> item)
-            => throw new InvalidOperationException($"New segments can't be added, they must be requested first");
+            => throw new InvalidOperationException($"Segments can't be added - try setting via the indexer instead");
 
         public void Clear()
             => throw new InvalidOperationException($"Segments can't be cleared");

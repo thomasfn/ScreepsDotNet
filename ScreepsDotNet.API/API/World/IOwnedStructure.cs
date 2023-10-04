@@ -15,6 +15,6 @@ namespace ScreepsDotNet.API.World
         /// <summary>
         /// An object with the structure’s owner info.
         /// </summary>
-        OwnerInfo Owner { get; }
+        OwnerInfo? Owner { get; }
     }
 }
