@@ -17,12 +17,51 @@ namespace ScreepsDotNet.API.World
           System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
     }
 
+    public readonly struct ShardInfo
+    {
+        /// <summary>
+        /// The name of the shard.
+        /// </summary>
+        public readonly string Name;
+        /// <summary>
+        /// Currently always equals to normal.
+        /// </summary>
+        public readonly string Type;
+        /// <summary>
+        /// Whether this shard belongs to the PTR.
+        /// </summary>
+        public readonly bool PTR;
+
+        public ShardInfo(string name, string type, bool ptr)
+        {
+            Name = name;
+            Type = type;
+            PTR = ptr;
+        }
+    }
+
     public interface IGame
     {
         /// <summary>
         /// An object containing information about your CPU usage.
         /// </summary>
         ICpu Cpu { get; }
+
+        /// <summary>
+        /// <para>
+        /// InterShardMemory object provides an interface for communicating between shards.
+        /// Your script is executed separatedly on each shard, and their Memory objects are isolated from each other.
+        /// In order to pass messages and data between shards, you need to use InterShardMemory instead.
+        /// </para>
+        /// <para>
+        /// Every shard can have its own 100 KB of data in string format that can be accessed by all other shards.
+        /// A shard can write only to its own data, other shards' data is read-only.
+        /// </para>
+        /// <para>
+        /// This data has nothing to do with Memory contents, it's a separate data container.
+        /// </para>
+        /// </summary>
+        IInterShardMemory InterShardMemory { get; }
 
         /// <summary>
         /// A global object representing world map. Use it to navigate between rooms.
@@ -68,6 +107,11 @@ namespace ScreepsDotNet.API.World
         /// A hash containing all the rooms available to you with room names as hash keys. A room is visible if you have a creep or an owned structure in it.
         /// </summary>
         IReadOnlyDictionary<string, IRoom> Rooms { get; }
+
+        /// <summary>
+        /// An object describing the world shard where your script is currently being executed in.
+        /// </summary>
+        ShardInfo Shard { get; }
 
         /// <summary>
         /// A hash containing all your spawns with spawn names as hash keys.

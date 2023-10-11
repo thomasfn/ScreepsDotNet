@@ -184,6 +184,11 @@ function initDotNet() {
             getObjectById: (...args) => Game.getObjectById(...args),
             notify: (...args) => Game.notify(...args),
         },
+        interShardMemory: {
+            getLocal: () => InterShardMemory.getLocal(),
+            setLocal: (value) => InterShardMemory.setLocal(value),
+            getRemote: (shard) => InterShardMemory.getRemote(value),
+        },
         map: {
             describeExits: (...args) => Game.map.describeExits(...args),
             findExit: (...args) => Game.map.findExit(...args),

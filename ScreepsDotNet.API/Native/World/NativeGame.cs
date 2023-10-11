@@ -85,6 +85,7 @@ namespace ScreepsDotNet.Native.World
         internal JSObject ProxyObject;
 
         private readonly NativeCpu nativeCpu;
+        private readonly NativeInterShardMemory nativeInterShardMemory;
         private readonly NativeMap nativeMap;
         private readonly NativeMarket nativeMarket;
         private readonly NativePathFinder nativePathFinder;
@@ -101,6 +102,7 @@ namespace ScreepsDotNet.Native.World
         private readonly NativeObjectLazyLookup<NativeStructure, IStructure> structureLazyLookup;
 
         private long? timeCache;
+        private ShardInfo? shardInfoCache;
 
         public JSObject GameObj => ProxyObject;
 
@@ -119,6 +121,8 @@ namespace ScreepsDotNet.Native.World
         public double CpuTime => nativeCpu.GetUsed();
 
         public ICpu Cpu => nativeCpu;
+
+        public IInterShardMemory InterShardMemory => nativeInterShardMemory;
 
         public IMap Map => nativeMap;
 
@@ -140,6 +144,8 @@ namespace ScreepsDotNet.Native.World
 
         public IReadOnlyDictionary<string, IStructureSpawn> Spawns => spawnLazyLookup;
 
+        public ShardInfo Shard => shardInfoCache ??= GetShardInfo();
+
         public IReadOnlyDictionary<string, IStructure> Structures => structureLazyLookup;
 
         public long Time => timeCache ??= ProxyObject.GetPropertyAsInt32("time");
@@ -153,6 +159,7 @@ namespace ScreepsDotNet.Native.World
             SpawnsObj = ProxyObject.GetPropertyAsJSObject("spawns")!;
             StructuresObj = ProxyObject.GetPropertyAsJSObject("structures")!;
             nativeCpu = new NativeCpu(ProxyObject.GetPropertyAsJSObject("cpu")!);
+            nativeInterShardMemory = new NativeInterShardMemory();
             nativeMap = new NativeMap();
             nativeMarket = new NativeMarket(ProxyObject.GetPropertyAsJSObject("market")!);
             nativePathFinder = new NativePathFinder();
@@ -397,6 +404,16 @@ namespace ScreepsDotNet.Native.World
                 }
             }
             return new WrapperObjectsFromCopyBufferEnumerable<T>(this, objectsByIdCache, packets);
+        }
+
+        private ShardInfo GetShardInfo()
+        {
+            using var shardObj = GameObj.GetPropertyAsJSObject("shard")!;
+            return new(
+                name: shardObj.GetPropertyAsString("name")!,
+                type: shardObj.GetPropertyAsString("type")!,
+                ptr: shardObj.GetPropertyAsBoolean("ptr")!
+            );
         }
     }
 }
