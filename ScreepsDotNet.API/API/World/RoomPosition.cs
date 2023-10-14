@@ -143,7 +143,7 @@ namespace ScreepsDotNet.API.World
         public static ExitDirection operator -(RoomCoord lhs, RoomCoord rhs)
         {
             int dx = lhs.X - rhs.X;
-            int dy = lhs.Y - rhs.Y;
+            int dy = rhs.Y - lhs.Y;
             var ang = Math.Atan2(dy, dx) + Math.PI * 0.5;
             if (ang < 0.0) { ang += (Math.PI * 2.0); }
             return (ExitDirection)((int)Math.Round(ang / (Math.PI * 0.25)) % 8 + 1);

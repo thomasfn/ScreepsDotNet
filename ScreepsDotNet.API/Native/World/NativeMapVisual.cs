@@ -9,6 +9,44 @@ using ScreepsDotNet.API.World;
 namespace ScreepsDotNet.Native.World
 {
     [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    internal static class MapVisualExtensions
+    {
+        public static string ToJS(this MapTextFontStyle mapTextFontStyle)
+            => mapTextFontStyle switch
+            {
+                MapTextFontStyle.Normal => "normal",
+                MapTextFontStyle.Italic => "italic",
+                MapTextFontStyle.Oblique => "oblique",
+                _ => throw new ArgumentException("Invalid font style", nameof(mapTextFontStyle))
+            };
+
+        public static string ToJS(this MapTextFontVariant mapTextFontVariant)
+           => mapTextFontVariant switch
+           {
+               MapTextFontVariant.Normal => "normal",
+               MapTextFontVariant.SmallCaps => "small-caps",
+               _ => throw new ArgumentException("Invalid font variant", nameof(mapTextFontVariant))
+           };
+
+        public static JSObject ToJS(this MapTextVisualStyle textVisualStyle)
+        {
+            var obj = JSUtils.CreateObject(null);
+            if (textVisualStyle.Color != null) { obj.SetProperty("color", textVisualStyle.Color.Value.ToString()); }
+            if (!string.IsNullOrEmpty(textVisualStyle.FontFamily)) { obj.SetProperty("fontFamily", textVisualStyle.FontFamily); }
+            if (textVisualStyle.FontSize != null) { obj.SetProperty("fontSize", textVisualStyle.FontSize.Value); }
+            if (textVisualStyle.FontStyle != null) { obj.SetProperty("fontStyle", textVisualStyle.FontStyle.Value.ToJS()); }
+            if (textVisualStyle.FontVariant != null) { obj.SetProperty("fontVariant", textVisualStyle.FontVariant.Value.ToJS()); }
+            if (textVisualStyle.Stroke != null) { obj.SetProperty("stroke", textVisualStyle.Stroke.Value.ToString()); }
+            if (textVisualStyle.StrokeWidth != null) { obj.SetProperty("strokeWidth", textVisualStyle.StrokeWidth.Value); }
+            if (textVisualStyle.BackgroundColor != null) { obj.SetProperty("backgroundColor", textVisualStyle.BackgroundColor.Value.ToString()); }
+            if (textVisualStyle.BackgroundPadding != null) { obj.SetProperty("backgroundPadding", textVisualStyle.BackgroundPadding.Value); }
+            if (textVisualStyle.Align != null) { obj.SetProperty("align", textVisualStyle.Align.Value.ToJS()); }
+            if (textVisualStyle.Opacity != null) { obj.SetProperty("opacity", textVisualStyle.Opacity.Value); }
+            return obj;
+        }
+    }
+
+    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
     internal partial class NativeMapVisual : IMapVisual
     {
         #region Imports
@@ -84,7 +122,7 @@ namespace ScreepsDotNet.Native.World
             return this;
         }
 
-        public IMapVisual Text(string text, RoomPosition pos, TextVisualStyle? style = null)
+        public IMapVisual Text(string text, RoomPosition pos, MapTextVisualStyle? style = null)
         {
             using var posJs = pos.ToJS();
             using var styleJs = style?.ToJS();
