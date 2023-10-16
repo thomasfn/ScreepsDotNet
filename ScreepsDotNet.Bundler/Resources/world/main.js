@@ -206,7 +206,10 @@ function initDotNet() {
             deal: (...args) => Game.market.deal(...args),
             extendOrder: (...args) => Game.market.extendOrder(...args),
             getAllOrders: (...args) => Game.market.getAllOrders(...args),
-            getHistory: (...args) => Game.market.getHistory(...args),
+            getHistory: (...args) => {
+                const result = Game.market.getHistory(...args);
+                return Array.isArray(result) ? result : [];
+            },
             getOrderById: (...args) => Game.market.getOrderById(...args),
         },
         cpu: {

@@ -27,10 +27,10 @@ namespace ScreepsDotNet.Native.World
         {
             get
             {
-                if (isDead) { return false; }
                 if (proxyObjectValidAsOf < nativeRoot.TickIndex)
                 {
                     proxyObject = ReacquireProxyObject();
+                    proxyObjectValidAsOf = nativeRoot.TickIndex;
                     if (proxyObject == null)
                     {
                         isDead = true;
@@ -38,12 +38,12 @@ namespace ScreepsDotNet.Native.World
                     }
                     else
                     {
+                        isDead = false;
                         ClearNativeCache();
-                        proxyObjectValidAsOf = nativeRoot.TickIndex;
                         return true;
                     }
                 }
-                return true;
+                return !isDead;
             }
         }
 
@@ -68,7 +68,6 @@ namespace ScreepsDotNet.Native.World
 
         protected void TouchProxyObject(bool objectNeededNow = true)
         {
-            if (isDead) { throw new NativeObjectNoLongerExistsException(); }
             if (proxyObjectValidAsOf < nativeRoot.TickIndex || (proxyObject == null && objectNeededNow))
             {
                 proxyObject?.Dispose();
@@ -81,8 +80,13 @@ namespace ScreepsDotNet.Native.World
                 }
                 else
                 {
+                    isDead = false;
                     proxyObjectValidAsOf = nativeRoot.TickIndex;
                 }
+            }
+            else if (isDead)
+            {
+                throw new NativeObjectNoLongerExistsException();
             }
         }
 
