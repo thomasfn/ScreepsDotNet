@@ -1,6 +1,6 @@
 # Screeps DotNet
 
-A toolset and API to build bots for [Screeps Arena](https://store.steampowered.com/app/1137320/Screeps_Arena/) and [Screeps World](https://store.steampowered.com/app/464350/Screeps_World/) (coming soon) using .Net 7.0.
+A toolset and API to build bots for [Screeps Arena](https://store.steampowered.com/app/1137320/Screeps_Arena/) and [Screeps World](https://store.steampowered.com/app/464350/Screeps_World/) using .Net 7.0.
 
 * [What is Screeps DotNet?](#what-is-screeps-dotnet)
 * [Quickstart](#quickstart)
@@ -10,17 +10,14 @@ A toolset and API to build bots for [Screeps Arena](https://store.steampowered.c
 * [Troubleshooting](#troubleshooting)
 * [License](#license)
 
-This repo contains the code to build the .NET runtime, libraries and shared host (`dotnet`) installers for
-all supported platforms, as well as the sources to .NET runtime and libraries.
-
 ## What is Screeps DotNet?
 
 Screeps DotNet allows you to write bots for Screeps in any language that targets .Net 7.0, for example C#, and provides tooling to compile your bot to wasm ready to be deployed to the Screeps environment.
 
 - [Screeps Arena](https://store.steampowered.com/app/1137320/Screeps_Arena/) - :heavy_check_mark: full support
-- [Screeps World](https://store.steampowered.com/app/464350/Screeps_World/) - :x: not yet supported (wip)
+- [Screeps World](https://store.steampowered.com/app/464350/Screeps_World/) - :exclamation: partial support (wip)
 
-A managed API is provided that handles the interop with the Screeps javascript API, meaning you only need to write code against a set of generic interfaces. For some examples, please see the [example project](ScreepsDotNet/Arena) which contains example solutions for all 10 tutorials of Screeps Arena.
+A managed API is provided that handles the interop with the Screeps javascript API, meaning you only need to write code against a set of generic interfaces. For some examples, please see the [example Arena project](ScreepsDotNet/Arena) which contains example solutions for all 10 tutorials of Screeps Arena, or the [example World project](ScreepsDotNet/World) which contains a barebones Screeps World bot.
 
 ## Quickstart
 
@@ -105,11 +102,39 @@ namespace ScreepsDotNet
 ```
 
 ### Entrypoint (World)
-To be determined. Screeps World support is still in development!
+
+Replace your `Program.cs` with the following code:
+```CS
+using System;
+using System.Runtime.InteropServices.JavaScript;
+
+using ScreepsDotNet.API.World;
+
+namespace ScreepsDotNet
+{
+    public static partial class Program
+    {
+        private static IGame? game;
+
+        [JSExport]
+        internal static void Init()
+        {
+            game = new Native.World.NativeGame();
+        }
+
+        [JSExport]
+        internal static void Loop()
+        {
+            if (game == null) { return; }
+            Console.WriteLine($"Hello world from C#, the current tick is {game.Time}");
+        }
+    }
+}
+```
 
 ### Building
 
-You can change the namespace if you wish, but make a note that you will also need to change the `main.mjs` file emitted by the bundler, so that the bootloader can find the entrypoint.
+You can change the namespace if you wish, but make a note that you will also need to change the `main.(m)js` file emitted by the bundler, so that the bootloader can find the entrypoint.
 
 Build the project in publish mode.
 ```
@@ -146,7 +171,7 @@ The Screeps .Net API has been designed to be as close to the JS API as possible,
 
 The API is exposed as a set of interfaces and a few support structures and is contained within the `ScreepsDotNet.API` namespace. Any part of the API common to both Arena and World lives directly in this namespace. Anything more specific lives in either `ScreepsDotNet.API.Arena` or `ScreepsDotNet.API.World`.
 
-There is currently only one exposed concrete implementation, and this is `ScreepsDotNet.Native.Arena.NativeGame` implementing `IGame`. At the start of your program you can instantiate this directly. You should avoid creating multiple instances of this throughout the lifetime of your program, and instead just reuse the same instance.
+There is currently only one exposed concrete implementation. For Arena this is `ScreepsDotNet.Native.Arena.NativeGame` implementing `IGame` and for World this is `ScreepsDotNet.Native.World.NativeGame` implementing `IGame`. At the start of your program you can instantiate this directly. You should avoid creating multiple instances of this throughout the lifetime of your program, and instead just reuse the same instance. Note that Arena and World have very different APIs so you won't be able to write code that targets both, unless you wrap the APIs in your own layer or do alot of switching.
 
 All other objects follow the same inheritance hierarchy as the JS API. For example - `IStructureTower : IOwnedStructure : IStructure : IGameObject : IPosition`.
 
@@ -158,7 +183,7 @@ More details and documentation for the API is planned.
 - Many Screeps Arena methods accept both a `Position` and an `IPosition`, to reflect that you can use a game object in the place of a position in the JS API. In some places you may need to convert an `IPosition` to a `Position` by using `gameObject.Position` where accepting an `IPosition` is impractical in the API.
 - JS interop is expensive. If you're using a property that involves JS interop frequently within the same method, for example `ICreep.Body` or `IOwnedStructure.My`, consider caching the evaluation in a local variable instead to reduce JS calls.
 - You can't store properties directly on objects like in the JS API, nor can you extend the objects yourself. You can, however, use `IGameObject` as the key of an `IDictionary` - this is the recommended way to associate data with an object. Don't forget to clean up the dictionary when the game object is destroyed!
-- Keeping objects alive between ticks is supported. If you retrieve the same object again from the API you might get multiple managed instances for the same JS object, but they will all be considered equal and have the same hash code, so this shouldn't cause any problems. Don't forget to test `IGameObject.Exists` to check that a reference is still valid.
+- Keeping objects alive between ticks is supported. If you retrieve the same object again from the API you might get multiple managed instances for the same JS object, but they will all be considered equal and have the same hash code, so this shouldn't cause any problems. Don't forget to test `IGameObject.Exists` to check that a reference is still valid. If you try to use an object that no longer exists, it will throw a `NativeObjectNoLongerExists` exception. If an object starts existing again (e.g. a room or object that regains visibility), you can safely reuse the same instance again.
 
 ## Project Structure
 
@@ -189,12 +214,12 @@ Screeps DotNet is made up of the following pieces:
 - If you need to get your bundle size down, you can try disabling AOT and making a release build. In my tests you can the bundle size down to almost 1mb in this case.
 
 ### CPU time
-- Screeps Arena gives you 1000ms of cpu during the first tick and 50ms for every subsequent tick. If the script takes too long, it will be forcefully terminated, which could have disastrous consequences for the .Net runtime, especially if it happens during GC.
-- The first time your code is executed it will need to be JIT'd. This comes with a one-off cpu time cost.
-- AOT avoids this but inflates the bundle size by quite a bit.
-- There is also an up-front cost to using any methods that involve JS interop, similar to the JIT, as it has to import and bind code to the JS api. This cannot be avoided, even with AOT.
-- This means you need to be very careful about calling a bunch of code for the first time after the first tick as this might incur alot of JIT time and run over the 50ms limit.
-- It is recommended to track CPU usage (via `IGame.Utils.GetCpuTime()`) throughout your main loop and early-out if it's getting too close to the 50ms limit.
+- Screeps Arena gives you 1000ms of cpu during the first tick and 50ms for every subsequent tick. Screeps World gives you 500ms hard limit every tick and a bucket system to limit average cpu usage based on GCL. If the script takes too long, it will be forcefully terminated, which could have disastrous consequences for the .Net runtime, especially if it happens during GC.
+- Code runs slower the first time as the Mono IL interpreter is still figuring out the best way to execute your code. Over time your code will actually gain performance as all the common pathways are hit and optimised internally.
+- AOT will compile parts of your code directly to wasm which will run much faster than the Mono IL interpreter can execute it, but also greatly increases the bundle size and the wasm module compile time, which will usually make using AOT on larger codebases impossible.
+- There is also an up-front cost to using any methods that involve JS interop, similar to a JIT, as it has to import and bind code to the JS api. This cannot be avoided, even with AOT.
+- This means you need to be very careful about calling a bunch of code for the first time after the first tick as this might incur alot of startup overhead and run over the 50ms/500ms limit.
+- It is recommended to track CPU usage (via Arena's `IGame.Utils.GetCpuTime()` or World's `IGame.Cpu.GetUsed()`) throughout your main loop and early-out if it's getting too close to the 50ms/500ms limit.
 - For Screeps World, this is less of a problem as the bucket should hopefully absorb any CPU spikes caused by JIT or JS interop, but remember you still have a 500ms tick limit and this is still quite easy to hit, especially during the runtime startup phase.
 
 ## Troubleshooting
@@ -203,6 +228,16 @@ Screeps DotNet is still very young and you're likely to run into all sorts of pr
 
 - For issues with runtime startup, try enabling verbose logging (`dotNet.setVerboseLogging(true);` in `main.[m]js`). This will hopefully allow you to narrow down where it's getting stuck.
 - For Screeps Arena, any calls to `console.log` are ignored during the startup phase. The bootloader deals with this by storing all logs in a buffer and printing them all during the next loop instead. If you need to log something during startup, you'll need to implement something similar.
+- For script execution timeouts, these are quite common during the initial startup phase when the wasm module is being compiled but should be recoverable. If not, ensure AOT is turned off and try to avoid running too much code during `Init` or the first `Loop`.
+
+## Local Development
+
+If you wish to use latest changes that have not yet been released to NuGet, you will need to build the project locally.
+
+- Whenever you make or pull a change to either the API or the Bundler (including bundled assets like the bootloader js), you will need to manually increment the version number in the csproj.
+- Once the version number is changed, right click on the project in Visual Studio and click Pack. This will generate a NuGet package to the output folder.
+- You can copy the generated NuGet package to your bot's local folder and have your bot's csproj reference that instead of the one from the NuGet repository. This allows your bot to compile against latest changes.
+- Currently this is necessary for Screeps World support as this has not yet been published to NuGet.
 
 ## License
 
