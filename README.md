@@ -116,6 +116,12 @@ namespace ScreepsDotNet
     {
         private static IGame? game;
 
+        public static void Main()
+        {
+            // Keep the entrypoint platform independent and let Init (which is called from js) create the game instance
+            // This keeps the door open for unit testing later down the line
+        }
+
         [JSExport]
         internal static void Init()
         {
