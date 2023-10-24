@@ -104,7 +104,7 @@
     }
 
     /// <summary>
-    /// An object that class contain resources in its cargo
+    /// An object that can contain resources in its cargo
     /// </summary>
     public interface IStore
     {
@@ -130,10 +130,11 @@
         int? GetFreeCapacity(ResourceType? resourceType = null);
 
         /// <summary>
-        /// Gets how much of each resource is in this store
+        /// Gets or sets how much of each resource is in this store.
+        /// Note that setting the resource amount will not affect GetUsedCapacity and GetFreeCapacity, and will not persist across ticks.
         /// </summary>
         /// <param name="resourceType"></param>
         /// <returns></returns>
-        int this[ResourceType resourceType] { get; }
+        int this[ResourceType resourceType] { get; set; }
     }
 }
