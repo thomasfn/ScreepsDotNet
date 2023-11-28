@@ -13,19 +13,28 @@
 		<PackageId>ScreepsDotNet.API</PackageId>
 		<Title>ScreepsDotNet API</Title>
 		<Authors>thomasfn</Authors>
-		<Description>A set of interfaces and a JS binding for the Screeps Arena API</Description>
-		<Version>1.0.0</Version>
-		<PackageVersion>1.0.0</PackageVersion>
+		<Description>A set of interfaces and a JS binding for the Screeps Arena and Screeps World APIs</Description>
+		<Version>1.1.0</Version>
+		<PackageVersion>1.1.0</PackageVersion>
 		<PackageProjectUrl>https://github.com/thomasfn/ScreepsDotNet</PackageProjectUrl>
 		<PackageLicenseFile>LICENSE</PackageLicenseFile>
 		<PackageTags>screeps world arena api</PackageTags>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<Copyright>Copyright (c) thomasfn 2023</Copyright>
+		<GenerateDocumentationFile>True</GenerateDocumentationFile>
 	</PropertyGroup>
+
+	<ItemGroup>
+		<None Remove="build\ScreepsDotNet.API.props" />
+	</ItemGroup>
 
 	<ItemGroup>
 		<Content Include="..\LICENSE" PackagePath="\" />
 		<Content Include="..\README.md" PackagePath="\" />
+		
+		<Content Include="build\ScreepsDotNet.API.props" PackagePath="build\" />
+
+		<Content Include="Native\world.c" PackagePath="Native\" />
 	</ItemGroup>
 
 </Project>

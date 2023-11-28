@@ -13,29 +13,32 @@ namespace ScreepsDotNet.API
     /// <typeparam name="TBodyPartType"></typeparam>
     public readonly struct BodyPart<TBodyPartType> : IEquatable<BodyPart<TBodyPartType>> where TBodyPartType : unmanaged, Enum
     {
-        public readonly BodyPartType Type;
+        public readonly TBodyPartType Type;
         public readonly int Hits;
+        public readonly string? Boost;
 
-        public BodyPart(BodyPartType type, int hits)
+        public BodyPart(TBodyPartType type, int hits, string? boost = null)
         {
             Type = type;
             Hits = hits;
+            Boost = boost;
         }
 
         public override bool Equals(object? obj) => obj is BodyPart<TBodyPartType> part && Equals(part);
 
         public bool Equals(BodyPart<TBodyPartType> other)
-            => Type == other.Type
-            && Hits == other.Hits;
+            => EqualityComparer<TBodyPartType>.Default.Equals(Type, other.Type)
+            && Hits == other.Hits
+            && Boost == other.Boost;
 
-        public override int GetHashCode() => HashCode.Combine(Type, Hits);
+        public override int GetHashCode() => HashCode.Combine(Type, Hits, Boost);
 
         public static bool operator ==(BodyPart<TBodyPartType> left, BodyPart<TBodyPartType> right) => left.Equals(right);
 
         public static bool operator !=(BodyPart<TBodyPartType> left, BodyPart<TBodyPartType> right) => !(left == right);
 
         public override string ToString()
-            => $"{Type}[{Hits}]";
+            => $"{Type}[{Hits}]{(!string.IsNullOrEmpty(Boost) ? $" {Boost}" : "")}";
     }
 
     /// <summary>

@@ -1,20 +1,22 @@
 import * as fflate from 'fflate';
 import './polyfill-fromentries';
 import './polyfill-textencoder';
-import { toBytes } from 'fast-base64/js';
-import { debug, log, setSuppressedLogMode } from './logging';
+import { toBytes as decodeB64 } from 'fast-base64/js';
+import { decode as decodeB32768 } from 'base32768'
+import { debug, error, log, setSuppressedLogMode } from './logging';
 
 import type { MonoConfig, RuntimeAPI } from './dotnet';
 import createDotnetRuntime from './dotnet'
 
-import { advanceFrame, cancelAdvanceFrame, setImmediate } from './timeouts';
+import { advanceFrame, cancelAdvanceFrame } from './timeouts';
 import Promise from 'promise-polyfill';
 
 export interface ManifestEntry {
     path: string;
     originalSize: number;
     compressed: boolean;
-    b64: string;
+    b64?: string;
+    b32768?: string;
 }
 
 export interface Manifest {
@@ -26,6 +28,8 @@ export class DotNet {
     private readonly manifest: readonly Readonly<ManifestEntry>[];
     private readonly monoConfig: Readonly<MonoConfig>;
     private readonly fileMap: Record<string, Uint8Array> = {};
+    private readonly isArena: boolean;
+    private readonly isWorld: boolean;
     private tickIndex: number = 0;
     private runtimeApi: RuntimeAPI | undefined;
     private readonly imports: Record<string, Record<string, unknown>> = {};
@@ -33,12 +37,20 @@ export class DotNet {
     private _tickBarrier?: number;
     private perfFn?: () => number;
     private verboseLogging: boolean = false;
+    private _ready: boolean = false;
+    private startSetupRuntime: boolean = false;
+    private pendingError?: Error;
+    private readonly customRuntimeSetupFnList: ((runtime: RuntimeAPI) => void)[] = [];
+
+    public get ready() { return this._ready; }
 
     private get isTickBarrier() { return this._tickBarrier != null && this._tickBarrier > this.tickIndex; }
 
-    public constructor(manifest: Readonly<Manifest>) {
+    public constructor(manifest: Readonly<Manifest>, env: 'world'|'arena') {
         this.manifest = manifest.manifest;
         this.monoConfig = manifest.config;
+        this.isArena = env === 'arena';
+        this.isWorld = env === 'world';
     }
 
     public setModuleImports(moduleName: string, imports: Record<string, unknown>): void {
@@ -53,27 +65,31 @@ export class DotNet {
         this.perfFn = perfFn;
     }
 
+    public addCustomRuntimeSetupFunction(setupFn: (runtime: RuntimeAPI) => void) {
+        this.customRuntimeSetupFnList.push(setupFn);
+    }
+
     public getExports(): Record<string, any> | undefined {
         return this.exports;
     }
 
     public init(): void {
-        setSuppressedLogMode(true);
+        if (this.isArena) { setSuppressedLogMode(true); }
         this.decodeManifest();
         this.createRuntime();
     }
 
     public loop(loopFn?: () => void): void {
-        setSuppressedLogMode(false);
+        if (this.isArena) { setSuppressedLogMode(false); }
         try {
+            ++this.tickIndex;
             let profiler = this.profile();
             this.runPendingAsyncActions();
             if (loopFn) { loopFn(); }
             profiler = this.profile(profiler, 'loop');
         } finally {
-            setSuppressedLogMode(true);
+            if (this.isArena) { setSuppressedLogMode(true); }
         }
-        ++this.tickIndex;
     }
 
     private profile(marker?: number, blockName?: string): number {
@@ -100,7 +116,15 @@ export class DotNet {
         let totalBytes = 0;
         for (const entry of this.manifest) {
             const profilerB64Marker = this.profile();
-            const fileDataRaw = toBytes(entry.b64);
+            let fileDataRaw: Uint8Array;
+            if ('b64' in entry) {
+                fileDataRaw = decodeB64(entry.b64!);
+            } else if ('b32768' in entry) {
+                fileDataRaw = decodeB32768(entry.b32768!);
+            } else {
+                log(`entry '${entry.path}' does not contain b64 or b32768 data`);
+                continue;
+            }
             profilerB64 += this.profileAccum(profilerB64Marker);
             if (entry.compressed) {
                 const profilerInflateMarker = this.profile();
@@ -122,7 +146,6 @@ export class DotNet {
 
     private createRuntime(): void {
         debug(`creating dotnet runtime...`);
-        let profiler = this.profile();
         createDotnetRuntime((api) => {
             return {
                 config: {
@@ -136,13 +159,7 @@ export class DotNet {
                     response: Promise.resolve(this.downloadResource(request.resolvedUrl!)),
                 }),
                 preRun: () => {
-                    profiler = this.profile(profiler, 'preRun');
-                },
-                onRuntimeInitialized: () => {
-                    profiler = this.profile(profiler, 'onRuntimeInitialized');
-                },
-                onDotnetReady: () => {
-                    profiler = this.profile(profiler, 'onDotnetReady');
+                    if (this.isWorld) { this.tickBarrier(); }
                 },
             };
         }).then(x => {
@@ -177,27 +194,41 @@ export class DotNet {
     }
 
     private async setupRuntime(): Promise<void> {
-        if (!this.runtimeApi) { return; }
-        let profiler = this.profile();
+        if (!this.runtimeApi) {
+            this.pendingError = new Error(`Tried to setupRuntime when runtimeApi was not set`);
+            return;
+        }
+        if (this.startSetupRuntime) {
+            this.pendingError = new Error(`Tried to setupRuntime when it was already called`);
+            return;
+        }
+        this.startSetupRuntime = true;
         debug(`setting up dotnet runtime...`);
+        for (const setupFn of this.customRuntimeSetupFnList) {
+            setupFn(this.runtimeApi);
+          }
         for (const moduleName in this.imports) {
             this.runtimeApi.setModuleImports(moduleName, this.imports[moduleName]);
         }
-        profiler = this.profile(profiler, 'setModuleImports');
         this.exports = await this.runtimeApi.getAssemblyExports(this.monoConfig.mainAssemblyName!);
         if (this.exports) {
             debug(`exports: ${Object.keys(this.exports)}`);
         } else {
             debug(`failed to retrieve exports`);
         }
-        profiler = this.profile(profiler, 'getAssemblyExports');
-        await this.runtimeApi.runMain(this.monoConfig.mainAssemblyName!, []);
+        let profiler = this.profile();
+        try {
+            await this.runtimeApi.runMain(this.monoConfig.mainAssemblyName!, []);
+        } catch (err) {
+            error(`got error when running Program.Main(): ${(err as Error).stack}`);
+        }
         profiler = this.profile(profiler, 'runMain');
+        this._ready = true;
     }
 
     private runPendingAsyncActions(): void {
         if (this.isTickBarrier) {
-            log(`refusing runPendingAsyncActions as tick barrier is in place`);
+            debug(`refusing runPendingAsyncActions as tick barrier is in place`);
             return;
         }
         let numTimersProcessed: number;
@@ -206,11 +237,12 @@ export class DotNet {
             if (numTimersProcessed > 0) {
                 //debug(`ran ${numTimersProcessed} async timers to completion`);
             }
-        } while (numTimersProcessed > 0 && !this.isTickBarrier);
+        } while (numTimersProcessed > 0 && !this.isTickBarrier && !this.pendingError);
+        if (this.pendingError) { throw this.pendingError; }
     }
 
     private tickBarrier(): void {
-        log(`TICK BARRIER`);
+        //debug(`TICK BARRIER`);
         this._tickBarrier = this.tickIndex + 1;
         cancelAdvanceFrame();
     }

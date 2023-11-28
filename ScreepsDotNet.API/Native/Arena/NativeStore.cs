@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices.JavaScript;
-
-using ScreepsDotNet.API.Arena;
+using ScreepsDotNet.API;
 
 namespace ScreepsDotNet.Native.Arena
 {
@@ -49,22 +48,48 @@ namespace ScreepsDotNet.Native.Arena
 
         #endregion
 
+        private const int ResourceCount = 1;
+
         internal readonly JSObject? ProxyObject;
+
+        private int[]? resourceCache;
 
         public NativeStore(JSObject? proxyObject)
         {
             ProxyObject = proxyObject;
         }
 
-        public int this[ResourceType resourceType] => ProxyObject?.GetPropertyAsInt32(resourceType.ToJS()) ?? 0;
+        public int this[ResourceType resourceType]
+        {
+            get
+            {
+                if (resourceCache == null)
+                {
+                    resourceCache = new int[ResourceCount];
+                    resourceCache.AsSpan().Fill(-1);
+                }
+                ref int amount = ref resourceCache[(int)resourceType];
+                if (amount < 0) { amount = ProxyObject?.GetPropertyAsInt32(resourceType.ToJS()) ?? 0; }
+                return amount;
+            }
+            set
+            {
+                if (resourceCache == null)
+                {
+                    resourceCache = new int[ResourceCount];
+                    resourceCache.AsSpan().Fill(-1);
+                }
+                resourceCache[(int)resourceType] = Math.Max(0, value);
+            }
+        }
 
         public int? GetCapacity(ResourceType? resourceType = null)
-            => ProxyObject != null ? Native_GetCapacity(ProxyObject, resourceType.ToJS()) : null;
+            => ProxyObject != null ? Native_GetCapacity(ProxyObject, resourceType?.ToJS()) : null;
 
         public int? GetFreeCapacity(ResourceType? resourceType = null)
-            => ProxyObject != null ? Native_GetFreeCapacity(ProxyObject, resourceType.ToJS()) : null;
+            => ProxyObject != null ? Native_GetFreeCapacity(ProxyObject, resourceType?.ToJS()) : null;
 
         public int? GetUsedCapacity(ResourceType? resourceType = null)
-            => ProxyObject != null ? Native_GetUsedCapacity(ProxyObject, resourceType.ToJS()) : null;
+            => ProxyObject != null ? Native_GetUsedCapacity(ProxyObject, resourceType?.ToJS()) : null;
     }
 }

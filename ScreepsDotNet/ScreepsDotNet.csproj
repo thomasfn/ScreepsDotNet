@@ -1,27 +1,35 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
-    <RuntimeIdentifier>browser-wasm</RuntimeIdentifier>
-	  <WasmMainJSPath>main.js</WasmMainJSPath>
-    <OutputType>Exe</OutputType>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-	  <Nullable>enable</Nullable>
-	  <PublishTrimmed>true</PublishTrimmed>
-	  <TrimMode>full</TrimMode>
-	  <TrimmerRemoveSymbols>true</TrimmerRemoveSymbols>
-	  <InvariantGlobalization>true</InvariantGlobalization>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net7.0</TargetFramework>
+		<RuntimeIdentifier>browser-wasm</RuntimeIdentifier>
+		<WasmMainJSPath>main.js</WasmMainJSPath>
+		<OutputType>Exe</OutputType>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<Nullable>enable</Nullable>
+		<PublishTrimmed>true</PublishTrimmed>
+		<TrimMode>full</TrimMode>
+		<TrimmerRemoveSymbols>true</TrimmerRemoveSymbols>
+		<InvariantGlobalization>true</InvariantGlobalization>
+	</PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
-	  <RunAOTCompilation>true</RunAOTCompilation>
-  </PropertyGroup>
+	<PropertyGroup>
+		<ScreepsEncoding>b64</ScreepsEncoding>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\ScreepsDotNet.API\ScreepsDotNet.API.csproj" />
-  </ItemGroup>
+	<PropertyGroup Condition="'$(Configuration)' == 'Release'">
+		<RunAOTCompilation>false</RunAOTCompilation>
+		<ScreepsCompressAssemblies>false</ScreepsCompressAssemblies>
+		<ScreepsCompressWasm>false</ScreepsCompressWasm>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="ScreepsDotNet.Bundler" Version="1.0.9" PrivateAssets="All" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\ScreepsDotNet.API\ScreepsDotNet.API.csproj" />
+	</ItemGroup>
+
+	<Import Project="..\ScreepsDotNet.API\build\ScreepsDotNet.API.props" />
+
+	<ItemGroup>
+		<PackageReference Include="ScreepsDotNet.Bundler" Version="1.1.0" PrivateAssets="All" />
+	</ItemGroup>
 
 </Project>

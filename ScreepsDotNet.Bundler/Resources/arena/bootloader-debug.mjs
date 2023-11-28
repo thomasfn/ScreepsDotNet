@@ -591,8 +591,8 @@ var bootloader = (function (exports) {
       P ? N(Q, "encode") : L;
      //AnonyCo
 
-    global$1.TextDecoder = global$1.TextEncoder || TextEncoder$1;
-    global$1.TextEncoder = global$1.TextDecoder || TextDecoder$1;
+    global$1.TextDecoder = global$1.TextDecoder || TextDecoder$1;
+    global$1.TextEncoder = global$1.TextEncoder || TextEncoder$1;
 
     const encoder = new TextEncoder();
     new TextDecoder();
@@ -619,6 +619,74 @@ var bootloader = (function (exports) {
     lookup$1['-'.charCodeAt(0)] = 62;
     lookup$1['_'.charCodeAt(0)] = 63;
     Object.fromEntries(Array.from(alphabet).map((a, i) => [i, a.charCodeAt(0)]));
+
+    /**
+      Base32768 is a binary-to-text encoding optimised for UTF-16-encoded text.
+      (e.g. Windows, Java, JavaScript)
+    */
+
+    // Z is a number, usually a uint15 but sometimes a uint7
+
+    const BITS_PER_CHAR = 15; // Base32768 is a 15-bit encoding
+    const BITS_PER_BYTE = 8;
+    const pairStrings = ['ҠҿԀԟڀڿݠޟ߀ߟကဟႠႿᄀᅟᆀᆟᇠሿበቿዠዿጠጿᎠᏟᐠᙟᚠᛟកសᠠᡟᣀᣟᦀᦟ᧠᧿ᨠᨿᯀᯟᰀᰟᴀᴟ⇠⇿⋀⋟⍀⏟␀␟─❟➀➿⠀⥿⦠⦿⨠⩟⪀⪿⫠⭟ⰀⰟⲀⳟⴀⴟⵀⵟ⺠⻟㇀㇟㐀䶟䷀龿ꀀꑿ꒠꒿ꔀꗿꙀꙟꚠꛟ꜀ꝟꞀꞟꡀꡟ', 'ƀƟɀʟ'];
+    const lookupD = {};
+    pairStrings.forEach((pairString, r) => {
+      // Decompression
+      const encodeRepertoire = [];
+      pairString.match(/../gu).forEach(pair => {
+        const first = pair.codePointAt(0);
+        const last = pair.codePointAt(1);
+        for (let codePoint = first; codePoint <= last; codePoint++) {
+          encodeRepertoire.push(String.fromCodePoint(codePoint));
+        }
+      });
+      const numZBits = BITS_PER_CHAR - BITS_PER_BYTE * r; // 0 -> 15, 1 -> 7
+      encodeRepertoire.forEach((chr, z) => {
+        lookupD[chr] = [numZBits, z];
+      });
+    });
+    const decode = str => {
+      const length = str.length;
+
+      // This length is a guess. There's a chance we allocate one more byte here
+      // than we actually need. But we can count and slice it off later
+      const uint8Array = new Uint8Array(Math.floor(length * BITS_PER_CHAR / BITS_PER_BYTE));
+      let numUint8s = 0;
+      let uint8 = 0;
+      let numUint8Bits = 0;
+      for (let i = 0; i < length; i++) {
+        const chr = str.charAt(i);
+        if (!(chr in lookupD)) {
+          throw new Error(`Unrecognised Base32768 character: ${chr}`);
+        }
+        const [numZBits, z] = lookupD[chr];
+        if (numZBits !== BITS_PER_CHAR && i !== length - 1) {
+          throw new Error('Secondary character found before end of input at position ' + String(i));
+        }
+
+        // Take most significant bit first
+        for (let j = numZBits - 1; j >= 0; j--) {
+          const bit = z >> j & 1;
+          uint8 = (uint8 << 1) + bit;
+          numUint8Bits++;
+          if (numUint8Bits === BITS_PER_BYTE) {
+            uint8Array[numUint8s] = uint8;
+            numUint8s++;
+            uint8 = 0;
+            numUint8Bits = 0;
+          }
+        }
+      }
+
+      // Final padding bits! Requires special consideration!
+      // Remember how we always pad with 1s?
+      // Note: there could be 0 such bits, check still works though
+      if (uint8 !== (1 << numUint8Bits) - 1) {
+        throw new Error('Padding mismatch');
+      }
+      return new Uint8Array(uint8Array.buffer, 0, numUint8s);
+    };
 
     const pendingLogMessages = [];
     let suppressedLogMode = false;
@@ -3423,7 +3491,7 @@ var bootloader = (function (exports) {
       }
     };
 
-    function _empty() {}
+    function _empty$1() {}
     const console$1 = {
       ...importedLogging
     };
@@ -3440,7 +3508,7 @@ var bootloader = (function (exports) {
     }
     const globalThis = global;
     function _callIgnored(body, direct) {
-      return _call$1(body, _empty, direct);
+      return _call$1(body, _empty$1, direct);
     }
     function _rethrow(thrown, value) {
       if (thrown) throw value;
@@ -3459,7 +3527,7 @@ var bootloader = (function (exports) {
     }
     function _continueIgnored(value) {
       if (value && value.then) {
-        return value.then(_empty);
+        return value.then(_empty$1);
       }
     }
     function _async(f) {
@@ -3483,7 +3551,7 @@ var bootloader = (function (exports) {
       }
       return then ? value.then(then) : value;
     }
-    function _catch(body, recover) {
+    function _catch$1(body, recover) {
       try {
         var result = body();
       } catch (e) {
@@ -3494,7 +3562,7 @@ var bootloader = (function (exports) {
       }
       return result;
     }
-    function _continue(value, then) {
+    function _continue$1(value, then) {
       return value && value.then ? value.then(then) : then(value);
     }
     function _invoke(body, then) {
@@ -3507,12 +3575,12 @@ var bootloader = (function (exports) {
     function _invokeIgnored(body) {
       var result = body();
       if (result && result.then) {
-        return result.then(_empty);
+        return result.then(_empty$1);
       }
     }
-    function _awaitIgnored(value, direct) {
+    function _awaitIgnored$1(value, direct) {
       if (!direct) {
-        return value && value.then ? value.then(_empty) : Promise$1.resolve();
+        return value && value.then ? value.then(_empty$1) : Promise$1.resolve();
       }
     }
     function _settle(pact, state, value) {
@@ -3768,20 +3836,33 @@ var bootloader = (function (exports) {
         src: './'
       }
     };
+    let wasmPrevAttemptBytes, wasmPrevAttemptModule;
     function _WebAssemblyInstantiate(bytes, imports) {
       try {
-        const compiledModule = new WebAssembly.Module(bytes);
+        let compiledModule;
+        if (wasmPrevAttemptBytes == bytes && wasmPrevAttemptModule) {
+          compiledModule = wasmPrevAttemptModule;
+          debug(`wasm module found from previous pass`);
+        } else {
+          wasmPrevAttemptBytes = bytes;
+          const t0 = Game.cpu.getUsed();
+          wasmPrevAttemptModule = new WebAssembly.Module(bytes);
+          const t1 = Game.cpu.getUsed();
+          debug(`wasm module compiled in ~${t1 - t0}ms`);
+          compiledModule = wasmPrevAttemptModule;
+        }
         const compiledInstance = new WebAssembly.Instance(compiledModule, imports);
+        wasmPrevAttemptBytes = null;
+        wasmPrevAttemptModule = null;
         return Promise$1.resolve({
           instance: compiledInstance,
           module: compiledModule
         });
       } catch (err) {
-        console$1.log(`Failed to create wasm instance: ${err}`);
+        error(`Failed to create wasm instance: ${err}`);
         return Promise$1.reject(err);
       }
     }
-    //! Licensed to the .NET Foundation under one or more agreements.
     //! The .NET Foundation licenses this file to you under the MIT license.
     var __dotnet_runtime = function (e) {
 
@@ -3810,7 +3891,7 @@ var bootloader = (function (exports) {
           function t() {
             tc.environmentVariables = tc.environmentVariables || {}, tc.assets = tc.assets || [], tc.runtimeOptions = tc.runtimeOptions || [], tc.globalizationMode = tc.globalizationMode || "auto", tc.debugLevel, tc.diagnosticTracing, b.diagnosticTracing = !!b.config.diagnosticTracing;
           }
-          return _catch(function () {
+          return _catch$1(function () {
             const n = b.locateFile(e);
             return _await$1(b.fetch_like(n), function (r) {
               return _await$1(r.json(), function (s) {
@@ -3820,7 +3901,7 @@ var bootloader = (function (exports) {
                   if (s.assets = [...(s.assets || []), ...(tc.assets || [])], s.environmentVariables = {
                     ...(s.environmentVariables || {}),
                     ...(tc.environmentVariables || {})
-                  }, tc = b.config = o.config = Object.assign(o.config, s), t(), o.onConfigLoaded) return _catch(function () {
+                  }, tc = b.config = o.config = Object.assign(o.config, s), t(), o.onConfigLoaded) return _catch$1(function () {
                     return _await$1(o.onConfigLoaded(b.config), function () {
                       0, t();
                     });
@@ -3859,7 +3940,7 @@ var bootloader = (function (exports) {
         return _await$1();
       });
       const jc = _async(function (e, t) {
-        return _continue(_catch(function () {
+        return _continue$1(_catch$1(function () {
           return _await$1(Rc(o.configSrc), function () {
             0, b.diagnosticTracing && console$1.debug("MONO_WASM: instantiate_wasm_module");
             const n = Ko("dotnetwasm");
@@ -3877,7 +3958,7 @@ var bootloader = (function (exports) {
       });
       const Ac = _async(function () {
         b.diagnosticTracing && console$1.debug("MONO_WASM: mono_wasm_after_user_runtime_initialized");
-        return _catch(function () {
+        return _catch$1(function () {
           if (!o.disableDotnet6Compatibility && o.exports) {
             const e = globalThis;
             for (let t = 0; t < o.exports.length; ++t) {
@@ -3887,8 +3968,8 @@ var bootloader = (function (exports) {
             }
           }
           return function () {
-            if (n, b.diagnosticTracing && console$1.debug("MONO_WASM: Initializing mono runtime"), o.onDotnetReady) return _catch(function () {
-              return _awaitIgnored(o.onDotnetReady());
+            if (n, b.diagnosticTracing && console$1.debug("MONO_WASM: Initializing mono runtime"), o.onDotnetReady) return _catch$1(function () {
+              return _awaitIgnored$1(o.onDotnetReady());
             }, function (e) {
               throw Sc("MONO_WASM: onDotnetReady () failed", e), e;
             });
@@ -3899,7 +3980,7 @@ var bootloader = (function (exports) {
       });
       const Ec = _async(function () {
         b.diagnosticTracing && console$1.debug("MONO_WASM: mono_wasm_before_user_runtime_initialized");
-        return _catch(function () {
+        return _catch$1(function () {
           return _call$1($c, function () {
             0, de(), b.mono_wasm_load_runtime_done || Nc("unused", tc.debugLevel), b.mono_wasm_runtime_is_ready || mono_wasm_runtime_ready(), b.mono_wasm_symbols_are_ready || ke("dotnet.js.symbols"), setTimeout$1(() => {
               Ar.init_fields();
@@ -3939,7 +4020,7 @@ var bootloader = (function (exports) {
       const wc = _async(function (e) {
         return _await$1(cc.promise, function () {
           b.diagnosticTracing && console$1.debug("MONO_WASM: onRuntimeInitialized"), uc.promise_control.resolve();
-          return _continue(_catch(function () {
+          return _continue$1(_catch$1(function () {
             const _rc2 = rc;
             return _await$1(_rc2 || us(), function () {
               return _await$1(_rc2 || Ec(), function (_Ec) {
@@ -3983,7 +4064,7 @@ var bootloader = (function (exports) {
             _temp3 && (e.__chunk = _e$__reader$read, e.__source_offset = 0);
             let t = 0,
               n = 0;
-            return _continue(_for(function () {
+            return _continue$1(_for(function () {
               return !_exit9 && !!e.__reader && !!e.__chunk && !e.__chunk.done;
             }, void 0, function () {
               const o = e.__chunk.value.byteLength - e.__source_offset;
@@ -4029,7 +4110,7 @@ var bootloader = (function (exports) {
       });
       const ws = _async(function (e, t) {
         let _exit8 = false;
-        return _continue(_catch(function () {
+        return _continue$1(_catch$1(function () {
           return _invoke(function () {
             if (a) {
               return _invoke(function () {
@@ -4165,11 +4246,11 @@ var bootloader = (function (exports) {
           if (_exit6) return _result7;
           const t = e.loadRemote && b.config.remoteSources ? b.config.remoteSources : [""];
           let n;
-          return _continue(_forOf(t, function (r) {
+          return _continue$1(_forOf(t, function (r) {
             r = r.trim(), "./" === r && (r = "");
             const t = os(e, r);
             e.name === t ? b.diagnosticTracing && console$1.debug(`MONO_WASM: Attempting to download '${t}'`) : b.diagnosticTracing && console$1.debug(`MONO_WASM: Attempting to download '${t}' for ${e.name}`);
-            return _catch(function () {
+            return _catch$1(function () {
               const r = ss({
                 name: e.name,
                 resolvedUrl: t,
@@ -4199,10 +4280,10 @@ var bootloader = (function (exports) {
         });
       });
       const ns = _async(function (e, t) {
-        return _continue(_for(function () {
+        return _continue$1(_for(function () {
           return !!Yo;
         }, void 0, function () {
-          return _awaitIgnored(Yo.promise);
+          return _awaitIgnored$1(Yo.promise);
         }), function () {
           return _finallyRethrows(function () {
             ++Go, Go == b.maxParallelDownloads && (b.diagnosticTracing && console$1.debug("MONO_WASM: Throttling further parallel downloads"), Yo = it());
@@ -4221,7 +4302,7 @@ var bootloader = (function (exports) {
         });
       });
       const ts = _async(function (e, t) {
-        return _catch(function () {
+        return _catch$1(function () {
           return _await$1(ns(e, t));
         }, function (n) {
           if (c || a) throw n;
@@ -4230,7 +4311,7 @@ var bootloader = (function (exports) {
           if (n && 404 == n.status) throw n;
           e.pendingDownloadInternal = void 0;
           return _await$1(Bo.promise, function (_Bo$promise) {
-            return _catch(function () {
+            return _catch$1(function () {
               return _await$1(ns(e, t));
             }, function () {
               e.pendingDownloadInternal = void 0;
@@ -4317,7 +4398,7 @@ var bootloader = (function (exports) {
         return _await$1();
       });
       const Ue = _async(function () {
-        return _continueIgnored(_catch(function () {
+        return _continueIgnored(_catch$1(function () {
           return _await$1(Promise.resolve().then(function () { return _polyfillNode_process; }), function (e) {
             const t = e => new Promise$1((t, n) => {
                 e.on("error", e => n(e)), e.write("", function () {
@@ -4326,7 +4407,7 @@ var bootloader = (function (exports) {
               }),
               n = t(e.stderr),
               r = t(e.stdout);
-            return _awaitIgnored(Promise$1.all([r, n]));
+            return _awaitIgnored$1(Promise$1.all([r, n]));
           });
         }, function (e) {
           console$1.error(`flushing std* streams failed: ${e}`);
@@ -4342,7 +4423,7 @@ var bootloader = (function (exports) {
         }, !_temp);
       });
       const Re = _async(function (e, t) {
-        return _catch(function () {
+        return _catch$1(function () {
           return _await$1(Te(e, t), function (n) {
             return De(n), n;
           });
@@ -8139,7 +8220,7 @@ var bootloader = (function (exports) {
           throw Sc("MONO_WASM: user preInint() failed", e), pc(e, true), e;
         }
         _async(function () {
-          return _continue(_catch(function () {
+          return _continue$1(_catch$1(function () {
             return _call$1(yc, function () {
               const _rc = rc;
               return _await$1(_rc || vc(), function (_vc) {
@@ -8428,7 +8509,7 @@ var bootloader = (function (exports) {
           const _this = this;
           return _call$1(function () {
             let _exit3 = false;
-            return _await$1(_catch(function () {
+            return _await$1(_catch$1(function () {
               return _invoke(function () {
                 if (!_this.instance) {
                   return _invoke(function () {
@@ -8465,7 +8546,7 @@ var bootloader = (function (exports) {
           const _this2 = this;
           return _call$1(function () {
             let _exit4 = false;
-            return _await$1(_catch(function () {
+            return _await$1(_catch$1(function () {
               let _exit5 = false;
               if (!_this2.moduleConfig.config) throw new Error("Assert failed: Null moduleConfig.config");
               const _this2$instance = _this2.instance;
@@ -14139,6 +14220,26 @@ var bootloader = (function (exports) {
     __dotnet_runtime.moduleExports.dotnet;
     __dotnet_runtime.moduleExports.exit;
 
+    function _empty() {}
+    function _awaitIgnored(value, direct) {
+      if (!direct) {
+        return value && value.then ? value.then(_empty) : Promise$1.resolve();
+      }
+    }
+    function _catch(body, recover) {
+      try {
+        var result = body();
+      } catch (e) {
+        return recover(e);
+      }
+      if (result && result.then) {
+        return result.then(void 0, recover);
+      }
+      return result;
+    }
+    function _continue(value, then) {
+      return value && value.then ? value.then(then) : then(value);
+    }
     function _await(value, then, direct) {
       if (direct) {
         return then ? then(value) : value;
@@ -14160,16 +14261,24 @@ var bootloader = (function (exports) {
       }
     }
     class DotNet {
+      get ready() {
+        return this._ready;
+      }
       get isTickBarrier() {
         return this._tickBarrier != null && this._tickBarrier > this.tickIndex;
       }
-      constructor(manifest) {
+      constructor(manifest, env) {
         this.fileMap = {};
         this.tickIndex = 0;
         this.imports = {};
         this.verboseLogging = false;
+        this._ready = false;
+        this.startSetupRuntime = false;
+        this.customRuntimeSetupFnList = [];
         this.manifest = manifest.manifest;
         this.monoConfig = manifest.config;
+        this.isArena = env === 'arena';
+        this.isWorld = env === 'world';
       }
       setModuleImports(moduleName, imports) {
         this.imports[moduleName] = imports;
@@ -14180,17 +14289,25 @@ var bootloader = (function (exports) {
       setPerfFn(perfFn) {
         this.perfFn = perfFn;
       }
+      addCustomRuntimeSetupFunction(setupFn) {
+        this.customRuntimeSetupFnList.push(setupFn);
+      }
       getExports() {
         return this.exports;
       }
       init() {
-        setSuppressedLogMode(true);
+        if (this.isArena) {
+          setSuppressedLogMode(true);
+        }
         this.decodeManifest();
         this.createRuntime();
       }
       loop(loopFn) {
-        setSuppressedLogMode(false);
+        if (this.isArena) {
+          setSuppressedLogMode(false);
+        }
         try {
+          ++this.tickIndex;
           let profiler = this.profile();
           this.runPendingAsyncActions();
           if (loopFn) {
@@ -14198,9 +14315,10 @@ var bootloader = (function (exports) {
           }
           profiler = this.profile(profiler, 'loop');
         } finally {
-          setSuppressedLogMode(true);
+          if (this.isArena) {
+            setSuppressedLogMode(true);
+          }
         }
-        ++this.tickIndex;
       }
       profile(marker, blockName) {
         if (!this.perfFn) {
@@ -14231,7 +14349,15 @@ var bootloader = (function (exports) {
         let totalBytes = 0;
         for (const entry of this.manifest) {
           const profilerB64Marker = this.profile();
-          const fileDataRaw = toBytes(entry.b64);
+          let fileDataRaw;
+          if ('b64' in entry) {
+            fileDataRaw = toBytes(entry.b64);
+          } else if ('b32768' in entry) {
+            fileDataRaw = decode(entry.b32768);
+          } else {
+            log(`entry '${entry.path}' does not contain b64 or b32768 data`);
+            continue;
+          }
           profilerB64 += this.profileAccum(profilerB64Marker);
           if (entry.compressed) {
             const profilerInflateMarker = this.profile();
@@ -14254,7 +14380,6 @@ var bootloader = (function (exports) {
       }
       createRuntime() {
         debug(`creating dotnet runtime...`);
-        let profiler = this.profile();
         createDotnetRuntime(api => {
           return {
             config: {
@@ -14268,13 +14393,9 @@ var bootloader = (function (exports) {
               response: Promise$1.resolve(this.downloadResource(request.resolvedUrl))
             }),
             preRun: () => {
-              profiler = this.profile(profiler, 'preRun');
-            },
-            onRuntimeInitialized: () => {
-              profiler = this.profile(profiler, 'onRuntimeInitialized');
-            },
-            onDotnetReady: () => {
-              profiler = this.profile(profiler, 'onDotnetReady');
+              if (this.isWorld) {
+                this.tickBarrier();
+              }
             }
           };
         }).then(x => {
@@ -14310,14 +14431,21 @@ var bootloader = (function (exports) {
         const _this = this;
         return _call(function () {
           if (!_this.runtimeApi) {
+            _this.pendingError = new Error(`Tried to setupRuntime when runtimeApi was not set`);
             return _await();
           }
-          let profiler = _this.profile();
+          if (_this.startSetupRuntime) {
+            _this.pendingError = new Error(`Tried to setupRuntime when it was already called`);
+            return _await();
+          }
+          _this.startSetupRuntime = true;
           debug(`setting up dotnet runtime...`);
+          for (const setupFn of _this.customRuntimeSetupFnList) {
+            setupFn(_this.runtimeApi);
+          }
           for (const moduleName in _this.imports) {
             _this.runtimeApi.setModuleImports(moduleName, _this.imports[moduleName]);
           }
-          profiler = _this.profile(profiler, 'setModuleImports');
           return _await(_this.runtimeApi.getAssemblyExports(_this.monoConfig.mainAssemblyName), function (_this$runtimeApi$getA) {
             _this.exports = _this$runtimeApi$getA;
             if (_this.exports) {
@@ -14325,25 +14453,33 @@ var bootloader = (function (exports) {
             } else {
               debug(`failed to retrieve exports`);
             }
-            profiler = _this.profile(profiler, 'getAssemblyExports');
-            return _await(_this.runtimeApi.runMain(_this.monoConfig.mainAssemblyName, []), function () {
+            let profiler = _this.profile();
+            return _continue(_catch(function () {
+              return _awaitIgnored(_this.runtimeApi.runMain(_this.monoConfig.mainAssemblyName, []));
+            }, function (err) {
+              error(`got error when running Program.Main(): ${err.stack}`);
+            }), function () {
               profiler = _this.profile(profiler, 'runMain');
+              _this._ready = true;
             });
           });
         });
       }
       runPendingAsyncActions() {
         if (this.isTickBarrier) {
-          log(`refusing runPendingAsyncActions as tick barrier is in place`);
+          debug(`refusing runPendingAsyncActions as tick barrier is in place`);
           return;
         }
         let numTimersProcessed;
         do {
           numTimersProcessed = advanceFrame();
-        } while (numTimersProcessed > 0 && !this.isTickBarrier);
+        } while (numTimersProcessed > 0 && !this.isTickBarrier && !this.pendingError);
+        if (this.pendingError) {
+          throw this.pendingError;
+        }
       }
       tickBarrier() {
-        log(`TICK BARRIER`);
+        //debug(`TICK BARRIER`);
         this._tickBarrier = this.tickIndex + 1;
         cancelAdvanceFrame();
       }

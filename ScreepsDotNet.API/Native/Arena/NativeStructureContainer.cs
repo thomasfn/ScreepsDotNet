@@ -1,5 +1,5 @@
 ﻿using System.Runtime.InteropServices.JavaScript;
-
+using ScreepsDotNet.API;
 using ScreepsDotNet.API.Arena;
 
 namespace ScreepsDotNet.Native.Arena

@@ -2,12 +2,15 @@
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Text;
 using System.Collections.Generic;
 
 using Newtonsoft.Json;
 
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
+
+using Kzrnm.Convert.Base32768;
 
 namespace ScreepsDotNet.Bundler
 {
@@ -19,6 +22,15 @@ namespace ScreepsDotNet.Bundler
         [Required]
         public string Configuration { get; set; } = null!;
 
+        [Required]
+        public bool CompressAssemblies { get; set; } = true;
+
+        [Required]
+        public bool CompressWasm { get; set; } = true;
+
+        [Required]
+        public string Encoding { get; set; } = null!;
+
         [Output]
         public string[] BundleFilePaths { get; set; } = null!;
 
@@ -27,14 +39,16 @@ namespace ScreepsDotNet.Bundler
             public readonly string Path;
             public readonly int OriginalSize;
             public readonly bool Compressed;
-            public readonly string B64;
+            public readonly string Encoding;
+            public readonly string Encoded;
 
-            public BundledAsset(string path, int originalSize, bool compressed, string b64)
+            public BundledAsset(string path, int originalSize, bool compressed, string encoding, string encoded)
             {
                 Path = path;
                 OriginalSize = originalSize;
                 Compressed = compressed;
-                B64 = b64;
+                Encoding = encoding;
+                Encoded = encoded;
             }
         }
 
@@ -53,28 +67,49 @@ namespace ScreepsDotNet.Bundler
             {
                 var localPath = GetAssetLocalPath(asset);
                 var sourcePath = Path.Combine(AppBundleDir, localPath);
-                using var memoryStream = new MemoryStream();
-                int originalSize;
-                using (var deflateStream = new DeflateStream(memoryStream, CompressionMode.Compress, true))
+                if (ShouldCompressAsset(asset))
                 {
-                    using var fileStream = File.OpenRead(sourcePath);
-                    fileStream.CopyTo(deflateStream);
-                    originalSize = (int)fileStream.Position;
+                    using var memoryStream = new MemoryStream();
+                    int originalSize;
+                    using (var deflateStream = new DeflateStream(memoryStream, CompressionMode.Compress, true))
+                    {
+                        using var fileStream = File.OpenRead(sourcePath);
+                        fileStream.CopyTo(deflateStream);
+                        originalSize = (int)fileStream.Position;
+                    }
+                    bundledAssets.Add(new BundledAsset(localPath.Replace('\\', '/'), originalSize, true, Encoding, Encode(memoryStream.ToArray())));
                 }
-                var b64 = Convert.ToBase64String(memoryStream.ToArray());
-                bundledAssets.Add(new BundledAsset(localPath.Replace('\\', '/'), originalSize, true, b64));
+                else
+                {
+                    byte[] data = File.ReadAllBytes(sourcePath);
+                    bundledAssets.Add(new BundledAsset(localPath.Replace('\\', '/'), data.Length, false, Encoding, Encode(data)));
+                }
             }
 
             var arenaFilePaths = BuildArena(Path.Combine(AppBundleDir, "arena"), monoConfig, bundledAssets);
-            // var worldFilePaths = BuildWorld(Path.Combine(AppBundleDir, "world"), monoConfig, bundledAssets);
+            var worldFilePaths = BuildWorld(Path.Combine(AppBundleDir, "world"), monoConfig, bundledAssets);
 
             BundleFilePaths = Enumerable.Empty<string>()
                 .Concat(arenaFilePaths)
-            //  .Concat(worldFilePaths)
+                .Concat(worldFilePaths)
                 .ToArray();
 
             return !Log.HasLoggedErrors;
         }
+
+        private string Encode(byte[] data) => Encoding switch
+        {
+            "b64" => Convert.ToBase64String(data),
+            "b32768" => Base32768.Encode(data),
+            _ => throw new InvalidOperationException($"Encoding '{Encoding}' is unsupported")
+        };
+
+        private Encoding GetOutputEncoding() => Encoding switch
+        {
+            "b64" => System.Text.Encoding.UTF8,
+            "b32768" => System.Text.Encoding.Unicode,
+            _ => throw new InvalidOperationException($"Encoding '{Encoding}' is unsupported")
+        };
 
         private IEnumerable<string> BuildArena(string path, MonoConfig monoConfig, IEnumerable<BundledAsset> bundledAssets)
         {
@@ -84,12 +119,12 @@ namespace ScreepsDotNet.Bundler
             using (var output = File.Open(bundleFilePath, FileMode.OpenOrCreate))
             {
                 output.SetLength(0);
-                using var writer = new StreamWriter(output);
+                using var writer = new StreamWriter(output, GetOutputEncoding());
                 writer.WriteLine($"export const manifest = [");
                 foreach (var bundledAsset in bundledAssets)
                 {
-                    writer.Write($"  {{ path: './{bundledAsset.Path}', originalSize: {bundledAsset.OriginalSize}, compressed: {(bundledAsset.Compressed ? "true" : "false")}, b64: '");
-                    writer.Write(bundledAsset.B64);
+                    writer.Write($"  {{ path: './{bundledAsset.Path}', originalSize: {bundledAsset.OriginalSize}, compressed: {(bundledAsset.Compressed ? "true" : "false")}, {bundledAsset.Encoding}: '");
+                    writer.Write(bundledAsset.Encoded);
                     writer.WriteLine($"' }},");
                 }
                 writer.WriteLine($"];");
@@ -111,42 +146,47 @@ namespace ScreepsDotNet.Bundler
             };
         }
 
-        //private IEnumerable<string> BuildWorld(string path, MonoConfig monoConfig, IEnumerable<BundledAsset> bundledAssets)
-        //{
-        //    Directory.CreateDirectory(path);
+        private IEnumerable<string> BuildWorld(string path, MonoConfig monoConfig, IEnumerable<BundledAsset> bundledAssets)
+        {
+            Directory.CreateDirectory(path);
 
-        //    var bundleFilePath = Path.Combine(path, "bundle.js");
-        //    using (var output = File.Open(bundleFilePath, FileMode.OpenOrCreate))
-        //    {
-        //        output.SetLength(0);
-        //        using var writer = new StreamWriter(output);
-        //        writer.WriteLine($"const manifest = [");
-        //        foreach (var bundledAsset in bundledAssets)
-        //        {
-        //            writer.Write($"  {{ path: './{bundledAsset.Path}', originalSize: {bundledAsset.OriginalSize}, compressed: {(bundledAsset.Compressed ? "true" : "false")}, b64: '");
-        //            writer.Write(bundledAsset.B64);
-        //            writer.WriteLine($"' }},");
-        //        }
-        //        writer.WriteLine($"];");
-        //        writer.Write($"const config = ");
-        //        writer.Write(JsonConvert.SerializeObject(monoConfig));
-        //        writer.WriteLine($";");
-        //        writer.WriteLine($"module.exports = {{ manifest, config }};");
-        //    }
+            var bundleFilePath = Path.Combine(path, "bundle.js");
+            using (var output = File.Open(bundleFilePath, FileMode.OpenOrCreate))
+            {
+                output.SetLength(0);
+                using var writer = new StreamWriter(output, GetOutputEncoding());
+                writer.WriteLine($"const manifest = [");
+                foreach (var bundledAsset in bundledAssets)
+                {
+                    writer.Write($"  {{ path: './{bundledAsset.Path}', originalSize: {bundledAsset.OriginalSize}, compressed: {(bundledAsset.Compressed ? "true" : "false")}, {bundledAsset.Encoding}: '");
+                    writer.Write(bundledAsset.Encoded);
+                    writer.WriteLine($"' }},");
+                }
+                writer.WriteLine($"];");
+                writer.Write($"const config = ");
+                writer.Write(JsonConvert.SerializeObject(monoConfig));
+                writer.WriteLine($";");
+                writer.WriteLine($"module.exports = {{ manifest, config }};");
+            }
 
-        //    File.WriteAllBytes(Path.Combine(path, "bootloader.js"), Configuration == "Release" ? BundleStaticAssets.world_bootloader_release_js : BundleStaticAssets.world_bootloader_debug_js);
-        //    File.WriteAllBytes(Path.Combine(path, "main.js"), BundleStaticAssets.world_main_js);
+            File.WriteAllBytes(Path.Combine(path, "bootloader.js"), Configuration == "Release" ? BundleStaticAssets.world_bootloader_release_js : BundleStaticAssets.world_bootloader_debug_js);
+            File.WriteAllBytes(Path.Combine(path, "main.js"), BundleStaticAssets.world_main_js);
 
-        //    return new string[]
-        //    {
-        //        bundleFilePath,
-        //        Path.Combine(path, "bootloader.js"),
-        //        Path.Combine(path, "main.js")
-        //    };
-        //}
+            return new string[]
+            {
+                bundleFilePath,
+                Path.Combine(path, "bootloader.js"),
+                Path.Combine(path, "main.js")
+            };
+        }
 
         private static bool ShouldBundleAsset(MonoAsset monoAsset)
             => (monoAsset.Behavior == "assembly" && Path.GetExtension(monoAsset.Name) == ".dll") || monoAsset.Behavior == "dotnetwasm";
+
+        private bool ShouldCompressAsset(MonoAsset monoAsset)
+            => monoAsset.Behavior == "assembly" ? CompressAssemblies
+             : monoAsset.Behavior == "dotnetwasm" ? CompressWasm
+             : false;
 
         private static string GetAssetLocalPath(MonoAsset monoAsset)
             => monoAsset.Behavior == "assembly" ? Path.Combine("managed", monoAsset.Name) : monoAsset.Name;

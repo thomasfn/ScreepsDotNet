@@ -53,8 +53,10 @@ export default {
             writeBundle(bundle) {
                 if (bundle.file !== 'dist/bootloader.js') { return; }
                 const str = fs.readFileSync(bundle.file, { encoding: 'utf8' });
-                const modifiedStr = `${str}\nexport const DotNet = bootloader.DotNet;\n`;
-                fs.writeFileSync(bundle.file.replace(path.extname(bundle.file), '.mjs'), modifiedStr);
+                const arenaStr = `${str}\nexport const DotNet = bootloader.DotNet;\n`;
+                fs.writeFileSync(bundle.file.replace(path.extname(bundle.file), '-arena.mjs'), arenaStr);
+                const worldStr = `${str}\nmodule.exports = bootloader;\n`;
+                fs.writeFileSync(bundle.file.replace(path.extname(bundle.file), '-world.js'), worldStr);
             }
         }
     ],

@@ -103,7 +103,7 @@ namespace ScreepsDotNet.Native.Arena
         private BodyType<BodyPartType>? cachedBodyType;
 
         public IEnumerable<BodyPart<BodyPartType>> Body
-            => NativeGameObjectUtils.GetArrayOnObject(ProxyObject, "body")!
+            => JSUtils.GetObjectArrayOnObject(ProxyObject, "body")!
                 .Select(x => new BodyPart<BodyPartType>(x.GetPropertyAsString("type")!.ParseBodyPartType(), x.GetPropertyAsInt32("hits")))
                 .ToArray();
 
