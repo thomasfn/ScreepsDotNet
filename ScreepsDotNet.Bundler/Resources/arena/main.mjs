@@ -100,6 +100,7 @@ function buildWrappedPrototype(constructor) {
 }
 
 const exports = dotNet.getExports();
+exports.ScreepsDotNet.Program.Init && exports.ScreepsDotNet.Program.Init();
 
 export function loop() {
     dotNet.loop(() => exports.ScreepsDotNet.Program.Loop());
