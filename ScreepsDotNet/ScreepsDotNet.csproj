@@ -29,7 +29,7 @@
 	<Import Project="..\ScreepsDotNet.API\build\ScreepsDotNet.API.props" />
 
 	<ItemGroup>
-		<PackageReference Include="ScreepsDotNet.Bundler" Version="1.0.0" PrivateAssets="All" />
+		<PackageReference Include="ScreepsDotNet.Bundler" Version="1.1.0" PrivateAssets="All" />
 	</ItemGroup>
 
 </Project>

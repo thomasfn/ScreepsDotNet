@@ -15,7 +15,7 @@ A toolset and API to build bots for [Screeps Arena](https://store.steampowered.c
 Screeps DotNet allows you to write bots for Screeps in any language that targets .Net 7.0, for example C#, and provides tooling to compile your bot to wasm ready to be deployed to the Screeps environment.
 
 - [Screeps Arena](https://store.steampowered.com/app/1137320/Screeps_Arena/) - :heavy_check_mark: full support
-- [Screeps World](https://store.steampowered.com/app/464350/Screeps_World/) - :exclamation: partial support (wip)
+- [Screeps World](https://store.steampowered.com/app/464350/Screeps_World/) - :heavy_check_mark: full support
 
 A managed API is provided that handles the interop with the Screeps javascript API, meaning you only need to write code against a set of generic interfaces. For some examples, please see the [example Arena project](ScreepsDotNet/Arena) which contains example solutions for all 10 tutorials of Screeps Arena, or the [example World project](ScreepsDotNet/World) which contains a barebones Screeps World bot.
 
@@ -89,12 +89,20 @@ namespace ScreepsDotNet
 
         public static void Main()
         {
+            // Keep the entrypoint platform independent and let Init (which is called from js) create the game instance
+            // This keeps the door open for unit testing later down the line
+        }
+
+        [JSExport]
+        internal static void Init()
+        {
             game = new Native.Arena.NativeGame();
         }
 
         [JSExport]
         internal static void Loop()
         {
+            if (game == null) { return; }
             Console.WriteLine($"Hello world from C#, the current tick is {game.Utils.GetTicks()}");
         }
     }
