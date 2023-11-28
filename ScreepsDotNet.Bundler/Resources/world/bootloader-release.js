@@ -591,8 +591,8 @@ var bootloader = (function (exports) {
       P ? N(Q, "encode") : L;
      //AnonyCo
 
-    global$1.TextDecoder = global$1.TextEncoder || TextEncoder$1;
-    global$1.TextEncoder = global$1.TextDecoder || TextDecoder$1;
+    global$1.TextDecoder = global$1.TextDecoder || TextDecoder$1;
+    global$1.TextEncoder = global$1.TextEncoder || TextEncoder$1;
 
     const encoder = new TextEncoder();
     new TextDecoder();
@@ -3836,20 +3836,33 @@ var bootloader = (function (exports) {
         src: './'
       }
     };
+    let wasmPrevAttemptBytes, wasmPrevAttemptModule;
     function _WebAssemblyInstantiate(bytes, imports) {
       try {
-        const compiledModule = new WebAssembly.Module(bytes);
+        let compiledModule;
+        if (wasmPrevAttemptBytes == bytes && wasmPrevAttemptModule) {
+          compiledModule = wasmPrevAttemptModule;
+          debug(`wasm module found from previous pass`);
+        } else {
+          wasmPrevAttemptBytes = bytes;
+          const t0 = Game.cpu.getUsed();
+          wasmPrevAttemptModule = new WebAssembly.Module(bytes);
+          const t1 = Game.cpu.getUsed();
+          debug(`wasm module compiled in ~${t1 - t0}ms`);
+          compiledModule = wasmPrevAttemptModule;
+        }
         const compiledInstance = new WebAssembly.Instance(compiledModule, imports);
+        wasmPrevAttemptBytes = null;
+        wasmPrevAttemptModule = null;
         return Promise$1.resolve({
           instance: compiledInstance,
           module: compiledModule
         });
       } catch (err) {
-        console$1.log(`Failed to create wasm instance: ${err}`);
+        error(`Failed to create wasm instance: ${err}`);
         return Promise$1.reject(err);
       }
     }
-    //! Licensed to the .NET Foundation under one or more agreements.
     //! The .NET Foundation licenses this file to you under the MIT license.
     var __dotnet_runtime = function (e) {
 
@@ -13376,7 +13389,6 @@ var bootloader = (function (exports) {
       }
       createRuntime() {
         debug(`creating dotnet runtime...`);
-        let profiler = this.profile();
         createDotnetRuntime(api => {
           return {
             config: {
@@ -13390,16 +13402,9 @@ var bootloader = (function (exports) {
               response: Promise$1.resolve(this.downloadResource(request.resolvedUrl))
             }),
             preRun: () => {
-              profiler = this.profile(profiler, 'preRun');
               if (this.isWorld) {
                 this.tickBarrier();
               }
-            },
-            onRuntimeInitialized: () => {
-              profiler = this.profile(profiler, 'onRuntimeInitialized');
-            },
-            onDotnetReady: () => {
-              profiler = this.profile(profiler, 'onDotnetReady');
             }
           };
         }).then(x => {
@@ -13443,7 +13448,6 @@ var bootloader = (function (exports) {
             return _await();
           }
           _this.startSetupRuntime = true;
-          let profiler = _this.profile();
           debug(`setting up dotnet runtime...`);
           for (const setupFn of _this.customRuntimeSetupFnList) {
             setupFn(_this.runtimeApi);
@@ -13451,7 +13455,6 @@ var bootloader = (function (exports) {
           for (const moduleName in _this.imports) {
             _this.runtimeApi.setModuleImports(moduleName, _this.imports[moduleName]);
           }
-          profiler = _this.profile(profiler, 'setModuleImports');
           return _await(_this.runtimeApi.getAssemblyExports(_this.monoConfig.mainAssemblyName), function (_this$runtimeApi$getA) {
             _this.exports = _this$runtimeApi$getA;
             if (_this.exports) {
@@ -13459,7 +13462,7 @@ var bootloader = (function (exports) {
             } else {
               debug(`failed to retrieve exports`);
             }
-            profiler = _this.profile(profiler, 'getAssemblyExports');
+            let profiler = _this.profile();
             return _continue(_catch(function () {
               return _awaitIgnored(_this.runtimeApi.runMain(_this.monoConfig.mainAssemblyName, []));
             }, function (err) {

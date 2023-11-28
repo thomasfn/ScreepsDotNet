@@ -1,4 +1,4 @@
 import { TextEncoder, TextDecoder } from 'fastestsmallesttextencoderdecoder-encodeinto';
 
-global.TextDecoder = global.TextEncoder || TextEncoder;
-global.TextEncoder = global.TextDecoder || TextDecoder;
+global.TextDecoder = global.TextDecoder || TextDecoder;
+global.TextEncoder = global.TextEncoder || TextEncoder;

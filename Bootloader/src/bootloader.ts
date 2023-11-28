@@ -146,7 +146,6 @@ export class DotNet {
 
     private createRuntime(): void {
         debug(`creating dotnet runtime...`);
-        let profiler = this.profile();
         createDotnetRuntime((api) => {
             return {
                 config: {
@@ -160,14 +159,7 @@ export class DotNet {
                     response: Promise.resolve(this.downloadResource(request.resolvedUrl!)),
                 }),
                 preRun: () => {
-                    profiler = this.profile(profiler, 'preRun');
                     if (this.isWorld) { this.tickBarrier(); }
-                },
-                onRuntimeInitialized: () => {
-                    profiler = this.profile(profiler, 'onRuntimeInitialized');
-                },
-                onDotnetReady: () => {
-                    profiler = this.profile(profiler, 'onDotnetReady');
                 },
             };
         }).then(x => {
@@ -211,7 +203,6 @@ export class DotNet {
             return;
         }
         this.startSetupRuntime = true;
-        let profiler = this.profile();
         debug(`setting up dotnet runtime...`);
         for (const setupFn of this.customRuntimeSetupFnList) {
             setupFn(this.runtimeApi);
@@ -219,14 +210,13 @@ export class DotNet {
         for (const moduleName in this.imports) {
             this.runtimeApi.setModuleImports(moduleName, this.imports[moduleName]);
         }
-        profiler = this.profile(profiler, 'setModuleImports');
         this.exports = await this.runtimeApi.getAssemblyExports(this.monoConfig.mainAssemblyName!);
         if (this.exports) {
             debug(`exports: ${Object.keys(this.exports)}`);
         } else {
             debug(`failed to retrieve exports`);
         }
-        profiler = this.profile(profiler, 'getAssemblyExports');
+        let profiler = this.profile();
         try {
             await this.runtimeApi.runMain(this.monoConfig.mainAssemblyName!, []);
         } catch (err) {

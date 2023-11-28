@@ -25,13 +25,47 @@ const _document = {
         src: './',
     },
 };
+let wasmPrevAttemptBytes, wasmPrevAttemptModule;
 function _WebAssemblyInstantiate(bytes, imports) {
     try {
-        const compiledModule = new WebAssembly.Module(bytes);
+        let compiledModule;
+        if (wasmPrevAttemptBytes == bytes && wasmPrevAttemptModule) {
+            compiledModule = wasmPrevAttemptModule;
+            importedLogging.debug(`wasm module found from previous pass`);
+        } else {
+            wasmPrevAttemptBytes = bytes;
+            const t0 = Game.cpu.getUsed();
+            wasmPrevAttemptModule = new WebAssembly.Module(bytes);
+            const t1 = Game.cpu.getUsed();
+            importedLogging.debug(`wasm module compiled in ~${t1 - t0}ms`);
+            compiledModule = wasmPrevAttemptModule;
+        }
         const compiledInstance = new WebAssembly.Instance(compiledModule, imports);
+        wasmPrevAttemptBytes = null;
+        wasmPrevAttemptModule = null;
         return Promise.resolve({ instance: compiledInstance, module: compiledModule });
     } catch (err) {
-        console.log(`Failed to create wasm instance: ${err}`);
+        importedLogging.error(`Failed to create wasm instance: ${err}`);
         return Promise.reject(err);
     }
+}
+const fromCharCode = String.fromCharCode;
+function decodeUtf16(o, t, e) {
+    let n = "";
+    const len = (t - e) >> 1;
+    if (len <= 1024) {
+        for (let r = 0; r < t - e; r += 2) {
+            const t = o.getValue(e + r, "i16");
+            n += fromCharCode(t);
+        }
+    } else {
+        const arr = [];
+        arr.length = len;
+        for (let r = 0; r < t - e; r += 2) {
+            const t = o.getValue(e + r, "i16");
+            arr[r >> 1] = fromCharCode(t);
+        }
+        n = n.concat(...arr);
+    }
+    return n;
 }
