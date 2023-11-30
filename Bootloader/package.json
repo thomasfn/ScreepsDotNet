@@ -1,6 +1,5 @@
 {
     "name": "screepsdotnet-bootloader",
-    "type": "module",
     "devDependencies": {
         "@babel/plugin-transform-async-to-generator": "^7.22.5",
         "@babel/plugin-transform-named-capturing-groups-regex": "^7.22.5",
@@ -10,6 +9,7 @@
         "@rollup/plugin-node-resolve": "^15.1.0",
         "@rollup/plugin-replace": "^5.0.2",
         "@rollup/plugin-typescript": "^11.1.2",
+        "@types/node": "^20.10.0",
         "@types/object.fromentries": "^2.0.1",
         "@types/promise-polyfill": "^6.0.4",
         "@types/screeps": "^3.3.3",
@@ -26,12 +26,13 @@
         "installandbuild": "npm i && npm run build"
     },
     "dependencies": {
+        "@bjorn3/browser_wasi_shim": "^0.2.16",
+        "base32768": "^3.0.1",
         "fast-base64": "^0.1.8",
         "fastestsmallesttextencoderdecoder-encodeinto": "^1.0.22",
         "fflate": "^0.8.0",
         "jszip": "^3.10.1",
         "object.fromentries": "^2.0.6",
-        "promise-polyfill": "^8.3.0",
-        "base32768": "^3.0.1"
+        "promise-polyfill": "^8.3.0"
     }
 }

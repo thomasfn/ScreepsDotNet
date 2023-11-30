@@ -1,4 +1,5 @@
-﻿#include <emscripten.h>
+﻿//#include <emscripten.h>
+#define EMSCRIPTEN_KEEPALIVE
 #include <assert.h>
 
 #include <mono/metadata/loader.h>

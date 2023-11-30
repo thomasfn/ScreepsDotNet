@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>net7.0</TargetFramework>
+		<TargetFramework>net8.0</TargetFramework>
 		<ImplicitUsings>disable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -14,8 +14,8 @@
 		<Title>ScreepsDotNet API</Title>
 		<Authors>thomasfn</Authors>
 		<Description>A set of interfaces and a JS binding for the Screeps Arena and Screeps World APIs</Description>
-		<Version>1.1.0</Version>
-		<PackageVersion>1.1.0</PackageVersion>
+		<Version>2.0.0</Version>
+		<PackageVersion>2.0.0</PackageVersion>
 		<PackageProjectUrl>https://github.com/thomasfn/ScreepsDotNet</PackageProjectUrl>
 		<PackageLicenseFile>LICENSE</PackageLicenseFile>
 		<PackageTags>screeps world arena api</PackageTags>
@@ -24,8 +24,21 @@
 		<GenerateDocumentationFile>True</GenerateDocumentationFile>
 	</PropertyGroup>
 
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+	  <NoWarn>1591;1701;1702</NoWarn>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+	  <NoWarn>1591;1701;1702</NoWarn>
+	</PropertyGroup>
+
 	<ItemGroup>
 		<None Remove="build\ScreepsDotNet.API.props" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<UpToDateCheckInput Include="Native\world.c" />
+		<UpToDateCheckInput Include="Interop\interop.c" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -35,6 +48,7 @@
 		<Content Include="build\ScreepsDotNet.API.props" PackagePath="build\" />
 
 		<Content Include="Native\world.c" PackagePath="Native\" />
+		<Content Include="Interop\interop.c" PackagePath="Interop\" />
 	</ItemGroup>
 
 </Project>

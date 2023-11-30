@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<TargetFramework>net7.0</TargetFramework>
-		<RuntimeIdentifier>browser-wasm</RuntimeIdentifier>
+		<TargetFramework>net8.0</TargetFramework>
+		<RuntimeIdentifier>wasi-wasm</RuntimeIdentifier>
 		<WasmMainJSPath>main.js</WasmMainJSPath>
 		<OutputType>Exe</OutputType>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -10,6 +10,10 @@
 		<TrimMode>full</TrimMode>
 		<TrimmerRemoveSymbols>true</TrimmerRemoveSymbols>
 		<InvariantGlobalization>true</InvariantGlobalization>
+		<WasmSingleFileBundle>true</WasmSingleFileBundle>
+		<EventSourceSupport>false</EventSourceSupport>
+		<UseSystemResourceKeys>true</UseSystemResourceKeys>
+		<InvariantTimezone>true</InvariantTimezone>
 	</PropertyGroup>
 
 	<PropertyGroup>
@@ -28,8 +32,10 @@
 
 	<Import Project="..\ScreepsDotNet.API\build\ScreepsDotNet.API.props" />
 
+	<!--
 	<ItemGroup>
 		<PackageReference Include="ScreepsDotNet.Bundler" Version="1.1.0" PrivateAssets="All" />
 	</ItemGroup>
+	-->
 
 </Project>
