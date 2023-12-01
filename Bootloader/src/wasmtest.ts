@@ -6,7 +6,7 @@ const wasmFilename = '/ScreepsDotNet/ScreepsDotNet.wasm';
 
 interface ScreepsDotNetExports extends WebAssembly.Exports {
     screepsdotnet_init(): void;
-    screepsdotnet_tick(): void;
+    screepsdotnet_loop(): void;
 }
 
 async function main() {
@@ -62,11 +62,13 @@ async function main() {
         object: {
             getProperty: (obj: Record<string | number | symbol, unknown>, key: string | number | symbol) => obj[key],
             setProperty: (obj: Record<string | number | symbol, unknown>, key: string | number | symbol, value: unknown) => obj[key] = value,
+            create: (proto: object) => Object.create(proto),
         },
         test: {
             echo: (value: unknown) => { console.log(`echoing '${value}' (${typeof value})`); return value; },
             addTwo: (a: number, b: number) => a + b,
             toUppercase: (str: string) => str.toUpperCase(),
+            stringify: (value: unknown) => JSON.stringify(value),
         }
     });
 
@@ -104,6 +106,9 @@ async function main() {
 
     console.log(`Running ScreepsDotNet Init...`);
     (instance.exports as ScreepsDotNetExports).screepsdotnet_init();
+
+    console.log(`Running ScreepsDotNet Loop...`);
+    (instance.exports as ScreepsDotNetExports).screepsdotnet_loop();
 }
 
 

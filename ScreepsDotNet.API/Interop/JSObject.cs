@@ -1,8 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace ScreepsDotNet.Interop
 {
-    public class JSObject : IDisposable
+    public class JSObject : IDisposable, IEquatable<JSObject?>
     {
         private readonly IntPtr jsHandle;
         private bool disposedValue;
@@ -14,18 +15,26 @@ namespace ScreepsDotNet.Interop
             this.jsHandle = jsHandle;
         }
 
+        public override string ToString()
+            => $"JSObject[{jsHandle}]{(disposedValue ? " (DISPOSED)" : "")}";
+
+        public override bool Equals(object? obj) => Equals(obj as JSObject);
+
+        public bool Equals(JSObject? other) => other is not null && jsHandle.Equals(other.jsHandle);
+
+        public override int GetHashCode() => HashCode.Combine(jsHandle);
+
+        public static bool operator ==(JSObject? left, JSObject? right) => EqualityComparer<JSObject>.Default.Equals(left, right);
+
+        public static bool operator !=(JSObject? left, JSObject? right) => !(left == right);
+
         #region IDisposable
 
         protected virtual void Dispose(bool disposing)
         {
             if (!disposedValue)
             {
-                if (disposing)
-                {
-                    // TODO: dispose managed state (managed objects)
-                }
-
-                // TODO: release reference to js object stored in jsHandle
+                Native.ReleaseJSObject(jsHandle);
                 disposedValue = true;
             }
         }

@@ -39,6 +39,7 @@ const INTEROP_VALUE_TYPE_NAMES: Record<InteropValueType, string> = [
 interface ParamSpec {
     type: InteropValueType;
     nullable: boolean;
+    nullAsUndefined: boolean;
 }
 
 interface FunctionSpec {
@@ -50,9 +51,13 @@ function stringifyParamSpec(paramSpec: Readonly<ParamSpec>): string {
     return `${INTEROP_VALUE_TYPE_NAMES[paramSpec.type]}${paramSpec.nullable ? '?' : ''}`;
 }
 
-const EXCEPTION_PARAM_SPEC: Readonly<ParamSpec> = { type: InteropValueType.Str, nullable: false };
+const EXCEPTION_PARAM_SPEC: Readonly<ParamSpec> = { type: InteropValueType.Str, nullable: false, nullAsUndefined: false };
 
 type BoundImportFunction = (paramsBufferPtr: number) => number;
+
+const CLR_TRACKING_ID = Symbol('clr-tracking-id');
+
+const TEMP_PROPERTY_DESCRIPTOR: PropertyDescriptor = {};
 
 export type MallocFunction = (sz: number) => number;
 
@@ -61,10 +66,12 @@ export class Interop {
 
     private readonly _imports: Record<string, Record<string, (...args: any[]) => unknown>>;
     
-    private readonly _boundImports: BoundImportFunction[] = [];
+    private readonly _boundImportList: BoundImportFunction[] = [];
+    private readonly _objectTrackingList: Record<number, object> = {};
 
     private _memory?: WebAssembly.Memory;
     private _malloc?: MallocFunction;
+    private _nextClrTrackingId: number = 0;
 
     private u8?: Uint8Array;
     private i8?: Int8Array;
@@ -105,8 +112,9 @@ export class Interop {
     constructor(imports: Record<string, Record<string, (...args: any[]) => unknown>>) {
         this._imports = imports;
         this.interopImport = {};
-        this.interopImport.js_bind_import = this.js_bind_import.bind(this) as (...args: unknown[]) => unknown;
-        this.interopImport.js_invoke_import = this.js_invoke_import.bind(this) as (...args: unknown[]) => unknown;
+        this.interopImport.js_bind_import = this.js_bind_import.bind(this);
+        this.interopImport.js_invoke_import = this.js_invoke_import.bind(this);
+        this.interopImport.js_release_object_reference = this.js_release_object_reference.bind(this);
     }
 
     private js_bind_import(moduleNamePtr: number, importNamePtr: number, functionSpecPtr: number): number {
@@ -122,18 +130,25 @@ export class Interop {
         }
         const functionSpec = this.functionSpecToJs(functionSpecPtr);
         const boundImportFunction = this.createImportBinding(importFunction, functionSpec);
-        const importIndex = this._boundImports.length;
-        this._boundImports.push(boundImportFunction);
+        const importIndex = this._boundImportList.length;
+        this._boundImportList.push(boundImportFunction);
         console.log(`${importIndex}: ${stringifyParamSpec(functionSpec.returnSpec)} ${moduleName}::${importName}(${functionSpec.paramSpecs.map(stringifyParamSpec).join(', ')})`);
         return importIndex;
     }
 
     private js_invoke_import(importIndex: number, paramsBufferPtr: number): number {
-        const boundImportFunction = this._boundImports[importIndex];
+        const boundImportFunction = this._boundImportList[importIndex];
         if (!boundImportFunction) {
             throw new Error(`attempt to invoke invalid import index ${importIndex}`);
         }
         return boundImportFunction(paramsBufferPtr);
+    }
+
+    private js_release_object_reference(clrTrackingId: number): void {
+        const obj = this._objectTrackingList[clrTrackingId];
+        if (obj == null) { return; }
+        delete this._objectTrackingList[clrTrackingId];
+        this.clearClrTrackingId(obj);
     }
 
     private createImportBinding(importFunction: (...args: unknown[]) => unknown, functionSpec: Readonly<FunctionSpec>): BoundImportFunction {
@@ -164,7 +179,7 @@ export class Interop {
     private marshalToJs(valuePtr: number, paramSpec: Readonly<ParamSpec>): unknown {
         const valueType: InteropValueType = this.u8![valuePtr + 12];
         if (valueType === InteropValueType.Void && paramSpec.nullable) {
-            return undefined;
+            return paramSpec.nullAsUndefined ? undefined : null;
         }
         switch (paramSpec.type) {
             case InteropValueType.Void: return undefined;
@@ -181,7 +196,7 @@ export class Interop {
             case InteropValueType.F64: return this.f64![valuePtr >> 3];
             // case InteropValueType.Ptr: return undefined;
             case InteropValueType.Str: return this.stringToJs(this.i32![valuePtr >> 2]);
-            // case InteropValueType.Obj: return undefined;
+            case InteropValueType.Obj: return this._objectTrackingList[this.u32![valuePtr >> 2]];
             // case InteropValueType.Arr: return undefined;
             default: throw new Error(`failed to marshal ${stringifyParamSpec(paramSpec)} from '${INTEROP_VALUE_TYPE_NAMES[valueType] ?? 'unknown'}'`);
         }
@@ -226,7 +241,14 @@ export class Interop {
                 this.i32![valuePtr >> 2] = this.stringToClr(typeof value === 'string' ? value : `${value}`);
                 this.u8![valuePtr + 12] = InteropValueType.Str;
                 break;
-            // case InteropValueType.Obj: return;
+            case InteropValueType.Obj:
+                if (typeof value !== 'object') {
+                    throw new Error(`failed to marshal ${typeof value} as '${stringifyParamSpec(paramSpec)}' (not an object)`);
+                }
+                const clrTrackingId = this.getClrTrackingId(value) ?? this.assignClrTrackingId(value);
+                this.u32![valuePtr >> 2] = clrTrackingId;
+                this.u8![valuePtr + 12] = InteropValueType.Obj;
+                return;
             // case InteropValueType.Arr: return;
             default: throw new Error(`failed to marshal '${typeof value}' as '${stringifyParamSpec(paramSpec)}' (not yet implemented)`);
         }
@@ -268,7 +290,6 @@ export class Interop {
             charPtr += 2;
         }
         this.u16![charPtr >> 1] = 0;
-        console.log(`put '${str}' at ${strPtr}`);
         return strPtr;
     }
 
@@ -277,6 +298,7 @@ export class Interop {
         return {
             type: this.u8![paramSpecPtr],
             nullable: (flags & 1) === 1,
+            nullAsUndefined: (flags & 2) === 2,
         };
     }
 
@@ -293,5 +315,24 @@ export class Interop {
             functionSpecPtr += 2;
         }
         return result;
+    }
+
+    private getClrTrackingId(obj: object): number | undefined {
+        return Object.getOwnPropertyDescriptor(obj, CLR_TRACKING_ID)?.value;
+    }
+
+    private assignClrTrackingId(obj: object): number {
+        const clrTrackingId = this._nextClrTrackingId++;
+        TEMP_PROPERTY_DESCRIPTOR.value = clrTrackingId;
+        TEMP_PROPERTY_DESCRIPTOR.configurable = true;
+        Object.defineProperty(obj, CLR_TRACKING_ID, TEMP_PROPERTY_DESCRIPTOR);
+        this._objectTrackingList[clrTrackingId] = obj;
+        return clrTrackingId;
+    }
+
+    private clearClrTrackingId(obj: object): void {
+        TEMP_PROPERTY_DESCRIPTOR.value = undefined;
+        TEMP_PROPERTY_DESCRIPTOR.configurable = true;
+        Object.defineProperty(obj, CLR_TRACKING_ID, TEMP_PROPERTY_DESCRIPTOR);
     }
 }

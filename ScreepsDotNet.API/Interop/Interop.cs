@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -11,6 +12,9 @@ internal static class ScreepsDotNet_Interop
 
     [MethodImpl(MethodImplOptions.InternalCall)]
     public static unsafe extern int InvokeImport(int importIndex, ScreepsDotNet.Interop.InteropValue* paramsBufferPtr);
+
+    [MethodImpl(MethodImplOptions.InternalCall)]
+    public static unsafe extern int ReleaseObjectReference(IntPtr jsHandle);
 }
 
 namespace ScreepsDotNet.Interop
@@ -40,6 +44,7 @@ namespace ScreepsDotNet.Interop
     {
         None = 0,
         Nullable = 1 << 0,
+        NullAsUndefined = 1 << 1,
     }
 
     public struct ParamSpec
@@ -299,7 +304,7 @@ namespace ScreepsDotNet.Interop
         public unsafe string? AsString(bool freeMem = true)
         {
             if (Slot.Type == InteropValueType.Void) { return null; }
-            Debug.Assert(Slot.Type == InteropValueType.Str);
+            Debug.Assert(Slot.Type == InteropValueType.Str, $"expecting 'Str', got '{Slot.Type}'");
             var str = new string((char*)Slot.IntPtrValue);
             if (freeMem) { Marshal.FreeHGlobal(Slot.IntPtrValue); }
             return str;
@@ -310,8 +315,7 @@ namespace ScreepsDotNet.Interop
         {
             if (Slot.Type == InteropValueType.Void) { return null; }
             Debug.Assert(Slot.Type == InteropValueType.Obj);
-            // TODO: Need to reuse the same instance from a map here, otherwise GC might release the reference too early
-            return new JSObject(Slot.JSHandle);
+            return Native.GetJSObject(Slot.JSHandle);
         }
 
         #endregion
@@ -319,6 +323,31 @@ namespace ScreepsDotNet.Interop
 
     public static class Native
     {
+        private static readonly Dictionary<IntPtr, WeakReference<JSObject>> trackedJSObjects = new();
+        
+        internal static JSObject GetJSObject(IntPtr jsHandle)
+        {
+            if (trackedJSObjects.TryGetValue(jsHandle, out var objRef))
+            {
+                if (objRef.TryGetTarget(out var obj) && obj != null) { return obj; }
+                obj = new(jsHandle);
+                objRef.SetTarget(obj);
+                return obj;
+            }
+            else
+            {
+                var obj = new JSObject(jsHandle);
+                trackedJSObjects.Add(jsHandle, new WeakReference<JSObject>(obj));
+                return obj;
+            }
+        }
+
+        internal static void ReleaseJSObject(IntPtr jsHandle)
+        {
+            trackedJSObjects.Remove(jsHandle);
+            ScreepsDotNet_Interop.ReleaseObjectReference(jsHandle);
+        }
+
         public static unsafe int BindImport(string moduleName, string importName, FunctionSpec functionSpec)
         {
             int result;
