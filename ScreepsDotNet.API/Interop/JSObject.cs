@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 namespace ScreepsDotNet.Interop
 {
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     public class JSObject : IDisposable, IEquatable<JSObject?>
     {
         private readonly IntPtr jsHandle;

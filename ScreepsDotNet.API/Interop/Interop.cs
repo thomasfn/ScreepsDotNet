@@ -72,6 +72,7 @@ namespace ScreepsDotNet.Interop
         public FunctionParamsSpec ParamSpecs;
     }
 
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     public struct InteropValue
     {
         public static readonly InteropValue Void = new InteropValue { Slot = new InteropValueImpl { Type = InteropValueType.Void } };
@@ -321,6 +322,7 @@ namespace ScreepsDotNet.Interop
         #endregion
     }
 
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     public static class Native
     {
         private static readonly Dictionary<IntPtr, WeakReference<JSObject>> trackedJSObjects = new();

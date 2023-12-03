@@ -37,6 +37,10 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\ScreepsDotNet.SourceGen\ScreepsDotNet.SourceGen.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<UpToDateCheckInput Include="Native\world.c" />
 		<UpToDateCheckInput Include="Interop\interop.c" />
 	</ItemGroup>
