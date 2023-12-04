@@ -1,249 +1,204 @@
-import * as fflate from 'fflate';
-import './polyfill-fromentries';
-import './polyfill-textencoder';
-import { toBytes as decodeB64 } from 'fast-base64/js';
-import { decode as decodeB32768 } from 'base32768'
-import { debug, error, log, setSuppressedLogMode } from './logging';
+import { Interop } from './interop';
+import { WASI, File, OpenFile, Fd } from '@bjorn3/browser_wasi_shim';
+import 'fastestsmallesttextencoderdecoder';
 
-import type { MonoConfig, RuntimeAPI } from './dotnet';
-import createDotnetRuntime from './dotnet'
+const utf8Decoder = new TextDecoder();
 
-import { advanceFrame, cancelAdvanceFrame } from './timeouts';
-import Promise from 'promise-polyfill';
-
-export interface ManifestEntry {
-    path: string;
-    originalSize: number;
-    compressed: boolean;
-    b64?: string;
-    b32768?: string;
+interface ScreepsDotNetExports extends WebAssembly.Exports {
+    memory: WebAssembly.Memory;
+    _start(): unknown;
+    malloc(sz: number): number;
+    free(ptr: number): void;
+    screepsdotnet_init(): void;
+    screepsdotnet_loop(): void;
 }
 
-export interface Manifest {
-    manifest: ManifestEntry[];
-    config: MonoConfig;
+class Stdio extends Fd {
+    private readonly outFunc: (text: string) => void;
+
+    private buffer?: string;
+
+    constructor(outFunc: (text: string) => void) {
+        super();
+        this.outFunc = outFunc;
+    }
+
+    public fd_write(view8: Uint8Array, iovs: [{ buf_len: number, buf: number }]): {ret: number, nwritten: number} {
+        let nwritten = 0;
+        for (let iovec of iovs) {
+            let buffer = view8.slice(iovec.buf, iovec.buf + iovec.buf_len);
+            this.addTextToBuffer(utf8Decoder.decode(buffer));
+
+            nwritten += iovec.buf_len;
+        }
+        return { ret: 0, nwritten };
+    }
+
+    private addTextToBuffer(text: string): void {
+        if (!this.buffer) {
+            this.buffer = text;
+        } else {
+            this.buffer += text;
+        }
+        let newlineIdx: number;
+        while ((newlineIdx = this.buffer.indexOf('\n')) >= 0) {
+            const line = this.buffer.substring(0, newlineIdx).trim();
+            this.outFunc(line);
+            this.buffer = this.buffer?.substring(newlineIdx + 1);
+        }
+    }
 }
 
-export class DotNet {
-    private readonly manifest: readonly Readonly<ManifestEntry>[];
-    private readonly monoConfig: Readonly<MonoConfig>;
-    private readonly fileMap: Record<string, Uint8Array> = {};
-    private readonly isArena: boolean;
-    private readonly isWorld: boolean;
-    private tickIndex: number = 0;
-    private runtimeApi: RuntimeAPI | undefined;
-    private readonly imports: Record<string, Record<string, unknown>> = {};
-    private exports: Record<string, unknown> | undefined;
-    private _tickBarrier?: number;
-    private perfFn?: () => number;
-    private verboseLogging: boolean = false;
-    private _ready: boolean = false;
-    private startSetupRuntime: boolean = false;
-    private pendingError?: Error;
-    private readonly customRuntimeSetupFnList: ((runtime: RuntimeAPI) => void)[] = [];
+type ScreepsDotNetWasmInstance = WebAssembly.Instance & { exports: ScreepsDotNetExports };
 
-    public get ready() { return this._ready; }
+export class Bootloader {
+    private readonly _pendingLogs: string[] = [];
+    private readonly _deferLogsToTick: boolean;
+    private readonly _profileFn: () => number;
 
-    private get isTickBarrier() { return this._tickBarrier != null && this._tickBarrier > this.tickIndex; }
+    private readonly _stdin: Fd;
+    private readonly _stdout: Fd;
+    private readonly _stderr: Fd;
 
-    public constructor(manifest: Readonly<Manifest>, env: 'world'|'arena') {
-        this.manifest = manifest.manifest;
-        this.monoConfig = manifest.config;
-        this.isArena = env === 'arena';
-        this.isWorld = env === 'world';
-    }
+    private readonly _wasi: WASI;
+    private readonly _interop: Interop;
 
-    public setModuleImports(moduleName: string, imports: Record<string, unknown>): void {
-        this.imports[moduleName] = imports;
-    }
+    private _wasmModule?: WebAssembly.Module;
+    private _wasmInstance?: ScreepsDotNetWasmInstance;
+    private _compiled: boolean = false;
+    private _started: boolean = false;
 
-    public setVerboseLogging(verboseLogging: boolean): void {
-        this.verboseLogging = verboseLogging;
-    }
+    private _inTick: boolean = false;
 
-    public setPerfFn(perfFn: () => number): void {
-        this.perfFn = perfFn;
-    }
+    public get compiled() { return this._compiled; }
+    public get started() { return this._started; }
 
-    public addCustomRuntimeSetupFunction(setupFn: (runtime: RuntimeAPI) => void) {
-        this.customRuntimeSetupFnList.push(setupFn);
-    }
+    constructor(env: 'world'|'arena', profileFn: () => number) {
+        this._deferLogsToTick = env === 'arena';
+        this._profileFn = profileFn;
 
-    public getExports(): Record<string, any> | undefined {
-        return this.exports;
-    }
+        this._stdin = new OpenFile(new File([]));
+        this._stdout = new Stdio(this.log.bind(this));
+        this._stderr = new Stdio(this.log.bind(this));
 
-    public init(): void {
-        if (this.isArena) { setSuppressedLogMode(true); }
-        this.decodeManifest();
-        this.createRuntime();
-    }
+        this._wasi = new WASI(['ScreepsDotNet'], [`ENV=${env}`], [this._stdin, this._stdout, this._stderr], { debug: false });
+        this._interop = new Interop();
 
-    public loop(loopFn?: () => void): void {
-        if (this.isArena) { setSuppressedLogMode(false); }
-        try {
-            ++this.tickIndex;
-            let profiler = this.profile();
-            this.runPendingAsyncActions();
-            if (loopFn) { loopFn(); }
-            profiler = this.profile(profiler, 'loop');
-        } finally {
-            if (this.isArena) { setSuppressedLogMode(true); }
-        }
-    }
-
-    private profile(marker?: number, blockName?: string): number {
-        if (!this.perfFn) { return 0; }
-        const cpuTime = this.perfFn();
-        if (blockName == null || marker == null) { return cpuTime; }
-        const delta = cpuTime - marker;
-        log('PROFILE', blockName, `${((delta / 100000) | 0) / 10} ms`);
-        return cpuTime;
-    }
-
-    private profileAccum(marker: number, blockName?: string): number {
-        if (!this.perfFn) { return 0; }
-        if (blockName == null) {
-            return this.perfFn() - marker;
-        }
-        log('PROFILE', blockName, `${((marker / 100000) | 0) / 10} ms`);
-        return marker;
-    }
-
-    private decodeManifest(): void {
-        let profiler = this.profile();
-        let profilerB64 = 0, profilerInflate = 0;
-        let totalBytes = 0;
-        for (const entry of this.manifest) {
-            const profilerB64Marker = this.profile();
-            let fileDataRaw: Uint8Array;
-            if ('b64' in entry) {
-                fileDataRaw = decodeB64(entry.b64!);
-            } else if ('b32768' in entry) {
-                fileDataRaw = decodeB32768(entry.b32768!);
-            } else {
-                log(`entry '${entry.path}' does not contain b64 or b32768 data`);
-                continue;
-            }
-            profilerB64 += this.profileAccum(profilerB64Marker);
-            if (entry.compressed) {
-                const profilerInflateMarker = this.profile();
-                const fileData = new Uint8Array(entry.originalSize);
-                fflate.inflateSync(fileDataRaw, { out: fileData });
-                profilerInflate += this.profileAccum(profilerInflateMarker);
-                this.fileMap[entry.path] = fileData;
-                totalBytes += fileData.length;
-            } else {
-                this.fileMap[entry.path] = fileDataRaw;
-                totalBytes += fileDataRaw.length;
-            }
-        }
-        log(`loaded ${this.manifest.length} items from the manifest, totalling ${(totalBytes / 1024)|0} KiB of data`);
-        profiler = this.profile(profiler, 'decodeManifest');
-        profilerB64 = this.profileAccum(profilerB64, 'decodeManifest (b64)');
-        profilerInflate = this.profileAccum(profilerInflate, 'decodeManifest (inflate)');
-    }
-
-    private createRuntime(): void {
-        debug(`creating dotnet runtime...`);
-        createDotnetRuntime((api) => {
-            return {
-                config: {
-                    ...this.monoConfig,
-                    diagnosticTracing: this.verboseLogging,
-                },
-                imports: {},
-                downloadResource: (request) => ({
-                    name: request.name,
-                    url: request.resolvedUrl!,
-                    response: Promise.resolve(this.downloadResource(request.resolvedUrl!)),
-                }),
-                preRun: () => {
-                    if (this.isWorld) { this.tickBarrier(); }
-                },
-            };
-        }).then(x => {
-            this.runtimeApi = x;
-            return this.setupRuntime();
+        this.setImports('object', {
+            getProperty: (obj: Record<string | number | symbol, unknown>, key: string | number | symbol) => obj[key],
+            setProperty: (obj: Record<string | number | symbol, unknown>, key: string | number | symbol, value: unknown) => obj[key] = value,
+            create: (proto: object) => Object.create(proto),
         });
-        this.runPendingAsyncActions();
     }
 
-    private downloadResource(url: string): Response {
-        if (this.fileMap[url]) {
-            //log(`got downloadResource for '${request.resolvedUrl}' - found in file map`);
-            return {
-                ok: true,
-                url,
-                status: 200,
-                statusText: 'ok',
-                arrayBuffer: () => Promise.resolve(this.fileMap[url]),
-                json: () => Promise.reject('json not yet supported'),
-            } as unknown as Response;
-        } else {
-            //log(`got downloadResource for '${request.resolvedUrl!}' - NOT found in file map`);
-            return {
-                ok: false,
-                url,
-                status: 404,
-                statusText: 'not found',
-                arrayBuffer: () => undefined,
-                json: () => undefined,
-            } as unknown as Response;
-        }
+    public setImports(moduleName: string, importTable: Record<string, (...args: any[]) => unknown>): void {
+        this._interop.setImports(moduleName, importTable);
     }
 
-    private async setupRuntime(): Promise<void> {
-        if (!this.runtimeApi) {
-            this.pendingError = new Error(`Tried to setupRuntime when runtimeApi was not set`);
+    public log(text: string): void {
+        if (!this._deferLogsToTick || this._inTick) {
+            this.dispatchLog(text);
             return;
         }
-        if (this.startSetupRuntime) {
-            this.pendingError = new Error(`Tried to setupRuntime when it was already called`);
-            return;
-        }
-        this.startSetupRuntime = true;
-        debug(`setting up dotnet runtime...`);
-        for (const setupFn of this.customRuntimeSetupFnList) {
-            setupFn(this.runtimeApi);
-          }
-        for (const moduleName in this.imports) {
-            this.runtimeApi.setModuleImports(moduleName, this.imports[moduleName]);
-        }
-        this.exports = await this.runtimeApi.getAssemblyExports(this.monoConfig.mainAssemblyName!);
-        if (this.exports) {
-            debug(`exports: ${Object.keys(this.exports)}`);
+        this._pendingLogs.push(text);
+    }
+
+    private dispatchLog(text: string): void {
+        console.log(`DOTNET: ${text}`);
+    }
+
+    public compile(wasmBytes: Uint8Array): void {
+        if (this._compiled) { return; }
+
+        // Compile wasm module
+        if (this._wasmModule) {
+            this.log(`Reusing wasm module fromn previous attempt...`);
         } else {
-            debug(`failed to retrieve exports`);
+            const t0 = this._profileFn();
+            this._wasmModule = new WebAssembly.Module(wasmBytes);
+            const t1 = this._profileFn();
+            this.log(`Compiled wasm module in ${t1 - t0} ms`);
         }
-        let profiler = this.profile();
+
+        // Instantiate wasm module
+        if (this._wasmInstance) {
+            this.log(`Reusing wasm instance fromn previous attempt...`);
+        } else {
+            const t0 = this._profileFn();
+            this._wasmInstance = new WebAssembly.Instance(this._wasmModule, this.getWasmImports()) as ScreepsDotNetWasmInstance;
+            const t1 = this._profileFn();
+            this.log(`Instantiated wasm module in ${t1 - t0} ms`);
+        }
+
+        // Wire things up
+        this._interop.memory = this._wasmInstance.exports.memory;
+        this._interop.malloc = this._wasmInstance.exports.malloc;
+        this._compiled = true;
+    }
+
+    public start(): void {
+        if (!this._wasmInstance || this._started) { return; }
+
+        // Start WASI
         try {
-            await this.runtimeApi.runMain(this.monoConfig.mainAssemblyName!, []);
+            const t0 = this._profileFn();
+            this._wasi.start(this._wasmInstance);
+            const t1 = this._profileFn();
+            this.log(`Started WASI in ${t1 - t0} ms`);
         } catch (err) {
-            error(`got error when running Program.Main(): ${(err as Error).stack}`);
-        }
-        profiler = this.profile(profiler, 'runMain');
-        this._ready = true;
-    }
-
-    private runPendingAsyncActions(): void {
-        if (this.isTickBarrier) {
-            debug(`refusing runPendingAsyncActions as tick barrier is in place`);
-            return;
-        }
-        let numTimersProcessed: number;
-        do {
-            numTimersProcessed = advanceFrame();
-            if (numTimersProcessed > 0) {
-                //debug(`ran ${numTimersProcessed} async timers to completion`);
+            if (err instanceof Error) {
+                this.log(err.stack ?? `${err}`);
+            } else {
+                this.log(`${err}`);
             }
-        } while (numTimersProcessed > 0 && !this.isTickBarrier && !this.pendingError);
-        if (this.pendingError) { throw this.pendingError; }
+        }
+
+        // Run usercode init
+        {
+            const t0 = this._profileFn();
+            this._wasmInstance.exports.screepsdotnet_init();
+            const t1 = this._profileFn();
+            this.log(`Init in ${t1 - t0} ms`);
+        }
+        this._started = true;
     }
 
-    private tickBarrier(): void {
-        //debug(`TICK BARRIER`);
-        this._tickBarrier = this.tickIndex + 1;
-        cancelAdvanceFrame();
+    public loop(): void {
+        if (!this._wasmInstance || this._started) { return; }
+
+        // Dispatch log messages
+        this._inTick = true;
+        this.dispatchPendingLogs();
+
+        // Run usercode loop
+        {
+            const t0 = this._profileFn();
+            this._wasmInstance.exports.screepsdotnet_init();
+            const t1 = this._profileFn();
+            this.log(`Loop in ${t1 - t0} ms`);
+        }
+    }
+
+    private getWasmImports(): WebAssembly.Imports {
+        return {
+            wasi_snapshot_preview1: {
+                ...this._wasi.wasiImport,
+                clock_res_get: (id: number, res_ptr: number) => {
+                    const buffer = new DataView(this._wasi.inst.exports.memory.buffer);
+                    buffer.setBigUint64(res_ptr, BigInt(0), true);
+                    return 0;
+                },
+            },
+            js: {
+                ...this._interop.interopImport,
+            },
+        };
+    }
+
+    private dispatchPendingLogs(): void {
+        for (let i = 0; i < this._pendingLogs.length; ++i) {
+            this.dispatchLog(this._pendingLogs[i]);
+        }
+        this._pendingLogs.length = 0;
     }
 }

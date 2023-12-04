@@ -64,7 +64,7 @@ export type MallocFunction = (sz: number) => number;
 export class Interop {
     public readonly interopImport: Record<string, (...args: any[]) => unknown>;
 
-    private readonly _imports: Record<string, Record<string, (...args: any[]) => unknown>>;
+    private readonly _imports: Record<string, Record<string, (...args: any[]) => unknown>> = {};
     
     private readonly _boundImportList: BoundImportFunction[] = [];
     private readonly _objectTrackingList: Record<number, object> = {};
@@ -85,7 +85,34 @@ export class Interop {
     public get memory(): WebAssembly.Memory | undefined { return this._memory; }
     public set memory(value) {
         this._memory = value;
-        if (!value) {
+        this.recreateBufferViews();
+    }
+
+    public get malloc(): MallocFunction | undefined { return this._malloc; }
+    public set malloc(value) { this._malloc = value; }
+
+    constructor() {
+        this.interopImport = {};
+        this.interopImport.js_bind_import = this.js_bind_import.bind(this);
+        this.interopImport.js_invoke_import = this.js_invoke_import.bind(this);
+        this.interopImport.js_release_object_reference = this.js_release_object_reference.bind(this);
+    }
+
+    public setImports(moduleName: string, importTable: Record<string, (...args: unknown[]) => unknown>): void {
+        this._imports[moduleName] = importTable;
+    }
+
+    public recreateBufferViews(): void {
+        if (this._memory) {
+            this.u8 = new Uint8Array(this._memory.buffer);
+            this.i8 = new Int8Array(this._memory.buffer);
+            this.u16 = new Uint16Array(this._memory.buffer);
+            this.i16 = new Int16Array(this._memory.buffer);
+            this.u32 = new Uint32Array(this._memory.buffer);
+            this.i32 = new Int32Array(this._memory.buffer);
+            this.f32 = new Float32Array(this._memory.buffer);
+            this.f64 = new Float64Array(this._memory.buffer);
+        } else {
             this.u8 = undefined;
             this.i8 = undefined;
             this.u16 = undefined;
@@ -94,27 +121,7 @@ export class Interop {
             this.i32 = undefined;
             this.f32 = undefined;
             this.f64 = undefined;
-        } else {
-            this.u8 = new Uint8Array(value.buffer);
-            this.i8 = new Int8Array(value.buffer);
-            this.u16 = new Uint16Array(value.buffer);
-            this.i16 = new Int16Array(value.buffer);
-            this.u32 = new Uint32Array(value.buffer);
-            this.i32 = new Int32Array(value.buffer);
-            this.f32 = new Float32Array(value.buffer);
-            this.f64 = new Float64Array(value.buffer);
         }
-    }
-
-    public get malloc(): MallocFunction | undefined { return this._malloc; }
-    public set malloc(value) { this._malloc = value; }
-
-    constructor(imports: Record<string, Record<string, (...args: any[]) => unknown>>) {
-        this._imports = imports;
-        this.interopImport = {};
-        this.interopImport.js_bind_import = this.js_bind_import.bind(this);
-        this.interopImport.js_invoke_import = this.js_invoke_import.bind(this);
-        this.interopImport.js_release_object_reference = this.js_release_object_reference.bind(this);
     }
 
     private js_bind_import(moduleNamePtr: number, importNamePtr: number, functionSpecPtr: number): number {
@@ -132,7 +139,7 @@ export class Interop {
         const boundImportFunction = this.createImportBinding(importFunction, functionSpec);
         const importIndex = this._boundImportList.length;
         this._boundImportList.push(boundImportFunction);
-        console.log(`${importIndex}: ${stringifyParamSpec(functionSpec.returnSpec)} ${moduleName}::${importName}(${functionSpec.paramSpecs.map(stringifyParamSpec).join(', ')})`);
+        // console.log(`${importIndex}: ${stringifyParamSpec(functionSpec.returnSpec)} ${moduleName}::${importName}(${functionSpec.paramSpecs.map(stringifyParamSpec).join(', ')})`);
         return importIndex;
     }
 
@@ -163,7 +170,7 @@ export class Interop {
                 args[i] = this.marshalToJs(argsPtr, functionSpec.paramSpecs[i]);
                 argsPtr += 16;
             }
-            console.log(args);
+            // console.log(args);
             let returnVal: unknown;
             try {
                 returnVal = importFunction(...args);

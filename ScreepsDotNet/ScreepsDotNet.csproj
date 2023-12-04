@@ -14,7 +14,15 @@
 		<EventSourceSupport>false</EventSourceSupport>
 		<UseSystemResourceKeys>true</UseSystemResourceKeys>
 		<InvariantTimezone>true</InvariantTimezone>
+		<WasmEnableThreads>false</WasmEnableThreads>
+		<MonoWasmThreads>false</MonoWasmThreads>
+		<WasiSdkVersion>15</WasiSdkVersion>
 	</PropertyGroup>
+
+	<ItemGroup>
+		<_WasmCommonCFlags Include="-mno-bulk-memory" />
+		<_WasiSdkClangArgs Include="-Wl,--features=mutable-globals" />
+	</ItemGroup>
 
 	<PropertyGroup>
 		<ScreepsEncoding>b64</ScreepsEncoding>

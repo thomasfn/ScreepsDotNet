@@ -12,20 +12,21 @@
             "esnext",
             "DOM"
         ],
-        "types": [],
+        "types": [
+            "@types/node"
+        ],
         "rootDirs": [
             "."
         ],
         "resolveJsonModule": true,
         "allowSyntheticDefaultImports": true,
-        "declaration": true,
-        "declarationDir": "dist"
+        "declaration": false,
+        "outDir": "./dist-test"
     },
     "include": [
-        "src/**/*.ts",
-        "src/**/*.mts"
+        "test/**/*.ts"
     ],
     "exclude": [
-        "src/**/*.d.ts"
+        "test/**/*.d.ts"
     ]
 }
