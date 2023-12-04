@@ -16,7 +16,6 @@
         "rootDirs": [
             "."
         ],
-        "resolveJsonModule": true,
         "allowSyntheticDefaultImports": true,
         "declaration": true,
         "declarationDir": "dist"

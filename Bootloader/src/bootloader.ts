@@ -1,4 +1,4 @@
-import { Interop } from './interop';
+import { Interop } from './interop.js';
 import { WASI, File, OpenFile, Fd } from '@bjorn3/browser_wasi_shim';
 import 'fastestsmallesttextencoderdecoder';
 

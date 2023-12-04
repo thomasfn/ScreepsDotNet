@@ -26,7 +26,7 @@
     },
     "scripts": {
         "build": "rollup -c rollup.config.js",
-        "test": "ts-node -P ./tsconfig-test.json ./test/wasmtest.mts",
+        "test": "tsc -P ./tsconfig-test.json && node ./dist-test/src-test/wasmtest.js",
         "installandbuild": "npm i && npm run build"
     },
     "dependencies": {
