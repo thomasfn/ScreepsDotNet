@@ -16,6 +16,11 @@ async function main() {
             toUppercase: (str: string) => str.toUpperCase(),
             stringify: (value: unknown) => JSON.stringify(value),
             reverseArray: (arr: number[]) => arr.reverse(),
+            fillBuffer: (dataView: DataView) => {
+                for (let i = 0; i < dataView.byteLength; ++i) {
+                    dataView.setUint8(i, i + 1);
+                }
+            },
         });
         bootloader.compile(wasmData);
         bootloader.start();

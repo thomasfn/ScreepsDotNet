@@ -22,10 +22,12 @@ namespace ScreepsDotNet.SourceGen
         static JSImportGenerator()
         {
             var primitiveMarshallers = new BaseMarshaller[] { new VoidMarshaller(), new NumericMarshaller(), new StringMarshaller(), new JSObjectMarshaller() };
+            var unlayerableMarshallers = new BaseMarshaller[] { new DataViewMarshaller() };
             var layeredMarshallers = new BaseMarshaller[] { new ArrayMarshaller(primitiveMarshallers.ToImmutableArray()) };
 
             allMarshallers = Enumerable.Empty<BaseMarshaller>()
                 .Concat(primitiveMarshallers)
+                .Concat(unlayerableMarshallers)
                 .Concat(layeredMarshallers)
                 .ToImmutableArray();
         }
@@ -48,6 +50,7 @@ namespace ScreepsDotNet.SourceGen
         {
             var sourceEmitter = new SourceEmitter();
             sourceEmitter.WriteLine("using System;");
+            sourceEmitter.WriteLine("using System.Collections.Immutable;");
             sourceEmitter.WriteLine("using ScreepsDotNet.Interop;");
 
             int uniqueImportIndex = 0;

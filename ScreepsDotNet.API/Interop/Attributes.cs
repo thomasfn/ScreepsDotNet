@@ -15,4 +15,14 @@ namespace ScreepsDotNet.Interop
             ImportName = importName;
         }
     }
+
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
+    [AttributeUsage(AttributeTargets.Parameter, Inherited = false, AllowMultiple = false)]
+    public sealed class JSMarshalAsDataViewAttribute : Attribute
+    {
+        public JSMarshalAsDataViewAttribute()
+        {
+            
+        }
+    }
 }

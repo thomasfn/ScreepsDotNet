@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 
 namespace ScreepsDotNet.Interop
 {
@@ -30,11 +31,16 @@ namespace ScreepsDotNet.Interop
         NullAsUndefined = 1 << 1,
     }
 
+    [StructLayout(LayoutKind.Explicit, Pack = 4, Size = 4)]
     public struct ParamSpec
     {
+        [FieldOffset(0)]
         public InteropValueType Type;
+        [FieldOffset(1)]
         public InteropValueFlags Flags;
+        [FieldOffset(2)]
         public InteropValueType ElementType;
+        [FieldOffset(3)]
         public InteropValueFlags ElementFlags;
 
         public ParamSpec(InteropValueType type, InteropValueFlags flags)

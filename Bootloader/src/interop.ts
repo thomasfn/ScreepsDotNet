@@ -205,7 +205,7 @@ export class Interop {
             // case InteropValueType.I64: return undefined;
             case InteropValueType.F32: return this.f32![valuePtr >> 2];
             case InteropValueType.F64: return this.f64![valuePtr >> 3];
-            // case InteropValueType.Ptr: return undefined;
+            case InteropValueType.Ptr: return new DataView(this._memory!.buffer, this.i32![valuePtr >> 2], this.i32![(valuePtr + 8) >> 2]);
             case InteropValueType.Str: return this.stringToJs(this.i32![valuePtr >> 2]);
             case InteropValueType.Obj: return this._objectTrackingList[this.u32![valuePtr >> 2]];
             case InteropValueType.Arr:

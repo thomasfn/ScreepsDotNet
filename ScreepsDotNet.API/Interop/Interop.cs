@@ -26,9 +26,12 @@ namespace ScreepsDotNet.Interop
         public Span<ParamSpec> Params => MemoryMarshal.CreateSpan(ref P0, 8);
     }
 
+    [StructLayout(LayoutKind.Explicit, Pack = 4, Size = 36)]
     public struct FunctionSpec
     {
+        [FieldOffset(0)]
         public ParamSpec ReturnParamSpec;
+        [FieldOffset(4)]
         public FunctionParamsSpec ParamSpecs;
     }
 
@@ -132,6 +135,9 @@ namespace ScreepsDotNet.Interop
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe InteropValue(InteropValue* value, int length) => Slot = new InteropValueImpl { IntPtrValue = (IntPtr)value, Type = InteropValueType.Arr, Length = length };
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe InteropValue(void* value, int length) => Slot = new InteropValueImpl { IntPtrValue = (IntPtr)value, Type = InteropValueType.Ptr, Length = length };
 
         #endregion
 

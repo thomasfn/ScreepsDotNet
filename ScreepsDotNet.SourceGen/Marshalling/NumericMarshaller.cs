@@ -11,20 +11,32 @@ namespace ScreepsDotNet.SourceGen.Marshalling
     {
         public override bool Unsafe => false;
 
-        private static readonly Dictionary<string, (InteropValueType, string)> primitiveTypeToInteropData = new Dictionary<string, (InteropValueType, string)>
+        private static readonly Dictionary<string, (InteropValueType, InteropValueFlags, string)> primitiveTypeToInteropData = new()
         {
-            { "bool", (InteropValueType.U1, "AsBool") },
-            { "byte", (InteropValueType.U8, "AsByte") },
-            { "sbyte", (InteropValueType.I8, "AsSByte") },
-            { "char", (InteropValueType.U16, "AsChar") },
-            { "ushort", (InteropValueType.U16, "AsUInt16") },
-            { "short", (InteropValueType.I16, "AsInt16") },
-            { "uint", (InteropValueType.U32, "AsUInt32") },
-            { "int", (InteropValueType.I32, "AsInt32") },
-            { "ulong", (InteropValueType.U64, "AsUInt64") },
-            { "long", (InteropValueType.I64, "AsInt64") },
-            { "float", (InteropValueType.F32, "AsSingle") },
-            { "double", (InteropValueType.F64, "AsDouble") },
+            { "bool", (InteropValueType.U1, InteropValueFlags.None, "AsBool") },
+            { "byte", (InteropValueType.U8, InteropValueFlags.None, "AsByte") },
+            { "sbyte", (InteropValueType.I8, InteropValueFlags.None, "AsSByte") },
+            { "char", (InteropValueType.U16, InteropValueFlags.None, "AsChar") },
+            { "ushort", (InteropValueType.U16, InteropValueFlags.None, "AsUInt16") },
+            { "short", (InteropValueType.I16, InteropValueFlags.None, "AsInt16") },
+            { "uint", (InteropValueType.U32, InteropValueFlags.None, "AsUInt32") },
+            { "int", (InteropValueType.I32, InteropValueFlags.None, "AsInt32") },
+            { "ulong", (InteropValueType.U64, InteropValueFlags.None, "AsUInt64") },
+            { "long", (InteropValueType.I64, InteropValueFlags.None, "AsInt64") },
+            { "float", (InteropValueType.F32, InteropValueFlags.None, "AsSingle") },
+            { "double", (InteropValueType.F64, InteropValueFlags.None, "AsDouble") },
+            { "bool?", (InteropValueType.U1, InteropValueFlags.Nullable, "AsBoolNullable") },
+            { "byte?", (InteropValueType.U8, InteropValueFlags.Nullable, "AsByteNullable") },
+            { "sbyte?", (InteropValueType.I8, InteropValueFlags.Nullable, "AsSByteNullable") },
+            { "char?", (InteropValueType.U16, InteropValueFlags.Nullable, "AsCharNullable") },
+            { "ushort?", (InteropValueType.U16, InteropValueFlags.Nullable, "AsUInt16Nullable") },
+            { "short?", (InteropValueType.I16, InteropValueFlags.Nullable, "AsInt16Nullable") },
+            { "uint?", (InteropValueType.U32, InteropValueFlags.Nullable, "AsUInt32Nullable") },
+            { "int?", (InteropValueType.I32, InteropValueFlags.Nullable, "AsInt32Nullable") },
+            { "ulong?", (InteropValueType.U64, InteropValueFlags.Nullable, "AsUInt64Nullable") },
+            { "long?", (InteropValueType.I64, InteropValueFlags.Nullable, "AsInt64Nullable") },
+            { "float?", (InteropValueType.F32, InteropValueFlags.Nullable, "AsSingleNullable") },
+            { "double?", (InteropValueType.F64, InteropValueFlags.Nullable, "AsDoubleNullable") },
         };
 
         public override bool CanMarshalToJS(ITypeSymbol paramTypeSymbol) => primitiveTypeToInteropData.ContainsKey(paramTypeSymbol.WithNullableAnnotation(NullableAnnotation.None).ToDisplayString());
@@ -51,17 +63,14 @@ namespace ScreepsDotNet.SourceGen.Marshalling
         public override void MarshalFromJS(ITypeSymbol returnTypeSymbol, string jsParamName, SourceEmitter emitter)
         {
             var interopData = primitiveTypeToInteropData[returnTypeSymbol.WithNullableAnnotation(NullableAnnotation.None).ToDisplayString()];
-            if (returnTypeSymbol.NullableAnnotation == NullableAnnotation.NotAnnotated)
-            {
-                emitter.WriteLine($"return {jsParamName}.{interopData.Item2}();");
-            }
-            else
-            {
-                emitter.WriteLine($"return {jsParamName}.{interopData.Item2}Nullable();");
-            }
+            emitter.WriteLine($"return {jsParamName}.{interopData.Item3}();");
         }
 
-        public override ParamSpec GenerateParamSpec(ITypeSymbol paramTypeSymbol) => new(primitiveTypeToInteropData[paramTypeSymbol.WithNullableAnnotation(NullableAnnotation.None).ToDisplayString()].Item1, paramTypeSymbol.NullableAnnotation == NullableAnnotation.Annotated ? InteropValueFlags.Nullable : InteropValueFlags.None);
+        public override ParamSpec GenerateParamSpec(ITypeSymbol paramTypeSymbol)
+        {
+            var interopData = primitiveTypeToInteropData[paramTypeSymbol.WithNullableAnnotation(NullableAnnotation.None).ToDisplayString()];
+            return new(interopData.Item1, interopData.Item2);
+        }
 
         public override ParamSpec GenerateReturnParamSpec(ITypeSymbol returnTypeSymbol) => GenerateParamSpec(returnTypeSymbol);
     }
