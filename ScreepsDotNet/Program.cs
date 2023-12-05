@@ -2,7 +2,10 @@
 #define ARENA
 //#define WORLD
 
+using ScreepsDotNet.Interop;
 using System;
+using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Runtime.InteropServices.JavaScript;
 
 namespace ScreepsDotNet
@@ -22,34 +25,82 @@ namespace ScreepsDotNet
 #endif
         private static ITutorialScript? tutorialScript;
 
-        public static void Main() { }
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicMethods, typeof(Program))]
+        public static void Main()
+        {
+
+        }
+
+        [Interop.JSImport("test", "addTwo")]
+        private static partial int AddTwoInts(int a, int b);
+
+        [Interop.JSImport("test", "toUppercase")]
+        private static partial string ToUppercase(string str);
+
+        [Interop.JSImport("object", "create")]
+        private static partial Interop.JSObject CreateObject(Interop.JSObject? prototypeObj = null);
+
+        [Interop.JSImport("object", "setProperty")]
+        private static partial void SetIntOnObject(Interop.JSObject obj, string key, int value);
+
+        [Interop.JSImport("test", "stringify")]
+        private static partial string StringifyObject(Interop.JSObject obj);
+
+        [Interop.JSImport("test", "stringify")]
+        private static partial string StringifyObject(int[] arr);
+
+        [Interop.JSImport("test", "reverseArray")]
+        private static partial byte[] ReverseArray(byte[] arr);
 
         [JSExport]
-        internal static void Init()
+        public static void Init()
         {
-#if WORLD
-            game = new Native.World.NativeGame();
-            tutorialScript = new World.BasicExample(game);
-#endif
-#if ARENA
-            game = new Native.Arena.NativeGame();
-            tutorialScript = new Arena.Tutorial10_FinalTest(game);
-#endif
+            try
+            {
+                //#if WORLD
+                //            game = new Native.World.NativeGame();
+                //            tutorialScript = new World.BasicExample(game);
+                //#endif
+                //#if ARENA
+                //            game = new Native.Arena.NativeGame();
+                //            tutorialScript = new Arena.Tutorial10_FinalTest(game);
+                //#endif
+                Console.WriteLine($"10 + 20 = {AddTwoInts(10, 20)}");
+
+                Console.WriteLine($"uppercase of 'hello world' = '{ToUppercase("hello world")}'");
+
+                var obj = CreateObject();
+                Console.WriteLine($"new object: {obj}");
+
+                SetIntOnObject(obj, "foo", 20);
+
+                Console.WriteLine($"as json: {StringifyObject(obj)}");
+
+                Console.WriteLine($"[1, 2, 3] = {StringifyObject([1, 2, 3])}");
+
+                Console.WriteLine($"reverse of [1, 2, 3] = {string.Join(", ", ReverseArray([1, 2, 3]).Select(x => x.ToString()))}");
+
+                obj.Dispose();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
         }
 
         [JSExport]
-        internal static void Loop()
+        public static void Loop()
         {
-#if WORLD
-            game?.Tick();
-#endif
-            tutorialScript?.Loop();
-#if WORLD
-            CheckHeap(game!.Cpu.GetHeapStatistics());
-#endif
-#if ARENA
-            CheckHeap(game!.Utils.GetHeapStatistics());
-#endif
+//#if WORLD
+//            game?.Tick();
+//#endif
+//            tutorialScript?.Loop();
+//#if WORLD
+//            CheckHeap(game!.Cpu.GetHeapStatistics());
+//#endif
+//#if ARENA
+//            CheckHeap(game!.Utils.GetHeapStatistics());
+//#endif
             LogGCActivity();
         }
 

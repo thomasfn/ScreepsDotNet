@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -19,46 +19,6 @@ internal static class ScreepsDotNet_Interop
 
 namespace ScreepsDotNet.Interop
 {
-    public enum InteropValueType : byte
-    {
-        Void = 0,
-        U1 = 1,
-        U8 = 2,
-        I8 = 3,
-        U16 = 4,
-        I16 = 5,
-        U32 = 6,
-        I32 = 7,
-        U64 = 8,
-        I64 = 9,
-        F32 = 10,
-        F64 = 11,
-        Ptr = 12,
-        Str = 13,
-        Obj = 14,
-        Arr = 15,
-    }
-
-    [Flags]
-    public enum InteropValueFlags : byte
-    {
-        None = 0,
-        Nullable = 1 << 0,
-        NullAsUndefined = 1 << 1,
-    }
-
-    public struct ParamSpec
-    {
-        public InteropValueType Type;
-        public InteropValueFlags Flags;
-
-        public ParamSpec(InteropValueType type, InteropValueFlags flags)
-        {
-            Type = type;
-            Flags = flags;
-        }
-    }
-
     [InlineArray(8)]
     public struct FunctionParamsSpec
     {
@@ -169,6 +129,9 @@ namespace ScreepsDotNet.Interop
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public InteropValue(JSObject value) => Slot = new InteropValueImpl { IntPtrValue = value.JSHandle, Type = InteropValueType.Obj };
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe InteropValue(InteropValue* value, int length) => Slot = new InteropValueImpl { IntPtrValue = (IntPtr)value, Type = InteropValueType.Arr, Length = length };
 
         #endregion
 
@@ -305,10 +268,25 @@ namespace ScreepsDotNet.Interop
         public unsafe string? AsString(bool freeMem = true)
         {
             if (Slot.Type == InteropValueType.Void) { return null; }
-            Debug.Assert(Slot.Type == InteropValueType.Str, $"expecting 'Str', got '{Slot.Type}'");
+            Debug.Assert(Slot.Type == InteropValueType.Str);
             var str = new string((char*)Slot.IntPtrValue);
             if (freeMem) { Marshal.FreeHGlobal(Slot.IntPtrValue); }
             return str;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe T[]? AsArray<T>(Func<InteropValue, T> elementMarshaller, bool freeMem = true)
+        {
+            if (Slot.Type == InteropValueType.Void) { return null; }
+            Debug.Assert(Slot.Type == InteropValueType.Arr);
+            ReadOnlySpan<InteropValue> valueArr = new((void*)Slot.IntPtrValue, Slot.Length);
+            T[] arr = new T[Slot.Length];
+            for (int i = 0; i < Slot.Length; ++i)
+            {
+                arr[i] = elementMarshaller(valueArr[i]);
+            }
+            if (freeMem) { Marshal.FreeHGlobal(Slot.IntPtrValue); }
+            return arr;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

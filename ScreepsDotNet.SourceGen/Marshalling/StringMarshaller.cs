@@ -1,25 +1,27 @@
 ﻿using Microsoft.CodeAnalysis;
 
+using ScreepsDotNet.Interop;
+
 namespace ScreepsDotNet.SourceGen.Marshalling
 {
     internal class StringMarshaller : BaseMarshaller
     {
         public override bool Unsafe => true;
 
-        public override bool CanMarshalToJS(IParameterSymbol paramSymbol)
+        public override bool CanMarshalToJS(ITypeSymbol paramTypeSymbol)
         {
-            var type = paramSymbol.Type.ToDisplayString();
+            var type = paramTypeSymbol.ToDisplayString();
             return type == "string" || type == "string?";
         }
 
-        public override void BeginMarshalToJS(IParameterSymbol paramSymbol, string paramName, SourceEmitter emitter)
+        public override void BeginMarshalToJS(ITypeSymbol paramTypeSymbol, string clrParamName, string jsParamName, SourceEmitter emitter)
         {
-            emitter.WriteLine($"fixed (char* {paramSymbol.Name}Ptr = {paramSymbol.Name})");
+            emitter.WriteLine($"fixed (char* {clrParamName}Ptr = {clrParamName})");
             emitter.OpenScope();
-            emitter.WriteLine($"{paramName} = new({paramSymbol.Name}Ptr);");
+            emitter.WriteLine($"{jsParamName} = new({clrParamName}Ptr);");
         }
 
-        public override void EndMarshalToJS(IParameterSymbol paramSymbol, string paramName, SourceEmitter emitter)
+        public override void EndMarshalToJS(ITypeSymbol paramTypeSymbol, string clrParamName, string jsParamName, SourceEmitter emitter)
         {
             emitter.CloseScope();
         }
@@ -30,20 +32,20 @@ namespace ScreepsDotNet.SourceGen.Marshalling
             return type == "string" || type == "string?";
         }
 
-        public override void MarshalFromJS(ITypeSymbol returnTypeSymbol, string paramName, SourceEmitter emitter)
+        public override void MarshalFromJS(ITypeSymbol returnTypeSymbol, string jsParamName, SourceEmitter emitter)
         {
             if (returnTypeSymbol.NullableAnnotation == NullableAnnotation.NotAnnotated)
             {
-                emitter.WriteLine($"var retObj = {paramName}.AsString();");
+                emitter.WriteLine($"var retObj = {jsParamName}.AsString();");
                 emitter.WriteLine($"if (retObj == null) {{ throw new NullReferenceException($\"Expecting string, got null\"); }}");
                 emitter.WriteLine($"return retObj;");
                 return;
             }
-            emitter.WriteLine($"return {paramName}.AsString();");
+            emitter.WriteLine($"return {jsParamName}.AsString();");
         }
 
-        public override string GenerateParamSpec(IParameterSymbol paramSymbol) => $"new(InteropValueType.Str, InteropValueFlags.{(paramSymbol.NullableAnnotation == NullableAnnotation.Annotated ? "Nullable" : "None")})";
+        public override ParamSpec GenerateParamSpec(ITypeSymbol paramTypeSymbol) => new(InteropValueType.Str, paramTypeSymbol.NullableAnnotation == NullableAnnotation.Annotated ? InteropValueFlags.Nullable : InteropValueFlags.None);
 
-        public override string GenerateReturnParamSpec(ITypeSymbol returnType) => $"new(InteropValueType.Str, InteropValueFlags.{(returnType.NullableAnnotation == NullableAnnotation.Annotated ? "Nullable" : "None")})";
+        public override ParamSpec GenerateReturnParamSpec(ITypeSymbol returnTypeSymbol) => GenerateParamSpec(returnTypeSymbol);
     }
 }

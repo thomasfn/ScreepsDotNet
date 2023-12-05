@@ -22,6 +22,7 @@
 	<ItemGroup>
 		<_WasmCommonCFlags Include="-mno-bulk-memory" />
 		<_WasiSdkClangArgs Include="-Wl,--features=mutable-globals" />
+		<!-- TODO: Figure out how to get it to legalise js interface - are we using wasm-opt in this pipeline? if so the 'legalize-js-interface' flag works nicely for this -->
 	</ItemGroup>
 
 	<PropertyGroup>

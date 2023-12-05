@@ -8,6 +8,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 
 using ScreepsDotNet.SourceGen.Marshalling;
+using ScreepsDotNet.Interop;
 
 namespace ScreepsDotNet.SourceGen
 {
@@ -21,9 +22,11 @@ namespace ScreepsDotNet.SourceGen
         static JSImportGenerator()
         {
             var primitiveMarshallers = new BaseMarshaller[] { new VoidMarshaller(), new NumericMarshaller(), new StringMarshaller(), new JSObjectMarshaller() };
+            var layeredMarshallers = new BaseMarshaller[] { new ArrayMarshaller(primitiveMarshallers.ToImmutableArray()) };
 
             allMarshallers = Enumerable.Empty<BaseMarshaller>()
                 .Concat(primitiveMarshallers)
+                .Concat(layeredMarshallers)
                 .ToImmutableArray();
         }
 
@@ -47,6 +50,7 @@ namespace ScreepsDotNet.SourceGen
             sourceEmitter.WriteLine("using System;");
             sourceEmitter.WriteLine("using ScreepsDotNet.Interop;");
 
+            int uniqueImportIndex = 0;
             foreach (var (methodDeclarationSyntax, methodSymbol) in methods)
             {
                 // Namespace
@@ -56,14 +60,16 @@ namespace ScreepsDotNet.SourceGen
                     sourceEmitter.EnterScope($"{methodSymbol.ContainingType.DeclaredAccessibility.ToCS()} {(methodSymbol.ContainingType.IsStatic ? "static " : "")}partial class {methodSymbol.ContainingType.Name}", () =>
                     {
                         // Import index cache
-                        sourceEmitter.WriteLine($"private static int __{methodSymbol.Name}_import_index = -1;");
+                        string importIndexFieldName = $"__{methodSymbol.Name}_{uniqueImportIndex}_import_index";
+                        sourceEmitter.WriteLine($"private static int {importIndexFieldName} = -1;");
+                        ++uniqueImportIndex;
 
                         // Method
                         sourceEmitter.WriteLine($"[global::System.Runtime.Versioning.SupportedOSPlatform(\"wasi\")]");
                         sourceEmitter.WriteLine($"[global::System.Diagnostics.DebuggerNonUserCode]");
                         sourceEmitter.EnterScope($"{methodSymbol.DeclaredAccessibility.ToCS()} {(methodSymbol.IsStatic ? "static " : "")}partial {methodSymbol.ReturnType.ToDisplayString()} {methodSymbol.Name}({string.Join(", ", methodSymbol.Parameters.Select(x => x.ToDisplayString()))})", () =>
                         {
-                            GenerateInteropForMethod(sourceEmitter, methodSymbol);
+                            GenerateInteropForMethod(sourceEmitter, methodSymbol, importIndexFieldName);
                         });
                     });
                 });
@@ -72,7 +78,7 @@ namespace ScreepsDotNet.SourceGen
             context.AddSource($"ScreepsDotNet.JSImports", SourceText.From(sourceEmitter.ToString(), Encoding.UTF8));
         }
 
-        private static void GenerateInteropForMethod(SourceEmitter sourceEmitter, IMethodSymbol methodSymbol)
+        private static void GenerateInteropForMethod(SourceEmitter sourceEmitter, IMethodSymbol methodSymbol, string importIndexFieldName)
         {
             // Max param count is 8
             if (methodSymbol.Parameters.Length > 8)
@@ -140,16 +146,15 @@ namespace ScreepsDotNet.SourceGen
             }
 
             // Emit import code
-            string importIndexFieldName = $"__{methodSymbol.Name}_import_index";
             sourceEmitter.EnterScope($"if ({importIndexFieldName} == -1)", () =>
             {
                 sourceEmitter.WriteLine($"var functionSpec = new FunctionSpec();");
                 for (int i = 0; i < methodSymbol.Parameters.Length; ++i)
                 {
                     var marshaller = marshallers[i];
-                    sourceEmitter.WriteLine($"functionSpec.ParamSpecs.Params[{i}] = {marshaller.GenerateParamSpec(methodSymbol.Parameters[i])};");
+                    sourceEmitter.WriteLine($"functionSpec.ParamSpecs.Params[{i}] = {ParamSpecToCs(marshaller.GenerateParamSpec(methodSymbol.Parameters[i]))};");
                 }
-                sourceEmitter.WriteLine($"functionSpec.ReturnParamSpec = {retMarshaller.GenerateReturnParamSpec(methodSymbol.ReturnType)};");
+                sourceEmitter.WriteLine($"functionSpec.ReturnParamSpec = {ParamSpecToCs(retMarshaller.GenerateReturnParamSpec(methodSymbol.ReturnType))};");
                 sourceEmitter.WriteLine($"{importIndexFieldName} = Interop.Native.BindImport(\"{moduleName}\", \"{importName}\", functionSpec);");
             });
 
@@ -164,13 +169,13 @@ namespace ScreepsDotNet.SourceGen
                 sourceEmitter.WriteLine($"Span<InteropValue> args = stackalloc InteropValue[{methodSymbol.Parameters.Length}];");
                 for (int i = 0; i < methodSymbol.Parameters.Length; ++i)
                 {
-                    marshallers[i].BeginMarshalToJS(methodSymbol.Parameters[i], $"args[{i}]", sourceEmitter);
+                    marshallers[i].BeginMarshalToJS(methodSymbol.Parameters[i].Type, methodSymbol.Parameters[i].Name, $"args[{i}]", sourceEmitter);
                 }
                 sourceEmitter.WriteLine($"var returnVal = Interop.Native.InvokeImport({importIndexFieldName}, args);");
                 retMarshaller.MarshalFromJS(methodSymbol.ReturnType, "returnVal", sourceEmitter);
                 for (int i = methodSymbol.Parameters.Length - 1; i >= 0; --i)
                 {
-                    marshallers[i].EndMarshalToJS(methodSymbol.Parameters[i], $"args[{i}]", sourceEmitter);
+                    marshallers[i].EndMarshalToJS(methodSymbol.Parameters[i].Type, methodSymbol.Parameters[i].Name, $"args[{i}]", sourceEmitter);
                 }
             }
             else
@@ -184,7 +189,27 @@ namespace ScreepsDotNet.SourceGen
             }
         }
 
-
+        private static string ParamSpecToCs(ParamSpec paramSpec)
+        {
+            var sb = new StringBuilder();
+            sb.Append("new(");
+            sb.Append("InteropValueType.");
+            sb.Append(paramSpec.Type.ToString());
+            sb.Append(", ");
+            sb.Append("InteropValueFlags.");
+            sb.Append(paramSpec.Flags.ToString());
+            if (paramSpec.ElementType != InteropValueType.Void)
+            {
+                sb.Append(", ");
+                sb.Append("InteropValueType.");
+                sb.Append(paramSpec.ElementType.ToString());
+                sb.Append(", ");
+                sb.Append("InteropValueFlags.");
+                sb.Append(paramSpec.ElementFlags.ToString());
+            }
+            sb.Append(")");
+            return sb.ToString();
+        }
 
     }
 }

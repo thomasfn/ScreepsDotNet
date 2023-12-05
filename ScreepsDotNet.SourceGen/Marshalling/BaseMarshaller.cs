@@ -1,7 +1,6 @@
 ﻿using Microsoft.CodeAnalysis;
-using System;
-using System.Collections.Generic;
-using System.Text;
+
+using ScreepsDotNet.Interop;
 
 namespace ScreepsDotNet.SourceGen.Marshalling
 {
@@ -9,18 +8,22 @@ namespace ScreepsDotNet.SourceGen.Marshalling
     {
         public abstract bool Unsafe { get; }
 
-        public abstract bool CanMarshalToJS(IParameterSymbol paramSymbol);
+        public virtual bool CanMarshalToJS(IParameterSymbol paramSymbol) => CanMarshalToJS(paramSymbol.Type);
 
-        public abstract void BeginMarshalToJS(IParameterSymbol paramSymbol, string paramName, SourceEmitter emitter);
+        public abstract bool CanMarshalToJS(ITypeSymbol paramTypeSymbol);
 
-        public abstract void EndMarshalToJS(IParameterSymbol paramSymbol, string paramName, SourceEmitter emitter);
+        public abstract void BeginMarshalToJS(ITypeSymbol paramTypeSymbol, string clrParamName, string jsParamName, SourceEmitter emitter);
+
+        public abstract void EndMarshalToJS(ITypeSymbol paramTypeSymbol, string clrParamName, string jsParamName, SourceEmitter emitter);
 
         public abstract bool CanMarshalFromJS(ITypeSymbol returnTypeSymbol);
 
-        public abstract void MarshalFromJS(ITypeSymbol returnTypeSymbol, string paramName, SourceEmitter emitter);
+        public abstract void MarshalFromJS(ITypeSymbol returnTypeSymbol, string jsParamName, SourceEmitter emitter);
 
-        public abstract string GenerateParamSpec(IParameterSymbol paramSymbol);
+        public virtual ParamSpec GenerateParamSpec(IParameterSymbol paramSymbol) => GenerateParamSpec(paramSymbol.Type);
 
-        public abstract string GenerateReturnParamSpec(ITypeSymbol returnType);
+        public abstract ParamSpec GenerateParamSpec(ITypeSymbol paramTypeSymbol);
+
+        public abstract ParamSpec GenerateReturnParamSpec(ITypeSymbol returnTypeSymbol);
     }
 }

@@ -33,13 +33,14 @@ const INTEROP_VALUE_TYPE_NAMES: Record<InteropValueType, string> = [
     'void*',
     'char*',
     'JSObject',
-    'JSArray',
+    '[]',
 ];
 
 interface ParamSpec {
     type: InteropValueType;
     nullable: boolean;
     nullAsUndefined: boolean;
+    elementSpec?: ParamSpec;
 }
 
 interface FunctionSpec {
@@ -48,6 +49,9 @@ interface FunctionSpec {
 }
 
 function stringifyParamSpec(paramSpec: Readonly<ParamSpec>): string {
+    if (paramSpec.type === InteropValueType.Arr && paramSpec.elementSpec) {
+        return `${stringifyParamSpec(paramSpec.elementSpec)}[]`;
+    }
     return `${INTEROP_VALUE_TYPE_NAMES[paramSpec.type]}${paramSpec.nullable ? '?' : ''}`;
 }
 
@@ -139,7 +143,7 @@ export class Interop {
         const boundImportFunction = this.createImportBinding(importFunction, functionSpec);
         const importIndex = this._boundImportList.length;
         this._boundImportList.push(boundImportFunction);
-        // console.log(`${importIndex}: ${stringifyParamSpec(functionSpec.returnSpec)} ${moduleName}::${importName}(${functionSpec.paramSpecs.map(stringifyParamSpec).join(', ')})`);
+        console.log(`${importIndex}: ${stringifyParamSpec(functionSpec.returnSpec)} ${moduleName}::${importName}(${functionSpec.paramSpecs.map(stringifyParamSpec).join(', ')})`);
         return importIndex;
     }
 
@@ -204,7 +208,11 @@ export class Interop {
             // case InteropValueType.Ptr: return undefined;
             case InteropValueType.Str: return this.stringToJs(this.i32![valuePtr >> 2]);
             case InteropValueType.Obj: return this._objectTrackingList[this.u32![valuePtr >> 2]];
-            // case InteropValueType.Arr: return undefined;
+            case InteropValueType.Arr:
+                if (paramSpec.elementSpec == null) {
+                    throw new Error(`malformed param spec (array with no element spec)`);
+                }
+                return this.arrayToJs(this.i32![valuePtr >> 2], this.i32![(valuePtr + 8) >> 2], paramSpec.elementSpec);
             default: throw new Error(`failed to marshal ${stringifyParamSpec(paramSpec)} from '${INTEROP_VALUE_TYPE_NAMES[valueType] ?? 'unknown'}'`);
         }
     }
@@ -256,7 +264,19 @@ export class Interop {
                 this.u32![valuePtr >> 2] = clrTrackingId;
                 this.u8![valuePtr + 12] = InteropValueType.Obj;
                 return;
-            // case InteropValueType.Arr: return;
+            case InteropValueType.Arr:
+                if (paramSpec.elementSpec == null) {
+                    throw new Error(`malformed param spec (array with no element spec)`);
+                }
+                if (!Array.isArray(value)) {
+                    //value = [value];
+                    // TODO: We could have a param spec flag that wraps single values in arrays in case we need to support apis that sometimes returns an array and sometimes a single value
+                    throw new Error(`failed to marshal ${typeof value} as '${stringifyParamSpec(paramSpec)}' (not an array)`);
+                }
+                this.i32![valuePtr >> 2] = this.arrayToClr(value, paramSpec.elementSpec);
+                this.i32![(valuePtr + 8) >> 2] = value.length;
+                this.u8![valuePtr + 12] = InteropValueType.Arr;
+                return;
             default: throw new Error(`failed to marshal '${typeof value}' as '${stringifyParamSpec(paramSpec)}' (not yet implemented)`);
         }
     }
@@ -300,12 +320,40 @@ export class Interop {
         return strPtr;
     }
 
+    private arrayToJs(arrayPtr: number, arrayLen: number, elementSpec: Readonly<ParamSpec>): unknown[] {
+        const result: unknown[] = [];
+        result.length = arrayLen;
+        for (let i = 0; i < arrayLen; ++i) {
+            result[i] = this.marshalToJs(arrayPtr, elementSpec);
+            arrayPtr += 16;
+        }
+        return result;
+    }
+
+    private arrayToClr(value: unknown[], elementSpec: Readonly<ParamSpec>): number {
+        const arrPtr = this._malloc!(value.length * 16);
+        let elPtr = arrPtr;
+        for (let i = 0; i < value.length; ++i) {
+            this.marshalToClr(elPtr, elementSpec, value[i]);
+            elPtr += 16;
+        }
+        return arrPtr;
+    }
+
     private paramSpecToJs(paramSpecPtr: number): ParamSpec {
+        const type = this.u8![paramSpecPtr];
         const flags = this.u8![paramSpecPtr + 1];
+        const elementType = this.u8![paramSpecPtr + 2];
+        const elementFlags = this.u8![paramSpecPtr + 3];
         return {
-            type: this.u8![paramSpecPtr],
+            type: type,
             nullable: (flags & 1) === 1,
             nullAsUndefined: (flags & 2) === 2,
+            elementSpec: elementType !== InteropValueType.Void ? {
+                type: elementType,
+                nullable: (elementFlags & 1) === 1,
+                nullAsUndefined: (elementFlags & 2) === 2,
+            } : undefined,
         };
     }
 
@@ -314,12 +362,12 @@ export class Interop {
             returnSpec: this.paramSpecToJs(functionSpecPtr),
             paramSpecs: []
         };
-        functionSpecPtr += 2;
+        functionSpecPtr += 4;
         for (let i = 0; i < 8; ++i) {
             const paramSpec = this.paramSpecToJs(functionSpecPtr);
             if (paramSpec.type === InteropValueType.Void) { break; }
             result.paramSpecs.push(paramSpec);
-            functionSpecPtr += 2;
+            functionSpecPtr += 4;
         }
         return result;
     }

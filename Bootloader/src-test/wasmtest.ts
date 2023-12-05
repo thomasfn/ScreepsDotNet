@@ -15,6 +15,7 @@ async function main() {
             addTwo: (a: number, b: number) => a + b,
             toUppercase: (str: string) => str.toUpperCase(),
             stringify: (value: unknown) => JSON.stringify(value),
+            reverseArray: (arr: number[]) => arr.reverse(),
         });
         bootloader.compile(wasmData);
         bootloader.start();
