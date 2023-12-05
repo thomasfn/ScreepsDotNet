@@ -51,6 +51,17 @@ class Stdio extends Fd {
 
 type ScreepsDotNetWasmInstance = WebAssembly.Instance & { exports: ScreepsDotNetExports };
 
+const JSTYPE_TO_ENUM: Readonly<Record<'undefined' | 'string' | 'number' | 'bigint' | 'boolean' | 'object' | 'function' | 'symbol', number>> = {
+    undefined: 0,
+    string: 1,
+    number: 2,
+    bigint: 3,
+    boolean: 4,
+    object: 5,
+    function: 6,
+    symbol: 7,
+};
+
 export class Bootloader {
     private readonly _pendingLogs: string[] = [];
     private readonly _deferLogsToTick: boolean;
@@ -85,8 +96,12 @@ export class Bootloader {
         this._interop = new Interop();
 
         this.setImports('object', {
+            hasProperty: (obj: Record<string | number | symbol, unknown>, key: string) => key in obj,
+            getTypeOfProperty: (obj: Record<string | number | symbol, unknown>, key: string) => JSTYPE_TO_ENUM[typeof obj[key]],
+            getKeys: (obj: Record<string | number | symbol, unknown>) => Object.keys(obj),
             getProperty: (obj: Record<string | number | symbol, unknown>, key: string | number | symbol) => obj[key],
             setProperty: (obj: Record<string | number | symbol, unknown>, key: string | number | symbol, value: unknown) => obj[key] = value,
+            deleteProperty: (obj: Record<string | number | symbol, unknown>, key: string) => delete obj[key],
             create: (proto: object) => Object.create(proto),
         });
     }
