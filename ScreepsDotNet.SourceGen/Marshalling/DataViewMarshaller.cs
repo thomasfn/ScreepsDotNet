@@ -1,6 +1,5 @@
 ﻿using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
+
 using Microsoft.CodeAnalysis;
 
 using ScreepsDotNet.Interop;
@@ -53,10 +52,7 @@ namespace ScreepsDotNet.SourceGen.Marshalling
             return CanMarshalToJS(paramSymbol.Type);
         }
 
-        public override bool CanMarshalToJS(ITypeSymbol paramTypeSymbol)
-        {
-            return CanMarshalAsDataView(paramTypeSymbol, out _);
-        }
+        public override bool CanMarshalToJS(ITypeSymbol paramTypeSymbol) => CanMarshalAsDataView(paramTypeSymbol, out _);
 
         public override void BeginMarshalToJS(ITypeSymbol paramTypeSymbol, string clrParamName, string jsParamName, SourceEmitter emitter)
         {

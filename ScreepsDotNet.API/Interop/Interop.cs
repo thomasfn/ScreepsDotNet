@@ -131,6 +131,9 @@ namespace ScreepsDotNet.Interop
         public unsafe InteropValue(char* value) => Slot = new InteropValueImpl { IntPtrValue = (IntPtr)value, Type = InteropValueType.Str };
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe InteropValue(char* value, int arrayLength) => Slot = new InteropValueImpl { IntPtrValue = (IntPtr)value, Type = InteropValueType.Arr, Length = arrayLength };
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public InteropValue(JSObject value) => Slot = new InteropValueImpl { IntPtrValue = value.JSHandle, Type = InteropValueType.Obj };
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -290,6 +293,48 @@ namespace ScreepsDotNet.Interop
             for (int i = 0; i < Slot.Length; ++i)
             {
                 arr[i] = elementMarshaller(valueArr[i]);
+            }
+            if (freeMem) { Marshal.FreeHGlobal(Slot.IntPtrValue); }
+            return arr;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe string[]? AsStringArray(bool freeMem = true)
+        {
+            if (Slot.Type == InteropValueType.Void) { return null; }
+            Debug.Assert(Slot.Type == InteropValueType.Arr);
+            string[] arr = new string[Slot.Length];
+            char* head = (char*)Slot.IntPtrValue;
+            for (int i = 0; i < Slot.Length; ++i)
+            {
+                var str = new string(head);
+                head += str.Length + 1;
+                arr[i] = str;
+            }
+            if (freeMem) { Marshal.FreeHGlobal(Slot.IntPtrValue); }
+            return arr;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe string?[]? AsNullableStringArray(bool freeMem = true)
+        {
+            if (Slot.Type == InteropValueType.Void) { return null; }
+            Debug.Assert(Slot.Type == InteropValueType.Arr);
+            string?[] arr = new string[Slot.Length];
+            char* head = (char*)Slot.IntPtrValue;
+            for (int i = 0; i < Slot.Length; ++i)
+            {
+                char nullCode = head[0];
+                ++head;
+                if (nullCode == 0)
+                {
+                    arr[i] = null;
+                    ++head;
+                    continue;
+                }
+                var str = new string(head);
+                head += str.Length + 1;
+                arr[i] = str;
             }
             if (freeMem) { Marshal.FreeHGlobal(Slot.IntPtrValue); }
             return arr;
