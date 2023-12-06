@@ -1,56 +1,36 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices.JavaScript;
+using ScreepsDotNet.Interop;
 
 using ScreepsDotNet.API;
 
 namespace ScreepsDotNet.Native
 {
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal static partial class JSUtils
     {
         #region Imports
 
         [JSImport("getConstructorOf", "object")]
-        [return: JSMarshalAsAttribute<JSType.Object>]
-        internal static partial JSObject GetConstructorOf([JSMarshalAs<JSType.Object>] JSObject obj);
+        internal static partial JSObject GetConstructorOf(JSObject obj);
 
-        [JSImport("getKeysOf", "object")]
-        [return: JSMarshalAsAttribute<JSType.Array<JSType.String>>]
-        internal static partial string[] GetKeysOf([JSMarshalAs<JSType.Object>] JSObject obj);
+        [JSImport("setProperty", "__object")]
+        internal static partial void SetObjectArrayOnObject(JSObject obj, string key, JSObject[] val);
 
-        [JSImport("create", "object")]
-        [return: JSMarshalAsAttribute<JSType.Object>]
-        internal static partial JSObject CreateObject([JSMarshalAs<JSType.Object>] JSObject? prototype);
+        [JSImport("getProperty", "__object")]
+        internal static partial JSObject[]? GetObjectArrayOnObject(JSObject obj, string key);
 
-        [JSImport("set", "object")]
-        internal static partial void SetObjectArrayOnObject([JSMarshalAs<JSType.Object>] JSObject obj, [JSMarshalAs<JSType.String>] string key, [JSMarshalAs<JSType.Array<JSType.Object>>] JSObject[] val);
+        [JSImport("setProperty", "__object")]
+        internal static partial void SetIntArrayOnObject(JSObject obj, string key, int[] val);
 
-        [JSImport("get", "object")]
-        [return: JSMarshalAsAttribute<JSType.Array<JSType.Object>>]
-        internal static partial JSObject[]? GetObjectArrayOnObject([JSMarshalAs<JSType.Object>] JSObject obj, [JSMarshalAs<JSType.String>] string key);
+        [JSImport("getProperty", "__object")]
+        internal static partial int[]? GetIntArrayOnObject(JSObject obj, string key);
 
-        [JSImport("set", "object")]
-        internal static partial void SetIntArrayOnObject([JSMarshalAs<JSType.Object>] JSObject obj, [JSMarshalAs<JSType.String>] string key, [JSMarshalAs<JSType.Array<JSType.Number>>] int[] val);
+        [JSImport("setProperty", "__object")]
+        internal static partial void SetStringArrayOnObject(JSObject obj, string key, string[] val);
 
-        [JSImport("get", "object")]
-        [return: JSMarshalAsAttribute<JSType.Array<JSType.Number>>]
-        internal static partial int[]? GetIntArrayOnObject([JSMarshalAs<JSType.Object>] JSObject obj, [JSMarshalAs<JSType.String>] string key);
-
-        [JSImport("set", "object")]
-        internal static partial void SetStringArrayOnObject([JSMarshalAs<JSType.Object>] JSObject obj, [JSMarshalAs<JSType.String>] string key, [JSMarshalAs<JSType.Array<JSType.String>>] string[] val);
-
-        [JSImport("get", "object")]
-        [return: JSMarshalAsAttribute<JSType.Array<JSType.String>>]
-        internal static partial string[]? GetStringArrayOnObject([JSMarshalAs<JSType.Object>] JSObject obj, [JSMarshalAs<JSType.String>] string key);
-
-        [JSImport("fixupArray", "object")]
-        [return: JSMarshalAsAttribute<JSType.Object>]
-        internal static partial JSObject FixupArray([JSMarshalAs<JSType.Object>] JSObject obj);
-
-        [JSImport("fixupArrayOnObject", "object")]
-        [return: JSMarshalAsAttribute<JSType.Object>]
-        internal static partial JSObject FixupArrayOnObject([JSMarshalAs<JSType.Object>] JSObject obj, [JSMarshalAs<JSType.String>] string key);
+        [JSImport("getProperty", "__object")]
+        internal static partial string[]? GetStringArrayOnObject(JSObject obj, string key);
 
         #endregion
 
@@ -72,7 +52,7 @@ namespace ScreepsDotNet.Native
 
         public static JSObject ToJS(this Position pos)
         {
-            var obj = CreateObject(null);
+            var obj = JSObject.Create();
             obj.SetProperty("x", pos.X);
             obj.SetProperty("y", pos.Y);
             return obj;
@@ -80,7 +60,7 @@ namespace ScreepsDotNet.Native
 
         public static JSObject ToJS(this FractionalPosition pos)
         {
-            var obj = CreateObject(null);
+            var obj = JSObject.Create();
             obj.SetProperty("x", pos.X);
             obj.SetProperty("y", pos.Y);
             return obj;

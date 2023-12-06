@@ -1,37 +1,37 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices.JavaScript;
+using ScreepsDotNet.Interop;
 using ScreepsDotNet.API;
 using ScreepsDotNet.API.World;
 
 namespace ScreepsDotNet.Native.World
 {
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal partial class NativeCpu : ICpu
     {
         #region Imports
 
         [JSImport("cpu.getHeapStatistics", "game")]
-        [return: JSMarshalAsAttribute<JSType.Object>]
+        
         internal static partial JSObject Native_GetHeapStatistics();
 
         [JSImport("cpu.getUsed", "game")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
+        
         internal static partial double Native_GetUsed();
 
         [JSImport("cpu.halt", "game")]
         internal static partial void Native_Halt();
 
         [JSImport("cpu.setShardLimits", "game")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_SetShardLimits([JSMarshalAs<JSType.Object>] JSObject newShardLimits);
+        
+        internal static partial int Native_SetShardLimits(JSObject newShardLimits);
 
         [JSImport("cpu.unlock", "game")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
+        
         internal static partial int Native_Unlock();
 
         [JSImport("cpu.generatePixel", "game")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
+        
         internal static partial int Native_GeneratePixel();
 
         #endregion
@@ -57,7 +57,7 @@ namespace ScreepsDotNet.Native.World
 
         public bool Unlocked =>  ProxyObject.GetPropertyAsBoolean("unlocked");
 
-        public long? UnlockedTime => ProxyObject.GetTypeOfProperty("unlockedTime") == "number" ? ProxyObject.GetPropertyAsInt32("unlockedTime") : null;
+        public long? UnlockedTime => ProxyObject.GetTypeOfProperty("unlockedTime") == JSPropertyType.Number ? ProxyObject.GetPropertyAsInt32("unlockedTime") : null;
 
         public NativeCpu(JSObject proxyObject)
         {
@@ -77,8 +77,6 @@ namespace ScreepsDotNet.Native.World
                 obj.GetPropertyAsInt32("malloced_memory"),
                 obj.GetPropertyAsInt32("peak_malloced_memory"),
                 obj.GetPropertyAsInt32("does_zap_garbage"),
-                obj.GetPropertyAsInt32("number_of_native_contexts"),
-                obj.GetPropertyAsInt32("number_of_detached_contexts"),
                 obj.GetPropertyAsInt32("externally_allocated_size")
             );
         }
@@ -91,7 +89,7 @@ namespace ScreepsDotNet.Native.World
 
         public CpuSetShardLimitsResult SetShardLimits(IReadOnlyDictionary<string, double> shardLimits)
         {
-            using var obj = JSUtils.CreateObject(null);
+            using var obj = JSObject.Create();
             foreach (var pair in shardLimits)
             {
                 obj.SetProperty(pair.Key, pair.Value);

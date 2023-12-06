@@ -1,27 +1,27 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices.JavaScript;
+using ScreepsDotNet.Interop;
 
 using ScreepsDotNet.API.World;
 
 namespace ScreepsDotNet.Native.World
 {
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal partial class NativeStructure : NativeRoomObject, IStructure, IEquatable<NativeStructure?>
     {
         #region Imports
 
         [JSImport("Structure.destroy", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Destroy([JSMarshalAs<JSType.Object>] JSObject proxyObject);
+        
+        internal static partial int Native_Destroy(JSObject proxyObject);
 
         [JSImport("Structure.isActive", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Boolean>]
-        internal static partial bool Native_IsActive([JSMarshalAs<JSType.Object>] JSObject proxyObject);
+        
+        internal static partial bool Native_IsActive(JSObject proxyObject);
 
         [JSImport("Structure.notifyWhenAttacked", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_NotifyWhenAttacked([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Boolean>] bool enabled);
+        
+        internal static partial int Native_NotifyWhenAttacked(JSObject proxyObject, bool enabled);
 
         #endregion
 

@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices.JavaScript;
+using ScreepsDotNet.Interop;
 using System.Linq;
 
 using ScreepsDotNet.API.World;
@@ -8,13 +8,13 @@ using ScreepsDotNet.API;
 
 namespace ScreepsDotNet.Native.World
 {
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal partial class NativeConstants : IConstants
     {
         #region Imports
 
         [JSImport("getConstantsObj", "game")]
-        [return: JSMarshalAsAttribute<JSType.Object>]
+        
         internal static partial JSObject Native_GetConstants();
 
         #endregion
@@ -164,12 +164,12 @@ namespace ScreepsDotNet.Native.World
         {
             var result = new Dictionary<(ResourceType, ResourceType), ResourceType>();
             using var reactionsObj = constantsObj.GetPropertyAsJSObject("REACTIONS")!;
-            var topLevelKeys = JSUtils.GetKeysOf(reactionsObj);
+            var topLevelKeys = reactionsObj.GetPropertyNames();
             foreach (var res1Raw in topLevelKeys)
             {
                 var res1 = res1Raw.ParseResourceType();
                 using var subObj = reactionsObj.GetPropertyAsJSObject(res1Raw)!;
-                var subKeys = JSUtils.GetKeysOf(subObj);
+                var subKeys = subObj.GetPropertyNames();
                 foreach (var res2Raw in subKeys)
                 {
                     var res2 = res2Raw.ParseResourceType();
@@ -208,7 +208,7 @@ namespace ScreepsDotNet.Native.World
         private IReadOnlyDictionary<TKey, TValue> InterpretMap<TKey, TValue>(JSObject obj, Func<JSObject, string, TKey?> keySelector, Func<JSObject, string, TValue> valueSelector) where TKey : notnull
         {
             var dict = new Dictionary<TKey, TValue>();
-            var keys = JSUtils.GetKeysOf(obj);
+            var keys = obj.GetPropertyNames();
             foreach (var key in keys)
             {
                 var selectedKey = keySelector(obj, key);

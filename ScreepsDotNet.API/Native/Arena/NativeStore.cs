@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Runtime.InteropServices.JavaScript;
+using ScreepsDotNet.Interop;
 using ScreepsDotNet.API;
 
 namespace ScreepsDotNet.Native.Arena
@@ -29,22 +29,22 @@ namespace ScreepsDotNet.Native.Arena
             };
     }
 
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal partial class NativeStore : IStore
     {
         #region Imports
 
         [JSImport("Store.getCapacity", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int? Native_GetCapacity([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.String>] string? resourceType);
+        
+        internal static partial int? Native_GetCapacity(JSObject proxyObject, string? resourceType);
 
         [JSImport("Store.getFreeCapacity", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int? Native_GetFreeCapacity([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.String>] string? resourceType);
+        
+        internal static partial int? Native_GetFreeCapacity(JSObject proxyObject, string? resourceType);
 
         [JSImport("Store.getUsedCapacity", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int? Native_GetUsedCapacity([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.String>] string? resourceType);
+        
+        internal static partial int? Native_GetUsedCapacity(JSObject proxyObject, string? resourceType);
 
         #endregion
 

@@ -1,12 +1,12 @@
 // Comment out the appropiate preprocessor directive below to switch the example between arena and world mode!
-#define ARENA
-//#define WORLD
+//#define ARENA
+#define WORLD
+
+using System;
+using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 
 using ScreepsDotNet.Interop;
-using System;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using System.Runtime.InteropServices.JavaScript;
 
 namespace ScreepsDotNet
 {
@@ -31,77 +31,108 @@ namespace ScreepsDotNet
 
         }
 
-        [Interop.JSImport("test", "addTwo")]
-        private static partial int AddTwoInts(int a, int b);
+        //[Interop.JSImport("test", "addTwo")]
+        //private static partial int AddTwoInts(int a, int b);
 
-        [Interop.JSImport("test", "toUppercase")]
-        private static partial string ToUppercase(string str);
+        //[Interop.JSImport("test", "toUppercase")]
+        //private static partial string ToUppercase(string str);
 
-        [Interop.JSImport("object", "create")]
-        private static partial Interop.JSObject CreateObject(Interop.JSObject? prototypeObj = null);
+        //[Interop.JSImport("test", "stringify")]
+        //private static partial string StringifyObject(Interop.JSObject obj);
 
-        [Interop.JSImport("object", "setProperty")]
-        private static partial void SetIntOnObject(Interop.JSObject obj, string key, int value);
+        //[Interop.JSImport("test", "stringify")]
+        //private static partial string StringifyObject(int[] arr);
 
-        [Interop.JSImport("test", "stringify")]
-        private static partial string StringifyObject(Interop.JSObject obj);
+        //[Interop.JSImport("test", "stringify")]
+        //private static partial string StringifyObject(string[] arr);
 
-        [Interop.JSImport("test", "stringify")]
-        private static partial string StringifyObject(int[] arr);
+        //[Interop.JSImport("test", "reverseArray")]
+        //private static partial string[] ReverseArray(ImmutableArray<string> arr);
 
-        [Interop.JSImport("test", "reverseArray")]
-        private static partial byte[] ReverseArray(byte[] arr);
+        //[Interop.JSImport("test", "reverseArray")]
+        //private static partial ImmutableArray<int> ReverseArray(ReadOnlySpan<int> arr);
 
-        [JSExport]
+        //[Interop.JSImport("test", "fillBuffer")]
+        //private static partial void FillBuffer([JSMarshalAsDataView] Span<byte> arr);
+
+        //public static void Init()
+        //{
+        //    try
+        //    {
+
+        //        Console.WriteLine($"10 + 20 = {AddTwoInts(10, 20)}");
+
+        //        Console.WriteLine($"uppercase of 'hello world' = '{ToUppercase("hello world")}'");
+
+        //        using var obj = Interop.JSObject.Create();
+        //        Console.WriteLine($"new object: {obj}");
+
+        //        obj.SetProperty("foo", 20);
+
+        //        Console.WriteLine($"as json: {StringifyObject(obj)}");
+
+        //        Console.WriteLine($"type of foo: {obj.GetTypeOfProperty("foo")}");
+
+        //        Console.WriteLine($"[1, 2, 3] = {StringifyObject([1, 2, 3])}");
+
+        //        Console.WriteLine($"reverse of [1, 2, 3] = [{string.Join(", ", ReverseArray([1, 2, 3]).Select(x => x.ToString()))}]");
+
+        //        Span<byte> buffer = stackalloc byte[10];
+        //        FillBuffer(buffer);
+
+        //        Console.WriteLine($"filled buffer from js = [{string.Join(", ", buffer.ToImmutableArray().Select(x => x.ToString()))}]");
+
+        //        Console.WriteLine($"['a', 'bc', 'def'] = {StringifyObject(["a", "bc", "def"])}");
+
+        //        Console.WriteLine($"reverse of ['a', 'bc', 'def'] = [{string.Join(", ", ReverseArray(["a", "bc", "def"]))}]");
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Console.WriteLine(ex);
+        //    }
+        //}
+
+        [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
         public static void Init()
         {
             try
             {
-                //#if WORLD
-                //            game = new Native.World.NativeGame();
-                //            tutorialScript = new World.BasicExample(game);
-                //#endif
-                //#if ARENA
-                //            game = new Native.Arena.NativeGame();
-                //            tutorialScript = new Arena.Tutorial10_FinalTest(game);
-                //#endif
-                Console.WriteLine($"10 + 20 = {AddTwoInts(10, 20)}");
-
-                Console.WriteLine($"uppercase of 'hello world' = '{ToUppercase("hello world")}'");
-
-                var obj = CreateObject();
-                Console.WriteLine($"new object: {obj}");
-
-                SetIntOnObject(obj, "foo", 20);
-
-                Console.WriteLine($"as json: {StringifyObject(obj)}");
-
-                Console.WriteLine($"[1, 2, 3] = {StringifyObject([1, 2, 3])}");
-
-                Console.WriteLine($"reverse of [1, 2, 3] = {string.Join(", ", ReverseArray([1, 2, 3]).Select(x => x.ToString()))}");
-
-                obj.Dispose();
+#if WORLD
+                game = new Native.World.NativeGame();
+                tutorialScript = new World.BasicExample(game);
+#endif
+#if ARENA
+                game = new Native.Arena.NativeGame();
+                tutorialScript = new Arena.Tutorial10_FinalTest(game);
+#endif
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                Console.WriteLine(ex);
+                Console.WriteLine(e);
             }
         }
 
-        [JSExport]
+        [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
         public static void Loop()
         {
-//#if WORLD
-//            game?.Tick();
-//#endif
-//            tutorialScript?.Loop();
-//#if WORLD
-//            CheckHeap(game!.Cpu.GetHeapStatistics());
-//#endif
-//#if ARENA
-//            CheckHeap(game!.Utils.GetHeapStatistics());
-//#endif
-            LogGCActivity();
+            try
+            {
+#if WORLD
+                game?.Tick();
+#endif
+                tutorialScript?.Loop();
+#if WORLD
+                CheckHeap(game!.Cpu.GetHeapStatistics());
+#endif
+#if ARENA
+                CheckHeap(game!.Utils.GetHeapStatistics());
+#endif
+                LogGCActivity();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
         }
 
         internal static void CheckHeap(in API.HeapInfo heapInfo)

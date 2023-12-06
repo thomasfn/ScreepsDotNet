@@ -3,13 +3,13 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Runtime.InteropServices.JavaScript;
+using ScreepsDotNet.Interop;
 
 using ScreepsDotNet.API.World;
 
 namespace ScreepsDotNet.Native.World
 {
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal class NativeRawMemorySegments : IDictionary<int, string>
     {
         private const int MaxSegmentCount = 100;
@@ -115,29 +115,29 @@ namespace ScreepsDotNet.Native.World
     }
 
 
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal partial class NativeRawMemory : IRawMemory
     {
         #region Imports
 
         [JSImport("rawMemory.get", "game")]
-        [return: JSMarshalAsAttribute<JSType.String>]
+        
         internal static partial string Native_Get();
 
         [JSImport("rawMemory.set", "game")]
-        internal static partial void Native_Set([JSMarshalAs<JSType.String>] string value);
+        internal static partial void Native_Set(string value);
 
         [JSImport("rawMemory.setActiveSegments", "game")]
-        internal static partial void Native_SetActiveSegments([JSMarshalAs<JSType.Array<JSType.Number>>] int[] ids);
+        internal static partial void Native_SetActiveSegments(int[] ids);
 
         [JSImport("rawMemory.setActiveForeignSegment", "game")]
-        internal static partial void Native_SetActiveForeignSegment([JSMarshalAs<JSType.String>] string? username, [JSMarshalAs<JSType.Number>] int? id);
+        internal static partial void Native_SetActiveForeignSegment(string? username, int? id);
 
         [JSImport("rawMemory.setDefaultPublicSegment", "game")]
-        internal static partial void Native_SetDefaultPublicSegment([JSMarshalAs<JSType.Number>] int? id);
+        internal static partial void Native_SetDefaultPublicSegment(int? id);
 
         [JSImport("rawMemory.setPublicSegments", "game")]
-        internal static partial void Native_SetPublicSegments([JSMarshalAs<JSType.Array<JSType.Number>>] int[] ids);
+        internal static partial void Native_SetPublicSegments(int[] ids);
 
         #endregion
 

@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices.JavaScript;
+using ScreepsDotNet.Interop;
 using System.Linq;
 
 using ScreepsDotNet.API;
@@ -8,74 +8,74 @@ using ScreepsDotNet.API.World;
 
 namespace ScreepsDotNet.Native.World
 {
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal partial class NativeRoom : NativeObject, IRoom, IEquatable<NativeRoom?>
     {
         #region Imports
 
         [JSImport("Room.createConstructionSite", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_CreateConstructionSite([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Number>] int x, [JSMarshalAs<JSType.Number>] int y, [JSMarshalAs<JSType.String>] string structureType, [JSMarshalAs<JSType.String>] string? name);
+        
+        internal static partial int Native_CreateConstructionSite(JSObject proxyObject, int x, int y, string structureType, string? name);
 
         [JSImport("Room.createFlag", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Object>]
-        internal static partial JSObject Native_CreateFlag([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Number>] int x, [JSMarshalAs<JSType.Number>] int y, [JSMarshalAs<JSType.String>] string? name, [JSMarshalAs<JSType.Number>] int? color, [JSMarshalAs<JSType.Number>] int? secondaryColor);
+        
+        internal static partial JSObject Native_CreateFlag(JSObject proxyObject, int x, int y, string? name, int? color, int? secondaryColor);
 
         [JSImport("Room.find", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Array<JSType.Object>>]
-        internal static partial JSObject[] Native_Find([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Number>] int type);
+        
+        internal static partial JSObject[] Native_Find(JSObject proxyObject, int type);
 
         [JSImport("Room.findFast", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_FindFast([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Number>] int type);
+        
+        internal static partial int Native_FindFast(JSObject proxyObject, int type);
 
         [JSImport("Room.findExitTo", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_FindExitTo([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.String>] string room);
+        
+        internal static partial int Native_FindExitTo(JSObject proxyObject, string room);
 
         [JSImport("Room.findPath", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Array<JSType.Object>>]
-        internal static partial JSObject[] Native_FindPath([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject fromPos, [JSMarshalAs<JSType.Object>] JSObject toPos, [JSMarshalAs<JSType.Object>] JSObject? opts);
+        
+        internal static partial JSObject[] Native_FindPath(JSObject proxyObject, JSObject fromPos, JSObject toPos, JSObject? opts);
 
         [JSImport("Room.findExitTo", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.String>]
-        internal static partial string Native_GetEventLogRaw([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Boolean>] bool raw);
+        
+        internal static partial string Native_GetEventLogRaw(JSObject proxyObject, bool raw);
 
         [JSImport("Room.getTerrain", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Object>]
-        internal static partial JSObject Native_GetTerrain([JSMarshalAs<JSType.Object>] JSObject proxyObject);
+        
+        internal static partial JSObject Native_GetTerrain(JSObject proxyObject);
 
         [JSImport("Room.lookAt", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Array<JSType.Object>>]
-        internal static partial JSObject[] Native_LookAt([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Number>] int x, [JSMarshalAs<JSType.Number>] int y);
+        
+        internal static partial JSObject[] Native_LookAt(JSObject proxyObject, int x, int y);
 
         [JSImport("Room.lookAtFast", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_LookAtFast([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Number>] int x, [JSMarshalAs<JSType.Number>] int y);
+        
+        internal static partial int Native_LookAtFast(JSObject proxyObject, int x, int y);
 
         [JSImport("Room.lookAtArea", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Array<JSType.Object>>]
-        internal static partial JSObject[] Native_LookAtArea([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Number>] int top, [JSMarshalAs<JSType.Number>] int left, [JSMarshalAs<JSType.Number>] int bottom, [JSMarshalAs<JSType.Number>] int right, [JSMarshalAs<JSType.Boolean>] bool asArray);
+        
+        internal static partial JSObject[] Native_LookAtArea(JSObject proxyObject, int top, int left, int bottom, int right, bool asArray);
 
         [JSImport("Room.lookAtAreaFast", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_LookAtAreaFast([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Number>] int top, [JSMarshalAs<JSType.Number>] int left, [JSMarshalAs<JSType.Number>] int bottom, [JSMarshalAs<JSType.Number>] int right);
+        
+        internal static partial int Native_LookAtAreaFast(JSObject proxyObject, int top, int left, int bottom, int right);
 
         [JSImport("Room.lookForAt", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Array<JSType.Object>>]
-        internal static partial JSObject[] Native_LookForAt([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.String>] string type, [JSMarshalAs<JSType.Number>] int x, [JSMarshalAs<JSType.Number>] int y);
+        
+        internal static partial JSObject[] Native_LookForAt(JSObject proxyObject, string type, int x, int y);
 
         [JSImport("Room.lookForAtFast", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_LookForAtFast([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.String>] string type, [JSMarshalAs<JSType.Number>] int x, [JSMarshalAs<JSType.Number>] int y);
+        
+        internal static partial int Native_LookForAtFast(JSObject proxyObject, string type, int x, int y);
 
         [JSImport("Room.lookForAtArea", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Array<JSType.Object>>]
-        internal static partial JSObject[] Native_LookForAtArea([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.String>] string type, [JSMarshalAs<JSType.Number>] int top, [JSMarshalAs<JSType.Number>] int left, [JSMarshalAs<JSType.Number>] int bottom, [JSMarshalAs<JSType.Number>] int right, [JSMarshalAs<JSType.Boolean>] bool asArray);
+        
+        internal static partial JSObject[] Native_LookForAtArea(JSObject proxyObject, string type, int top, int left, int bottom, int right, bool asArray);
 
         [JSImport("Room.lookForAtAreaFast", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_LookForAtAreaFast([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.String>] string type, [JSMarshalAs<JSType.Number>] int top, [JSMarshalAs<JSType.Number>] int left, [JSMarshalAs<JSType.Number>] int bottom, [JSMarshalAs<JSType.Number>] int right);
+        
+        internal static partial int Native_LookForAtAreaFast(JSObject proxyObject, string type, int top, int left, int bottom, int right);
 
         #endregion
 
@@ -247,7 +247,7 @@ namespace ScreepsDotNet.Native.World
         private JSObject? InterpretLookElement(JSObject lookElement)
         {
             var typeStr = lookElement.GetPropertyAsString("type")!;
-            if (lookElement.GetTypeOfProperty(typeStr) != "object") { return null; }
+            if (lookElement.GetTypeOfProperty(typeStr) != JSPropertyType.Object) { return null; }
             return lookElement.GetPropertyAsJSObject(typeStr);
         }
 

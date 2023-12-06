@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices.JavaScript;
+using ScreepsDotNet.Interop;
 
 using ScreepsDotNet.API;
 using ScreepsDotNet.API.Arena;
@@ -37,66 +37,66 @@ namespace ScreepsDotNet.Native.Arena
             };
     }
 
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal partial class NativeCreep : NativeGameObject, ICreep
     {
         #region Imports
 
         [JSImport("Creep.attack", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Attack([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject);
+        
+        internal static partial int Native_Attack(JSObject proxyObject, JSObject targetProxyObject);
 
         [JSImport("Creep.build", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Build([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject);
+        
+        internal static partial int Native_Build(JSObject proxyObject, JSObject targetProxyObject);
 
         [JSImport("Creep.drop", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Drop([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.String>] string resourceType, [JSMarshalAs<JSType.Number>] int? amount);
+        
+        internal static partial int Native_Drop(JSObject proxyObject, string resourceType, int? amount);
 
         [JSImport("Creep.harvest", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Harvest([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject);
+        
+        internal static partial int Native_Harvest(JSObject proxyObject, JSObject targetProxyObject);
 
         [JSImport("Creep.heal", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Heal([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject);
+        
+        internal static partial int Native_Heal(JSObject proxyObject, JSObject targetProxyObject);
 
         [JSImport("Creep.move", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Move([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Number>] int direction);
+        
+        internal static partial int Native_Move(JSObject proxyObject, int direction);
 
         [JSImport("Creep.moveTo", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_MoveTo([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject);
+        
+        internal static partial int Native_MoveTo(JSObject proxyObject, JSObject targetProxyObject);
 
         [JSImport("Creep.pickup", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Pickup([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject);
+        
+        internal static partial int Native_Pickup(JSObject proxyObject, JSObject targetProxyObject);
 
         [JSImport("Creep.pull", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Pull([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject);
+        
+        internal static partial int Native_Pull(JSObject proxyObject, JSObject targetProxyObject);
 
         [JSImport("Creep.rangedAttack", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_RangedAttack([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject);
+        
+        internal static partial int Native_RangedAttack(JSObject proxyObject, JSObject targetProxyObject);
 
         [JSImport("Creep.rangedHeal", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_RangedHeal([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject);
+        
+        internal static partial int Native_RangedHeal(JSObject proxyObject, JSObject targetProxyObject);
 
         [JSImport("Creep.rangedMassAttack", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_RangedMassAttack([JSMarshalAs<JSType.Object>] JSObject proxyObject);
+        
+        internal static partial int Native_RangedMassAttack(JSObject proxyObject);
 
         [JSImport("Creep.transfer", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Transfer([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject, [JSMarshalAs<JSType.String>] string resourceType, [JSMarshalAs<JSType.Number>] int? amount);
+        
+        internal static partial int Native_Transfer(JSObject proxyObject, JSObject targetProxyObject, string resourceType, int? amount);
 
         [JSImport("Creep.withdraw", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Withdraw([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject, [JSMarshalAs<JSType.String>] string resourceType, [JSMarshalAs<JSType.Number>] int? amount);
+        
+        internal static partial int Native_Withdraw(JSObject proxyObject, JSObject targetProxyObject, string resourceType, int? amount);
 
         #endregion
 

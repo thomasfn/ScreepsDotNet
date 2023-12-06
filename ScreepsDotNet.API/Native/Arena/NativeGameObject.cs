@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.InteropServices.JavaScript;
+using ScreepsDotNet.Interop;
 using System.Runtime.CompilerServices;
 using System.Linq;
 
@@ -10,38 +10,38 @@ using ScreepsDotNet.API.Arena;
 
 namespace ScreepsDotNet.Native.Arena
 {
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal partial class NativeGameObject : IGameObject, IEquatable<NativeGameObject?>
     {
         #region Imports
 
         [JSImport("GameObject.findClosestByPath", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Object>]
-        internal static partial JSObject Native_FindClosestByPath_NoOpts([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Array<JSType.Object>>] JSObject[] positions);
+        
+        internal static partial JSObject Native_FindClosestByPath_NoOpts(JSObject proxyObject, JSObject[] positions);
 
         [JSImport("GameObject.findClosestByPath", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Object>]
-        internal static partial JSObject Native_FindClosestByPath([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Array<JSType.Object>>] JSObject[] positions, [JSMarshalAs<JSType.Object>] JSObject options);
+        
+        internal static partial JSObject Native_FindClosestByPath(JSObject proxyObject, JSObject[] positions, JSObject options);
 
         [JSImport("GameObject.findClosestByRange", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Object>]
-        internal static partial JSObject Native_FindClosestByRange([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Array<JSType.Object>>] JSObject[] positions);
+        
+        internal static partial JSObject Native_FindClosestByRange(JSObject proxyObject, JSObject[] positions);
 
         [JSImport("GameObject.findInRange", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Array<JSType.Object>>]
-        internal static partial JSObject[] Native_FindInRange([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Array<JSType.Object>>] JSObject[] positions, [JSMarshalAs<JSType.Number>] int range);
+        
+        internal static partial JSObject[] Native_FindInRange(JSObject proxyObject, JSObject[] positions, int range);
 
         [JSImport("GameObject.findPathTo", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Array<JSType.Object>>]
-        internal static partial JSObject[] Native_FindPathTo_NoOpts([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject pos);
+        
+        internal static partial JSObject[] Native_FindPathTo_NoOpts(JSObject proxyObject, JSObject pos);
 
         [JSImport("GameObject.findPathTo", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Array<JSType.Object>>]
-        internal static partial JSObject[] Native_FindPathTo([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject pos, [JSMarshalAs<JSType.Object>] JSObject options);
+        
+        internal static partial JSObject[] Native_FindPathTo(JSObject proxyObject, JSObject pos, JSObject options);
 
         [JSImport("GameObject.getRangeTo", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_GetRangeTo([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject pos);
+        
+        internal static partial int Native_GetRangeTo(JSObject proxyObject, JSObject pos);
 
         #endregion
 
@@ -49,9 +49,9 @@ namespace ScreepsDotNet.Native.Arena
 
         public bool Exists => ProxyObject.GetPropertyAsBoolean("exists");
 
-        public string Id => ProxyObject.GetTypeOfProperty("id") == "number" ? ProxyObject.GetPropertyAsInt32("id").ToString() : (ProxyObject.GetPropertyAsString("id") ?? ProxyObject.ToString() ?? "");
+        public string Id => ProxyObject.GetTypeOfProperty("id") == JSPropertyType.Number ? ProxyObject.GetPropertyAsInt32("id").ToString() : (ProxyObject.GetPropertyAsString("id") ?? ProxyObject.ToString() ?? "");
 
-        public int? TicksToDecay => ProxyObject.GetTypeOfProperty("ticksToDecay") == "number" ? ProxyObject.GetPropertyAsInt32("ticksToDecay") : null;
+        public int? TicksToDecay => ProxyObject.GetTypeOfProperty("ticksToDecay") == JSPropertyType.Number ? ProxyObject.GetPropertyAsInt32("ticksToDecay") : null;
 
         public int X => ProxyObject.GetPropertyAsInt32("x");
 
@@ -123,7 +123,7 @@ namespace ScreepsDotNet.Native.Arena
         public static bool operator !=(NativeGameObject? left, NativeGameObject? right) => !(left == right);
     }
 
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal static class NativeGameObjectPrototypes<T> where T : IGameObject
     {
         public static JSObject? ConstructorObj;
@@ -134,7 +134,7 @@ namespace ScreepsDotNet.Native.Arena
         }
     }
 
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal static partial class NativeGameObjectUtils
     {
         private const string TypeIdKey = "__dotnet_typeId";
@@ -144,11 +144,11 @@ namespace ScreepsDotNet.Native.Arena
         private static readonly IDictionary<Type, string> prototypeNameMappings = new Dictionary<Type, string>();
 
         [JSImport("getUtils", "game")]
-        [return: JSMarshalAsAttribute<JSType.Object>]
+        
         internal static partial JSObject GetUtilsObject();
 
         [JSImport("getPrototypes", "game")]
-        [return: JSMarshalAsAttribute<JSType.Object>]
+        
         internal static partial JSObject GetPrototypesObject();
 
         internal static void RegisterPrototypeTypeMapping<TInterface, TConcrete>(string prototypeName)
@@ -242,13 +242,13 @@ namespace ScreepsDotNet.Native.Arena
         }
     }
 
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal static class NativeGameObjectExtensions
     {
         public static JSObject ToJS(this IPosition position)
         {
             if (position is NativeGameObject nativeGameObject) { return nativeGameObject.ProxyObject; }
-            var obj = JSUtils.CreateObject(null);
+            var obj = JSObject.Create();
             obj.SetProperty("x", position.X);
             obj.SetProperty("y", position.Y);
             return obj;

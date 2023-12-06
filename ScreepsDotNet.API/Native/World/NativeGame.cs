@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Runtime.InteropServices.JavaScript;
+using ScreepsDotNet.Interop;
 
 using ScreepsDotNet.API;
 using ScreepsDotNet.API.World;
@@ -36,7 +36,7 @@ namespace ScreepsDotNet.Native.World
 
         double CpuTime { get; }
 
-        JSObject GetProxyObjectById(ObjectId id);
+        JSObject? GetProxyObjectById(ObjectId id);
 
         IWithId? GetExistingWrapperObjectById(ObjectId id);
 
@@ -53,7 +53,7 @@ namespace ScreepsDotNet.Native.World
         IEnumerable<T> GetWrapperObjectsFromCopyBuffer<T>(int cnt) where T : class, IRoomObject;
     }
 
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     public partial class NativeGame : IGame, INativeRoot
     {
         #region Imports
@@ -62,23 +62,19 @@ namespace ScreepsDotNet.Native.World
         internal static partial void Native_CheckIn();
 
         [JSImport("getGameObj", "game")]
-        [return: JSMarshalAsAttribute<JSType.Object>]
         internal static partial JSObject Native_GetGameObject();
 
         [JSImport("getMemoryObj", "game")]
-        [return: JSMarshalAsAttribute<JSType.Object>]
         internal static partial JSObject Native_GetMemoryObj();
 
         [JSImport("getRawMemoryObj", "game")]
-        [return: JSMarshalAsAttribute<JSType.Object>]
         internal static partial JSObject Native_GetRawMemoryObj();
 
         [JSImport("game.getObjectById", "game")]
-        [return: JSMarshalAsAttribute<JSType.Object>]
-        internal static partial JSObject Native_GetObjectById([JSMarshalAs<JSType.String>] string id);
+        internal static partial JSObject? Native_GetObjectById(string id);
 
         [JSImport("game.notify", "game")]
-        internal static partial void Native_Notify([JSMarshalAs<JSType.String>] string message, [JSMarshalAs<JSType.Number>] int groupInterval);
+        internal static partial void Native_Notify(string message, int groupInterval);
 
         #endregion
 
@@ -240,7 +236,7 @@ namespace ScreepsDotNet.Native.World
         }
 
         public T? GetObjectById<T>(string id) where T : class, IRoomObject
-            => (this as INativeRoot).GetOrCreateWrapperObject<T>(Native_GetObjectById(id)) as T;
+            => (this as INativeRoot).GetOrCreateWrapperObject<T>(Native_GetObjectById(id));
 
         public T? GetObjectById<T>(ObjectId id) where T : class, IRoomObject
             => GetObjectById<T>((string)id);
@@ -255,9 +251,9 @@ namespace ScreepsDotNet.Native.World
             => new NativeRoomVisual(roomName);
 
         public IMemoryObject CreateMemoryObject()
-            => new NativeMemoryObject(JSUtils.CreateObject(null));
+            => new NativeMemoryObject(JSObject.Create());
 
-        JSObject INativeRoot.GetProxyObjectById(ObjectId id)
+        JSObject? INativeRoot.GetProxyObjectById(ObjectId id)
             => Native_GetObjectById(id);
 
         IWithId? INativeRoot.GetExistingWrapperObjectById(ObjectId id)

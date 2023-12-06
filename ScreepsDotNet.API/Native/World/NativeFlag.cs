@@ -1,33 +1,33 @@
 ﻿using System;
 using System.Collections.Generic;
 
-using System.Runtime.InteropServices.JavaScript;
+using ScreepsDotNet.Interop;
 
 using ScreepsDotNet.API;
 using ScreepsDotNet.API.World;
 
 namespace ScreepsDotNet.Native.World
 {
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal partial class NativeFlag : NativeRoomObject, IFlag, IEquatable<NativeFlag?>
     {
         #region Imports
 
         [JSImport("Flag.remove", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Remove([JSMarshalAs<JSType.Object>] JSObject proxyObject);
+        
+        internal static partial int Native_Remove(JSObject proxyObject);
 
         [JSImport("Flag.setColor", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_SetColor([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Number>] int color, [JSMarshalAs<JSType.Number>] int? secondaryColor);
+        
+        internal static partial int Native_SetColor(JSObject proxyObject, int color, int? secondaryColor);
 
         [JSImport("Flag.setPosition", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_SetPosition([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Number>] int x, [JSMarshalAs<JSType.Number>] int y);
+        
+        internal static partial int Native_SetPosition(JSObject proxyObject, int x, int y);
 
         [JSImport("Flag.setPosition", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_SetPosition([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject pos);
+        
+        internal static partial int Native_SetPosition(JSObject proxyObject, JSObject pos);
 
         #endregion
 

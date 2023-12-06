@@ -1,17 +1,12 @@
-import { Interop } from './interop.js';
-import { WASI, File, OpenFile, Fd } from '@bjorn3/browser_wasi_shim';
 import 'fastestsmallesttextencoderdecoder';
+import { WASI, File, OpenFile, Fd } from '@bjorn3/browser_wasi_shim';
+
+import { ImportTable, Interop } from './interop.js';
+import { ScreepsDotNetExports } from './common.js';
+import { BaseBindings } from './bindings/base.js';
+import { WorldBindings } from './bindings/world.js';
 
 const utf8Decoder = new TextDecoder();
-
-interface ScreepsDotNetExports extends WebAssembly.Exports {
-    memory: WebAssembly.Memory;
-    _start(): unknown;
-    malloc(sz: number): number;
-    free(ptr: number): void;
-    screepsdotnet_init(): void;
-    screepsdotnet_loop(): void;
-}
 
 class Stdio extends Fd {
     private readonly outFunc: (text: string) => void;
@@ -73,6 +68,7 @@ export class Bootloader {
 
     private readonly _wasi: WASI;
     private readonly _interop: Interop;
+    private readonly _bindings?: BaseBindings;
 
     private _wasmModule?: WebAssembly.Module;
     private _wasmInstance?: ScreepsDotNetWasmInstance;
@@ -95,7 +91,7 @@ export class Bootloader {
         this._wasi = new WASI(['ScreepsDotNet'], [`ENV=${env}`], [this._stdin, this._stdout, this._stderr], { debug: false });
         this._interop = new Interop();
 
-        this.setImports('object', {
+        this.setImports('__object', {
             hasProperty: (obj: Record<string | number | symbol, unknown>, key: string) => key in obj,
             getTypeOfProperty: (obj: Record<string | number | symbol, unknown>, key: string) => JSTYPE_TO_ENUM[typeof obj[key]],
             getKeys: (obj: Record<string | number | symbol, unknown>) => Object.keys(obj),
@@ -104,9 +100,23 @@ export class Bootloader {
             deleteProperty: (obj: Record<string | number | symbol, unknown>, key: string) => delete obj[key],
             create: (proto: object) => Object.create(proto),
         });
+
+        switch (env) {
+            case 'world':
+                this._bindings = new WorldBindings(this.log.bind(this));
+                break;
+            case 'arena':
+                // this._bindings = new ArenaBindings(this.log.bind(this));
+                break;
+        }
+        if (this._bindings) {
+            for (const moduleName in this._bindings.imports) {
+                this.setImports(moduleName, this._bindings.imports[moduleName]);
+            }
+        }
     }
 
-    public setImports(moduleName: string, importTable: Record<string, (...args: any[]) => unknown>): void {
+    public setImports(moduleName: string, importTable: ImportTable): void {
         this._interop.setImports(moduleName, importTable);
     }
 
@@ -127,7 +137,7 @@ export class Bootloader {
 
         // Compile wasm module
         if (this._wasmModule) {
-            this.log(`Reusing wasm module fromn previous attempt...`);
+            this.log(`Reusing wasm module from previous attempt...`);
         } else {
             const t0 = this._profileFn();
             this._wasmModule = new WebAssembly.Module(wasmBytes);
@@ -137,7 +147,7 @@ export class Bootloader {
 
         // Instantiate wasm module
         if (this._wasmInstance) {
-            this.log(`Reusing wasm instance fromn previous attempt...`);
+            this.log(`Reusing wasm instance from previous attempt...`);
         } else {
             const t0 = this._profileFn();
             this._wasmInstance = new WebAssembly.Instance(this._wasmModule, this.getWasmImports()) as ScreepsDotNetWasmInstance;
@@ -152,7 +162,7 @@ export class Bootloader {
     }
 
     public start(): void {
-        if (!this._wasmInstance || this._started) { return; }
+        if (!this._wasmInstance || !this._compiled || this._started) { return; }
 
         // Start WASI
         try {
@@ -168,18 +178,24 @@ export class Bootloader {
             }
         }
 
+        // Run bindings init
+        this._bindings?.init(this._wasmInstance.exports);
+
         // Run usercode init
         {
             const t0 = this._profileFn();
             this._wasmInstance.exports.screepsdotnet_init();
             const t1 = this._profileFn();
-            this.log(`Init in ${t1 - t0} ms`);
+            this.log(`Init in ${(((t1 - t0) * 100)|0)/100} ms`);
         }
         this._started = true;
     }
 
     public loop(): void {
-        if (!this._wasmInstance || this._started) { return; }
+        if (!this._wasmInstance || !this._started) { return; }
+
+        // Run bindings loop
+        this._bindings?.loop();
 
         // Dispatch log messages
         this._inTick = true;
@@ -188,9 +204,9 @@ export class Bootloader {
         // Run usercode loop
         {
             const t0 = this._profileFn();
-            this._wasmInstance.exports.screepsdotnet_init();
+            this._wasmInstance.exports.screepsdotnet_loop();
             const t1 = this._profileFn();
-            this.log(`Loop in ${t1 - t0} ms`);
+            this.log(`Loop in ${(((t1 - t0) * 100)|0)/100} ms`);
         }
     }
 

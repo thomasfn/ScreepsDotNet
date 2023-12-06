@@ -3,20 +3,20 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Runtime.InteropServices.JavaScript;
+using ScreepsDotNet.Interop;
 
 using ScreepsDotNet.API.World;
 
 namespace ScreepsDotNet.Native.World
 {
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal abstract partial class NativeRoomObject : NativeObject, IRoomObject
     {
         #region Imports
 
         [JSImport("RoomObject.getEncodedRoomPosition", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_GetEncodedRoomPosition([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Number>] IntPtr outPtr);
+        
+        internal static partial void Native_GetEncodedRoomPosition(JSObject proxyObject, IntPtr outPtr);
 
         #endregion
 
@@ -117,7 +117,7 @@ namespace ScreepsDotNet.Native.World
         Ruins = 123,
     }
 
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal static class NativeRoomObjectPrototypes<T> where T : IRoomObject
     {
         public static int TypeId;
@@ -135,21 +135,22 @@ namespace ScreepsDotNet.Native.World
         }
     }
 
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal static partial class NativeCopyBuffer
     {
         #region Imports
 
         [JSImport("getMaxSize", "copybuffer")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
+        
         internal static partial int Native_GetMaxSize();
 
         [JSImport("read", "copybuffer")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Read([JSMarshalAs<JSType.MemoryView>] Span<byte> data);
+        
+        internal static partial int Native_Read(Span<byte> data);
 
         [JSImport("write", "copybuffer")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Write([JSMarshalAs<JSType.MemoryView>] Span<byte> data);
+        
+        internal static partial int Native_Write(Span<byte> data);
 
         #endregion
 
@@ -199,7 +200,7 @@ namespace ScreepsDotNet.Native.World
             => $"({ObjectId}, {TypeId}, {Flags}, {Hits}, {HitsMax}, {RoomPos})";
     }
 
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal static partial class NativeRoomObjectUtils
     {
         private const string TypeIdKey = "__dotnet_typeId";
@@ -213,16 +214,16 @@ namespace ScreepsDotNet.Native.World
         #region Imports
 
         [JSImport("getPrototypes", "game")]
-        [return: JSMarshalAsAttribute<JSType.Object>]
+        
         internal static partial JSObject GetPrototypesObject();
 
         [JSImport("createRoomPosition", "game")]
-        [return: JSMarshalAsAttribute<JSType.Object>]
-        internal static partial JSObject CreateRoomPosition([JSMarshalAs<JSType.Number>] int x, [JSMarshalAs<JSType.Number>] int y, [JSMarshalAs<JSType.String>] string roomName);
+        
+        internal static partial JSObject CreateRoomPosition(int x, int y, string roomName);
 
         [JSImport("interpretDateTime", "object")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial double InterpretDateTime([JSMarshalAs<JSType.Object>] JSObject obj);
+        
+        internal static partial double InterpretDateTime(JSObject obj);
 
         #endregion
 
@@ -413,7 +414,7 @@ namespace ScreepsDotNet.Native.World
         }
     }
 
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal static class NativeRoomObjectExtensions
     {
         public static JSObject ToJS(this IRoomObject roomObject)

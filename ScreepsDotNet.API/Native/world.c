@@ -1,6 +1,4 @@
-﻿//#include <emscripten.h>
-#define EMSCRIPTEN_KEEPALIVE
-#include <assert.h>
+﻿#include <assert.h>
 
 #include <mono/metadata/loader.h>
 
@@ -16,7 +14,8 @@ void DecodeObjectIds(void* encodedIdPtr, int encodedIdStride, void* outPtr, int 
 
 void DecodeRoomObjectListFromCopyBuffer(void* outPtr, int count);
 
-EMSCRIPTEN_KEEPALIVE void* ScreepsDotNet_InitNative_World(int copyBufferSize)
+__attribute__((export_name("screepsdotnet_init_world")))
+void* screepsdotnet_init_world(int copyBufferSize)
 {
     copyBufferPtr = malloc(copyBufferSize);
 	mono_add_internal_call("ScreepsDotNet_Native::DecodeRoomPosition", DecodeRoomPosition);

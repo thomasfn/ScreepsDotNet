@@ -1,10 +1,10 @@
 ﻿using ScreepsDotNet.API.World;
 using System;
-using System.Runtime.InteropServices.JavaScript;
+using ScreepsDotNet.Interop;
 
 namespace ScreepsDotNet.Native.World
 {
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal abstract class NativeObject : INativeObject
     {
         protected readonly INativeRoot nativeRoot;

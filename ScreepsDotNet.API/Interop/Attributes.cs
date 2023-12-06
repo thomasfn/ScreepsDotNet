@@ -6,13 +6,13 @@ namespace ScreepsDotNet.Interop
     [AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = true)]
     public sealed class JSImportAttribute : Attribute
     {
-        public readonly string ModuleName;
         public readonly string ImportName;
+        public readonly string ModuleName;
 
-        public JSImportAttribute(string moduleName, string importName)
+        public JSImportAttribute(string importName, string moduleName)
         {
-            ModuleName = moduleName;
             ImportName = importName;
+            ModuleName = moduleName;
         }
     }
 

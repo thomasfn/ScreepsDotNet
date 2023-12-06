@@ -1,19 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices.JavaScript;
+using ScreepsDotNet.Interop;
 
 using ScreepsDotNet.API.World;
 
 namespace ScreepsDotNet.Native.World
 {
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal partial class NativeConstructionSite : NativeRoomObject, IConstructionSite, IEquatable<NativeConstructionSite?>
     {
         #region Imports
 
         [JSImport("ConstructionSite.remove", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Remove([JSMarshalAs<JSType.Object>] JSObject proxyObject);
+        
+        internal static partial int Native_Remove(JSObject proxyObject);
 
         #endregion
 

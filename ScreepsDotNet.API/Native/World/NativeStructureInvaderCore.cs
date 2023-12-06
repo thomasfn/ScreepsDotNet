@@ -1,10 +1,10 @@
-﻿using System.Runtime.InteropServices.JavaScript;
+﻿using ScreepsDotNet.Interop;
 
 using ScreepsDotNet.API.World;
 
 namespace ScreepsDotNet.Native.World
 {
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal partial class NativeStructureInvaderCore : NativeOwnedStructure, IStructureInvaderCore
     {
         private int? levelCache;
@@ -12,7 +12,7 @@ namespace ScreepsDotNet.Native.World
 
         public int Level => CacheLifetime(ref levelCache) ??= ProxyObject.GetPropertyAsInt32("level");
 
-        public int? TicksToDeploy => CachePerTick(ref ticksToDeployCache) ??= ProxyObject.GetTypeOfProperty("ticksToDeploy") == "number" ? ProxyObject.GetPropertyAsInt32("ticksToDeploy") : null;
+        public int? TicksToDeploy => CachePerTick(ref ticksToDeployCache) ??= ProxyObject.GetTypeOfProperty("ticksToDeploy") == JSPropertyType.Number ? ProxyObject.GetPropertyAsInt32("ticksToDeploy") : null;
 
         public ISpawning? Spawning
         {

@@ -1,21 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices.JavaScript;
+using ScreepsDotNet.Interop;
 
 using ScreepsDotNet.API;
 using ScreepsDotNet.API.Arena;
 
 namespace ScreepsDotNet.Native.Arena
 {
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal partial class NativeSpawning : ISpawning
     {
         #region Imports
 
         [JSImport("Spawning.cancel", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int? Native_Cancel([JSMarshalAs<JSType.Object>] JSObject proxyObject);
+        
+        internal static partial int? Native_Cancel(JSObject proxyObject);
 
         public CancelSpawnCreepResult Cancel()
         {
@@ -38,14 +38,14 @@ namespace ScreepsDotNet.Native.Arena
         }
     }
 
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal partial class NativeStructureSpawn : NativeOwnedStructure, IStructureSpawn
     {
         #region Imports
 
         [JSImport("StructureSpawn.spawnCreep", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Object>]
-        internal static partial JSObject Native_SpawnCreep([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Array<JSType.String>>] string[] bodyParts);
+        
+        internal static partial JSObject Native_SpawnCreep(JSObject proxyObject, string[] bodyParts);
 
         #endregion
 
@@ -70,7 +70,7 @@ namespace ScreepsDotNet.Native.Arena
             var resultObj = Native_SpawnCreep(ProxyObject, body.Select(x => x.ToJS()).ToArray());
             if (resultObj == null) { throw new InvalidOperationException($"StructureSpawn.spawnCreep returned null or undefined"); }
             var creepObj = resultObj.GetPropertyAsJSObject("object");
-            int? error = resultObj.GetTypeOfProperty("error") == "number" ? resultObj.GetPropertyAsInt32("error") : null;
+            int? error = resultObj.GetTypeOfProperty("error") == JSPropertyType.Number ? resultObj.GetPropertyAsInt32("error") : null;
             return new SpawnCreepResult(creepObj != null ? NativeGameObjectUtils.CreateWrapperForObject(creepObj) as ICreep : null, (SpawnCreepError?)error);
         }
 

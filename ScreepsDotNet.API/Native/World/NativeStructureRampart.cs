@@ -1,17 +1,17 @@
-﻿using System.Runtime.InteropServices.JavaScript;
+﻿using ScreepsDotNet.Interop;
 
 using ScreepsDotNet.API.World;
 
 namespace ScreepsDotNet.Native.World
 {
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal partial class NativeStructureRampart : NativeOwnedStructure, IStructureRampart
     {
         #region Imports
 
         [JSImport("StructureRampart.setPublic", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_SetPublic([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Boolean>] bool isPublic);
+        
+        internal static partial int Native_SetPublic(JSObject proxyObject, bool isPublic);
 
         #endregion
 

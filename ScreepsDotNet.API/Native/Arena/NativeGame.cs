@@ -2,7 +2,7 @@
 
 namespace ScreepsDotNet.Native.Arena
 {
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     public class NativeGame : IGame
     {
         public IUtils Utils { get; } = new NativeUtils();

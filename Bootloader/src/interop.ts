@@ -1,3 +1,5 @@
+import { createWasmMemoryView, WasmMemoryView } from './memory.js';
+
 const enum InteropValueType {
     Void = 0,
     U1 = 1,
@@ -59,32 +61,37 @@ const EXCEPTION_PARAM_SPEC: Readonly<ParamSpec> = { type: InteropValueType.Str, 
 
 type BoundImportFunction = (paramsBufferPtr: number) => number;
 
+interface BoundImportSymbol {
+    fullName: string;
+    functionSpec: Readonly<FunctionSpec>;
+}
+
 const CLR_TRACKING_ID = Symbol('clr-tracking-id');
 
 const TEMP_PROPERTY_DESCRIPTOR: PropertyDescriptor = {};
 
 export type MallocFunction = (sz: number) => number;
 
+export interface ImportTable {
+    [key: string]: Importable;
+}
+
+export type Importable = ((...args: any[]) => unknown) | ImportTable;
+
 export class Interop {
     public readonly interopImport: Record<string, (...args: any[]) => unknown>;
 
-    private readonly _imports: Record<string, Record<string, (...args: any[]) => unknown>> = {};
+    private readonly _imports: Record<string, ImportTable> = {};
     
     private readonly _boundImportList: BoundImportFunction[] = [];
+    private readonly _boundImportSymbolList: BoundImportSymbol[] = [];
     private readonly _objectTrackingList: Record<number, object> = {};
 
     private _memory?: WebAssembly.Memory;
     private _malloc?: MallocFunction;
     private _nextClrTrackingId: number = 0;
 
-    private u8?: Uint8Array;
-    private i8?: Int8Array;
-    private u16?: Uint16Array;
-    private i16?: Int16Array;
-    private u32?: Uint32Array;
-    private i32?: Int32Array;
-    private f32?: Float32Array;
-    private f64?: Float64Array;
+    private _memoryView?: WasmMemoryView;
 
     public get memory(): WebAssembly.Memory | undefined { return this._memory; }
     public set memory(value) {
@@ -102,30 +109,31 @@ export class Interop {
         this.interopImport.js_release_object_reference = this.js_release_object_reference.bind(this);
     }
 
-    public setImports(moduleName: string, importTable: Record<string, (...args: unknown[]) => unknown>): void {
+    public setImports(moduleName: string, importTable: ImportTable): void {
         this._imports[moduleName] = importTable;
     }
 
     public recreateBufferViews(): void {
         if (this._memory) {
-            this.u8 = new Uint8Array(this._memory.buffer);
-            this.i8 = new Int8Array(this._memory.buffer);
-            this.u16 = new Uint16Array(this._memory.buffer);
-            this.i16 = new Int16Array(this._memory.buffer);
-            this.u32 = new Uint32Array(this._memory.buffer);
-            this.i32 = new Int32Array(this._memory.buffer);
-            this.f32 = new Float32Array(this._memory.buffer);
-            this.f64 = new Float64Array(this._memory.buffer);
+            this._memoryView = createWasmMemoryView(this._memory);
         } else {
-            this.u8 = undefined;
-            this.i8 = undefined;
-            this.u16 = undefined;
-            this.i16 = undefined;
-            this.u32 = undefined;
-            this.i32 = undefined;
-            this.f32 = undefined;
-            this.f64 = undefined;
+            this._memoryView = undefined;
         }
+    }
+
+    private resolveImport(moduleName: string, importTable: Readonly<ImportTable>, importName: string): (...args: any[]) => unknown {
+        const segments = importName.split('.');
+        let currentValue: Importable = importTable;
+        for (const segment of segments) {
+            if (currentValue == null || typeof currentValue !== 'object') {
+                throw new Error(`unable to resolve import '${importName}' from module '${moduleName}' (one or more keys along the path did not resolve to an object)`);
+            }
+            currentValue = currentValue[segment];
+        }
+        if (currentValue == null || typeof currentValue !== 'function') {
+            throw new Error(`unable to resolve import '${importName}' from module '${moduleName}' (the path did not resolve to a function)`);
+        }
+        return currentValue;
     }
 
     private js_bind_import(moduleNamePtr: number, importNamePtr: number, functionSpecPtr: number): number {
@@ -135,15 +143,13 @@ export class Interop {
             throw new Error(`unknown import module '${moduleName}'`);
         }
         const importName = this.stringToJs(importNamePtr);
-        const importFunction = importTable[importName];
-        if (!importFunction) {
-            throw new Error(`unknown import '${importName}' in module '${moduleName}'`);
-        }
+        const importFunction = this.resolveImport(moduleName, importTable, importName);
         const functionSpec = this.functionSpecToJs(functionSpecPtr);
-        const boundImportFunction = this.createImportBinding(importFunction, functionSpec);
         const importIndex = this._boundImportList.length;
+        const boundImportFunction = this.createImportBinding(importFunction, functionSpec, importIndex);
         this._boundImportList.push(boundImportFunction);
-        console.log(`${importIndex}: ${stringifyParamSpec(functionSpec.returnSpec)} ${moduleName}::${importName}(${functionSpec.paramSpecs.map(stringifyParamSpec).join(', ')})`);
+        this._boundImportSymbolList.push({ fullName: `${moduleName}::${importName}`, functionSpec });
+        // console.log(this.stringifyImportBindingForDisplay(importIndex));
         return importIndex;
     }
 
@@ -162,7 +168,7 @@ export class Interop {
         this.clearClrTrackingId(obj);
     }
 
-    private createImportBinding(importFunction: (...args: unknown[]) => unknown, functionSpec: Readonly<FunctionSpec>): BoundImportFunction {
+    private createImportBinding(importFunction: (...args: unknown[]) => unknown, functionSpec: Readonly<FunctionSpec>, importIndex: number): BoundImportFunction {
         return (paramsBufferPtr) => {
             // TODO: Cache args array to eliminate allocation here
             const args: unknown[] = [];
@@ -170,14 +176,19 @@ export class Interop {
             const returnValPtr = paramsBufferPtr;
             const exceptionValPtr = paramsBufferPtr + 16;
             let argsPtr = exceptionValPtr + 16;
-            for (let i = 0; i < functionSpec.paramSpecs.length; ++i) {
-                args[i] = this.marshalToJs(argsPtr, functionSpec.paramSpecs[i]);
-                argsPtr += 16;
+            try {
+                for (let i = 0; i < functionSpec.paramSpecs.length; ++i) {
+                    args[i] = this.marshalToJs(argsPtr, functionSpec.paramSpecs[i]);
+                    argsPtr += 16;
+                }
+            } catch (err) {
+                throw new Error(`${this.stringifyImportBindingForDisplay(importIndex)}: ${(err as Error).message}`);
             }
             let returnVal: unknown;
             try {
                 returnVal = importFunction(...args);
                 this.marshalToClr(returnValPtr, functionSpec.returnSpec, returnVal);
+                //console.log(`${importIndex}:${this._boundImportSymbolList[importIndex]}(${args.map(this.stringifyValueForDisplay.bind(this)).join(', ')}) -> ${this.stringifyValueForDisplay(returnVal)}`);
                 return 1;
             } catch (err) {
                 this.marshalToClr(exceptionValPtr, EXCEPTION_PARAM_SPEC, `${err}`);
@@ -187,37 +198,40 @@ export class Interop {
     }
 
     private marshalToJs(valuePtr: number, paramSpec: Readonly<ParamSpec>): unknown {
-        const valueType: InteropValueType = this.u8![valuePtr + 12];
+        const valueType: InteropValueType = this._memoryView!.u8[valuePtr + 12];
         if (valueType === InteropValueType.Void && paramSpec.nullable) {
             return paramSpec.nullAsUndefined ? undefined : null;
         }
         if (paramSpec.type === InteropValueType.Arr && paramSpec.elementSpec?.type === InteropValueType.Str && valueType === InteropValueType.Arr) {
-            return this.stringArrayToJs(this.i32![valuePtr >> 2], this.i32![(valuePtr + 8) >> 2], paramSpec.elementSpec);
+            return this.stringArrayToJs(this._memoryView!.i32[valuePtr >> 2], this._memoryView!.i32[(valuePtr + 8) >> 2], paramSpec.elementSpec);
+        }
+        if (paramSpec.type === InteropValueType.I32 && valueType === InteropValueType.Ptr) {
+            return this._memoryView!.i32[valuePtr >> 2];
         }
         if (valueType !== paramSpec.type) {
             throw new Error(`failed to marshal ${stringifyParamSpec(paramSpec)} from '${INTEROP_VALUE_TYPE_NAMES[valueType] ?? 'unknown'}'`);
         }
         switch (paramSpec.type) {
             case InteropValueType.Void: return undefined;
-            case InteropValueType.U1: return this.u8![valuePtr] !== 0;
-            case InteropValueType.U8: return this.u8![valuePtr];
-            case InteropValueType.I8: return this.i8![valuePtr];
-            case InteropValueType.U16: return this.u16![valuePtr >> 1];
-            case InteropValueType.I16: return this.i16![valuePtr >> 1];
-            case InteropValueType.U32: return this.u32![valuePtr >> 2];
-            case InteropValueType.I32: return this.i32![valuePtr >> 2];
-            // case InteropValueType.U64: return undefined;
-            // case InteropValueType.I64: return undefined;
-            case InteropValueType.F32: return this.f32![valuePtr >> 2];
-            case InteropValueType.F64: return this.f64![valuePtr >> 3];
-            case InteropValueType.Ptr: return new DataView(this._memory!.buffer, this.i32![valuePtr >> 2], this.i32![(valuePtr + 8) >> 2]);
-            case InteropValueType.Str: return this.stringToJs(this.i32![valuePtr >> 2]);
-            case InteropValueType.Obj: return this._objectTrackingList[this.u32![valuePtr >> 2]];
+            case InteropValueType.U1: return this._memoryView!.u8[valuePtr] !== 0;
+            case InteropValueType.U8: return this._memoryView!.u8[valuePtr];
+            case InteropValueType.I8: return this._memoryView!.i8[valuePtr];
+            case InteropValueType.U16: return this._memoryView!.u16[valuePtr >> 1];
+            case InteropValueType.I16: return this._memoryView!.i16[valuePtr >> 1];
+            case InteropValueType.U32: return this._memoryView!.u32[valuePtr >> 2];
+            case InteropValueType.I32: return this._memoryView!.i32[valuePtr >> 2];
+            case InteropValueType.U64: return (this._memoryView!.u32[valuePtr >> 2] << 32) | this._memoryView!.u32[(valuePtr + 4) >> 2];
+            case InteropValueType.I64: return (this._memoryView!.i32[valuePtr >> 2] << 32) | this._memoryView!.i32[(valuePtr + 4) >> 2];
+            case InteropValueType.F32: return this._memoryView!.f32[valuePtr >> 2];
+            case InteropValueType.F64: return this._memoryView!.f64[valuePtr >> 3];
+            case InteropValueType.Ptr: return new DataView(this._memory!.buffer, this._memoryView!.i32[valuePtr >> 2], this._memoryView!.i32[(valuePtr + 8) >> 2]);
+            case InteropValueType.Str: return this.stringToJs(this._memoryView!.i32[valuePtr >> 2]);
+            case InteropValueType.Obj: return this._objectTrackingList[this._memoryView!.i32[(valuePtr + 4) >> 2]];
             case InteropValueType.Arr:
                 if (paramSpec.elementSpec == null) {
                     throw new Error(`malformed param spec (array with no element spec)`);
                 }
-                return this.arrayToJs(this.i32![valuePtr >> 2], this.i32![(valuePtr + 8) >> 2], paramSpec.elementSpec);
+                return this.arrayToJs(this._memoryView!.i32[valuePtr >> 2], this._memoryView!.i32[(valuePtr + 8) >> 2], paramSpec.elementSpec);
             default: throw new Error(`failed to marshal ${stringifyParamSpec(paramSpec)} from '${INTEROP_VALUE_TYPE_NAMES[valueType] ?? 'unknown'}'`);
         }
     }
@@ -225,18 +239,18 @@ export class Interop {
     private marshalToClr(valuePtr: number, paramSpec: Readonly<ParamSpec>, value: unknown): void {
         if (value == null) {
             if (paramSpec.nullable || paramSpec.type === InteropValueType.Void) {
-                this.u8![valuePtr + 12] = InteropValueType.Void;
+                this._memoryView!.u8[valuePtr + 12] = InteropValueType.Void;
                 return;
             }
             throw new Error(`failed to marshal null as '${stringifyParamSpec(paramSpec)}'`);
         }
         switch (paramSpec.type) {
             case InteropValueType.Void:
-                this.u8![valuePtr + 12] = InteropValueType.Void;
+                this._memoryView!.u8[valuePtr + 12] = InteropValueType.Void;
                 break;
             case InteropValueType.U1:
-                this.u8![valuePtr] = value ? 1 : 0;
-                this.u8![valuePtr + 12] = InteropValueType.U1;
+                this._memoryView!.u8[valuePtr] = value ? 1 : 0;
+                this._memoryView!.u8[valuePtr + 12] = InteropValueType.U1;
                 break;
             case InteropValueType.U8:
             case InteropValueType.I8:
@@ -258,16 +272,16 @@ export class Interop {
                 throw new Error(`failed to marshal non-numeric as '${stringifyParamSpec(paramSpec)}'`);
             // case InteropValueType.Ptr: return;
             case InteropValueType.Str:
-                this.i32![valuePtr >> 2] = this.stringToClr(typeof value === 'string' ? value : `${value}`);
-                this.u8![valuePtr + 12] = InteropValueType.Str;
+                this._memoryView!.i32[valuePtr >> 2] = this.stringToClr(typeof value === 'string' ? value : `${value}`);
+                this._memoryView!.u8[valuePtr + 12] = InteropValueType.Str;
                 break;
             case InteropValueType.Obj:
-                if (typeof value !== 'object') {
+                if (typeof value !== 'object' && typeof value !== 'function') {
                     throw new Error(`failed to marshal ${typeof value} as '${stringifyParamSpec(paramSpec)}' (not an object)`);
                 }
                 const clrTrackingId = this.getClrTrackingId(value) ?? this.assignClrTrackingId(value);
-                this.u32![valuePtr >> 2] = clrTrackingId;
-                this.u8![valuePtr + 12] = InteropValueType.Obj;
+                this._memoryView!.i32[(valuePtr + 4) >> 2] = clrTrackingId;
+                this._memoryView!.u8[valuePtr + 12] = InteropValueType.Obj;
                 break;
             case InteropValueType.Arr:
                 if (paramSpec.elementSpec == null) {
@@ -279,12 +293,12 @@ export class Interop {
                     throw new Error(`failed to marshal ${typeof value} as '${stringifyParamSpec(paramSpec)}' (not an array)`);
                 }
                 if (paramSpec.elementSpec.type === InteropValueType.Str) {
-                    this.i32![valuePtr >> 2] = this.stringArrayToClr(value, paramSpec.elementSpec);
+                    this._memoryView!.i32[valuePtr >> 2] = this.stringArrayToClr(value, paramSpec.elementSpec);
                 } else {
-                    this.i32![valuePtr >> 2] = this.arrayToClr(value, paramSpec.elementSpec);
+                    this._memoryView!.i32[valuePtr >> 2] = this.arrayToClr(value, paramSpec.elementSpec);
                 }
-                this.i32![(valuePtr + 8) >> 2] = value.length;
-                this.u8![valuePtr + 12] = InteropValueType.Arr;
+                this._memoryView!.i32[(valuePtr + 8) >> 2] = value.length;
+                this._memoryView!.u8[valuePtr + 12] = InteropValueType.Arr;
                 break;
             default: throw new Error(`failed to marshal '${typeof value}' as '${stringifyParamSpec(paramSpec)}' (not yet implemented)`);
         }
@@ -292,26 +306,26 @@ export class Interop {
 
     private marshalNumericToClr(valuePtr: number, paramSpec: Readonly<ParamSpec>, value: number): void {
         switch (paramSpec.type) {
-            case InteropValueType.U8: this.u8![valuePtr] = value; break;
-            case InteropValueType.I8: this.i8![valuePtr] = value; break;
-            case InteropValueType.U16: this.u16![valuePtr >> 1] = value; break;
-            case InteropValueType.I16: this.i16![valuePtr >> 1] = value; break;
-            case InteropValueType.U32: this.u32![valuePtr >> 2] = value; break;
-            case InteropValueType.I32: this.i32![valuePtr >> 2] = value; break;
-            // case InteropValueType.U64: return;
-            // case InteropValueType.I64: return;
-            case InteropValueType.F32: this.f32![valuePtr >> 2] = value; break;
-            case InteropValueType.F64: this.f64![valuePtr >> 3] = value; break;
+            case InteropValueType.U8: this._memoryView!.u8[valuePtr] = value; break;
+            case InteropValueType.I8: this._memoryView!.i8[valuePtr] = value; break;
+            case InteropValueType.U16: this._memoryView!.u16[valuePtr >> 1] = value; break;
+            case InteropValueType.I16: this._memoryView!.i16[valuePtr >> 1] = value; break;
+            case InteropValueType.U32: this._memoryView!.u32[valuePtr >> 2] = value; break;
+            case InteropValueType.I32: this._memoryView!.i32[valuePtr >> 2] = value; break;
+            // case InteropValueType.U64: break;
+            // case InteropValueType.I64: break;
+            case InteropValueType.F32: this._memoryView!.f32[valuePtr >> 2] = value; break;
+            case InteropValueType.F64: this._memoryView!.f64[valuePtr >> 3] = value; break;
             default: throw new Error(`failed to marshal numeric as '${stringifyParamSpec(paramSpec)}' (not yet implemented)`);
         }
-        this.u8![valuePtr + 12] = paramSpec.type;
+        this._memoryView!.u8[valuePtr + 12] = paramSpec.type;
     }
 
     private stringToJs(stringPtr: number): string {
         let code: number;
         let result = '';
         do {
-            code = this.u16![stringPtr >> 1];
+            code = this._memoryView!.u16[stringPtr >> 1];
             if (code !== 0) { result += String.fromCharCode(code); }
             stringPtr += 2;
         } while (code !== 0);
@@ -322,10 +336,10 @@ export class Interop {
         const strPtr = this._malloc!((str.length + 1) * 2);
         let charPtr = strPtr;
         for (let i = 0; i < str.length; ++i) {
-            this.u16![charPtr >> 1] = str.charCodeAt(i);
+            this._memoryView!.u16[charPtr >> 1] = str.charCodeAt(i);
             charPtr += 2;
         }
-        this.u16![charPtr >> 1] = 0;
+        this._memoryView!.u16[charPtr >> 1] = 0;
         return strPtr;
     }
 
@@ -355,7 +369,7 @@ export class Interop {
         for (let i = 0; i < arrayLen; ++i) {
             let code: number;
             if (elementSpec.nullable) {
-                code = this.u16![arrayPtr >> 1];
+                code = this._memoryView!.u16[arrayPtr >> 1];
                 arrayPtr += 2;
                 if (code === 0) {
                     result[i] = elementSpec.nullAsUndefined ? undefined : null;
@@ -365,7 +379,7 @@ export class Interop {
             }
             let element = '';
             do {
-                code = this.u16![arrayPtr >> 1];
+                code = this._memoryView!.u16[arrayPtr >> 1];
                 if (code !== 0) { element += String.fromCharCode(code); }
                 arrayPtr += 2;
             } while (code !== 0);
@@ -391,25 +405,25 @@ export class Interop {
         let charPtr = strPtr;
         for (const element of value) {
             if (elementSpec.nullable) {
-                this.u16![charPtr >> 1] = element != null ? 1 : 0;
+                this._memoryView!.u16[charPtr >> 1] = element != null ? 1 : 0;
                 charPtr += 2;
             }
             const str = typeof element === 'string' ? element : `${element}`;
             for (let i = 0; i < str.length; ++i) {
-                this.u16![charPtr >> 1] = str.charCodeAt(i);
+                this._memoryView!.u16[charPtr >> 1] = str.charCodeAt(i);
                 charPtr += 2;
             }
-            this.u16![charPtr >> 1] = 0;
+            this._memoryView!.u16[charPtr >> 1] = 0;
             charPtr += 2;
         }
         return strPtr;
     }
 
     private paramSpecToJs(paramSpecPtr: number): ParamSpec {
-        const type = this.u8![paramSpecPtr];
-        const flags = this.u8![paramSpecPtr + 1];
-        const elementType = this.u8![paramSpecPtr + 2];
-        const elementFlags = this.u8![paramSpecPtr + 3];
+        const type = this._memoryView!.u8[paramSpecPtr];
+        const flags = this._memoryView!.u8[paramSpecPtr + 1];
+        const elementType = this._memoryView!.u8[paramSpecPtr + 2];
+        const elementFlags = this._memoryView!.u8[paramSpecPtr + 3];
         return {
             type: type,
             nullable: (flags & 1) === 1,
@@ -454,5 +468,20 @@ export class Interop {
         TEMP_PROPERTY_DESCRIPTOR.value = undefined;
         TEMP_PROPERTY_DESCRIPTOR.configurable = true;
         Object.defineProperty(obj, CLR_TRACKING_ID, TEMP_PROPERTY_DESCRIPTOR);
+    }
+
+    private stringifyValueForDisplay(value: unknown): string {
+        if (value === undefined) { return 'undefined'; }
+        if (value === null) { return 'null'; }
+        if (typeof value === 'string') { return `'${value}'`; }
+        if (typeof value === 'number' || typeof value === 'boolean') { return `${value}`; }
+        if (Array.isArray(value)) { return `array[#${value.length}, %${this.getClrTrackingId(value)}]`; }
+        if (typeof value === 'object') { return `object[#${Object.keys(value).length}, %${this.getClrTrackingId(value)}]`; }
+        return typeof value;
+    }
+
+    private stringifyImportBindingForDisplay(importIndex: number): string {
+        const boundImportSymbol = this._boundImportSymbolList[importIndex];
+        return `${importIndex}: ${stringifyParamSpec(boundImportSymbol.functionSpec.returnSpec)} ${boundImportSymbol.fullName}(${boundImportSymbol.functionSpec.paramSpecs.map(stringifyParamSpec).join(', ')})`;
     }
 }

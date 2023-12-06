@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices.JavaScript;
+using ScreepsDotNet.Interop;
 
 using ScreepsDotNet.API;
 using ScreepsDotNet.API.World;
@@ -10,18 +10,18 @@ namespace ScreepsDotNet.Native.World
 {
     using BodyType = BodyType<BodyPartType>;
 
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal partial class NativeSpawning : ISpawning
     {
         #region Imports
 
         [JSImport("Spawning.cancel", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Cancel([JSMarshalAs<JSType.Object>] JSObject proxyObject);
+        
+        internal static partial int Native_Cancel(JSObject proxyObject);
 
         [JSImport("Spawning.setDirections", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_SetDirections([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Array<JSType.Number>>] int[] directions);
+        
+        internal static partial int Native_SetDirections(JSObject proxyObject, int[] directions);
 
         #endregion
 
@@ -61,44 +61,43 @@ namespace ScreepsDotNet.Native.World
             => (SpawningSetDirectionsResult)Native_SetDirections(proxyObject, directions.Cast<int>().ToArray());
     }
 
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal static class SpawnCreepOptionsExtensions
     {
         public static JSObject ToJS(this SpawnCreepOptions spawnCreepOptions)
         {
-            var obj = JSUtils.CreateObject(null);
+            using var obj = JSObject.Create();
             if (spawnCreepOptions.Memory != null) { obj.SetProperty("memory", spawnCreepOptions.Memory.ToJS()); }
             if (spawnCreepOptions.EnergyStructures != null) { JSUtils.SetObjectArrayOnObject(obj, "energyStructures", spawnCreepOptions.EnergyStructures.Select(x => x.ToJS()).ToArray()); }
             if (spawnCreepOptions.DryRun != null) { obj.SetProperty("dryRun", spawnCreepOptions.DryRun.Value); }
             if (spawnCreepOptions.Directions != null)
             {
                 JSUtils.SetIntArrayOnObject(obj, "directions", spawnCreepOptions.Directions.Cast<int>().ToArray());
-                JSUtils.FixupArrayOnObject(obj, "directions");
             }
             return obj;
         }
     }
 
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal partial class NativeStructureSpawn : NativeOwnedStructure, IStructureSpawn
     {
         #region Imports
 
         [JSImport("StructureSpawn.spawnCreep", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_SpawnCreep([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Array<JSType.String>>] string[] body, [JSMarshalAs<JSType.String>] string name, [JSMarshalAs<JSType.Object>] JSObject opts);
+        
+        internal static partial int Native_SpawnCreep(JSObject proxyObject, string[] body, string name, JSObject opts);
 
         [JSImport("StructureSpawn.spawnCreep", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_SpawnCreep([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Array<JSType.String>>] string[] body, [JSMarshalAs<JSType.String>] string name);
+        
+        internal static partial int Native_SpawnCreep(JSObject proxyObject, string[] body, string name);
 
         [JSImport("StructureSpawn.recycleCreep", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_RecycleCreep([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject target);
+        
+        internal static partial int Native_RecycleCreep(JSObject proxyObject, JSObject target);
 
         [JSImport("StructureSpawn.renewCreep", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_RenewCreep([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject target);
+        
+        internal static partial int Native_RenewCreep(JSObject proxyObject, JSObject target);
 
         #endregion
 

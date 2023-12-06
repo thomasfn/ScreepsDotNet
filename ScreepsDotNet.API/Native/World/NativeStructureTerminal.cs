@@ -1,19 +1,19 @@
 ﻿using System;
-using System.Runtime.InteropServices.JavaScript;
+using ScreepsDotNet.Interop;
 
 using ScreepsDotNet.API;
 using ScreepsDotNet.API.World;
 
 namespace ScreepsDotNet.Native.World
 {
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal partial class NativeStructureTerminal : NativeOwnedStructure, IStructureTerminal
     {
         #region Imports
 
         [JSImport("StructureTerminal.send", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Send([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.String>] string resourceType, [JSMarshalAs<JSType.Number>] int amount, [JSMarshalAs<JSType.String>] string destination, [JSMarshalAs<JSType.String>] string? description);
+        
+        internal static partial int Native_Send(JSObject proxyObject, string resourceType, int amount, string destination, string? description);
 
         #endregion
 

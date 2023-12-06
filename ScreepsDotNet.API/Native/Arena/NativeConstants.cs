@@ -1,18 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices.JavaScript;
+using ScreepsDotNet.Interop;
 
 using ScreepsDotNet.API.Arena;
 
 namespace ScreepsDotNet.Native.Arena
 {
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal partial class NativeConstants : IConstants
     {
         #region Imports
 
         [JSImport("get", "game/constants")]
-        [return: JSMarshalAsAttribute<JSType.Object>]
+        
         internal static partial JSObject Native_GetConstants();
 
         #endregion

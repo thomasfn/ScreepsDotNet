@@ -21,6 +21,7 @@ namespace ScreepsDotNet.SourceGen.Marshalling
             { "short", (InteropValueType.I16, InteropValueFlags.None, "AsInt16") },
             { "uint", (InteropValueType.U32, InteropValueFlags.None, "AsUInt32") },
             { "int", (InteropValueType.I32, InteropValueFlags.None, "AsInt32") },
+            { "nint", (InteropValueType.I32, InteropValueFlags.None, "AsInt32") },
             { "ulong", (InteropValueType.U64, InteropValueFlags.None, "AsUInt64") },
             { "long", (InteropValueType.I64, InteropValueFlags.None, "AsInt64") },
             { "float", (InteropValueType.F32, InteropValueFlags.None, "AsSingle") },
@@ -33,6 +34,7 @@ namespace ScreepsDotNet.SourceGen.Marshalling
             { "short?", (InteropValueType.I16, InteropValueFlags.Nullable, "AsInt16Nullable") },
             { "uint?", (InteropValueType.U32, InteropValueFlags.Nullable, "AsUInt32Nullable") },
             { "int?", (InteropValueType.I32, InteropValueFlags.Nullable, "AsInt32Nullable") },
+            { "nint?", (InteropValueType.I32, InteropValueFlags.Nullable, "AsInt32Nullable") },
             { "ulong?", (InteropValueType.U64, InteropValueFlags.Nullable, "AsUInt64Nullable") },
             { "long?", (InteropValueType.I64, InteropValueFlags.Nullable, "AsInt64Nullable") },
             { "float?", (InteropValueType.F32, InteropValueFlags.Nullable, "AsSingleNullable") },
@@ -62,8 +64,9 @@ namespace ScreepsDotNet.SourceGen.Marshalling
 
         public override void MarshalFromJS(ITypeSymbol returnTypeSymbol, string jsParamName, SourceEmitter emitter)
         {
-            var interopData = primitiveTypeToInteropData[returnTypeSymbol.WithNullableAnnotation(NullableAnnotation.None).ToDisplayString()];
-            emitter.WriteLine($"return {jsParamName}.{interopData.Item3}();");
+            var typeName = returnTypeSymbol.WithNullableAnnotation(NullableAnnotation.None).ToDisplayString();
+            var interopData = primitiveTypeToInteropData[typeName];
+            emitter.WriteLine($"return ({typeName}){jsParamName}.{interopData.Item3}();");
         }
 
         public override ParamSpec GenerateParamSpec(ITypeSymbol paramTypeSymbol)

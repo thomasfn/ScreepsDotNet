@@ -39,6 +39,10 @@
 		<ProjectReference Include="..\ScreepsDotNet.API\ScreepsDotNet.API.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+		<ProjectReference Include="..\ScreepsDotNet.SourceGen\ScreepsDotNet.SourceGen.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+	</ItemGroup>
+
 	<Import Project="..\ScreepsDotNet.API\build\ScreepsDotNet.API.props" />
 
 	<!--

@@ -1,32 +1,32 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices.JavaScript;
+using ScreepsDotNet.Interop;
 
 using ScreepsDotNet.API;
 using ScreepsDotNet.API.World;
 
 namespace ScreepsDotNet.Native.World
 {
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal static partial class SearchPathOptionsExtensions
     {
         #region Imports
 
         [JSImport("PathFinder.compileRoomCallback", "game/prototypes/wrapped")]
-        internal static partial void Native_CompileRoomCallback([JSMarshalAs<JSType.Object>] JSObject obj, [JSMarshalAs<JSType.Object>] JSObject roomCostMapObj);
+        internal static partial void Native_CompileRoomCallback(JSObject obj, JSObject roomCostMapObj);
 
         [JSImport("set", "object")]
-        internal static partial void SetCostCallbackOnObject([JSMarshalAs<JSType.Object>] JSObject obj, [JSMarshalAs<JSType.String>] string key, [JSMarshalAs<JSType.Function<JSType.String, JSType.Object, JSType.Object>>] Func<string, JSObject, JSObject?> fn);
+        internal static partial void SetCostCallbackOnObject(JSObject obj, string key, Func<string, JSObject, JSObject?> fn);
 
         #endregion
 
         public static JSObject ToJS(this SearchPathOptions searchPathOptions)
         {
-            var obj = JSUtils.CreateObject(null);
+            var obj = JSObject.Create();
             if (searchPathOptions.RoomCostMap != null)
             {
-                using var roomCostMapObj = JSUtils.CreateObject(null);
+                using var roomCostMapObj = JSObject.Create();
                 foreach (var (roomName, spec) in searchPathOptions.RoomCostMap)
                 {
                     if (spec.SpecificationType == RoomCostSpecificationType.UseDefaultCostMatrix)
@@ -57,7 +57,7 @@ namespace ScreepsDotNet.Native.World
 
         public static JSObject ToJS(this FindPathOptions findPathOptions)
         {
-            var obj = JSUtils.CreateObject(null);
+            var obj = JSObject.Create();
             if (findPathOptions.IgnoreCreeps != null) { obj.SetProperty("ignoreCreeps", findPathOptions.IgnoreCreeps.Value); }
             if (findPathOptions.IgnoreDestructibleStructures != null) { obj.SetProperty("ignoreDestructibleStructures", findPathOptions.IgnoreDestructibleStructures.Value); }
             if (findPathOptions.IgnoreRoads != null) { obj.SetProperty("ignoreRoads", findPathOptions.IgnoreRoads.Value); }
@@ -75,7 +75,7 @@ namespace ScreepsDotNet.Native.World
 
         public static JSObject ToJS(this Goal goal)
         {
-            var obj = JSUtils.CreateObject(null);
+            var obj = JSObject.Create();
             using var posJs = goal.Position.ToJS();
             obj.SetProperty("pos", posJs);
             obj.SetProperty("range", goal.Range);
@@ -101,18 +101,18 @@ namespace ScreepsDotNet.Native.World
             );
     }
 
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal partial class NativePathFinder : IPathFinder
     {
         #region Imports
 
         [JSImport("PathFinder.search", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Object>]
-        internal static partial JSObject Native_Search([JSMarshalAs<JSType.Object>] JSObject origin, [JSMarshalAs<JSType.Object>] JSObject goal, [JSMarshalAs<JSType.Object>] JSObject? opts);
+        
+        internal static partial JSObject Native_Search(JSObject origin, JSObject goal, JSObject? opts);
 
         [JSImport("PathFinder.search", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Object>]
-        internal static partial JSObject Native_Search([JSMarshalAs<JSType.Object>] JSObject origin, [JSMarshalAs<JSType.Array<JSType.Object>>] JSObject[] goals, [JSMarshalAs<JSType.Object>] JSObject? opts);
+        
+        internal static partial JSObject Native_Search(JSObject origin, JSObject[] goals, JSObject? opts);
 
         #endregion
 

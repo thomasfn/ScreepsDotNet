@@ -1,22 +1,22 @@
 ﻿using System;
-using System.Runtime.InteropServices.JavaScript;
+using ScreepsDotNet.Interop;
 
 using ScreepsDotNet.API.World;
 
 namespace ScreepsDotNet.Native.World
 {
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal partial class NativeStructureController : NativeOwnedStructure, IStructureController
     {
         #region Imports
 
         [JSImport("StructureController.activateSafeMode", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_ActivateSafeMode([JSMarshalAs<JSType.Object>] JSObject proxyObject);
+        
+        internal static partial int Native_ActivateSafeMode(JSObject proxyObject);
 
         [JSImport("StructureController.unclaim", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Unclaim([JSMarshalAs<JSType.Object>] JSObject proxyObject);
+        
+        internal static partial int Native_Unclaim(JSObject proxyObject);
 
         #endregion
 
@@ -38,11 +38,11 @@ namespace ScreepsDotNet.Native.World
             }
         }
 
-        public int? SafeMode => ProxyObject.GetTypeOfProperty("safeMode") == "number" ? ProxyObject.GetPropertyAsInt32("safeMode") : null;
+        public int? SafeMode => ProxyObject.GetTypeOfProperty("safeMode") == JSPropertyType.Number ? ProxyObject.GetPropertyAsInt32("safeMode") : null;
 
         public int SafeModeAvailable => ProxyObject.GetPropertyAsInt32("safeModeAvailable");
 
-        public int? SafeModeCooldown => ProxyObject.GetTypeOfProperty("safeModeCooldown") == "number" ? ProxyObject.GetPropertyAsInt32("safeModeCooldown") : null;
+        public int? SafeModeCooldown => ProxyObject.GetTypeOfProperty("safeModeCooldown") == JSPropertyType.Number ? ProxyObject.GetPropertyAsInt32("safeModeCooldown") : null;
 
         public ControllerSign? Sign
         {

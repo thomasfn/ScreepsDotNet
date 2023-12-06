@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices.JavaScript;
+using ScreepsDotNet.Interop;
 using System.Linq;
 
 using ScreepsDotNet.API;
@@ -8,7 +8,7 @@ using ScreepsDotNet.API.Arena;
 
 namespace ScreepsDotNet.Native.Arena
 {
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal static class PositionExtensions
     {
         public static Position ToPosition(this JSObject obj)
@@ -19,7 +19,7 @@ namespace ScreepsDotNet.Native.Arena
 
         public static JSObject ToJS(this Position pos)
         {
-            var obj = JSUtils.CreateObject(null);
+            var obj = JSObject.Create();
             obj.SetProperty("x", pos.X);
             obj.SetProperty("y", pos.Y);
             return obj;
@@ -27,7 +27,7 @@ namespace ScreepsDotNet.Native.Arena
 
         public static JSObject ToJS(this FractionalPosition pos)
         {
-            var obj = JSUtils.CreateObject(null);
+            var obj = JSObject.Create();
             obj.SetProperty("x", pos.X);
             obj.SetProperty("y", pos.Y);
             return obj;
@@ -40,72 +40,57 @@ namespace ScreepsDotNet.Native.Arena
             => pos != null ? pos.Value.ToJS() : null;
     }
 
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal partial class NativeUtils : IUtils
     {
         #region Imports
 
         [JSImport("createConstructionSite", "game/utils")]
-        [return: JSMarshalAsAttribute<JSType.Object>]
-        internal static partial JSObject Native_CreateConstructionSite([JSMarshalAs<JSType.Object>] JSObject position, [JSMarshalAs<JSType.Object>] JSObject prototype);
+        internal static partial JSObject Native_CreateConstructionSite(JSObject position, JSObject prototype);
 
         [JSImport("createVisual", "game/visual")]
-        [return: JSMarshalAsAttribute<JSType.Object>]
-        internal static partial JSObject Native_CreateVisual([JSMarshalAs<JSType.Number>] int layer, [JSMarshalAs<JSType.Boolean>] bool persistent);
+        internal static partial JSObject Native_CreateVisual(int layer, bool persistent);
 
         [JSImport("findClosestByPath", "game/utils")]
-        [return: JSMarshalAsAttribute<JSType.Object>]
-        internal static partial JSObject Native_FindClosestByPath([JSMarshalAs<JSType.Object>] JSObject fromPos, [JSMarshalAs<JSType.Array<JSType.Object>>] JSObject[] positions, [JSMarshalAs<JSType.Object>] JSObject? options);
+        internal static partial JSObject Native_FindClosestByPath(JSObject fromPos, JSObject[] positions, JSObject? options);
 
         [JSImport("findClosestByRange", "game/utils")]
-        [return: JSMarshalAsAttribute<JSType.Object>]
-        internal static partial JSObject Native_FindClosestByRange([JSMarshalAs<JSType.Object>] JSObject fromPos, [JSMarshalAs<JSType.Array<JSType.Object>>] JSObject[] positions);
+        internal static partial JSObject Native_FindClosestByRange(JSObject fromPos, JSObject[] positions);
 
         [JSImport("findInRange", "game/utils")]
-        [return: JSMarshalAsAttribute<JSType.Array<JSType.Object>>]
-        internal static partial JSObject[] Native_FindInRange([JSMarshalAs<JSType.Object>] JSObject fromPos, [JSMarshalAs<JSType.Array<JSType.Object>>] JSObject[] positions, [JSMarshalAs<JSType.Number>] int range);
+        internal static partial JSObject[] Native_FindInRange(JSObject fromPos, JSObject[] positions, int range);
 
         [JSImport("findPath", "game/utils")]
-        [return: JSMarshalAsAttribute<JSType.Array<JSType.Object>>]
-        internal static partial JSObject[] Native_FindPath([JSMarshalAs<JSType.Object>] JSObject fromPos, [JSMarshalAs<JSType.Object>] JSObject toPos, [JSMarshalAs<JSType.Object>] JSObject? options);
+        internal static partial JSObject[] Native_FindPath(JSObject fromPos, JSObject toPos, JSObject? options);
 
         [JSImport("getCpuTime", "game/utils")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
         internal static partial long Native_GetCpuTime();
 
         [JSImport("getDirection", "game/utils")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_GetDirection([JSMarshalAs<JSType.Number>] int dx, [JSMarshalAs<JSType.Number>] int dy);
+        internal static partial int Native_GetDirection(int dx, int dy);
 
         [JSImport("getHeapStatistics", "game/utils")]
-        [return: JSMarshalAsAttribute<JSType.Object>]
         internal static partial JSObject Native_GetHeapStatistics();
 
         [JSImport("getObjectById", "game/utils")]
-        [return: JSMarshalAsAttribute<JSType.Object>]
         internal static partial JSObject Native_GetObjectById(string id);
 
         [JSImport("getObjects", "game/utils")]
-        [return: JSMarshalAsAttribute<JSType.Array<JSType.Object>>]
         internal static partial JSObject[] Native_GetObjects();
 
         [JSImport("getObjectsByPrototype", "game/utils")]
-        [return: JSMarshalAsAttribute<JSType.Array<JSType.Object>>]
-        internal static partial JSObject[] Native_GetObjectsByPrototype([JSMarshalAs<JSType.Object>] JSObject prototype);
+        internal static partial JSObject[] Native_GetObjectsByPrototype(JSObject prototype);
 
         [JSImport("getRange", "game/utils")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_GetRange([JSMarshalAs<JSType.Object>] JSObject a, [JSMarshalAs<JSType.Object>] JSObject b);
+        internal static partial int Native_GetRange(JSObject a, JSObject b);
 
         [JSImport("getTerrainAt", "game/utils")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_GetTerrainAt([JSMarshalAs<JSType.Object>] JSObject pos);
+        internal static partial int Native_GetTerrainAt(JSObject pos);
 
         [JSImport("getTerrain", "game/utils")]
-        internal static partial void Native_GetTerrain([JSMarshalAs<JSType.Number>] int minX, [JSMarshalAs<JSType.Number>] int minY, [JSMarshalAs<JSType.Number>] int maxX, [JSMarshalAs<JSType.Number>] int maxY, [JSMarshalAs<JSType.MemoryView>] Span<byte> outTerrainData);
+        internal static partial void Native_GetTerrain(int minX, int minY, int maxX, int maxY, [JSMarshalAsDataView] Span<byte> outTerrainData);
 
         [JSImport("getTicks", "game/utils")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
         internal static partial int Native_GetTicks();
 
         #endregion
@@ -116,7 +101,7 @@ namespace ScreepsDotNet.Native.Arena
             if (resultObj == null) { throw new InvalidOperationException($"Native_CreateConstructionSite returned null or undefined"); }
             var constructionSiteObj = resultObj.GetPropertyAsJSObject("object");
             var constructionSite = constructionSiteObj.ToGameObject<IConstructionSite>();
-            CreateConstructionSiteError? error = resultObj.GetTypeOfProperty("error") == "number" ? (CreateConstructionSiteError)resultObj.GetPropertyAsInt32("error") : null;
+            CreateConstructionSiteError? error = resultObj.GetTypeOfProperty("error") == JSPropertyType.Number ? (CreateConstructionSiteError)resultObj.GetPropertyAsInt32("error") : null;
             return new CreateConstructionSiteResult(constructionSite, error);
         }
 
@@ -176,8 +161,6 @@ namespace ScreepsDotNet.Native.Arena
                 obj.GetPropertyAsInt32("malloced_memory"),
                 obj.GetPropertyAsInt32("peak_malloced_memory"),
                 obj.GetPropertyAsInt32("does_zap_garbage"),
-                obj.GetPropertyAsInt32("number_of_native_contexts"),
-                obj.GetPropertyAsInt32("number_of_detached_contexts"),
                 obj.GetPropertyAsInt32("externally_allocated_size")
             );
         }

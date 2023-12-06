@@ -1,14 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices.JavaScript;
+using ScreepsDotNet.Interop;
 
 using ScreepsDotNet.API;
 using ScreepsDotNet.API.World;
 
 namespace ScreepsDotNet.Native.World
 {
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal static class MapVisualExtensions
     {
         public static string ToJS(this MapTextFontStyle mapTextFontStyle)
@@ -30,7 +30,7 @@ namespace ScreepsDotNet.Native.World
 
         public static JSObject ToJS(this MapTextVisualStyle textVisualStyle)
         {
-            var obj = JSUtils.CreateObject(null);
+            var obj = JSObject.Create();
             if (textVisualStyle.Color != null) { obj.SetProperty("color", textVisualStyle.Color.Value.ToString()); }
             if (!string.IsNullOrEmpty(textVisualStyle.FontFamily)) { obj.SetProperty("fontFamily", textVisualStyle.FontFamily); }
             if (textVisualStyle.FontSize != null) { obj.SetProperty("fontSize", textVisualStyle.FontSize.Value); }
@@ -46,39 +46,37 @@ namespace ScreepsDotNet.Native.World
         }
     }
 
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal partial class NativeMapVisual : IMapVisual
     {
         #region Imports
 
         [JSImport("visual.line", "game")]
-        internal static partial void Native_Line([JSMarshalAs<JSType.Object>] JSObject pos1, [JSMarshalAs<JSType.Object>] JSObject pos2, [JSMarshalAs<JSType.Object>] JSObject? style);
+        internal static partial void Native_Line(JSObject pos1, JSObject pos2, JSObject? style);
 
         [JSImport("visual.circle", "game")]
-        internal static partial void Native_Circle([JSMarshalAs<JSType.Object>] JSObject position, [JSMarshalAs<JSType.Object>] JSObject? style);
+        internal static partial void Native_Circle(JSObject position, JSObject? style);
 
         [JSImport("visual.rect", "game")]
-        internal static partial void Native_Rect([JSMarshalAs<JSType.Object>] JSObject position, [JSMarshalAs<JSType.Number>] double w, [JSMarshalAs<JSType.Number>] double h, [JSMarshalAs<JSType.Object>] JSObject? style);
+        internal static partial void Native_Rect(JSObject position, double w, double h, JSObject? style);
 
         [JSImport("visual.poly", "game")]
-        internal static partial void Native_Poly([JSMarshalAs<JSType.Array<JSType.Object>>] JSObject[] positions, [JSMarshalAs<JSType.Object>] JSObject? style);
+        internal static partial void Native_Poly(JSObject[] positions, JSObject? style);
 
         [JSImport("visual.text", "game")]
-        internal static partial void Native_Text([JSMarshalAs<JSType.String>] string text, [JSMarshalAs<JSType.Object>] JSObject position, [JSMarshalAs<JSType.Object>] JSObject? style);
+        internal static partial void Native_Text(string text, JSObject position, JSObject? style);
 
         [JSImport("visual.clear", "game")]
         internal static partial void Native_Clear();
 
         [JSImport("visual.getSize", "game")]
-        [return: JSMarshalAs<JSType.Number>]
         internal static partial int Native_GetSize();
 
         [JSImport("visual.export", "game")]
-        [return: JSMarshalAs<JSType.String>]
         internal static partial string Native_Export();
 
         [JSImport("visual.import", "game")]
-        internal static partial void Native_Import([JSMarshalAs<JSType.String>] string value);
+        internal static partial void Native_Import(string value);
 
         #endregion
 

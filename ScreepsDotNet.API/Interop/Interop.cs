@@ -19,6 +19,15 @@ internal static class ScreepsDotNet_Interop
 
 namespace ScreepsDotNet.Interop
 {
+
+    [Serializable]
+    public class JSException : Exception
+    {
+        public JSException() { }
+        public JSException(string message) : base(message) { }
+        public JSException(string message, Exception inner) : base(message, inner) { }
+    }
+
     [InlineArray(8)]
     public struct FunctionParamsSpec
     {
@@ -134,7 +143,7 @@ namespace ScreepsDotNet.Interop
         public unsafe InteropValue(char* value, int arrayLength) => Slot = new InteropValueImpl { IntPtrValue = (IntPtr)value, Type = InteropValueType.Arr, Length = arrayLength };
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public InteropValue(JSObject value) => Slot = new InteropValueImpl { IntPtrValue = value.JSHandle, Type = InteropValueType.Obj };
+        public InteropValue(JSObject value) => Slot = new InteropValueImpl { JSHandle = value.JSHandle, Type = InteropValueType.Obj };
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe InteropValue(InteropValue* value, int length) => Slot = new InteropValueImpl { IntPtrValue = (IntPtr)value, Type = InteropValueType.Arr, Length = length };
@@ -379,7 +388,7 @@ namespace ScreepsDotNet.Interop
             ScreepsDotNet_Interop.ReleaseObjectReference(jsHandle);
         }
 
-        public static unsafe int BindImport(string moduleName, string importName, FunctionSpec functionSpec)
+        public static unsafe int BindImport(string importName, string moduleName, FunctionSpec functionSpec)
         {
             int result;
             fixed (char* importNamePtr = importName)
@@ -413,10 +422,10 @@ namespace ScreepsDotNet.Interop
                     string? errorText = exceptionVal.AsString();
                     if (!string.IsNullOrEmpty(errorText))
                     {
-                        throw new Exception(errorText);
+                        throw new JSException(errorText);
                     }
                 }
-                throw new Exception($"Imported method threw an error");
+                throw new JSException($"Imported method threw an error");
             }
             else
             {

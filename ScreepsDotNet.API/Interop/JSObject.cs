@@ -21,55 +21,55 @@ namespace ScreepsDotNet.Interop
     {
         #region Imports
 
-        [Interop.JSImport("object", "hasProperty")]
+        [JSImport("hasProperty", "__object")]
         private static partial bool HasPropertyOnObject(JSObject obj, string key);
 
-        [Interop.JSImport("object", "getTypeOfProperty")]
+        [JSImport("getTypeOfProperty", "__object")]
         private static partial int GetTypeOfPropertyOnObject(JSObject obj, string key);
 
-        [Interop.JSImport("object", "getKeys")]
+        [JSImport("getKeys", "__object")]
         private static partial ImmutableArray<string> GetKeysOnObject(JSObject obj);
 
-        [Interop.JSImport("object", "getProperty")]
+        [JSImport("getProperty", "__object")]
         private static partial bool GetPropertyAsBooleanOnObject(JSObject obj, string key);
 
-        [Interop.JSImport("object", "getProperty")]
+        [JSImport("getProperty", "__object")]
         private static partial int GetPropertyAsInt32OnObject(JSObject obj, string key);
 
-        [Interop.JSImport("object", "getProperty")]
+        [JSImport("getProperty", "__object")]
         private static partial double GetPropertyAsDoubleOnObject(JSObject obj, string key);
 
-        [Interop.JSImport("object", "getProperty")]
-        private static partial string GetPropertyAsStringOnObject(JSObject obj, string key);
+        [JSImport("getProperty", "__object")]
+        private static partial string? GetPropertyAsStringOnObject(JSObject obj, string key);
 
-        [Interop.JSImport("object", "getProperty")]
+        [JSImport("getProperty", "__object")]
         private static partial JSObject? GetPropertyAsJSObjectOnObject(JSObject obj, string key);
 
-        [Interop.JSImport("object", "getProperty")]
+        [JSImport("getProperty", "__object")]
         private static partial byte[]? GetPropertyAsByteArrayOnObject(JSObject obj, string key);
 
-        [Interop.JSImport("object", "setProperty")]
+        [JSImport("setProperty", "__object")]
         private static partial void SetPropertyOnObject(JSObject obj, string key, bool value);
 
-        [Interop.JSImport("object", "setProperty")]
+        [JSImport("setProperty", "__object")]
         private static partial void SetPropertyOnObject(JSObject obj, string key, int value);
 
-        [Interop.JSImport("object", "setProperty")]
+        [JSImport("setProperty", "__object")]
         private static partial void SetPropertyOnObject(JSObject obj, string key, double value);
 
-        [Interop.JSImport("object", "setProperty")]
+        [JSImport("setProperty", "__object")]
         private static partial void SetPropertyOnObject(JSObject obj, string key, string? value);
 
-        [Interop.JSImport("object", "setProperty")]
+        [JSImport("setProperty", "__object")]
         private static partial void SetPropertyOnObject(JSObject obj, string key, JSObject? value);
 
-        [Interop.JSImport("object", "setProperty")]
+        [JSImport("setProperty", "__object")]
         private static partial void SetPropertyOnObject(JSObject obj, string key, byte[]? value);
 
-        [Interop.JSImport("object", "deleteProperty")]
+        [JSImport("deleteProperty", "__object")]
         private static partial void DeletePropertyOnObject(JSObject obj, string key);
 
-        [Interop.JSImport("object", "create")]
+        [JSImport("create", "__object")]
         private static partial JSObject CreateObject(JSObject? prototypeObj = null);
 
         #endregion

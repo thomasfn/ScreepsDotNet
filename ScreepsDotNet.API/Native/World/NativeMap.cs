@@ -1,21 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices.JavaScript;
+using ScreepsDotNet.Interop;
 
 using ScreepsDotNet.API.World;
 
 namespace ScreepsDotNet.Native.World
 {
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal static partial class NativeMapExtensions
     {
         [JSImport("set", "object")]
-        internal static partial void SetRouteCallbackOnObject([JSMarshalAs<JSType.Object>] JSObject obj, [JSMarshalAs<JSType.String>] string key, [JSMarshalAs<JSType.Function<JSType.String, JSType.String, JSType.Number>>] Func<string, string, double> func);
+        internal static partial void SetRouteCallbackOnObject(JSObject obj, string key, Func<string, string, double> func);
 
         public static JSObject ToJS(this MapFindRouteOptions mapFindRouteOptions)
         {
-            var obj = JSUtils.CreateObject(null);
+            var obj = JSObject.Create();
             if (mapFindRouteOptions.RouteCallback != null) { SetRouteCallbackOnObject(obj, "routeCallback", mapFindRouteOptions.RouteCallback); }
             return obj;
         }
@@ -33,38 +33,31 @@ namespace ScreepsDotNet.Native.World
         };
     }
 
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal partial class NativeMap : IMap
     {
         #region Imports
 
         [JSImport("map.describeExits", "game")]
-        [return: JSMarshalAsAttribute<JSType.Object>]
-        internal static partial JSObject Native_DescribeExits([JSMarshalAs<JSType.String>] string roomName);
+        internal static partial JSObject Native_DescribeExits(string roomName);
 
         [JSImport("map.findExit", "game")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_FindExit([JSMarshalAs<JSType.String>] string fromRoom, [JSMarshalAs<JSType.String>] string toRoom, [JSMarshalAs<JSType.Object>] JSObject? opts);
+        internal static partial int Native_FindExit(string fromRoom, string toRoom, JSObject? opts);
 
         [JSImport("map.findRoute", "game")]
-        [return: JSMarshalAsAttribute<JSType.Array<JSType.Object>>]
-        internal static partial JSObject[]? Native_FindRoute([JSMarshalAs<JSType.String>] string fromRoom, [JSMarshalAs<JSType.String>] string toRoom, [JSMarshalAs<JSType.Object>] JSObject? opts);
+        internal static partial JSObject[]? Native_FindRoute(string fromRoom, string toRoom, JSObject? opts);
 
         [JSImport("map.getRoomLinearDistance", "game")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_GetRoomLinearDistance([JSMarshalAs<JSType.String>] string roomName1, [JSMarshalAs<JSType.String>] string roomName2, [JSMarshalAs<JSType.Boolean>] bool continuous);
+        internal static partial int Native_GetRoomLinearDistance(string roomName1, string roomName2, bool continuous);
 
         [JSImport("map.getRoomTerrain", "game")]
-        [return: JSMarshalAsAttribute<JSType.Object>]
-        internal static partial JSObject Native_GetRoomTerrain([JSMarshalAs<JSType.String>] string roomName);
+        internal static partial JSObject Native_GetRoomTerrain(string roomName);
 
         [JSImport("map.getWorldSize", "game")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
         internal static partial int Native_GetWorldSize();
 
         [JSImport("map.getRoomStatus", "game")]
-        [return: JSMarshalAsAttribute<JSType.Object>]
-        internal static partial JSObject Native_GetRoomStatus([JSMarshalAs<JSType.String>] string roomName);
+        internal static partial JSObject Native_GetRoomStatus(string roomName);
 
         #endregion
 

@@ -6,13 +6,15 @@
         "module": "ES2022",
         "sourceMap": false,
         "target": "ES2022",
-        "moduleResolution": "Bundler",
+        "moduleResolution": "node16",
         "strict": true,
         "lib": [
             "esnext",
             "DOM"
         ],
-        "types": [],
+        "types": [
+            "@types/screeps"
+        ],
         "rootDirs": [
             "."
         ],

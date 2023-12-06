@@ -1,25 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.InteropServices.JavaScript;
+using ScreepsDotNet.Interop;
 
 using ScreepsDotNet.API.World;
 
 namespace ScreepsDotNet.Native.World
 {
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal partial class NativeMemoryObject : IMemoryObject
     {
-        #region Imports
-
-        [JSImport("deleteOnObject", "object")]
-        internal static partial void Native_DeleteOnObject([JSMarshalAs<JSType.Object>] JSObject target, [JSMarshalAs<JSType.String>] string key);
-
-        #endregion
-
         internal readonly JSObject ProxyObject;
 
-        public IEnumerable<string> Keys => JSUtils.GetKeysOf(ProxyObject);
+        public IEnumerable<string> Keys => ProxyObject.GetPropertyNames();
 
         public NativeMemoryObject(JSObject proxyObject)
         {
@@ -28,7 +21,7 @@ namespace ScreepsDotNet.Native.World
 
         public bool TryGetInt(string key, out int value)
         {
-            if (ProxyObject.GetTypeOfProperty(key) != "number")
+            if (ProxyObject.GetTypeOfProperty(key) != JSPropertyType.Number)
             {
                 value = default;
                 return false;
@@ -39,7 +32,7 @@ namespace ScreepsDotNet.Native.World
 
         public bool TryGetString(string key, out string value)
         {
-            if (ProxyObject.GetTypeOfProperty(key) != "string")
+            if (ProxyObject.GetTypeOfProperty(key) != JSPropertyType.String)
             {
                 value = string.Empty;
                 return false;
@@ -51,7 +44,7 @@ namespace ScreepsDotNet.Native.World
 
         public bool TryGetDouble(string key, out double value)
         {
-            if (ProxyObject.GetTypeOfProperty(key) != "number")
+            if (ProxyObject.GetTypeOfProperty(key) != JSPropertyType.Number)
             {
                 value = default;
                 return false;
@@ -62,7 +55,7 @@ namespace ScreepsDotNet.Native.World
 
         public bool TryGetBool(string key, out bool value)
         {
-            if (ProxyObject.GetTypeOfProperty(key) != "boolean")
+            if (ProxyObject.GetTypeOfProperty(key) != JSPropertyType.Boolean)
             {
                 value = default;
                 return false;
@@ -73,7 +66,7 @@ namespace ScreepsDotNet.Native.World
 
         public bool TryGetObject(string key, [MaybeNullWhen(false)] out IMemoryObject value)
         {
-            if (ProxyObject.GetTypeOfProperty(key) != "object")
+            if (ProxyObject.GetTypeOfProperty(key) != JSPropertyType.Object)
             {
                 value = default;
                 return false;
@@ -104,16 +97,16 @@ namespace ScreepsDotNet.Native.World
         {
             var obj = ProxyObject.GetPropertyAsJSObject(key);
             if (obj != null) { return new NativeMemoryObject(obj); }
-            obj = JSUtils.CreateObject(null);
+            obj = JSObject.Create();
             ProxyObject.SetProperty(key, obj);
             return new NativeMemoryObject(obj);
         }
 
         public void ClearValue(string key)
-            => Native_DeleteOnObject(ProxyObject, key);
+            => ProxyObject.DeleteProperty(key);
     }
 
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal static class NativeMemoryObjectExtensions
     {
         public static JSObject ToJS(this IMemoryObject roomObject)

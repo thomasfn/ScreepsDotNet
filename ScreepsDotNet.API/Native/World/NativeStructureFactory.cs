@@ -1,18 +1,18 @@
-﻿using System.Runtime.InteropServices.JavaScript;
+﻿using ScreepsDotNet.Interop;
 
 using ScreepsDotNet.API;
 using ScreepsDotNet.API.World;
 
 namespace ScreepsDotNet.Native.World
 {
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal partial class NativeStructureFactory : NativeOwnedStructure, IStructureFactory
     {
         #region Imports
 
         [JSImport("StructureFactory.produce", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Produce([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.String>] string resourceType);
+        
+        internal static partial int Native_Produce(JSObject proxyObject, string resourceType);
 
         #endregion
 

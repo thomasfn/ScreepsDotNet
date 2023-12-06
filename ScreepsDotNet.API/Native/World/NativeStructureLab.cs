@@ -1,30 +1,30 @@
-﻿using System.Runtime.InteropServices.JavaScript;
+﻿using ScreepsDotNet.Interop;
 
 using ScreepsDotNet.API;
 using ScreepsDotNet.API.World;
 
 namespace ScreepsDotNet.Native.World
 {
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal partial class NativeStructureLab : NativeOwnedStructure, IStructureLab
     {
         #region Imports
 
         [JSImport("StructureLab.boostCreep", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_BoostCreep([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject creep, [JSMarshalAs<JSType.Number>] int? bodyPartsCount);
+        
+        internal static partial int Native_BoostCreep(JSObject proxyObject, JSObject creep, int? bodyPartsCount);
 
         [JSImport("StructureLab.reverseReaction", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_ReverseReaction([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject lab1, [JSMarshalAs<JSType.Object>] JSObject lab2);
+        
+        internal static partial int Native_ReverseReaction(JSObject proxyObject, JSObject lab1, JSObject lab2);
 
         [JSImport("StructureLab.runReaction", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_RunReaction([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject lab1, [JSMarshalAs<JSType.Object>] JSObject lab2);
+        
+        internal static partial int Native_RunReaction(JSObject proxyObject, JSObject lab1, JSObject lab2);
 
         [JSImport("StructureLab.unboostCreep", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_UnboostCreep([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject creep);
+        
+        internal static partial int Native_UnboostCreep(JSObject proxyObject, JSObject creep);
 
         #endregion
 

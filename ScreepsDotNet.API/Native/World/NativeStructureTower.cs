@@ -1,26 +1,26 @@
-﻿using System.Runtime.InteropServices.JavaScript;
+﻿using ScreepsDotNet.Interop;
 
 using ScreepsDotNet.API;
 using ScreepsDotNet.API.World;
 
 namespace ScreepsDotNet.Native.World
 {
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal partial class NativeStructureTower : NativeOwnedStructure, IStructureTower
     {
         #region Imports
 
         [JSImport("StructureTower.attack", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Attack([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject target);
+        
+        internal static partial int Native_Attack(JSObject proxyObject, JSObject target);
 
         [JSImport("StructureTower.heal", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Heal([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject target);
+        
+        internal static partial int Native_Heal(JSObject proxyObject, JSObject target);
 
         [JSImport("StructureTower.repair", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Repair([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject target);
+        
+        internal static partial int Native_Repair(JSObject proxyObject, JSObject target);
 
         #endregion
 

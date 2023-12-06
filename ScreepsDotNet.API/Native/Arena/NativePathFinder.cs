@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using System.Runtime.InteropServices.JavaScript;
+using ScreepsDotNet.Interop;
 using System.Linq;
 
 using ScreepsDotNet.API;
@@ -7,12 +7,12 @@ using ScreepsDotNet.API.Arena;
 
 namespace ScreepsDotNet.Native.Arena
 {
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal static class PathOptionsExtensions
     {
         public static JSObject ToJS(this SearchPathOptions options)
         {
-            var obj = JSUtils.CreateObject(null);
+            var obj = JSObject.Create();
             if (options.CostMatrix is NativeCostMatrix nativeCostMatrix)
             {
                 obj.SetProperty("costMatrix", nativeCostMatrix.ProxyObject);
@@ -42,14 +42,14 @@ namespace ScreepsDotNet.Native.Arena
 
         public static JSObject ToJS(this Goal goal)
         {
-            var obj = JSUtils.CreateObject(null);
+            var obj = JSObject.Create();
             obj.SetProperty("pos", goal.Position.ToJS());
             if (goal.Range != null) { obj.SetProperty("range", goal.Range.Value); }
             return obj;
         }
     }
 
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal static class SearchPathResultExtensions
     {
         public static SearchPathResult ToSearchPathResult(this JSObject obj)
@@ -61,26 +61,26 @@ namespace ScreepsDotNet.Native.Arena
                 );
     }
 
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal partial class NativePathFinder : IPathFinder
     {
         #region Imports
 
         [JSImport("searchPath", "game/pathFinder")]
-        [return: JSMarshalAsAttribute<JSType.Object>]
-        internal static partial JSObject Native_SearchPath([JSMarshalAs<JSType.Object>] JSObject origin, [JSMarshalAs<JSType.Object>] JSObject goal, [JSMarshalAs<JSType.Object>] JSObject options);
+        
+        internal static partial JSObject Native_SearchPath(JSObject origin, JSObject goal, JSObject options);
 
         [JSImport("searchPath", "game/pathFinder")]
-        [return: JSMarshalAsAttribute<JSType.Object>]
-        internal static partial JSObject Native_SearchPath([JSMarshalAs<JSType.Object>] JSObject origin, [JSMarshalAs<JSType.Array<JSType.Object>>] JSObject[] goals, [JSMarshalAs<JSType.Object>] JSObject options);
+        
+        internal static partial JSObject Native_SearchPath(JSObject origin, JSObject[] goals, JSObject options);
 
         [JSImport("searchPath", "game/pathFinder")]
-        [return: JSMarshalAsAttribute<JSType.Object>]
-        internal static partial JSObject Native_SearchPath([JSMarshalAs<JSType.Object>] JSObject origin, [JSMarshalAs<JSType.Object>] JSObject goal);
+        
+        internal static partial JSObject Native_SearchPath(JSObject origin, JSObject goal);
 
         [JSImport("searchPath", "game/pathFinder")]
-        [return: JSMarshalAsAttribute<JSType.Object>]
-        internal static partial JSObject Native_SearchPath([JSMarshalAs<JSType.Object>] JSObject origin, [JSMarshalAs<JSType.Array<JSType.Object>>] JSObject[] goals);
+        
+        internal static partial JSObject Native_SearchPath(JSObject origin, JSObject[] goals);
 
         #endregion
 

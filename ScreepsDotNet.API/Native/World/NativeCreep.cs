@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices.JavaScript;
+using ScreepsDotNet.Interop;
 using System.Linq;
 
 using ScreepsDotNet.API;
@@ -67,130 +67,130 @@ namespace ScreepsDotNet.Native.World
             };
     }
 
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal partial class NativeCreep : NativeRoomObject, ICreep, IEquatable<NativeCreep?>
     {
         #region Imports
 
         [JSImport("Creep.attack", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Attack([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject);
+        
+        internal static partial int Native_Attack(JSObject proxyObject, JSObject targetProxyObject);
 
         [JSImport("Creep.attackController", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_AttackController([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject);
+        
+        internal static partial int Native_AttackController(JSObject proxyObject, JSObject targetProxyObject);
 
         [JSImport("Creep.build", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Build([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject);
+        
+        internal static partial int Native_Build(JSObject proxyObject, JSObject targetProxyObject);
 
         [JSImport("Creep.cancelOrder", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_CancelOrder([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.String>] string methodName);
+        
+        internal static partial int Native_CancelOrder(JSObject proxyObject, string methodName);
 
         [JSImport("Creep.claimController", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_ClaimController([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject);
+        
+        internal static partial int Native_ClaimController(JSObject proxyObject, JSObject targetProxyObject);
 
         [JSImport("Creep.dismantle", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Dismantle([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject);
+        
+        internal static partial int Native_Dismantle(JSObject proxyObject, JSObject targetProxyObject);
 
         [JSImport("Creep.drop", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Drop([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.String>] string resourceType, [JSMarshalAs<JSType.Number>] int? amount);
+        
+        internal static partial int Native_Drop(JSObject proxyObject, string resourceType, int? amount);
 
         [JSImport("Creep.generateSafeMode", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_GenerateSafeMode([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject);
+        
+        internal static partial int Native_GenerateSafeMode(JSObject proxyObject, JSObject targetProxyObject);
 
         [JSImport("Creep.getActiveBodyparts", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_GetActiveBodyparts([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.String>] string type);
+        
+        internal static partial int Native_GetActiveBodyparts(JSObject proxyObject, string type);
 
         [JSImport("Creep.harvest", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Harvest([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject);
+        
+        internal static partial int Native_Harvest(JSObject proxyObject, JSObject targetProxyObject);
 
         [JSImport("Creep.heal", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Heal([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject);
+        
+        internal static partial int Native_Heal(JSObject proxyObject, JSObject targetProxyObject);
 
         [JSImport("Creep.move", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Move([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Number>] int direction);
+        
+        internal static partial int Native_Move(JSObject proxyObject, int direction);
 
         [JSImport("Creep.moveByPath", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_MoveByPath([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Array<JSType.Object>>] JSObject[] path);
+        
+        internal static partial int Native_MoveByPath(JSObject proxyObject, JSObject[] path);
 
         [JSImport("Creep.moveByPath", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_MoveByPath([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.String>] string serialisedPath);
+        
+        internal static partial int Native_MoveByPath(JSObject proxyObject, string serialisedPath);
 
         [JSImport("Creep.moveTo", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_MoveTo([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Number>] int x, [JSMarshalAs<JSType.Number>] int y, [JSMarshalAs<JSType.Object>] JSObject? opts);
+        
+        internal static partial int Native_MoveTo(JSObject proxyObject, int x, int y, JSObject? opts);
 
         [JSImport("Creep.moveTo", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_MoveTo([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject target, [JSMarshalAs<JSType.Object>] JSObject? opts);
+        
+        internal static partial int Native_MoveTo(JSObject proxyObject, JSObject target, JSObject? opts);
 
         [JSImport("Creep.notifyWhenAttacked", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_NotifyWhenAttacked([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Boolean>] bool enabled);
+        
+        internal static partial int Native_NotifyWhenAttacked(JSObject proxyObject, bool enabled);
 
         [JSImport("Creep.pickup", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Pickup([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject);
+        
+        internal static partial int Native_Pickup(JSObject proxyObject, JSObject targetProxyObject);
 
         [JSImport("Creep.pull", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Pull([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject);
+        
+        internal static partial int Native_Pull(JSObject proxyObject, JSObject targetProxyObject);
 
         [JSImport("Creep.rangedAttack", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_RangedAttack([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject);
+        
+        internal static partial int Native_RangedAttack(JSObject proxyObject, JSObject targetProxyObject);
 
         [JSImport("Creep.rangedHeal", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_RangedHeal([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject);
+        
+        internal static partial int Native_RangedHeal(JSObject proxyObject, JSObject targetProxyObject);
 
         [JSImport("Creep.rangedMassAttack", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_RangedMassAttack([JSMarshalAs<JSType.Object>] JSObject proxyObject);
+        
+        internal static partial int Native_RangedMassAttack(JSObject proxyObject);
 
         [JSImport("Creep.repair", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Repair([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject);
+        
+        internal static partial int Native_Repair(JSObject proxyObject, JSObject targetProxyObject);
 
         [JSImport("Creep.reserveController", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_ReserveController([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject);
+        
+        internal static partial int Native_ReserveController(JSObject proxyObject, JSObject targetProxyObject);
 
         [JSImport("Creep.say", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Say([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.String>] string message, [JSMarshalAs<JSType.Boolean>] bool? sayPublic);
+        
+        internal static partial int Native_Say(JSObject proxyObject, string message, bool? sayPublic);
 
         [JSImport("Creep.signController", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_SignController([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject, [JSMarshalAs<JSType.String>] string text);
+        
+        internal static partial int Native_SignController(JSObject proxyObject, JSObject targetProxyObject, string text);
 
         [JSImport("Creep.suicide", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Suicide([JSMarshalAs<JSType.Object>] JSObject proxyObject);
+        
+        internal static partial int Native_Suicide(JSObject proxyObject);
 
         [JSImport("Creep.transfer", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Transfer([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject, [JSMarshalAs<JSType.String>] string resourceType, [JSMarshalAs<JSType.Number>] int? amount);
+        
+        internal static partial int Native_Transfer(JSObject proxyObject, JSObject targetProxyObject, string resourceType, int? amount);
 
         [JSImport("Creep.upgradeController", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_UpgradeController([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject);
+        
+        internal static partial int Native_UpgradeController(JSObject proxyObject, JSObject targetProxyObject);
 
         [JSImport("Creep.withdraw", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Withdraw([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject, [JSMarshalAs<JSType.String>] string resourceType, [JSMarshalAs<JSType.Number>] int? amount);
+        
+        internal static partial int Native_Withdraw(JSObject proxyObject, JSObject targetProxyObject, string resourceType, int? amount);
 
         #endregion
 

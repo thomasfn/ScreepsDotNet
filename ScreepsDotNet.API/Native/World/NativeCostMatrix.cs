@@ -1,32 +1,29 @@
 ﻿using System;
-using System.Runtime.InteropServices.JavaScript;
+using ScreepsDotNet.Interop;
 
 using ScreepsDotNet.API;
 
 namespace ScreepsDotNet.Native.World
 {
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal partial class NativeCostMatrix : ICostMatrix
     {
         #region Imports
 
         [JSImport("createCostMatrix", "game")]
-        [return: JSMarshalAsAttribute<JSType.Object>]
         internal static partial JSObject Native_Ctor();
 
         [JSImport("CostMatrix.get", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial byte Native_Get([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Number>] int x, [JSMarshalAs<JSType.Number>] int y);
+        internal static partial byte Native_Get(JSObject proxyObject, int x, int y);
 
         [JSImport("CostMatrix.set", "game/prototypes/wrapped")]
-        internal static partial void Native_Set([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Number>] int x, [JSMarshalAs<JSType.Number>] int y, [JSMarshalAs<JSType.Number>] byte cost);
+        internal static partial void Native_Set(JSObject proxyObject, int x, int y, byte cost);
 
         [JSImport("CostMatrix.setRect", "game/prototypes/wrapped")]
-        internal static partial void Native_SetRect([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Number>] int minX, [JSMarshalAs<JSType.Number>] int minY, [JSMarshalAs<JSType.Number>] int maxX, [JSMarshalAs<JSType.Number>] int maxY, [JSMarshalAs<JSType.MemoryView>] Span<byte> values);
+        internal static partial void Native_SetRect(JSObject proxyObject, int minX, int minY, int maxX, int maxY, [JSMarshalAsDataView] Span<byte> values);
 
         [JSImport("CostMatrix.get", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Object>]
-        internal static partial JSObject Native_Clone([JSMarshalAs<JSType.Object>] JSObject proxyObject);
+        internal static partial JSObject Native_Clone(JSObject proxyObject);
 
         #endregion
 
