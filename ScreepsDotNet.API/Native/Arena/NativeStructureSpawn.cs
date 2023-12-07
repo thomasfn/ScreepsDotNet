@@ -70,7 +70,7 @@ namespace ScreepsDotNet.Native.Arena
             var resultObj = Native_SpawnCreep(ProxyObject, body.Select(x => x.ToJS()).ToArray());
             if (resultObj == null) { throw new InvalidOperationException($"StructureSpawn.spawnCreep returned null or undefined"); }
             var creepObj = resultObj.GetPropertyAsJSObject("object");
-            int? error = resultObj.GetTypeOfProperty("error") == JSPropertyType.Number ? resultObj.GetPropertyAsInt32("error") : null;
+            int? error = resultObj.TryGetPropertyAsInt32("error");
             return new SpawnCreepResult(creepObj != null ? NativeGameObjectUtils.CreateWrapperForObject(creepObj) as ICreep : null, (SpawnCreepError?)error);
         }
 

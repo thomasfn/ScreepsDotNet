@@ -185,9 +185,10 @@ namespace ScreepsDotNet.Native.World
         {
             var result = new List<double>();
             int i = 0;
-            while (obj.HasProperty(i.ToString()) || i < firstIndex)
+            double? value;
+            while ((value = obj.TryGetPropertyAsDouble(i.ToString())) != null || i < firstIndex)
             {
-                result.Add(obj.GetPropertyAsDouble(i.ToString()));
+                result.Add(value ?? 0.0);
                 ++i;
             }
             return result.ToArray();
@@ -197,9 +198,10 @@ namespace ScreepsDotNet.Native.World
         {
             var result = new List<int>();
             int i = 0;
-            while (obj.HasProperty(i.ToString()) || i < firstIndex)
+            int? value;
+            while ((value = obj.TryGetPropertyAsInt32(i.ToString())) != null || i < firstIndex)
             {
-                result.Add(obj.GetPropertyAsInt32(i.ToString()));
+                result.Add(value ?? 0);
                 ++i;
             }
             return result.ToArray();

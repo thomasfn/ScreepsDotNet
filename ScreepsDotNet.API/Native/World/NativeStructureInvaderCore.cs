@@ -12,7 +12,7 @@ namespace ScreepsDotNet.Native.World
 
         public int Level => CacheLifetime(ref levelCache) ??= ProxyObject.GetPropertyAsInt32("level");
 
-        public int? TicksToDeploy => CachePerTick(ref ticksToDeployCache) ??= ProxyObject.GetTypeOfProperty("ticksToDeploy") == JSPropertyType.Number ? ProxyObject.GetPropertyAsInt32("ticksToDeploy") : null;
+        public int? TicksToDeploy => CachePerTick(ref ticksToDeployCache) ??= ProxyObject.TryGetPropertyAsInt32("ticksToDeploy");
 
         public ISpawning? Spawning
         {

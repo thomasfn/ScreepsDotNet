@@ -4,6 +4,8 @@
 #include <mono/metadata/object.h>
 #include <mono/metadata/exception.h>
 
+const char* dotnet_wasi_getentrypointassemblyname();
+
 __attribute__((__import_module__("js"), __import_name__("js_bind_import")))
 extern int js_bind_import(const char* moduleNamePtr, const char* importNamePtr, const void* importSpecPtr);
 
@@ -30,7 +32,7 @@ void screepsdotnet_init()
 
 	if (!method_Init)
 	{
-		method_Init = lookup_dotnet_method("ScreepsDotNet.dll", "ScreepsDotNet", "Program", "Init", -1);
+		method_Init = lookup_dotnet_method(dotnet_wasi_getentrypointassemblyname(), "ScreepsDotNet", "Program", "Init", -1);
 		assert(method_Init);
 	}
 
@@ -44,7 +46,7 @@ void screepsdotnet_loop()
 {
 	if (!method_Loop)
 	{
-		method_Loop = lookup_dotnet_method("ScreepsDotNet.dll", "ScreepsDotNet", "Program", "Loop", -1);
+		method_Loop = lookup_dotnet_method(dotnet_wasi_getentrypointassemblyname(), "ScreepsDotNet", "Program", "Loop", -1);
 		assert(method_Loop);
 	}
 

@@ -57,7 +57,7 @@ namespace ScreepsDotNet.Native.World
 
         public bool Unlocked =>  ProxyObject.GetPropertyAsBoolean("unlocked");
 
-        public long? UnlockedTime => ProxyObject.GetTypeOfProperty("unlockedTime") == JSPropertyType.Number ? ProxyObject.GetPropertyAsInt32("unlockedTime") : null;
+        public long? UnlockedTime => ProxyObject.TryGetPropertyAsInt32("unlockedTime");
 
         public NativeCpu(JSObject proxyObject)
         {

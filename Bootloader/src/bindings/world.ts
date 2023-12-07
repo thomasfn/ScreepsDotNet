@@ -224,8 +224,8 @@ export class WorldBindings extends BaseBindings {
                 ) => PathFinder.search(origin, goal, opts),
             },
             RoomTerrain: {
-                get: (thisObj, ...args) => thisObj.get(...args),
-                getRawBuffer: (thisObj, memoryView) => memoryView.set(thisObj.getRawBuffer()),
+                get: (thisObj: RoomTerrain, x: number, y: number) => thisObj.get(x, y),
+                getRawBuffer: (thisObj: RoomTerrain, dataView: DataView) => (thisObj as unknown as { getRawBuffer(destination: Uint8Array): void }).getRawBuffer(new Uint8Array(dataView.buffer, dataView.byteOffset, dataView.byteLength)),
             },
         };
     }

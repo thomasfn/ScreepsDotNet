@@ -40,6 +40,15 @@ namespace ScreepsDotNet.Interop
         private static partial double GetPropertyAsDoubleOnObject(JSObject obj, string key);
 
         [JSImport("getProperty", "__object")]
+        private static partial bool? GetPropertyAsNullableBooleanOnObject(JSObject obj, string key);
+
+        [JSImport("getProperty", "__object")]
+        private static partial int? GetPropertyAsNullableInt32OnObject(JSObject obj, string key);
+
+        [JSImport("getProperty", "__object")]
+        private static partial double? GetPropertyAsNullableDoubleOnObject(JSObject obj, string key);
+
+        [JSImport("getProperty", "__object")]
         private static partial string? GetPropertyAsStringOnObject(JSObject obj, string key);
 
         [JSImport("getProperty", "__object")]
@@ -101,6 +110,12 @@ namespace ScreepsDotNet.Interop
         public int GetPropertyAsInt32(string propertyName) => GetPropertyAsInt32OnObject(this, propertyName);
 
         public double GetPropertyAsDouble(string propertyName) => GetPropertyAsDoubleOnObject(this, propertyName);
+
+        public bool? TryGetPropertyAsBoolean(string propertyName) => GetPropertyAsNullableBooleanOnObject(this, propertyName);
+
+        public int? TryGetPropertyAsInt32(string propertyName) => GetPropertyAsNullableInt32OnObject(this, propertyName);
+
+        public double? TryGetPropertyAsDouble(string propertyName) => GetPropertyAsNullableDoubleOnObject(this, propertyName);
 
         public string? GetPropertyAsString(string propertyName) => GetPropertyAsStringOnObject(this, propertyName);
 

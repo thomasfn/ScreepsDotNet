@@ -7,7 +7,7 @@ namespace ScreepsDotNet.Native.Arena
     [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal partial class NativeOwnedStructure : NativeStructure, IOwnedStructure
     {
-        public bool? My => ProxyObject.GetTypeOfProperty("my") == JSPropertyType.Boolean ? ProxyObject.GetPropertyAsBoolean("my") : null;
+        public bool? My => ProxyObject.TryGetPropertyAsBoolean("my");
 
         public NativeOwnedStructure(JSObject proxyObject)
             : base(proxyObject)

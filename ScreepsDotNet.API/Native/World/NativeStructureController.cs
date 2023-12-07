@@ -38,11 +38,11 @@ namespace ScreepsDotNet.Native.World
             }
         }
 
-        public int? SafeMode => ProxyObject.GetTypeOfProperty("safeMode") == JSPropertyType.Number ? ProxyObject.GetPropertyAsInt32("safeMode") : null;
+        public int? SafeMode =>  ProxyObject.TryGetPropertyAsInt32("safeMode");
 
         public int SafeModeAvailable => ProxyObject.GetPropertyAsInt32("safeModeAvailable");
 
-        public int? SafeModeCooldown => ProxyObject.GetTypeOfProperty("safeModeCooldown") == JSPropertyType.Number ? ProxyObject.GetPropertyAsInt32("safeModeCooldown") : null;
+        public int? SafeModeCooldown => ProxyObject.TryGetPropertyAsInt32("safeModeCooldown");
 
         public ControllerSign? Sign
         {

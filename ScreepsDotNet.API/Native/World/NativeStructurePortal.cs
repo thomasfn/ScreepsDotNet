@@ -15,7 +15,7 @@ namespace ScreepsDotNet.Native.World
 
         public PortalInterShardDestination? InterShardDestination => CacheLifetime(ref interShardDestinationCache) ??= GetInterShardDestination();
 
-        public int? TicksToDecay => CachePerTick(ref ticksToDecayCache) ??= ProxyObject.GetTypeOfProperty("ticksToDecay") == JSPropertyType.Number ? ProxyObject.GetPropertyAsInt32("ticksToDecay") : null;
+        public int? TicksToDecay => CachePerTick(ref ticksToDecayCache) ??= ProxyObject.TryGetPropertyAsInt32("ticksToDecay");
 
         public NativeStructurePortal(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
             : base(nativeRoot, proxyObject, id)
