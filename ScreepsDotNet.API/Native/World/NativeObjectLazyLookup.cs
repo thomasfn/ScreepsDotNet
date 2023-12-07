@@ -50,6 +50,7 @@ namespace ScreepsDotNet.Native.World
 
         public void InvalidateProxyObject()
         {
+            proxyObject.Dispose();
             proxyObject = proxyObjectReacquireFn();
             keysCache = null;
             // TODO: Instead of clearing the whole cache, go through and remove any where Exists == false

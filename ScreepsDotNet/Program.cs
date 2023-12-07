@@ -150,6 +150,11 @@ namespace ScreepsDotNet
                 Console.WriteLine($"Heap usage is very high ({heapUsageFrac * 100.0:N}%), running aggressive GC...");
                 GC.Collect(GC.MaxGeneration, GCCollectionMode.Aggressive, true);
                 ticksSinceLastGC = 0;
+            } else if (ticksSinceLastGC > 100)
+            {
+                Console.WriteLine($"GC hasn't run in a while (heap usage at {heapUsageFrac * 100.0:N}%), running GC...");
+                GC.Collect(GC.MaxGeneration, GCCollectionMode.Default, true);
+                ticksSinceLastGC = 0;
             }
         }
 

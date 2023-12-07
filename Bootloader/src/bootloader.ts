@@ -76,9 +76,13 @@ export class Bootloader {
     private _started: boolean = false;
 
     private _inTick: boolean = false;
+    private _profilingEnabled: boolean = false;
 
     public get compiled() { return this._compiled; }
     public get started() { return this._started; }
+
+    public get profilingEnabled() { return this._profilingEnabled; }
+    public set profilingEnabled(value) { this._profilingEnabled = value; }
 
     constructor(env: 'world'|'arena', profileFn: () => number) {
         this._deferLogsToTick = env === 'arena';
@@ -89,7 +93,7 @@ export class Bootloader {
         this._stderr = new Stdio(this.log.bind(this));
 
         this._wasi = new WASI(['ScreepsDotNet'], [`ENV=${env}`], [this._stdin, this._stdout, this._stderr], { debug: false });
-        this._interop = new Interop();
+        this._interop = new Interop(profileFn);
 
         this.setImports('__object', {
             hasProperty: (obj: Record<string | number | symbol, unknown>, key: string) => key in obj,
@@ -186,7 +190,9 @@ export class Bootloader {
             const t0 = this._profileFn();
             this._wasmInstance.exports.screepsdotnet_init();
             const t1 = this._profileFn();
-            this.log(`Init in ${(((t1 - t0) * 100)|0)/100} ms`);
+            if (this._profilingEnabled) {
+                this.log(`Init in ${(((t1 - t0) * 100)|0)/100} ms (${this._interop.buildProfilerString()})`);
+            }
         }
         this._started = true;
     }
@@ -195,6 +201,7 @@ export class Bootloader {
         if (!this._wasmInstance || !this._started) { return; }
 
         // Run bindings loop
+        this._interop.loop();
         this._bindings?.loop();
 
         // Dispatch log messages
@@ -206,7 +213,9 @@ export class Bootloader {
             const t0 = this._profileFn();
             this._wasmInstance.exports.screepsdotnet_loop();
             const t1 = this._profileFn();
-            this.log(`Loop in ${(((t1 - t0) * 100)|0)/100} ms`);
+            if (this._profilingEnabled) {
+                this.log(`Loop in ${(((t1 - t0) * 100)|0)/100} ms (${this._interop.buildProfilerString()})`);
+            }
         }
     }
 

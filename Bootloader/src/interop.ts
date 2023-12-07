@@ -81,6 +81,7 @@ export type Importable = ((...args: any[]) => unknown) | ImportTable;
 export class Interop {
     public readonly interopImport: Record<string, (...args: any[]) => unknown>;
 
+    private readonly _profileFn: () => number;
     private readonly _imports: Record<string, ImportTable> = {};
     
     private readonly _boundImportList: BoundImportFunction[] = [];
@@ -90,8 +91,15 @@ export class Interop {
     private _memory?: WebAssembly.Memory;
     private _malloc?: MallocFunction;
     private _nextClrTrackingId: number = 0;
-
     private _memoryView?: WasmMemoryView;
+
+    private _numBoundImportInvokes: number = 0;
+    private _numImportBinds: number = 0;
+    private _numBeginTrackingObjects: number = 0;
+    private _numReleaseTrackingObjects: number = 0;
+    private _numTotalTrackingObjects: number = 0;
+    private _timeInInterop: number = 0;
+    private _timeInJsUserCode: number = 0;
 
     public get memory(): WebAssembly.Memory | undefined { return this._memory; }
     public set memory(value) {
@@ -102,7 +110,8 @@ export class Interop {
     public get malloc(): MallocFunction | undefined { return this._malloc; }
     public set malloc(value) { this._malloc = value; }
 
-    constructor() {
+    constructor(profileFn: () => number) {
+        this._profileFn = profileFn;
         this.interopImport = {};
         this.interopImport.js_bind_import = this.js_bind_import.bind(this);
         this.interopImport.js_invoke_import = this.js_invoke_import.bind(this);
@@ -119,6 +128,28 @@ export class Interop {
         } else {
             this._memoryView = undefined;
         }
+    }
+
+    public loop(): void {
+        this._numBoundImportInvokes = 0;
+        this._numImportBinds = 0;
+        this._numBeginTrackingObjects = 0;
+        this._numReleaseTrackingObjects = 0;
+        this._timeInInterop = 0;
+        this._timeInJsUserCode = 0;
+    }
+
+    public buildProfilerString(): string {
+        const phrases: string[] = [
+            `${((this._timeInInterop * 100)|0)/100} ms in interop`,
+            `${((this._timeInJsUserCode * 100)|0)/100} ms in screeps api`,
+            `${this._numBoundImportInvokes} js interop calls`,
+            `${this._numTotalTrackingObjects} +${this._numBeginTrackingObjects} -${this._numReleaseTrackingObjects} tracked js objects`,
+        ];
+        if (this._numBoundImportInvokes > 0) {
+            phrases.push(`${this._boundImportList.length} +${this._numImportBinds} bound imports`);
+        }
+        return phrases.join(', ');
     }
 
     private resolveImport(moduleName: string, importTable: Readonly<ImportTable>, importName: string): (...args: any[]) => unknown {
@@ -149,6 +180,7 @@ export class Interop {
         const boundImportFunction = this.createImportBinding(importFunction, functionSpec, importIndex);
         this._boundImportList.push(boundImportFunction);
         this._boundImportSymbolList.push({ fullName: `${moduleName}::${importName}`, functionSpec });
+        ++this._numImportBinds;
         // console.log(this.stringifyImportBindingForDisplay(importIndex));
         return importIndex;
     }
@@ -158,6 +190,7 @@ export class Interop {
         if (!boundImportFunction) {
             throw new Error(`attempt to invoke invalid import index ${importIndex}`);
         }
+        ++this._numBoundImportInvokes;
         return boundImportFunction(paramsBufferPtr);
     }
 
@@ -166,11 +199,14 @@ export class Interop {
         if (obj == null) { return; }
         delete this._objectTrackingList[clrTrackingId];
         this.clearClrTrackingId(obj);
+        ++this._numReleaseTrackingObjects;
+        --this._numTotalTrackingObjects;
     }
 
     private createImportBinding(importFunction: (...args: unknown[]) => unknown, functionSpec: Readonly<FunctionSpec>, importIndex: number): BoundImportFunction {
         return (paramsBufferPtr) => {
             // TODO: Cache args array to eliminate allocation here
+            const t0 = this._profileFn();
             const args: unknown[] = [];
             args.length = functionSpec.paramSpecs.length;
             const returnValPtr = paramsBufferPtr;
@@ -184,6 +220,8 @@ export class Interop {
             } catch (err) {
                 throw new Error(`${this.stringifyImportBindingForDisplay(importIndex)}: ${(err as Error).message}`);
             }
+            const t1 = this._profileFn();
+            this._timeInInterop += (t1 - t0);
             let returnVal: unknown;
             try {
                 returnVal = importFunction(...args);
@@ -193,6 +231,9 @@ export class Interop {
             } catch (err) {
                 this.marshalToClr(exceptionValPtr, EXCEPTION_PARAM_SPEC, `${err}`);
                 return 0;
+            } finally {
+                const t2 = this._profileFn();
+                this._timeInJsUserCode += (t2 - t1);
             }
         };
     }
@@ -461,6 +502,8 @@ export class Interop {
         TEMP_PROPERTY_DESCRIPTOR.configurable = true;
         Object.defineProperty(obj, CLR_TRACKING_ID, TEMP_PROPERTY_DESCRIPTOR);
         this._objectTrackingList[clrTrackingId] = obj;
+        ++this._numBeginTrackingObjects;
+        ++this._numTotalTrackingObjects;
         return clrTrackingId;
     }
 

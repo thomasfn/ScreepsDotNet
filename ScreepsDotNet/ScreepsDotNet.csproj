@@ -14,8 +14,6 @@
 		<EventSourceSupport>false</EventSourceSupport>
 		<UseSystemResourceKeys>true</UseSystemResourceKeys>
 		<InvariantTimezone>true</InvariantTimezone>
-		<WasmEnableThreads>false</WasmEnableThreads>
-		<MonoWasmThreads>false</MonoWasmThreads>
 		<WasiSdkVersion>15</WasiSdkVersion>
 	</PropertyGroup>
 

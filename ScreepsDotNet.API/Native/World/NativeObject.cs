@@ -29,6 +29,7 @@ namespace ScreepsDotNet.Native.World
             {
                 if (proxyObjectValidAsOf < nativeRoot.TickIndex)
                 {
+                    proxyObject?.Dispose();
                     proxyObject = ReacquireProxyObject();
                     proxyObjectValidAsOf = nativeRoot.TickIndex;
                     if (proxyObject == null)
