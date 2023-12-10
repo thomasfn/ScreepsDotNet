@@ -9,7 +9,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ScreepsDotNet.API", "Screep
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ScreepsDotNet.Bundler", "ScreepsDotNet.Bundler\ScreepsDotNet.Bundler.csproj", "{11F69637-6C57-43D3-9CA6-CDEC7CCE2F20}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScreepsDotNet.API.Tests", "ScreepsDotNet.API.Tests\ScreepsDotNet.API.Tests.csproj", "{CECA1347-E97B-496F-8CE6-E897267C8CB6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ScreepsDotNet.API.Tests", "ScreepsDotNet.API.Tests\ScreepsDotNet.API.Tests.csproj", "{CECA1347-E97B-496F-8CE6-E897267C8CB6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScreepsDotNet.SourceGen", "ScreepsDotNet.SourceGen\ScreepsDotNet.SourceGen.csproj", "{4471B50E-3A54-4F01-AEA5-30F27E43094A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{CECA1347-E97B-496F-8CE6-E897267C8CB6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CECA1347-E97B-496F-8CE6-E897267C8CB6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CECA1347-E97B-496F-8CE6-E897267C8CB6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4471B50E-3A54-4F01-AEA5-30F27E43094A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4471B50E-3A54-4F01-AEA5-30F27E43094A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4471B50E-3A54-4F01-AEA5-30F27E43094A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4471B50E-3A54-4F01-AEA5-30F27E43094A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
