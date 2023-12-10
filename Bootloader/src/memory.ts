@@ -9,7 +9,7 @@ export interface WasmMemoryView {
     readonly f64: Float64Array;
 }
 
-export function createWasmMemoryView(memory: WebAssembly.Memory): WasmMemoryView {
+function createWasmMemoryView(memory: WebAssembly.Memory): WasmMemoryView {
     return {
         u8: new Uint8Array(memory.buffer),
         i8: new Int8Array(memory.buffer),
@@ -20,4 +20,26 @@ export function createWasmMemoryView(memory: WebAssembly.Memory): WasmMemoryView
         f32: new Float32Array(memory.buffer),
         f64: new Float64Array(memory.buffer),
     };
+}
+
+export class WasmMemoryManager {
+    private readonly _memory: WebAssembly.Memory;
+
+    private _view?: WasmMemoryView;
+    private _viewArrayBuffer?: ArrayBuffer;
+    
+    public get view() {
+        if (this._view == null || this._viewArrayBuffer !== this._memory.buffer) {
+            this._view = this.createNewView();
+        }
+        return this._view;
+    }
+
+    constructor(memory: WebAssembly.Memory) {
+        this._memory = memory;
+    }
+
+    public createNewView(): WasmMemoryView {
+        return createWasmMemoryView(this._memory);
+    }
 }

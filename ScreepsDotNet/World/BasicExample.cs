@@ -83,7 +83,7 @@ namespace ScreepsDotNet.World
         private int targetMinerCount = 0;
         private int targetUpgraderCount = 3;
 
-        private static readonly BodyType<BodyPartType> workerBodyType = new(stackalloc (BodyPartType, int)[] { (BodyPartType.Move, 1), (BodyPartType.Carry, 1), (BodyPartType.Work, 1) });
+        private static readonly BodyType<BodyPartType> workerBodyType = new([(BodyPartType.Move, 1), (BodyPartType.Carry, 1), (BodyPartType.Work, 1)]);
 
         public RoomManager(IGame game, IRoom room)
         {

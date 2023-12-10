@@ -1,5 +1,6 @@
 import { ScreepsDotNetExports } from '../common.js';
 import type { Importable } from '../interop.js';
+import { WasmMemoryManager, WasmMemoryView } from '../memory.js';
 import { BaseBindings } from './base.js';
 
 declare const global: typeof globalThis;
@@ -59,8 +60,8 @@ export class WorldBindings extends BaseBindings {
 
     private _memoryCache?: Memory;
 
-    public init(exports: ScreepsDotNetExports): void {
-        super.init(exports);
+    public init(exports: ScreepsDotNetExports, memoryManager: WasmMemoryManager): void {
+        super.init(exports, memoryManager);
         const entrypointFn = exports.screepsdotnet_init_world;
         if (!entrypointFn) {
           this.log(`failed to call 'screepsdotnet_init_world' (not found in wasm exports)`);
@@ -167,7 +168,7 @@ export class WorldBindings extends BaseBindings {
             ...wrappedPrototypes,
             RoomObject: {
                 ...wrappedPrototypes.RoomObject,
-                getEncodedRoomPosition: (thisObj: RoomObject, outPtr: number) => this.encodeRoomPosition(thisObj.pos, outPtr),
+                getEncodedRoomPosition: (thisObj: RoomObject, outPtr: number) => this.encodeRoomPosition(this._memoryManager!.view, thisObj.pos, outPtr),
             },
             Spawning: this.buildWrappedPrototype(StructureSpawn.Spawning),
             Store: {
@@ -199,11 +200,11 @@ export class WorldBindings extends BaseBindings {
                         return { code: result };
                     }
                 },
-                findFast: (thisObj: Room, type: FindConstant) => this.encodeRoomObjectArray(thisObj.find(type) as unknown as Record<string, unknown>[]),
-                lookAtFast: (thisObj: Room, x: number, y: number) => this.encodeRoomObjectArray(thisObj.lookAt(x, y)),
-                lookAtAreaFast: (thisObj: Room, top: number, left: number, bottom: number, right: number) => this.encodeRoomObjectArray(thisObj.lookAtArea(top, left, bottom, right, true)),
-                lookForAtFast: (thisObj: Room, type: LookConstant, x: number, y: number) => this.encodeRoomObjectArray(thisObj.lookForAt(type, x, y) as unknown as Record<string, unknown>[]),
-                lookForAtAreaFast: (thisObj: Room, type: LookConstant, top: number, left: number, bottom: number, right: number) => this.encodeRoomObjectArray(thisObj.lookForAtArea(type, top, left, bottom, right, true), type),
+                findFast: (thisObj: Room, type: FindConstant) => this.encodeRoomObjectArray(this._memoryManager!.view, thisObj.find(type) as unknown as Record<string, unknown>[]),
+                lookAtFast: (thisObj: Room, x: number, y: number) => this.encodeRoomObjectArray(this._memoryManager!.view, thisObj.lookAt(x, y)),
+                lookAtAreaFast: (thisObj: Room, top: number, left: number, bottom: number, right: number) => this.encodeRoomObjectArray(this._memoryManager!.view, thisObj.lookAtArea(top, left, bottom, right, true)),
+                lookForAtFast: (thisObj: Room, type: LookConstant, x: number, y: number) => this.encodeRoomObjectArray(this._memoryManager!.view, thisObj.lookForAt(type, x, y) as unknown as Record<string, unknown>[]),
+                lookForAtAreaFast: (thisObj: Room, type: LookConstant, top: number, left: number, bottom: number, right: number) => this.encodeRoomObjectArray(this._memoryManager!.view, thisObj.lookForAtArea(type, top, left, bottom, right, true), type),
             },
             PathFinder: {
                 ...(PathFinder as unknown as Importable),
@@ -230,9 +231,9 @@ export class WorldBindings extends BaseBindings {
         };
     }
 
-    private encodeRoomPosition({x, y, roomName}: RoomPosition, outPtr: number) {
+    private encodeRoomPosition(memoryView: WasmMemoryView, {x, y, roomName}: RoomPosition, outPtr: number) {
         // X:i32(4), y:i32(4), roomName:6i8(6), padding:2i8(2) total=16
-        const { u8, i32 } = this._memoryView!;
+        const { u8, i32 } = memoryView;
         i32[(outPtr + 0) >>> 2] = x;
         i32[(outPtr + 4) >>> 2] = y;
         if (roomName.length < 4) {
@@ -249,8 +250,8 @@ export class WorldBindings extends BaseBindings {
         }
     }
     
-    private encodeObjectId(id: string, outPtr: number) {
-        const { u8, i32 } = this._memoryView!;
+    private encodeObjectId(memoryView: WasmMemoryView, id: string, outPtr: number) {
+        const { u8, i32 } = memoryView;
         if (id) {
             const l = id.length;
             for (let j = 0; j < l; ++j) {
@@ -266,8 +267,8 @@ export class WorldBindings extends BaseBindings {
         }
     }
 
-    private encodeRoomObjectArray(arr: Record<string, unknown>[], key?: string) {
-        const { u8, i32 } = this._memoryView!;
+    private encodeRoomObjectArray(memoryView: WasmMemoryView, arr: Record<string, unknown>[], key?: string) {
+        const { i32 } = memoryView;
         if (this._copyBufferPtr == null) { throw new Error(`encodeRoomObjectArray failed as copy buffer was not allocated`); }
         // room object packet (54b):
         // - id (0..24)
@@ -294,12 +295,12 @@ export class WorldBindings extends BaseBindings {
             }
             if (!(obj instanceof RoomObject)) { continue; }
             ++numEncoded;
-            this.encodeObjectId(obj.id as string, copyBufferHead);
+            this.encodeObjectId(memoryView, obj.id as string, copyBufferHead);
             i32[copyBufferHeadI32 + 6] = Object.getPrototypeOf(obj).constructor.__dotnet_typeId || 0;
             i32[copyBufferHeadI32 + 7] = obj.my ? PACKET_FLAG_MY : 0;
             i32[copyBufferHeadI32 + 8] = (obj.hits || obj.progress || obj.energy || obj.mineralAmount || 0) as number;
             i32[copyBufferHeadI32 + 9] = (obj.hitsMax || obj.progressTotal || obj.energyCapacity || obj.density || 0) as number;
-            this.encodeRoomPosition(obj.pos, copyBufferHead + 40);
+            this.encodeRoomPosition(memoryView, obj.pos, copyBufferHead + 40);
             copyBufferHead += PACKET_SIZE_IN_BYTES;
         }
         return numEncoded;

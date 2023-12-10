@@ -3,6 +3,7 @@ import { WASI, File, OpenFile, Fd } from '@bjorn3/browser_wasi_shim';
 
 import { ImportTable, Interop } from './interop.js';
 import { ScreepsDotNetExports } from './common.js';
+import { WasmMemoryManager } from './memory.js';
 import { BaseBindings } from './bindings/base.js';
 import { WorldBindings } from './bindings/world.js';
 
@@ -72,6 +73,8 @@ export class Bootloader {
 
     private _wasmModule?: WebAssembly.Module;
     private _wasmInstance?: ScreepsDotNetWasmInstance;
+    private _memoryManager?: WasmMemoryManager;
+    private _memorySize: number = 0;
     private _compiled: boolean = false;
     private _started: boolean = false;
 
@@ -160,13 +163,15 @@ export class Bootloader {
         }
 
         // Wire things up
-        this._interop.memory = this._wasmInstance.exports.memory;
+        this._memoryManager = new WasmMemoryManager(this._wasmInstance.exports.memory);
+        this._interop.memoryManager = this._memoryManager;
+        this._memorySize = this._wasmInstance.exports.memory.buffer.byteLength;
         this._interop.malloc = this._wasmInstance.exports.malloc;
         this._compiled = true;
     }
 
     public start(): void {
-        if (!this._wasmInstance || !this._compiled || this._started) { return; }
+        if (!this._wasmInstance || !this._compiled || this._started || !this._memoryManager) { return; }
 
         // Start WASI
         try {
@@ -183,7 +188,7 @@ export class Bootloader {
         }
 
         // Run bindings init
-        this._bindings?.init(this._wasmInstance.exports);
+        this._bindings?.init(this._wasmInstance.exports, this._memoryManager);
 
         // Run usercode init
         {
@@ -217,6 +222,13 @@ export class Bootloader {
                 this.log(`Loop in ${(((t1 - t0) * 100)|0)/100} ms (${this._interop.buildProfilerString()})`);
             }
         }
+    }
+
+    private checkMemoryDidGrow(): void {
+        if (!this._wasmInstance || !this._compiled) { return; }
+        const newMemorySize = this._wasmInstance.exports.memory.buffer.byteLength;
+        if (newMemorySize === this._memorySize) { return; }
+
     }
 
     private getWasmImports(): WebAssembly.Imports {
