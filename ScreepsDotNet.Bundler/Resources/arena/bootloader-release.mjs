@@ -3866,7 +3866,7 @@ var bootloader = (function (exports) {
     //! The .NET Foundation licenses this file to you under the MIT license.
     var __dotnet_runtime = function (e) {
 
-      const Ic = _async(function (e) {
+      const Dc = _async(function (e) {
         tc = o.config = b.config = Object.assign(b.config || {}, e || {});
         return _call$1(es, function () {
           const _rc3 = rc;
@@ -3878,15 +3878,15 @@ var bootloader = (function (exports) {
         let _exit12 = false;
         return _invoke(function () {
           if (nc) {
-            return _await$1(oc.promise, function () {
-              const _temp6 = (void 0);
+            return _await$1(sc.promise, function () {
+              const _temp5 = (void 0);
               _exit12 = true;
-              return _temp6;
+              return _temp5;
             });
           }
-        }, function (_result19) {
-          if (_exit12) return _result19;
-          if (nc = true, !e) return t(), oc.promise_control.resolve(), void 0;
+        }, function (_result18) {
+          if (_exit12) return _result18;
+          if (nc = true, !e) return t(), sc.promise_control.resolve(), void 0;
           b.diagnosticTracing && console$1.debug("MONO_WASM: mono_wasm_load_config");
           function t() {
             tc.environmentVariables = tc.environmentVariables || {}, tc.assets = tc.assets || [], tc.runtimeOptions = tc.runtimeOptions || [], tc.globalizationMode = tc.globalizationMode || "auto", tc.debugLevel, tc.diagnosticTracing, b.diagnosticTracing = !!b.config.diagnosticTracing;
@@ -3906,17 +3906,17 @@ var bootloader = (function (exports) {
                       0, t();
                     });
                   }, function (e) {
-                    throw Sc("MONO_WASM: onConfigLoaded() failed", e), e;
+                    throw Oc("MONO_WASM: onConfigLoaded() failed", e), e;
                   });
-                }, function (_result22) {
+                }, function (_result21) {
                   if (_exit13) ;
-                  oc.promise_control.resolve();
+                  sc.promise_control.resolve();
                 });
               });
             });
           }, function (t) {
             const n = `Failed to load config file ${e} ${t}`;
-            throw pc(n, true), tc = b.config = o.config = {
+            throw bc(n, true), tc = b.config = o.config = {
               message: n,
               error: t,
               isError: true
@@ -3924,39 +3924,39 @@ var bootloader = (function (exports) {
           });
         });
       });
-      const $c = _async(function () {
+      const Nc = _async(function () {
         try {
           const e = undefined;
-          Oc("TZ", Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC");
+          xc("TZ", Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC");
         } catch (e) {
-          Oc("TZ", "UTC");
+          xc("TZ", "UTC");
         }
         for (const e in tc.environmentVariables) {
           const t = tc.environmentVariables[e];
           if ("string" !== typeof t) throw new Error(`Expected environment variable '${e}' to be a string but it was ${typeof t}: '${t}'`);
-          Oc(e, t);
+          xc(e, t);
         }
-        tc.runtimeOptions && xc(tc.runtimeOptions), tc.aotProfilerOptions && me(tc.aotProfilerOptions), tc.coverageProfilerOptions && ge(tc.coverageProfilerOptions);
+        tc.runtimeOptions && jc(tc.runtimeOptions), tc.aotProfilerOptions && me(tc.aotProfilerOptions), tc.coverageProfilerOptions && ge(tc.coverageProfilerOptions);
         return _await$1();
       });
-      const jc = _async(function (e, t) {
+      const $c = _async(function (e, t) {
         return _continue$1(_catch$1(function () {
           return _await$1(Rc(o.configSrc), function () {
             0, b.diagnosticTracing && console$1.debug("MONO_WASM: instantiate_wasm_module");
             const n = Ko("dotnetwasm");
             return _await$1(ts(n, false), function () {
-              return _await$1(ic.promise, function () {
-                0, o.addRunDependency("instantiate_wasm_module"), as(n, e, t), b.diagnosticTracing && console$1.debug("MONO_WASM: instantiate_wasm_module done"), sc.promise_control.resolve();
+              return _await$1(ac.promise, function () {
+                0, o.addRunDependency("instantiate_wasm_module"), as(n, e, t), b.diagnosticTracing && console$1.debug("MONO_WASM: instantiate_wasm_module done"), ic.promise_control.resolve();
               });
             });
           });
         }, function (e) {
-          throw Sc("MONO_WASM: instantiate_wasm_module() failed", e), pc(e, true), e;
-        }), function (_result18) {
+          throw Oc("MONO_WASM: instantiate_wasm_module() failed", e), bc(e, true), e;
+        }), function (_result17) {
           o.removeRunDependency("instantiate_wasm_module");
         });
       });
-      const Ac = _async(function () {
+      const Sc = _async(function () {
         b.diagnosticTracing && console$1.debug("MONO_WASM: mono_wasm_after_user_runtime_initialized");
         return _catch$1(function () {
           if (!o.disableDotnet6Compatibility && o.exports) {
@@ -3971,33 +3971,33 @@ var bootloader = (function (exports) {
             if (n, b.diagnosticTracing && console$1.debug("MONO_WASM: Initializing mono runtime"), o.onDotnetReady) return _catch$1(function () {
               return _awaitIgnored$1(o.onDotnetReady());
             }, function (e) {
-              throw Sc("MONO_WASM: onDotnetReady () failed", e), e;
+              throw Oc("MONO_WASM: onDotnetReady () failed", e), e;
             });
           }();
         }, function (e) {
-          throw Sc("MONO_WASM: Error in mono_wasm_after_user_runtime_initialized", e), e;
+          throw Oc("MONO_WASM: Error in mono_wasm_after_user_runtime_initialized", e), e;
         });
       });
-      const Ec = _async(function () {
+      const Ac = _async(function () {
         b.diagnosticTracing && console$1.debug("MONO_WASM: mono_wasm_before_user_runtime_initialized");
         return _catch$1(function () {
-          return _call$1($c, function () {
-            0, de(), b.mono_wasm_load_runtime_done || Nc("unused", tc.debugLevel), b.mono_wasm_runtime_is_ready || mono_wasm_runtime_ready(), b.mono_wasm_symbols_are_ready || ke("dotnet.js.symbols"), setTimeout$1(() => {
+          return _call$1(Nc, function () {
+            0, de(), b.mono_wasm_load_runtime_done || kc("unused", tc.debugLevel), b.mono_wasm_runtime_is_ready || mono_wasm_runtime_ready(), b.mono_wasm_symbols_are_ready || ke("dotnet.js.symbols"), setTimeout$1(() => {
               Ar.init_fields();
             });
           });
         }, function (e) {
-          throw Sc("MONO_WASM: Error in mono_wasm_before_user_runtime_initialized", e), e;
+          throw Oc("MONO_WASM: Error in mono_wasm_before_user_runtime_initialized", e), e;
         });
       });
-      const vc = _async(function () {
+      const Ec = _async(function () {
         o.addRunDependency("mono_wasm_pre_init_full");
           b.diagnosticTracing && console$1.debug("MONO_WASM: mono_wasm_pre_init_full");
         return _call$1(es, function () {
           o.removeRunDependency("mono_wasm_pre_init_full");
         });
       });
-      const yc = _async(function () {
+      const vc = _async(function () {
         o.addRunDependency("mono_wasm_pre_init_essential_async");
           b.diagnosticTracing && console$1.debug("MONO_WASM: mono_wasm_pre_init_essential_async");
         return _call$1(ms, function () {
@@ -4006,90 +4006,55 @@ var bootloader = (function (exports) {
           });
         });
       });
-      const hc = _async(function (e) {
-        return _await$1(lc.promise, function () {
+      const pc = _async(function (e) {
+        return _await$1(fc.promise, function () {
           b.diagnosticTracing && console$1.debug("MONO_WASM: postRunAsync");
           try {
             e.map(e => e());
           } catch (e) {
-            throw Sc("MONO_WASM: user callback posRun() failed", e), pc(e, true), e;
+            throw Oc("MONO_WASM: user callback posRun() failed", e), bc(e, true), e;
           }
-          fc.promise_control.resolve();
+          _c.promise_control.resolve();
         });
       });
-      const wc = _async(function (e) {
-        return _await$1(cc.promise, function () {
-          b.diagnosticTracing && console$1.debug("MONO_WASM: onRuntimeInitialized"), uc.promise_control.resolve();
+      const hc = _async(function (e) {
+        return _await$1(uc.promise, function () {
+          b.diagnosticTracing && console$1.debug("MONO_WASM: onRuntimeInitialized"), lc.promise_control.resolve();
           return _continue$1(_catch$1(function () {
             const _rc2 = rc;
             return _await$1(_rc2 || us(), function () {
-              return _await$1(_rc2 || Ec(), function (_Ec) {
-                _rc2 || _Ec, tc.runtimeOptions && xc(tc.runtimeOptions);
+              return _await$1(_rc2 || Ac(), function (_Ac) {
+                _rc2 || _Ac, tc.runtimeOptions && jc(tc.runtimeOptions);
                 try {
                   e();
                 } catch (e) {
-                  throw Sc("MONO_WASM: user callback onRuntimeInitialized() failed", e), e;
+                  throw Oc("MONO_WASM: user callback onRuntimeInitialized() failed", e), e;
                 }
-                return _callIgnored(Ac);
+                return _callIgnored(Sc);
               }, _rc2);
             }, _rc2);
           }, function (e) {
-            throw Sc("MONO_WASM: onRuntimeInitializedAsync() failed", e), pc(e, true), e;
-          }), function (_result13) {
-            lc.promise_control.resolve();
+            throw Oc("MONO_WASM: onRuntimeInitializedAsync() failed", e), bc(e, true), e;
+          }), function (_result12) {
+            fc.promise_control.resolve();
           });
         });
       });
-      const gc = _async(function (e) {
+      const wc = _async(function (e) {
         o.addRunDependency("mono_pre_run_async");
-        return _await$1(sc.promise, function () {
-          return _await$1(ac.promise, function () {
+        return _await$1(ic.promise, function () {
+          return _await$1(cc.promise, function () {
             b.diagnosticTracing && console$1.debug("MONO_WASM: preRunAsync");
             try {
               e.map(e => e());
             } catch (e) {
-              throw Sc("MONO_WASM: user callback preRun() failed", e), pc(e, true), e;
+              throw Oc("MONO_WASM: user callback preRun() failed", e), bc(e, true), e;
             }
-            cc.promise_control.resolve(), o.removeRunDependency("mono_pre_run_async");
+            uc.promise_control.resolve(), o.removeRunDependency("mono_pre_run_async");
           });
         });
       });
-      const _a = _async(function (e, t, n) {
-        const r = new Span(t, n, 0);
-        return _t(_async(function () {
-          const _temp3 = !e.__chunk && e.body;
-            _temp3 && (e.__reader = e.body.getReader());
-          return _await$1(_temp3 && e.__reader.read(), function (_e$__reader$read) {
-            let _exit9 = false;
-            _temp3 && (e.__chunk = _e$__reader$read, e.__source_offset = 0);
-            let t = 0,
-              n = 0;
-            return _continue$1(_for(function () {
-              return !_exit9 && !!e.__reader && !!e.__chunk && !e.__chunk.done;
-            }, void 0, function () {
-              const o = e.__chunk.value.byteLength - e.__source_offset;
-              return _invoke(function () {
-                if (0 === o) {
-                  return _await$1(e.__reader.read(), function (_e$__reader$read2) {
-                    e.__chunk = _e$__reader$read2, e.__source_offset = 0;
-                  });
-                }
-              }, function () {
-                const s = r.byteLength - t,
-                  i = Math.min(o, s),
-                  a = e.__chunk.value.subarray(e.__source_offset, e.__source_offset + i);
-                if (r.set(a, t), t += i, n += i, e.__source_offset += i, t == r.byteLength) {
-                  _exit9 = true;
-                  return n;
-                }
-              });
-            }), function (_result12) {
-              return _exit9 ? _result12 : n;
-            });
-          }, !_temp3);
-        }));
-      });
-      const Hs = _async(function (e) {
+      const Vs = _async(function (e) {
         if (!b.mono_wasm_bindings_is_ready) throw new Error("Assert failed: The runtime must be initialized.");
         if (!Fs.get(e)) {
           const t = be(e);
@@ -4098,18 +4063,8 @@ var bootloader = (function (exports) {
         }
         return Fs.get(e) || {};
       });
-      const Is = _async(function (e, t) {
-        if (!e) throw new Error("Assert failed: Invalid module_name");
-        if (!t) throw new Error("Assert failed: Invalid module_name");
-        let n = Ts.get(e);
-        const r = !n;
-        r && (b.diagnosticTracing && console$1.debug(`MONO_WASM: importing ES6 module '${e}' from '${t}'`), n = _import(t), Ts.set(e, n));
-        return _await$1(n, function (o) {
-          return r && (Ms.set(e, o), b.diagnosticTracing && console$1.debug(`MONO_WASM: imported ES6 module '${e}' from '${t}'`)), o;
-        });
-      });
       const ws = _async(function (e, t) {
-        let _exit8 = false;
+        let _exit9 = false;
         return _continue$1(_catch$1(function () {
           return _invoke(function () {
             if (a) {
@@ -4128,18 +4083,18 @@ var bootloader = (function (exports) {
                     arrayBuffer: () => t,
                     json: () => JSON.parse(t)
                   };
-                  _exit8 = true;
+                  _exit9 = true;
                   return _ok$url$arrayBuffer$j;
                 });
               });
             }
           }, function (_result10) {
-            if (_exit8) return _result10;
+            if (_exit9) return _result10;
             if ("function" === typeof globalThis.fetch) {
               const _globalThis$fetch = globalThis.fetch(e, t || {
                 credentials: "same-origin"
               });
-              _exit8 = true;
+              _exit9 = true;
               return _globalThis$fetch;
             }
             if ("function" === typeof read) {
@@ -4150,7 +4105,7 @@ var bootloader = (function (exports) {
                 arrayBuffer: () => t,
                 json: () => JSON.parse(o.UTF8ArrayToString(t, 0, t.length))
               };
-              _exit8 = true;
+              _exit9 = true;
               return _ok$url$arrayBuffer$j2;
             }
           });
@@ -4167,37 +4122,51 @@ var bootloader = (function (exports) {
               throw t;
             }
           };
-          _exit8 = true;
+          _exit9 = true;
           return _ok$url$status$status;
         }), function (_result11) {
-          if (_exit8) return _result11;
+          if (_exit9) return _result11;
           throw new Error("No fetch implementation available");
         });
       });
       const ms = _async(function () {
-        const _a2 = a;
-        return _await$1(_a2 && b.requirePromise, function (_b$requirePromise) {
-          if (_a2 && (s.require = _b$requirePromise, globalThis.performance === gs)) {
-            const {
-              performance: e
-            } = s.require("perf_hooks");
-            globalThis.performance = e;
+        return _invokeIgnored(function () {
+          if (a) {
+            return _await$1(b.requirePromise, function (_b$requirePromise) {
+              if (s.require = _b$requirePromise, globalThis.performance === gs) {
+                const {
+                  performance: e
+                } = s.require("perf_hooks");
+                globalThis.performance = e;
+              }
+              if (globalThis.crypto || (globalThis.crypto = {}), !globalThis.crypto.getRandomValues) {
+                let e;
+                try {
+                  e = s.require("node:crypto");
+                } catch (e) {}
+                e ? e.webcrypto ? globalThis.crypto = e.webcrypto : e.randomBytes && (globalThis.crypto.getRandomValues = t => {
+                  t && t.set(e.randomBytes(t.length));
+                }) : globalThis.crypto.getRandomValues = () => {
+                  throw new Error("Using node without crypto support. To enable current operation, either provide polyfill for 'globalThis.crypto.getRandomValues' or enable 'node:crypto' module.");
+                };
+              }
+            });
           }
-        }, !_a2);
+        });
       });
       const us = _async(function () {
         return _await$1(Fo.promise, function () {
           if (b.config.assets) {
-            if (!(Ho == zo)) throw new Error(`Assert failed: Expected ${zo} assets to be downloaded, but only finished ${Ho}`);
-            if (!(Vo == Lo)) throw new Error(`Assert failed: Expected ${Lo} assets to be in memory, but only instantiated ${Vo}`);
+            if (!(Vo == zo)) throw new Error(`Assert failed: Expected ${zo} assets to be downloaded, but only finished ${Vo}`);
+            if (!(Ho == Lo)) throw new Error(`Assert failed: Expected ${Lo} assets to be in memory, but only instantiated ${Ho}`);
             Jo.forEach(e => Io.loaded_files.push(e.url)), b.diagnosticTracing && console$1.debug("MONO_WASM: all assets are loaded in wasm memory");
           }
         });
       });
       const as = _async(function (e, t, n) {
-        if (!(e && e.pendingDownloadInternal)) throw new Error("Assert failed: Can't load dotnet.wasm");
+        if (!(e && e.pendingDownloadInternal && e.pendingDownloadInternal.response)) throw new Error("Assert failed: Can't load dotnet.wasm");
         return _await$1(e.pendingDownloadInternal.response, function (r) {
-          const o = r.headers ? r.headers.get("Content-Type") : void 0;
+          const o = r.headers && r.headers.get ? r.headers.get("Content-Type") : void 0;
           let s, i;
           return _invoke(function () {
             if ("function" === typeof WebAssembly.instantiateStreaming && "application/wasm" === o) {
@@ -4220,7 +4189,7 @@ var bootloader = (function (exports) {
         });
       });
       const rs = _async(function (e) {
-        let _exit6 = false;
+        let _exit7 = false;
         if (e.buffer) {
           const t = e.buffer;
           return e.buffer = null, e.pendingDownloadInternal = {
@@ -4232,18 +4201,18 @@ var bootloader = (function (exports) {
                 get: () => {}
               }
             })
-          }, ++Ho, e.pendingDownloadInternal.response;
+          }, e.pendingDownloadInternal.response;
         }
         return _invoke(function () {
           if (e.pendingDownloadInternal && e.pendingDownloadInternal.response) {
             return _await$1(e.pendingDownloadInternal.response, function (_await$e$pendingDownl) {
-              _exit6 = true;
+              _exit7 = true;
               return _await$e$pendingDownl;
             });
           }
         }, function (_result7) {
-          let _exit7 = false;
-          if (_exit6) return _result7;
+          let _exit8 = false;
+          if (_exit7) return _result7;
           const t = e.loadRemote && b.config.remoteSources ? b.config.remoteSources : [""];
           let n;
           return _continue$1(_forOf(t, function (r) {
@@ -4260,15 +4229,14 @@ var bootloader = (function (exports) {
               const _e$pendingDownloadInt3 = e.pendingDownloadInternal = r;
               return _await$1(r.response, function (_r$response) {
                 if (n = _r$response, !n.ok) return;
-                const _temp2 = (++Ho, n);
-                _exit7 = true;
-                return _temp2;
+                _exit8 = true;
+                return n;
               });
             }, function () {});
           }, function () {
-            return _exit7;
+            return _exit8;
           }), function (_result9) {
-            if (_exit7) return _result9;
+            if (_exit8) return _result9;
             const r = e.isOptional || e.name.match(/\.pdb$/) && b.config.ignorePdbLoadErrors;
             if (!n) throw new Error(`Assert failed: Response undefined ${e.name}`);
             if (r) return o.print(`MONO_WASM: optional download '${n.url}' for ${e.name} failed ${n.status} ${n.statusText}`), void 0;
@@ -4289,7 +4257,9 @@ var bootloader = (function (exports) {
             ++Go, Go == b.maxParallelDownloads && (b.diagnosticTracing && console$1.debug("MONO_WASM: Throttling further parallel downloads"), Yo = it());
             return _await$1(rs(e), function (n) {
               if (!t || !n) return;
-              return _await$1(n.arrayBuffer());
+              return _await$1(n.arrayBuffer(), function (r) {
+                return ++Vo, r;
+              });
             });
           }, function (_wasThrown2, _result6) {
             if (--Go, Yo && Go == b.maxParallelDownloads - 1) {
@@ -4334,9 +4304,8 @@ var bootloader = (function (exports) {
                 n.pendingDownloadInternal = n.pendingDownload;
                 const r = _async(function () {
                   return _await$1(n.pendingDownloadInternal.response, function (e) {
-                    const _Ho = ++Ho;
                     return _await$1(t || e.arrayBuffer(), function (_e$arrayBuffer) {
-                      return t || (n.buffer = _e$arrayBuffer), {
+                      return t || (n.buffer = _e$arrayBuffer), ++Vo, {
                         asset: n,
                         buffer: n.buffer
                       };
@@ -4372,14 +4341,14 @@ var bootloader = (function (exports) {
                         _t$buffer = t.buffer = null,
                         _t$pendingDownload = t.pendingDownload = null,
                         _t$pendingDownloadInt = t.pendingDownloadInternal = null;
-                      return _await$1(uc.promise, function () {
+                      return _await$1(lc.promise, function () {
                         0, is(t, n, r);
                       });
                     }
                   });
                 } else {
                   const e = undefined;
-                  if (!Xo[t.behavior]) {
+                  if (Xo[t.behavior]) Xo[t.behavior] && ++Vo;else {
                     if (!t.isOptional) throw new Error("Assert failed: Expected asset to have the downloaded buffer");
                     Zo[t.behavior] || zo--, Qo[t.behavior] || Lo--;
                   }
@@ -4390,7 +4359,7 @@ var bootloader = (function (exports) {
           Promise$1.all(t).then(() => {
             Fo.promise_control.resolve();
           }).catch(e => {
-            o.printErr("MONO_WASM: Error in mono_download_assets: " + e), pc(e, true);
+            o.printErr("MONO_WASM: Error in mono_download_assets: " + e), bc(e, true);
           });
         } catch (e) {
           throw o.printErr("MONO_WASM: Error in mono_download_assets: " + e), e;
@@ -4413,25 +4382,25 @@ var bootloader = (function (exports) {
           console$1.error(`flushing std* streams failed: ${e}`);
         }));
       });
-      const Te = _async(function (e, t) {
-        Mc(e, t);
-          const _temp = -1 == b.waitForDebugger;
-          _temp && console$1.log("MONO_WASM: waiting for debugger...");
-        return _await$1(_temp && ee(), function (_ee) {
+      const Re = _async(function (e, t) {
+        Ic(e, t);
+          const _temp2 = -1 == b.waitForDebugger;
+          _temp2 && console$1.log("MONO_WASM: waiting for debugger...");
+        return _await$1(_temp2 && ee(), function (_ee) {
           const n = Me(e);
           return b.javaScriptExports.call_entry_point(n, t);
-        }, !_temp);
+        }, !_temp2);
       });
-      const Re = _async(function (e, t) {
+      const Te = _async(function (e, t) {
         return _catch$1(function () {
-          return _await$1(Te(e, t), function (n) {
+          return _await$1(Re(e, t), function (n) {
             return De(n), n;
           });
         }, function (e) {
           return e instanceof b.ExitStatus ? e.status : (De(1, e), 1);
         });
       });
-      var t = "7.0.1",
+      var t = "7.0.14",
         n = false,
         r = "Release";
       let o, s, i, a, c, u, l, f;
@@ -4458,14 +4427,14 @@ var bootloader = (function (exports) {
           diagnosticTracing: false
         },
         x = -1;
-      function R(e) {
+      function T(e) {
         return void 0 === e || null === e;
       }
-      const T = [[true, "mono_wasm_register_root", "number", ["number", "number", "string"]], [true, "mono_wasm_deregister_root", null, ["number"]], [true, "mono_wasm_string_get_data", null, ["number", "number", "number", "number"]], [true, "mono_wasm_string_get_data_ref", null, ["number", "number", "number", "number"]], [true, "mono_wasm_set_is_debugger_attached", "void", ["bool"]], [true, "mono_wasm_send_dbg_command", "bool", ["number", "number", "number", "number", "number"]], [true, "mono_wasm_send_dbg_command_with_parms", "bool", ["number", "number", "number", "number", "number", "number", "string"]], [true, "mono_wasm_setenv", null, ["string", "string"]], [true, "mono_wasm_parse_runtime_options", null, ["number", "number"]], [true, "mono_wasm_strdup", "number", ["string"]], [true, "mono_background_exec", null, []], [true, "mono_set_timeout_exec", null, []], [true, "mono_wasm_load_icu_data", "number", ["number"]], [true, "mono_wasm_get_icudt_name", "string", ["string"]], [false, "mono_wasm_add_assembly", "number", ["string", "number", "number"]], [true, "mono_wasm_add_satellite_assembly", "void", ["string", "string", "number", "number"]], [false, "mono_wasm_load_runtime", null, ["string", "number"]], [true, "mono_wasm_change_debugger_log_level", "void", ["number"]], [true, "mono_wasm_get_corlib", "number", []], [true, "mono_wasm_assembly_load", "number", ["string"]], [true, "mono_wasm_find_corlib_class", "number", ["string", "string"]], [true, "mono_wasm_assembly_find_class", "number", ["number", "string", "string"]], [true, "mono_wasm_runtime_run_module_cctor", "void", ["number"]], [true, "mono_wasm_find_corlib_type", "number", ["string", "string"]], [true, "mono_wasm_assembly_find_type", "number", ["number", "string", "string"]], [true, "mono_wasm_assembly_find_method", "number", ["number", "string", "number"]], [true, "mono_wasm_invoke_method", "number", ["number", "number", "number", "number"]], [false, "mono_wasm_invoke_method_ref", "void", ["number", "number", "number", "number", "number"]], [true, "mono_wasm_string_get_utf8", "number", ["number"]], [true, "mono_wasm_string_from_utf16_ref", "void", ["number", "number", "number"]], [true, "mono_wasm_get_obj_type", "number", ["number"]], [true, "mono_wasm_array_length", "number", ["number"]], [true, "mono_wasm_array_get", "number", ["number", "number"]], [true, "mono_wasm_array_get_ref", "void", ["number", "number", "number"]], [false, "mono_wasm_obj_array_new", "number", ["number"]], [false, "mono_wasm_obj_array_new_ref", "void", ["number", "number"]], [false, "mono_wasm_obj_array_set", "void", ["number", "number", "number"]], [false, "mono_wasm_obj_array_set_ref", "void", ["number", "number", "number"]], [true, "mono_wasm_register_bundled_satellite_assemblies", "void", []], [false, "mono_wasm_try_unbox_primitive_and_get_type_ref", "number", ["number", "number", "number"]], [true, "mono_wasm_box_primitive_ref", "void", ["number", "number", "number", "number"]], [true, "mono_wasm_intern_string_ref", "void", ["number"]], [true, "mono_wasm_assembly_get_entry_point", "number", ["number"]], [true, "mono_wasm_get_delegate_invoke_ref", "number", ["number"]], [true, "mono_wasm_string_array_new_ref", "void", ["number", "number"]], [true, "mono_wasm_typed_array_new_ref", "void", ["number", "number", "number", "number", "number"]], [true, "mono_wasm_class_get_type", "number", ["number"]], [true, "mono_wasm_type_get_class", "number", ["number"]], [true, "mono_wasm_get_type_name", "string", ["number"]], [true, "mono_wasm_get_type_aqn", "string", ["number"]], [true, "mono_wasm_event_pipe_enable", "bool", ["string", "number", "number", "string", "bool", "number"]], [true, "mono_wasm_event_pipe_session_start_streaming", "bool", ["number"]], [true, "mono_wasm_event_pipe_session_disable", "bool", ["number"]], [true, "mono_wasm_diagnostic_server_create_thread", "bool", ["string", "number"]], [true, "mono_wasm_diagnostic_server_thread_attach_to_runtime", "void", []], [true, "mono_wasm_diagnostic_server_post_resume_runtime", "void", []], [true, "mono_wasm_diagnostic_server_create_stream", "number", []], [true, "mono_wasm_string_from_js", "number", ["string"]], [false, "mono_wasm_exit", "void", ["number"]], [true, "mono_wasm_getenv", "number", ["string"]], [true, "mono_wasm_set_main_args", "void", ["number", "number"]], [false, "mono_wasm_enable_on_demand_gc", "void", ["number"]], [false, "mono_profiler_init_aot", "void", ["number"]], [false, "mono_wasm_exec_regression", "number", ["number", "string"]], [false, "mono_wasm_invoke_method_bound", "number", ["number", "number"]], [true, "mono_wasm_write_managed_pointer_unsafe", "void", ["number", "number"]], [true, "mono_wasm_copy_managed_pointer", "void", ["number", "number"]], [true, "mono_wasm_i52_to_f64", "number", ["number", "number"]], [true, "mono_wasm_u52_to_f64", "number", ["number", "number"]], [true, "mono_wasm_f64_to_i52", "number", ["number", "number"]], [true, "mono_wasm_f64_to_u52", "number", ["number", "number"]]],
+      const R = [[true, "mono_wasm_register_root", "number", ["number", "number", "string"]], [true, "mono_wasm_deregister_root", null, ["number"]], [true, "mono_wasm_string_get_data", null, ["number", "number", "number", "number"]], [true, "mono_wasm_string_get_data_ref", null, ["number", "number", "number", "number"]], [true, "mono_wasm_set_is_debugger_attached", "void", ["bool"]], [true, "mono_wasm_send_dbg_command", "bool", ["number", "number", "number", "number", "number"]], [true, "mono_wasm_send_dbg_command_with_parms", "bool", ["number", "number", "number", "number", "number", "number", "string"]], [true, "mono_wasm_setenv", null, ["string", "string"]], [true, "mono_wasm_parse_runtime_options", null, ["number", "number"]], [true, "mono_wasm_strdup", "number", ["string"]], [true, "mono_background_exec", null, []], [true, "mono_set_timeout_exec", null, []], [true, "mono_wasm_load_icu_data", "number", ["number"]], [true, "mono_wasm_get_icudt_name", "string", ["string"]], [false, "mono_wasm_add_assembly", "number", ["string", "number", "number"]], [true, "mono_wasm_add_satellite_assembly", "void", ["string", "string", "number", "number"]], [false, "mono_wasm_load_runtime", null, ["string", "number"]], [true, "mono_wasm_change_debugger_log_level", "void", ["number"]], [true, "mono_wasm_get_corlib", "number", []], [true, "mono_wasm_assembly_load", "number", ["string"]], [true, "mono_wasm_find_corlib_class", "number", ["string", "string"]], [true, "mono_wasm_assembly_find_class", "number", ["number", "string", "string"]], [true, "mono_wasm_runtime_run_module_cctor", "void", ["number"]], [true, "mono_wasm_find_corlib_type", "number", ["string", "string"]], [true, "mono_wasm_assembly_find_type", "number", ["number", "string", "string"]], [true, "mono_wasm_assembly_find_method", "number", ["number", "string", "number"]], [true, "mono_wasm_invoke_method", "number", ["number", "number", "number", "number"]], [false, "mono_wasm_invoke_method_ref", "void", ["number", "number", "number", "number", "number"]], [true, "mono_wasm_string_get_utf8", "number", ["number"]], [true, "mono_wasm_string_from_utf16_ref", "void", ["number", "number", "number"]], [true, "mono_wasm_get_obj_type", "number", ["number"]], [true, "mono_wasm_array_length", "number", ["number"]], [true, "mono_wasm_array_get", "number", ["number", "number"]], [true, "mono_wasm_array_get_ref", "void", ["number", "number", "number"]], [false, "mono_wasm_obj_array_new", "number", ["number"]], [false, "mono_wasm_obj_array_new_ref", "void", ["number", "number"]], [false, "mono_wasm_obj_array_set", "void", ["number", "number", "number"]], [false, "mono_wasm_obj_array_set_ref", "void", ["number", "number", "number"]], [true, "mono_wasm_register_bundled_satellite_assemblies", "void", []], [false, "mono_wasm_try_unbox_primitive_and_get_type_ref", "number", ["number", "number", "number"]], [true, "mono_wasm_box_primitive_ref", "void", ["number", "number", "number", "number"]], [true, "mono_wasm_intern_string_ref", "void", ["number"]], [true, "mono_wasm_assembly_get_entry_point", "number", ["number"]], [true, "mono_wasm_get_delegate_invoke_ref", "number", ["number"]], [true, "mono_wasm_string_array_new_ref", "void", ["number", "number"]], [true, "mono_wasm_typed_array_new_ref", "void", ["number", "number", "number", "number", "number"]], [true, "mono_wasm_class_get_type", "number", ["number"]], [true, "mono_wasm_type_get_class", "number", ["number"]], [true, "mono_wasm_get_type_name", "string", ["number"]], [true, "mono_wasm_get_type_aqn", "string", ["number"]], [true, "mono_wasm_event_pipe_enable", "bool", ["string", "number", "number", "string", "bool", "number"]], [true, "mono_wasm_event_pipe_session_start_streaming", "bool", ["number"]], [true, "mono_wasm_event_pipe_session_disable", "bool", ["number"]], [true, "mono_wasm_diagnostic_server_create_thread", "bool", ["string", "number"]], [true, "mono_wasm_diagnostic_server_thread_attach_to_runtime", "void", []], [true, "mono_wasm_diagnostic_server_post_resume_runtime", "void", []], [true, "mono_wasm_diagnostic_server_create_stream", "number", []], [true, "mono_wasm_string_from_js", "number", ["string"]], [false, "mono_wasm_exit", "void", ["number"]], [true, "mono_wasm_getenv", "number", ["string"]], [true, "mono_wasm_set_main_args", "void", ["number", "number"]], [false, "mono_wasm_enable_on_demand_gc", "void", ["number"]], [false, "mono_profiler_init_aot", "void", ["number"]], [false, "mono_wasm_exec_regression", "number", ["number", "string"]], [false, "mono_wasm_invoke_method_bound", "number", ["number", "number"]], [true, "mono_wasm_write_managed_pointer_unsafe", "void", ["number", "number"]], [true, "mono_wasm_copy_managed_pointer", "void", ["number", "number"]], [true, "mono_wasm_i52_to_f64", "number", ["number", "number"]], [true, "mono_wasm_u52_to_f64", "number", ["number", "number"]], [true, "mono_wasm_f64_to_i52", "number", ["number", "number"]], [true, "mono_wasm_f64_to_u52", "number", ["number", "number"]]],
         M = {};
       function I() {
         const e = !!f;
-        for (const t of T) {
+        for (const t of R) {
           const n = M,
             [r, s, i, a, c] = t;
           if (r || e) n[s] = function (...e) {
@@ -4523,8 +4492,8 @@ var bootloader = (function (exports) {
       let W = {},
         F = 0,
         B = -1,
-        H,
         V,
+        H,
         z;
       function mono_wasm_runtime_ready() {
         if (s.mono_wasm_runtime_is_ready = b.mono_wasm_runtime_is_ready = true, F = 0, W = {}, B = -1, globalThis.dotnetDebugger) debugger;else console$1.debug("mono_wasm_runtime_ready", "fe00e07a-5519-4dfe-b35a-f867dbaf2e28");
@@ -4543,12 +4512,12 @@ var bootloader = (function (exports) {
         P.has(t) && console$1.log(`MONO_WASM: Adding an id (${t}) that already exists in commands_received`), P.set(t, a);
       }
       function J(e) {
-        e.length > B && (H && o._free(H), B = Math.max(e.length, B, 256), H = o._malloc(B));
+        e.length > B && (V && o._free(V), B = Math.max(e.length, B, 256), V = o._malloc(B));
         const t = atob(e);
-        for (let e = 0; e < t.length; e++) o.HEAPU8[H + e] = t.charCodeAt(e);
+        for (let e = 0; e < t.length; e++) o.HEAPU8[V + e] = t.charCodeAt(e);
       }
       function q(e, t, n, r, o, s, i) {
-        J(r), M.mono_wasm_send_dbg_command_with_parms(e, t, n, H, o, s, i.toString());
+        J(r), M.mono_wasm_send_dbg_command_with_parms(e, t, n, V, o, s, i.toString());
         const {
           res_ok: a,
           res: c
@@ -4557,7 +4526,7 @@ var bootloader = (function (exports) {
         return c;
       }
       function G(e, t, n, r) {
-        J(r), M.mono_wasm_send_dbg_command(e, t, n, H, r.length);
+        J(r), M.mono_wasm_send_dbg_command(e, t, n, V, r.length);
         const {
           res_ok: o,
           res: s
@@ -4597,7 +4566,7 @@ var bootloader = (function (exports) {
         -1 == b.waitForDebugger && (b.waitForDebugger = 1), M.mono_wasm_set_is_debugger_attached(true);
       }
       function ne(e, t) {
-        V = o.UTF8ToString(e).concat(".dll"), z = t, console$1.assert(true, `Adding an entrypoint breakpoint ${V} at method token  ${z}`);
+        H = o.UTF8ToString(e).concat(".dll"), z = t, console$1.assert(true, `Adding an entrypoint breakpoint ${H} at method token  ${z}`);
         debugger;
       }
       function re(e, t) {
@@ -4914,7 +4883,7 @@ var bootloader = (function (exports) {
         return r;
       }
       function Ie(e) {
-        pc(e, false), De(1, e);
+        bc(e, false), De(1, e);
       }
       function De(e, t) {
         if (b.config.asyncFlushOnExit && 0 === e) throw _async(function () {
@@ -4966,13 +4935,13 @@ var bootloader = (function (exports) {
           deref: () => e
         };
       }
-      const He = "function" === typeof globalThis.FinalizationRegistry;
-      let Ve;
+      const Ve = "function" === typeof globalThis.FinalizationRegistry;
+      let He;
       const ze = [],
         Le = [];
       let Je = 1;
       const qe = new Map();
-      He && (Ve = new globalThis.FinalizationRegistry(rt));
+      Ve && (He = new globalThis.FinalizationRegistry(rt));
       const Ge = Symbol.for("wasm js_owned_gc_handle"),
         Ye = Symbol.for("wasm cs_owned_js_handle");
       function Ze(e) {
@@ -4994,12 +4963,12 @@ var bootloader = (function (exports) {
         }
       }
       function et(e, t) {
-        e[Ge] = t, He && Ve.register(e, t, e);
+        e[Ge] = t, Ve && He.register(e, t, e);
         const n = Be(e);
         qe.set(t, n);
       }
       function tt(e, t) {
-        e && (t = e[Ge], e[Ge] = 0, He && Ve.unregister(e)), 0 !== t && qe.delete(t) && b.javaScriptExports.release_js_owned_object_by_gc_handle(t);
+        e && (t = e[Ge], e[Ge] = 0, Ve && He.unregister(e)), 0 !== t && qe.delete(t) && b.javaScriptExports.release_js_owned_object_by_gc_handle(t);
       }
       function nt(e) {
         const t = e[Ge];
@@ -5085,7 +5054,7 @@ var bootloader = (function (exports) {
         if (!(e >= t && e <= n)) throw new Error(`Assert failed: Overflow: value ${e} is out of ${t} ${n} range`);
       }
       function St(e, t) {
-        e % 4 === 0 && t % 4 === 0 ? o.HEAP32.fill(0, e >>> 2, t >>> 2) : o.HEAP8.fill(0, e, t);
+        o.HEAP8.fill(0, e, t + e);
       }
       function Ot(e, t) {
         const n = !!t;
@@ -5106,10 +5075,10 @@ var bootloader = (function (exports) {
       function kt(e, t) {
         At(t, -128, 127), o.HEAP8[e] = t;
       }
-      function Rt(e, t) {
+      function Tt(e, t) {
         At(t, -32768, 32767), o.HEAP16[e >>> 1] = t;
       }
-      function Tt(e, t) {
+      function Rt(e, t) {
         o.HEAP32[e >>> 2] = t;
       }
       function Mt(e, t) {
@@ -5154,10 +5123,10 @@ var bootloader = (function (exports) {
       function Bt(e) {
         return o.HEAPU8[e];
       }
-      function Ht(e) {
+      function Vt(e) {
         return o.HEAPU16[e >>> 1];
       }
-      function Vt(e) {
+      function Ht(e) {
         return o.HEAPU32[e >>> 2];
       }
       function zt(e) {
@@ -5226,13 +5195,13 @@ var bootloader = (function (exports) {
         return t;
       }
       function _n(...e) {
-        for (let t = 0; t < e.length; t++) R(e[t]) || e[t].release();
+        for (let t = 0; t < e.length; t++) T(e[t]) || e[t].release();
       }
       function dn(e) {
         void 0 !== e && (rn.set(e, 0), on[sn] = e, sn++);
       }
       function mn() {
-        if (R(rn) || !on) {
+        if (T(rn) || !on) {
           rn = un(nn, "js roots"), on = new Int32Array(nn), sn = nn;
           for (let e = 0; e < nn; e++) on[e] = nn - e - 1;
         }
@@ -5432,23 +5401,23 @@ var bootloader = (function (exports) {
       }
       function $n(e) {
         if (!e) throw new Error("Assert failed: Null sig");
-        return Vt(e);
+        return Ht(e);
       }
       function Nn(e) {
         if (!e) throw new Error("Assert failed: Null sig");
-        return Vt(e + 16);
+        return Ht(e + 16);
       }
       function kn(e) {
         if (!e) throw new Error("Assert failed: Null sig");
-        return Vt(e + 20);
-      }
-      function Rn(e) {
-        if (!e) throw new Error("Assert failed: Null sig");
-        return Vt(e + 24);
+        return Ht(e + 20);
       }
       function Tn(e) {
         if (!e) throw new Error("Assert failed: Null sig");
-        return Vt(e + 28);
+        return Ht(e + 24);
+      }
+      function Rn(e) {
+        if (!e) throw new Error("Assert failed: Null sig");
+        return Ht(e + 28);
       }
       function Mn(e) {
         if (!e) throw new Error("Assert failed: Null signatures");
@@ -5460,11 +5429,11 @@ var bootloader = (function (exports) {
       }
       function Dn(e) {
         if (!e) throw new Error("Assert failed: Null arg");
-        return Vt(e + 12);
+        return Ht(e + 12);
       }
       function Un(e) {
         if (!e) throw new Error("Assert failed: Null arg");
-        return Vt(e + 4);
+        return Ht(e + 4);
       }
       function Cn(e, t) {
         if (!e) throw new Error("Assert failed: Null arg");
@@ -5484,19 +5453,19 @@ var bootloader = (function (exports) {
       }
       function Bn(e) {
         if (!e) throw new Error("Assert failed: Null arg");
-        return Ht(e);
+        return Vt(e);
       }
-      function Hn(e) {
+      function Vn(e) {
         if (!e) throw new Error("Assert failed: Null arg");
         return Lt(e);
       }
-      function Vn(e) {
+      function Hn(e) {
         if (!e) throw new Error("Assert failed: Null arg");
         return Jt(e);
       }
       function zn(e) {
         if (!e) throw new Error("Assert failed: Null arg");
-        return Vt(e);
+        return Ht(e);
       }
       function Ln(e) {
         if (!e) throw new Error("Assert failed: Null arg");
@@ -5534,7 +5503,7 @@ var bootloader = (function (exports) {
       }
       function Kn(e, t) {
         if (!e) throw new Error("Assert failed: Null arg");
-        Rt(e, t);
+        Tt(e, t);
       }
       function er(e, t) {
         if (!e) throw new Error("Assert failed: Null arg");
@@ -5567,7 +5536,7 @@ var bootloader = (function (exports) {
       }
       function ar(e) {
         if (!e) throw new Error("Assert failed: Null arg");
-        return Vt(e + 4);
+        return Ht(e + 4);
       }
       function cr(e, t) {
         if (!e) throw new Error("Assert failed: Null arg");
@@ -5575,7 +5544,7 @@ var bootloader = (function (exports) {
       }
       function ur(e) {
         if (!e) throw new Error("Assert failed: Null arg");
-        return Vt(e + 4);
+        return Ht(e + 4);
       }
       function lr(e, t) {
         if (!e) throw new Error("Assert failed: Null arg");
@@ -5710,7 +5679,7 @@ var bootloader = (function (exports) {
           let o;
           M.mono_wasm_string_get_data_ref(e.address, t, n, r);
           const s = Jt(n),
-            i = Vt(t),
+            i = Ht(t),
             a = Jt(r);
           if (a && (o = pr.get(e.value)), void 0 === o && (s && i ? (o = this.decode(i, i + s), a && pr.set(e.value, o)) : o = Sr), void 0 === o) throw new Error(`internal error when decoding string at location ${e.value}`);
           return o;
@@ -5742,9 +5711,9 @@ var bootloader = (function (exports) {
       }
       function jr(e) {
         if (0 === e.length) return Sr;
-        const t = Tr(e),
+        const t = Rr(e),
           n = pr.get(t);
-        if (R(n)) throw new Error("internal error: interned_string_table did not contain string after js_string_to_mono_string_interned");
+        if (T(n)) throw new Error("internal error: interned_string_table did not contain string after js_string_to_mono_string_interned");
         return n;
       }
       function $r(e, t, n) {
@@ -5762,7 +5731,7 @@ var bootloader = (function (exports) {
         if (0 === n.length && yr) return t.set(yr), void 0;
         const r = br.get(n);
         if (r) return t.set(r), void 0;
-        Rr(n, t), $r(n, t, true);
+        Tr(n, t), $r(n, t, true);
       }
       function kr(e, t) {
         if (t.clear(), null !== e) if ("symbol" === typeof e) Nr(e, t);else {
@@ -5772,17 +5741,17 @@ var bootloader = (function (exports) {
               const n = br.get(e);
               if (n) return t.set(n), void 0;
             }
-            Rr(e, t);
+            Tr(e, t);
           }
         }
       }
-      function Rr(e, t) {
+      function Tr(e, t) {
         const n = o._malloc(2 * (e.length + 1)),
           r = n >>> 1 | 0;
         for (let t = 0; t < e.length; t++) o.HEAP16[r + t] = e.charCodeAt(t);
         o.HEAP16[r + e.length] = 0, M.mono_wasm_string_from_utf16_ref(n, e.length, t.address), o._free(n);
       }
-      function Tr(e) {
+      function Rr(e) {
         const t = fn();
         try {
           return Nr(e, t), t.value;
@@ -5799,7 +5768,7 @@ var bootloader = (function (exports) {
         }
       }
       function Ir() {
-        0 == pn.size && (pn.set(wr.Array, ro), pn.set(wr.Span, so), pn.set(wr.ArraySegment, io), pn.set(wr.Boolean, Ur), pn.set(wr.Byte, Cr), pn.set(wr.Char, Pr), pn.set(wr.Int16, Wr), pn.set(wr.Int32, Fr), pn.set(wr.Int52, Br), pn.set(wr.BigInt64, Hr), pn.set(wr.Double, Vr), pn.set(wr.Single, zr), pn.set(wr.IntPtr, Lr), pn.set(wr.DateTime, Jr), pn.set(wr.DateTimeOffset, qr), pn.set(wr.String, Gr), pn.set(wr.Exception, eo), pn.set(wr.JSException, eo), pn.set(wr.JSObject, to), pn.set(wr.Object, no), pn.set(wr.Task, Kr), pn.set(wr.Action, Xr), pn.set(wr.Function, Xr), pn.set(wr.None, Zr), pn.set(wr.Discard, Zr), pn.set(wr.Void, Zr));
+        0 == pn.size && (pn.set(wr.Array, ro), pn.set(wr.Span, so), pn.set(wr.ArraySegment, io), pn.set(wr.Boolean, Ur), pn.set(wr.Byte, Cr), pn.set(wr.Char, Pr), pn.set(wr.Int16, Wr), pn.set(wr.Int32, Fr), pn.set(wr.Int52, Br), pn.set(wr.BigInt64, Vr), pn.set(wr.Double, Hr), pn.set(wr.Single, zr), pn.set(wr.IntPtr, Lr), pn.set(wr.DateTime, Jr), pn.set(wr.DateTimeOffset, qr), pn.set(wr.String, Gr), pn.set(wr.Exception, eo), pn.set(wr.JSException, eo), pn.set(wr.JSObject, to), pn.set(wr.Object, no), pn.set(wr.Task, Kr), pn.set(wr.Action, Xr), pn.set(wr.Function, Xr), pn.set(wr.None, Zr), pn.set(wr.Discard, Zr), pn.set(wr.Void, Zr));
       }
       function Dr(e, t, n, r, o, s) {
         let i = "",
@@ -5828,13 +5797,13 @@ var bootloader = (function (exports) {
           if (!(e && "function" === typeof e)) throw new Error(`Assert failed: Unknow converter for type ${w} at ${t}`);
           l = "converter" + t + "_arg1", i += ", " + l, a += " " + wr[w], s[l] = e;
         }
-        const h = Rn(e);
+        const h = Tn(e);
         if (h !== wr.None) {
           const e = hn.get(h);
           if (!(e && "function" === typeof e)) throw new Error(`Assert failed: Unknow converter for type ${h} at ${t}`);
           f = "converter" + t + "_arg2", i += ", " + f, a += " " + wr[h], s[f] = e;
         }
-        const p = Tn(e);
+        const p = Rn(e);
         if (p !== wr.None) {
           const e = hn.get(p);
           if (!(e && "function" === typeof e)) throw new Error(`Assert failed: Unknow converter for type ${p} at ${t}`);
@@ -5867,10 +5836,10 @@ var bootloader = (function (exports) {
       function Br(e, t) {
         null === t || void 0 === t ? Cn(e, wr.None) : (Cn(e, wr.Int52), nr(e, t));
       }
-      function Hr(e, t) {
+      function Vr(e, t) {
         null === t || void 0 === t ? Cn(e, wr.None) : (Cn(e, wr.BigInt64), rr(e, t));
       }
-      function Vr(e, t) {
+      function Hr(e, t) {
         null === t || void 0 === t ? Cn(e, wr.None) : (Cn(e, wr.Double), sr(e, t));
       }
       function zr(e, t) {
@@ -5981,10 +5950,7 @@ var bootloader = (function (exports) {
           if (void 0 === n) {
             if ("string" === r || "symbol" === r) Cn(e, wr.String), Yr(e, t);else if ("number" === r) Cn(e, wr.Double), sr(e, t);else {
               if ("bigint" === r) throw new Error("NotImplementedException: bigint");
-              if ("boolean" === r) Cn(e, wr.Boolean), Zn(e, t);else if (t instanceof Date) Cn(e, wr.DateTime), or(e, t);else if (t instanceof Error) {
-                Cn(e, wr.JSException);
-                cr(e, Qe(t));
-              } else if (t instanceof Uint8Array) oo(e, t, wr.Byte);else if (t instanceof Float64Array) oo(e, t, wr.Double);else if (t instanceof Int32Array) oo(e, t, wr.Int32);else if (Array.isArray(t)) oo(e, t, wr.Object);else {
+              if ("boolean" === r) Cn(e, wr.Boolean), Zn(e, t);else if (t instanceof Date) Cn(e, wr.DateTime), or(e, t);else if (t instanceof Error) eo(e, t);else if (t instanceof Uint8Array) oo(e, t, wr.Byte);else if (t instanceof Float64Array) oo(e, t, wr.Double);else if (t instanceof Int32Array) oo(e, t, wr.Int32);else if (Array.isArray(t)) oo(e, t, wr.Object);else {
                 if (t instanceof Int16Array || t instanceof Int8Array || t instanceof Uint8ClampedArray || t instanceof Uint16Array || t instanceof Uint32Array || t instanceof Float32Array) throw new Error("NotImplementedException: TypedArray");
                 if (ft(t)) Kr(e, t);else {
                   if (t instanceof Span) throw new Error("NotImplementedException: Span");
@@ -6073,7 +6039,7 @@ var bootloader = (function (exports) {
         }
       }
       function co() {
-        0 == hn.size && (hn.set(wr.Array, ko), hn.set(wr.Span, To), hn.set(wr.ArraySegment, Mo), hn.set(wr.Boolean, lo), hn.set(wr.Byte, fo), hn.set(wr.Char, _o), hn.set(wr.Int16, mo), hn.set(wr.Int32, go), hn.set(wr.Int52, wo), hn.set(wr.BigInt64, ho), hn.set(wr.Single, po), hn.set(wr.IntPtr, yo), hn.set(wr.Double, bo), hn.set(wr.String, xo), hn.set(wr.Exception, jo), hn.set(wr.JSException, jo), hn.set(wr.JSObject, $o), hn.set(wr.Object, No), hn.set(wr.DateTime, Eo), hn.set(wr.DateTimeOffset, Eo), hn.set(wr.Task, So), hn.set(wr.Action, Ao), hn.set(wr.Function, Ao), hn.set(wr.None, vo), hn.set(wr.Void, vo), hn.set(wr.Discard, vo));
+        0 == hn.size && (hn.set(wr.Array, ko), hn.set(wr.Span, Ro), hn.set(wr.ArraySegment, Mo), hn.set(wr.Boolean, lo), hn.set(wr.Byte, fo), hn.set(wr.Char, _o), hn.set(wr.Int16, mo), hn.set(wr.Int32, go), hn.set(wr.Int52, wo), hn.set(wr.BigInt64, ho), hn.set(wr.Single, po), hn.set(wr.IntPtr, yo), hn.set(wr.Double, bo), hn.set(wr.String, xo), hn.set(wr.Exception, jo), hn.set(wr.JSException, jo), hn.set(wr.JSObject, $o), hn.set(wr.Object, No), hn.set(wr.DateTime, Eo), hn.set(wr.DateTimeOffset, Eo), hn.set(wr.Task, So), hn.set(wr.Action, Ao), hn.set(wr.Function, Ao), hn.set(wr.None, vo), hn.set(wr.Void, vo), hn.set(wr.Discard, vo));
       }
       function uo(e, t, n, r, o, s) {
         let i = "",
@@ -6102,13 +6068,13 @@ var bootloader = (function (exports) {
           if (!(e && "function" === typeof e)) throw new Error(`Assert failed: Unknow converter for type ${w} at ${t}`);
           l = "converter" + t + "_arg1", i += ", " + l, a += " " + wr[w], s[l] = e;
         }
-        const h = Rn(e);
+        const h = Tn(e);
         if (h !== wr.None) {
           const e = pn.get(h);
           if (!(e && "function" === typeof e)) throw new Error(`Assert failed: Unknow converter for type ${h} at ${t}`);
           f = "converter" + t + "_arg2", i += ", " + f, a += " " + wr[h], s[f] = e;
         }
-        const p = Tn(e);
+        const p = Rn(e);
         if (p !== wr.None) {
           const e = pn.get(p);
           if (!(e && "function" === typeof e)) throw new Error(`Assert failed: Unknow converter for type ${p} at ${t}`);
@@ -6132,10 +6098,10 @@ var bootloader = (function (exports) {
         return Dn(e) == wr.None ? null : Bn(e);
       }
       function mo(e) {
-        return Dn(e) == wr.None ? null : Hn(e);
+        return Dn(e) == wr.None ? null : Vn(e);
       }
       function go(e) {
-        return Dn(e) == wr.None ? null : Vn(e);
+        return Dn(e) == wr.None ? null : Hn(e);
       }
       function wo(e) {
         return Dn(e) == wr.None ? null : Ln(e);
@@ -6256,7 +6222,7 @@ var bootloader = (function (exports) {
           return Ze(ar(e));
         }
         if (t == wr.Array) {
-          return Ro(e, Un(e));
+          return To(e, Un(e));
         }
         if (t == wr.Object) {
           const t = ur(e);
@@ -6270,9 +6236,9 @@ var bootloader = (function (exports) {
       }
       function ko(e, t) {
         if (!!!t) throw new Error("Assert failed: Expected valid sig parameter");
-        return Ro(e, kn(t));
+        return To(e, kn(t));
       }
-      function Ro(e, t) {
+      function To(e, t) {
         if (Dn(e) == wr.None) return null;
         if (!(-1 != mr(t))) throw new Error(`Assert failed: Element type ${wr[t]} not supported`);
         const s = zn(e),
@@ -6310,7 +6276,7 @@ var bootloader = (function (exports) {
         }
         return o._free(s), a;
       }
-      function To(e, t) {
+      function Ro(e, t) {
         if (!!!t) throw new Error("Assert failed: Expected valid sig parameter");
         const n = kn(t),
           r = zn(e),
@@ -6345,8 +6311,8 @@ var bootloader = (function (exports) {
       }
       const Fo = it(),
         Bo = it();
-      let Ho = 0,
-        Vo = 0,
+      let Vo = 0,
+        Ho = 0,
         zo = 0,
         Lo = 0;
       const Jo = [],
@@ -6376,7 +6342,7 @@ var bootloader = (function (exports) {
         if (e.resolvedUrl) n = e.resolvedUrl;else {
           if ("" === t) {
             if ("assembly" === e.behavior || "pdb" === e.behavior) n = r ? r + "/" + e.name : e.name;else if ("resource" === e.behavior) {
-              const t = "" !== e.culture ? `${e.culture}/${e.name}` : e.name;
+              const t = e.culture && "" !== e.culture ? `${e.culture}/${e.name}` : e.name;
               n = r ? r + "/" + t : t;
             } else n = e.name;
           } else n = t + e.name;
@@ -6454,8 +6420,8 @@ var bootloader = (function (exports) {
             const e = Jo.findIndex(e => e.file == r);
             Jo.splice(e, 1);
           }
-        } else "icu" === e.behavior ? fe(s) || o.printErr(`MONO_WASM: Error loading ICU asset ${e.name}`) : "resource" === e.behavior && M.mono_wasm_add_satellite_assembly(r, e.culture, s, n.length);
-        ++Vo;
+        } else "icu" === e.behavior ? fe(s) || o.printErr(`MONO_WASM: Error loading ICU asset ${e.name}`) : "resource" === e.behavior && M.mono_wasm_add_satellite_assembly(r, e.culture || "", s, n.length);
+        ++Ho;
       }
       function cs(e, t) {
         if (e.length < 8) return false;
@@ -6634,11 +6600,22 @@ var bootloader = (function (exports) {
         if (!e) throw new Error("Assert failed: Null reference");
         return typeof e[t];
       }
-      function Rs() {
+      function Ts() {
         return globalThis;
       }
-      const Ts = new Map(),
+      const Rs = new Map(),
         Ms = new Map();
+      function Is(e, t) {
+        if (!e) throw new Error("Assert failed: Invalid module_name");
+        if (!t) throw new Error("Assert failed: Invalid module_name");
+        let n = Rs.get(e);
+        const r = !n;
+        return r && (b.diagnosticTracing && console$1.debug(`MONO_WASM: importing ES6 module '${e}' from '${t}'`), n = _import(t), Rs.set(e, n)), _t(function () {
+          return _await$1(n, function (o) {
+            return r && (Ms.set(e, o), b.diagnosticTracing && console$1.debug(`MONO_WASM: imported ES6 module '${e}' from '${t}'`)), o;
+          });
+        });
+      }
       function Ds(e, t) {
         let n = "unknown exception";
         if (t) {
@@ -6668,7 +6645,7 @@ var bootloader = (function (exports) {
               namespace: u,
               classname: l,
               methodname: f
-            } = Vs(o),
+            } = Hs(o),
             _ = be(s);
           if (!_) throw new Error("Could not find assembly: " + s);
           const d = M.mono_wasm_assembly_find_class(_, u, l);
@@ -6736,7 +6713,7 @@ var bootloader = (function (exports) {
         }
         a[r] || (a[r] = s), a[`${r}.${o}`] = s;
       }
-      function Vs(e) {
+      function Hs(e) {
         const t = e.substring(e.indexOf("[") + 1, e.indexOf("]")).trim(),
           n = (e = e.substring(e.indexOf("]") + 1).trim()).substring(e.indexOf(":") + 1);
         let r = "",
@@ -6954,7 +6931,7 @@ var bootloader = (function (exports) {
         }
       }
       function Qs(e, t, n) {
-        if (R(t)) throw new Error("Expected (value, WasmRoot, boolean)");
+        if (T(t)) throw new Error("Expected (value, WasmRoot, boolean)");
         switch (true) {
           case null === e:
           case "undefined" === typeof e:
@@ -6962,7 +6939,7 @@ var bootloader = (function (exports) {
           case "number" === typeof e:
             {
               let n;
-              return (0 | e) === e ? (Tt(Uo._box_buffer, e), n = Uo._class_int32) : e >>> 0 === e ? ($t(Uo._box_buffer, e), n = Uo._class_uint32) : (Wt(Uo._box_buffer, e), n = Uo._class_double), M.mono_wasm_box_primitive_ref(n, Uo._box_buffer, 8, t.address), void 0;
+              return (0 | e) === e ? (Rt(Uo._box_buffer, e), n = Uo._class_int32) : e >>> 0 === e ? ($t(Uo._box_buffer, e), n = Uo._class_uint32) : (Wt(Uo._box_buffer, e), n = Uo._class_double), M.mono_wasm_box_primitive_ref(n, Uo._box_buffer, 8, t.address), void 0;
             }
           case "string" === typeof e:
             return kr(e, t), void 0;
@@ -7054,7 +7031,7 @@ var bootloader = (function (exports) {
         const r = ln(n);
         try {
           const n = Ze(e);
-          if (R(n)) return Us(t, "ERR06: Invalid JS object handle '" + e + "'", r), void 0;
+          if (T(n)) return Us(t, "ERR06: Invalid JS object handle '" + e + "'", r), void 0;
           ti(n, r);
         } catch (e) {
           Us(t, String(e), r);
@@ -7063,7 +7040,7 @@ var bootloader = (function (exports) {
         }
       }
       function ai(e, t, n) {
-        if (0 === e || e === x) return Tt(n, 0), void 0;
+        if (0 === e || e === x) return Rt(n, 0), void 0;
         Xi._get_cs_owned_object_by_js_handle_ref(e, t ? 1 : 0, n);
       }
       const ci = Symbol.for("wasm delegate_invoke");
@@ -7124,7 +7101,7 @@ var bootloader = (function (exports) {
       function _i(e, t, n) {
         if (t >= 512) throw new Error(`Got marshaling error ${t} when attempting to unbox object at address ${e.value} (root located at ${e.address})`);
         let r = 0;
-        if ((4 === t || 7 == t) && (r = Vt(n), r < 1024)) throw new Error(`Got invalid MonoType ${r} for object at address ${e.value} (root located at ${e.address})`);
+        if ((4 === t || 7 == t) && (r = Ht(n), r < 1024)) throw new Error(`Got invalid MonoType ${r} for object at address ${e.value} (root located at ${e.address})`);
         return fi(e, t);
       }
       function di(e) {
@@ -7135,9 +7112,9 @@ var bootloader = (function (exports) {
           case 1:
             return Jt(t);
           case 25:
-            return Vt(t);
+            return Ht(t);
           case 32:
-            return Vt(t);
+            return Ht(t);
           case 24:
             return Zt(t);
           case 2:
@@ -7259,10 +7236,10 @@ var bootloader = (function (exports) {
         }
         const n = Xi._get_js_owned_object_gc_handle_ref(e.address);
         let r = ot(n);
-        return R(r) && (r = new ManagedObject(), et(r, n)), r;
+        return T(r) && (r = new ManagedObject(), et(r, n)), r;
       }
       function Ei(e, t) {
-        if (!e) return Tt(t, 0), void 0;
+        if (!e) return Rt(t, 0), void 0;
         Xi._get_js_owned_object_by_gc_handle_ref(e, t);
       }
       const Ai = new Map();
@@ -7299,7 +7276,7 @@ var bootloader = (function (exports) {
           const t = xr(i);
           if (!t || "string" !== typeof t) return Us(r, "ERR12: Invalid method name object @" + i.value, a), void 0;
           const n = Xe(e);
-          if (R(n)) return Us(r, "ERR13: Invalid JS object handle '" + e + "' while invoking '" + t + "'", a), void 0;
+          if (T(n)) return Us(r, "ERR13: Invalid JS object handle '" + e + "' while invoking '" + t + "'", a), void 0;
           const o = wi(s);
           try {
             const e = n[t];
@@ -7320,7 +7297,7 @@ var bootloader = (function (exports) {
           const t = xr(o);
           if (!t) return Us(n, "Invalid property name object '" + o.value + "'", s), void 0;
           const r = Ze(e);
-          if (R(r)) return Us(n, "ERR01: Invalid JS object handle '" + e + "' while geting '" + t + "'", s), void 0;
+          if (T(r)) return Us(n, "ERR01: Invalid JS object handle '" + e + "' while geting '" + t + "'", s), void 0;
           const i = undefined;
           Qs(r[t], s, true);
         } catch (e) {
@@ -7337,7 +7314,7 @@ var bootloader = (function (exports) {
           const n = xr(c);
           if (!n) return Us(s, "Invalid property name object '" + t + "'", u), void 0;
           const i = Ze(e);
-          if (R(i)) return Us(s, "ERR02: Invalid JS object handle '" + e + "' while setting '" + n + "'", u), void 0;
+          if (T(i)) return Us(s, "ERR02: Invalid JS object handle '" + e + "' while setting '" + n + "'", u), void 0;
           let l = false;
           const f = di(a);
           if (r) i[n] = f, l = true;else {
@@ -7351,11 +7328,11 @@ var bootloader = (function (exports) {
           u.release(), c.release(), a.release();
         }
       }
-      function Ri(e, t, n, r) {
+      function Ti(e, t, n, r) {
         const o = ln(r);
         try {
           const r = Ze(e);
-          if (R(r)) return Us(n, "ERR03: Invalid JS object handle '" + e + "' while getting [" + t + "]", o), void 0;
+          if (T(r)) return Us(n, "ERR03: Invalid JS object handle '" + e + "' while getting [" + t + "]", o), void 0;
           const s = undefined;
           Qs(r[t], o, true);
         } catch (e) {
@@ -7364,12 +7341,12 @@ var bootloader = (function (exports) {
           o.release();
         }
       }
-      function Ti(e, t, n, r, o) {
+      function Ri(e, t, n, r, o) {
         const s = ln(n),
           i = ln(o);
         try {
           const n = Ze(e);
-          if (R(n)) return Us(r, "ERR04: Invalid JS object handle '" + e + "' while setting [" + t + "]", i), void 0;
+          if (T(n)) return Us(r, "ERR04: Invalid JS object handle '" + e + "' while setting [" + t + "]", i), void 0;
           const o = di(s);
           n[t] = o, i.clear();
         } catch (e) {
@@ -7508,7 +7485,7 @@ var bootloader = (function (exports) {
           size: 8
         });
       }
-      function Hi(e) {
+      function Vi(e) {
         const t = [];
         let n = 0,
           r = false,
@@ -7539,12 +7516,12 @@ var bootloader = (function (exports) {
           needs_root_buffer: i
         };
       }
-      function Vi(e) {
+      function Hi(e) {
         let t = Ci.get(e);
-        return t || (t = Hi(e), Ci.set(e, t)), t;
+        return t || (t = Vi(e), Ci.set(e, t)), t;
       }
       function zi(e) {
-        const t = Vi(e);
+        const t = Hi(e);
         if ("string" !== typeof t.args_marshal) throw new Error("Corrupt converter for '" + e + "'");
         if (t.compiled_function && t.compiled_variadic_function) return t;
         const n = e.replace("!", "_result_unmarshaled");
@@ -7560,7 +7537,7 @@ var bootloader = (function (exports) {
           setU52: Ut,
           setI52: Dt,
           setB32: Ot,
-          setI32_unchecked: Tt,
+          setI32_unchecked: Rt,
           setU32_unchecked: $t,
           scratchValueRoot: t.scratchValueRoot,
           stackAlloc: o.stackAlloc,
@@ -7672,7 +7649,7 @@ var bootloader = (function (exports) {
             unbox_buffer_size: c,
             getB32: Ft,
             getI32: Jt,
-            getU32: Vt,
+            getU32: Ht,
             getF32: Zt,
             getF64: Xt,
             stackSave: o.stackSave
@@ -7710,7 +7687,7 @@ var bootloader = (function (exports) {
             namespace: n,
             classname: r,
             methodname: o
-          } = Vs(e),
+          } = Hs(e),
           s = M.mono_wasm_assembly_load(t);
         if (!s) throw new Error("Could not find assembly: " + t);
         const i = M.mono_wasm_assembly_find_class(s, n, r);
@@ -7758,7 +7735,9 @@ var bootloader = (function (exports) {
         e.abort();
       }
       function oa(e) {
-        e.__abort_controller.abort(), e.__reader && e.__reader.cancel();
+        e.__abort_controller.abort(), e.__reader && e.__reader.cancel().catch(e => {
+          e && "AbortError" !== e.name && o.printErr("MONO_WASM: Error in http_wasm_abort_response: " + e);
+        });
       }
       function sa(e, t, n, r, o, s, i, a) {
         return ia(e, t, n, r, o, s, new Span(i, a, 0).slice());
@@ -7808,6 +7787,23 @@ var bootloader = (function (exports) {
         t.set(n, 0);
         const r = Math.min(t.byteLength, n.byteLength);
         return e.__source_offset += r, r;
+      }
+      function _a(e, t, n) {
+        const r = new Span(t, n, 0);
+        return _t(_async(function () {
+          e.__reader || (e.__reader = e.body.getReader());
+            const _e$__chunk = e.__chunk;
+          return _await$1(_e$__chunk || e.__reader.read(), function (_e$__reader$read) {
+            if (_e$__chunk || (e.__chunk = _e$__reader$read, e.__source_offset = 0), e.__chunk.done) {
+              return 0;
+            }
+            const t = e.__chunk.value.byteLength - e.__source_offset;
+            if (!(t > 0)) throw new Error("Assert failed: expected remaining_source to be greater than 0");
+            const n = Math.min(t, r.byteLength),
+              o = e.__chunk.value.subarray(e.__source_offset, e.__source_offset + n);
+            return r.set(o, 0), e.__source_offset += n, t == n && (e.__chunk = void 0), n;
+          }, _e$__chunk);
+        }));
       }
       let da = 0,
         ma = false,
@@ -7877,8 +7873,8 @@ var bootloader = (function (exports) {
         $a = Symbol.for("wasm ws_pending_close_promises"),
         Na = Symbol.for("wasm ws_pending_send_promises"),
         ka = Symbol.for("wasm ws_is_aborted"),
-        Ra = Symbol.for("wasm ws_receive_status_ptr");
-      let Ta = false,
+        Ta = Symbol.for("wasm ws_receive_status_ptr");
+      let Ra = false,
         Ma,
         Ia;
       const Da = 65536,
@@ -7889,7 +7885,7 @@ var bootloader = (function (exports) {
           {
             promise_control: s
           } = it();
-        o[Oa] = new va(), o[xa] = new va(), o[ja] = s, o[Na] = [], o[$a] = [], o[Ra] = n, o.binaryType = "arraybuffer";
+        o[Oa] = new va(), o[xa] = new va(), o[ja] = s, o[Na] = [], o[$a] = [], o[Ta] = n, o.binaryType = "arraybuffer";
         const i = () => {
             o[ka] || (s.resolve(o), pa());
           },
@@ -7922,7 +7918,7 @@ var bootloader = (function (exports) {
       function Wa(e, t, n, r, s) {
         if (!!!e) throw new Error("Assert failed: ERR17: expected ws instance");
         const a = Ja(e, new Uint8Array(o.HEAPU8.buffer, t, n), r, s);
-        return s && a ? Va(e, a) : null;
+        return s && a ? Ha(e, a) : null;
       }
       function Fa(e, t, n) {
         if (!!!e) throw new Error("Assert failed: ERR18: expected ws instance");
@@ -7951,9 +7947,9 @@ var bootloader = (function (exports) {
           } = it();
           return e[$a].push(o), "string" === typeof n ? e.close(t, n) : e.close(t), r;
         }
-        return Ta || (Ta = true, console$1.log("WARNING: Web browsers do not support closing the output side of a WebSocket. CloseOutputAsync has closed the socket and discarded any incoming messages.")), "string" === typeof n ? e.close(t, n) : e.close(t), null;
+        return Ra || (Ra = true, console$1.log("WARNING: Web browsers do not support closing the output side of a WebSocket. CloseOutputAsync has closed the socket and discarded any incoming messages.")), "string" === typeof n ? e.close(t, n) : e.close(t), null;
       }
-      function Ha(e) {
+      function Va(e) {
         if (!!!e) throw new Error("Assert failed: ERR18: expected ws instance");
         e[ka] = true;
         const t = e[ja];
@@ -7964,7 +7960,7 @@ var bootloader = (function (exports) {
           e.reject("OperationCanceledException");
         }), e.close(1e3, "Connection was aborted.");
       }
-      function Va(e, t) {
+      function Ha(e, t) {
         if (e.send(t), e[Ea] = null, e.bufferedAmount < Da) return null;
         const {
             promise: n,
@@ -8011,7 +8007,7 @@ var bootloader = (function (exports) {
         }
         const a = s.data.length === s.offset ? 1 : 0;
         a && t.dequeue();
-        const c = e[Ra];
+        const c = e[Ta];
         Mt(c, i), Mt(c + 4, s.type), Mt(c + 8, a);
       }
       function Ja(e, t, n, r) {
@@ -8069,7 +8065,7 @@ var bootloader = (function (exports) {
           set_property: js,
           has_property: Ns,
           get_typeof_property: ks,
-          get_global_this: Rs,
+          get_global_this: Ts,
           get_dotnet_instance: () => _,
           dynamic_import: Is,
           mono_wasm_cancel_promise: dt,
@@ -8078,7 +8074,7 @@ var bootloader = (function (exports) {
           ws_wasm_send: Wa,
           ws_wasm_receive: Fa,
           ws_wasm_close: Ba,
-          ws_wasm_abort: Ha,
+          ws_wasm_abort: Va,
           http_wasm_supports_streaming_response: ta,
           http_wasm_create_abort_controler: na,
           http_wasm_abort_request: ra,
@@ -8102,26 +8098,26 @@ var bootloader = (function (exports) {
       }
       function Ya() {
         return {
-          mono_wasm_setenv: Oc,
+          mono_wasm_setenv: xc,
           mono_wasm_load_bytes_into_heap: tn,
           mono_wasm_load_icu_data: fe,
           mono_wasm_runtime_ready: mono_wasm_runtime_ready,
           mono_wasm_load_data_archive: cs,
           mono_wasm_load_config: Rc,
-          mono_load_runtime_and_bcl_args: Ic,
+          mono_load_runtime_and_bcl_args: Dc,
           mono_wasm_new_root_buffer: un,
           mono_wasm_new_root: fn,
           mono_wasm_new_external_root: ln,
           mono_wasm_release_roots: _n,
-          mono_run_main: Te,
-          mono_run_main_and_exit: Re,
+          mono_run_main: Re,
+          mono_run_main_and_exit: Te,
           mono_wasm_add_assembly: null,
-          mono_wasm_load_runtime: Nc,
+          mono_wasm_load_runtime: kc,
           config: b.config,
           loaded_files: [],
           setB32: Ot,
           setI8: kt,
-          setI16: Rt,
+          setI16: Tt,
           setI32: Mt,
           setI52: Dt,
           setU52: Ut,
@@ -8139,8 +8135,8 @@ var bootloader = (function (exports) {
           getU52: Gt,
           getI64Big: Yt,
           getU8: Bt,
-          getU16: Ht,
-          getU32: Vt,
+          getU16: Vt,
+          getU32: Ht,
           getF32: Zt,
           getF64: Xt
         };
@@ -8191,62 +8187,65 @@ var bootloader = (function (exports) {
         cc = it(),
         uc = it(),
         lc = it(),
-        fc = it();
-      function _c(e, t) {
+        fc = it(),
+        _c = it();
+      function dc(e, t) {
         const n = e.instantiateWasm,
           r = e.preInit ? "function" === typeof e.preInit ? [e.preInit] : e.preInit : [],
           o = e.preRun ? "function" === typeof e.preRun ? [e.preRun] : e.preRun : [],
           s = e.postRun ? "function" === typeof e.postRun ? [e.postRun] : e.postRun : [],
           i = e.onRuntimeInitialized ? e.onRuntimeInitialized : () => {};
-        rc = !e.configSrc && (!e.config || !e.config.assets || -1 == e.config.assets.findIndex(e => "assembly" === e.behavior)), e.instantiateWasm = (e, t) => dc(e, t, n), e.preInit = [() => mc(r)], e.preRun = [() => gc(o)], e.onRuntimeInitialized = () => wc(i), e.postRun = [() => hc(s)], e.ready = e.ready.then(_async(function () {
-          return _await$1(fc.promise, function () {
-            return t;
+        rc = !e.configSrc && (!e.config || !e.config.assets || -1 == e.config.assets.findIndex(e => "assembly" === e.behavior)), e.instantiateWasm = (e, t) => mc(e, t, n), e.preInit = [() => gc(r)], e.preRun = [() => wc(o)], e.onRuntimeInitialized = () => hc(i), e.postRun = [() => pc(s)], e.ready.then(_async(function () {
+          return _await$1(_c.promise, function () {
+            oc.promise_control.resolve(t);
           });
-        })), e.onAbort || (e.onAbort = () => Ie);
+        })).catch(e => {
+          oc.promise_control.reject(e);
+        }), e.ready = oc.promise, e.onAbort || (e.onAbort = () => Ie);
       }
-      function dc(e, t, n) {
+      function mc(e, t, n) {
         if (o.configSrc || o.config || n || o.print("MONO_WASM: configSrc nor config was specified"), tc = o.config ? b.config = o.config : b.config = o.config = {}, b.diagnosticTracing = !!tc.diagnosticTracing, n) {
           return n(e, (e, n) => {
-            sc.promise_control.resolve(), t(e, n);
+            ic.promise_control.resolve(), t(e, n);
           });
         }
-        return jc(e, t), [];
+        return $c(e, t), [];
       }
-      function mc(e) {
+      function gc(e) {
         o.addRunDependency("mono_pre_init");
         try {
-          bc(), b.diagnosticTracing && console$1.debug("MONO_WASM: preInit"), ic.promise_control.resolve(), e.forEach(e => e());
+          yc(), b.diagnosticTracing && console$1.debug("MONO_WASM: preInit"), ac.promise_control.resolve(), e.forEach(e => e());
         } catch (e) {
-          throw Sc("MONO_WASM: user preInint() failed", e), pc(e, true), e;
+          throw Oc("MONO_WASM: user preInint() failed", e), bc(e, true), e;
         }
         _async(function () {
           return _continue$1(_catch$1(function () {
-            return _call$1(yc, function () {
+            return _call$1(vc, function () {
               const _rc = rc;
-              return _await$1(_rc || vc(), function (_vc) {
-                _vc;
+              return _await$1(_rc || Ec(), function (_Ec) {
+                _Ec;
               }, _rc);
             });
           }, function (e) {
-            throw pc(e, true), e;
+            throw bc(e, true), e;
           }), function (_result2) {
-            ac.promise_control.resolve(), o.removeRunDependency("mono_pre_init");
+            cc.promise_control.resolve(), o.removeRunDependency("mono_pre_init");
           });
         })();
       }
-      function pc(e, t) {
-        b.diagnosticTracing && console$1.trace("MONO_WASM: abort_startup"), sc.promise_control.reject(e), ic.promise_control.reject(e), ac.promise_control.reject(e), cc.promise_control.reject(e), uc.promise_control.reject(e), lc.promise_control.reject(e), fc.promise_control.reject(e), t && De(1, e);
+      function bc(e, t) {
+        b.diagnosticTracing && console$1.trace("MONO_WASM: abort_startup"), oc.promise_control.reject(e), ic.promise_control.reject(e), ac.promise_control.reject(e), cc.promise_control.reject(e), uc.promise_control.reject(e), lc.promise_control.reject(e), fc.promise_control.reject(e), _c.promise_control.reject(e), t && De(1, e);
       }
-      function bc() {
+      function yc() {
         o.addRunDependency("mono_wasm_pre_init_essential"), b.diagnosticTracing && console$1.debug("MONO_WASM: mono_wasm_pre_init_essential"), I(), Ga(s), Za(Io), Qa(Do), o.removeRunDependency("mono_wasm_pre_init_essential");
       }
-      function Sc(e, t) {
+      function Oc(e, t) {
         o.printErr(`${e}: ${JSON.stringify(t)}`), t.stack && (o.printErr("MONO_WASM: Stacktrace: \n"), o.printErr(t.stack));
       }
-      function Oc(e, t) {
+      function xc(e, t) {
         M.mono_wasm_setenv(e, t);
       }
-      function xc(e) {
+      function jc(e) {
         if (!Array.isArray(e)) throw new Error("Expected runtimeOptions to be an array of strings");
         const t = o._malloc(4 * e.length);
         let n = 0;
@@ -8257,30 +8256,30 @@ var bootloader = (function (exports) {
         }
         M.mono_wasm_parse_runtime_options(e.length, t);
       }
-      function Nc(e, t) {
+      function kc(e, t) {
         if (b.diagnosticTracing && console$1.debug("MONO_WASM: mono_wasm_load_runtime"), !b.mono_wasm_load_runtime_done) {
           b.mono_wasm_load_runtime_done = true;
           try {
-            void 0 == t && (t = 0, tc && tc.debugLevel && (t = 0 + t)), M.mono_wasm_load_runtime(e || "unused", t), b.waitForDebugger = tc.waitForDebugger, b.mono_wasm_bindings_is_ready || kc();
+            void 0 == t && (t = 0, tc && tc.debugLevel && (t = 0 + t)), M.mono_wasm_load_runtime(e || "unused", t), b.waitForDebugger = tc.waitForDebugger, b.mono_wasm_bindings_is_ready || Tc();
           } catch (e) {
-            if (Sc("MONO_WASM: mono_wasm_load_runtime () failed", e), pc(e, false), c || a) {
+            if (Oc("MONO_WASM: mono_wasm_load_runtime () failed", e), bc(e, false), c || a) {
               (0, M.mono_wasm_exit)(1);
             }
             throw e;
           }
         }
       }
-      function kc() {
+      function Tc() {
         if (b.diagnosticTracing && console$1.debug("MONO_WASM: bindings_init"), !b.mono_wasm_bindings_is_ready) {
           b.mono_wasm_bindings_is_ready = true;
           try {
             zs(), Ki(), co(), Ir(), b._i52_error_scratch_buffer = o._malloc(4);
           } catch (e) {
-            throw Sc("MONO_WASM: Error in bindings_init", e), e;
+            throw Oc("MONO_WASM: Error in bindings_init", e), e;
           }
         }
       }
-      function Tc(e, t, n, r, s) {
+      function Mc(e, t, n, r, s) {
         if (true !== b.mono_wasm_runtime_is_ready) return;
         const i = 0 !== e ? o.UTF8ToString(e).concat(".dll") : "",
           c = D(new Uint8Array(o.HEAPU8.buffer, t, n));
@@ -8295,7 +8294,7 @@ var bootloader = (function (exports) {
           pdb_b64: u
         });
       }
-      function Mc(e, t) {
+      function Ic(e, t) {
         const n = t.length + 1,
           r = o._malloc(4 * n);
         let s = 0;
@@ -8303,17 +8302,17 @@ var bootloader = (function (exports) {
         for (let e = 0; e < t.length; ++e) o.setValue(r + 4 * s, M.mono_wasm_strdup(t[e]), "i32"), s += 1;
         M.mono_wasm_set_main_args(n, r);
       }
-      var Dc, Uc;
+      var Uc, Cc;
       ((function (e) {
         e[e.Sending = 0] = "Sending", e[e.Closed = 1] = "Closed", e[e.Error = 2] = "Error";
-      }))(Dc || (Dc = {})), function (e) {
+      }))(Uc || (Uc = {})), function (e) {
         e[e.Idle = 0] = "Idle", e[e.PartialCommand = 1] = "PartialCommand", e[e.Error = 2] = "Error";
-      }(Uc || (Uc = {}));
-      const Cc = void 0;
-      function Pc() {
+      }(Cc || (Cc = {}));
+      const Pc = void 0;
+      function Wc() {
         return {
           mono_set_timeout: ya,
-          mono_wasm_asm_loaded: Tc,
+          mono_wasm_asm_loaded: Mc,
           mono_wasm_fire_debugger_agent_message: mono_wasm_fire_debugger_agent_message,
           mono_wasm_debugger_log: ue,
           mono_wasm_add_dbg_command_received: L,
@@ -8325,8 +8324,8 @@ var bootloader = (function (exports) {
           mono_wasm_invoke_js_with_args_ref: $i,
           mono_wasm_get_object_property_ref: Ni,
           mono_wasm_set_object_property_ref: ki,
-          mono_wasm_get_by_index_ref: Ri,
-          mono_wasm_set_by_index_ref: Ti,
+          mono_wasm_get_by_index_ref: Ti,
+          mono_wasm_set_by_index_ref: Ri,
           mono_wasm_get_global_object_ref: Mi,
           mono_wasm_create_cs_owned_object_ref: bi,
           mono_wasm_release_cs_owned_object: Ke,
@@ -8338,10 +8337,10 @@ var bootloader = (function (exports) {
           mono_wasm_marshal_promise: Oo,
           mono_wasm_load_icu_data: fe,
           mono_wasm_get_icudt_name: _e,
-          ...Cc
+          ...Pc
         };
       }
-      class Wc {
+      class Fc {
         constructor() {
           this.moduleConfig = {
             disableDotnet6Compatibility: true,
@@ -8508,7 +8507,7 @@ var bootloader = (function (exports) {
         create() {
           const _this = this;
           return _call$1(function () {
-            let _exit3 = false;
+            let _exit4 = false;
             return _await$1(_catch$1(function () {
               return _invoke(function () {
                 if (!_this.instance) {
@@ -8519,7 +8518,7 @@ var bootloader = (function (exports) {
                       });
                     }
                   }, function (_result3) {
-                    if (_exit3) ;
+                    if (_exit4) ;
                     if (!_this.moduleConfig) throw new Error("Assert failed: Null moduleConfig");
                     if (!_this.moduleConfig.config) throw new Error("Assert failed: Null moduleConfig.config");
                     return _await$1(m(_this.moduleConfig), function (_m) {
@@ -8528,7 +8527,7 @@ var bootloader = (function (exports) {
                   });
                 }
               }, function (_result4) {
-                if (_exit3) ;
+                if (_exit4) ;
                 if (_this.virtualWorkingDirectory) {
                   const e = _this.instance.Module.FS,
                     t = e.stat(_this.virtualWorkingDirectory);
@@ -8545,9 +8544,9 @@ var bootloader = (function (exports) {
         run() {
           const _this2 = this;
           return _call$1(function () {
-            let _exit4 = false;
+            let _exit5 = false;
             return _await$1(_catch$1(function () {
-              let _exit5 = false;
+              let _exit6 = false;
               if (!_this2.moduleConfig.config) throw new Error("Assert failed: Null moduleConfig.config");
               const _this2$instance = _this2.instance;
               return _await$1(_this2$instance || _this2.create(), function (_this2$create) {
@@ -8570,13 +8569,13 @@ var bootloader = (function (exports) {
           });
         }
       }
-      const Fc = new Wc();
-      function Bc() {
+      const Bc = new Fc();
+      function Vc() {
         return {
-          runMain: Te,
-          runMainAndExit: Re,
-          setEnvironmentVariable: Oc,
-          getAssemblyExports: Hs,
+          runMain: Re,
+          runMainAndExit: Te,
+          setEnvironmentVariable: xc,
+          getAssemblyExports: Vs,
           setModuleImports: Os,
           getConfig: () => b.config,
           setHeapB32: Ot,
@@ -8584,7 +8583,7 @@ var bootloader = (function (exports) {
           setHeapU16: jt,
           setHeapU32: Nt,
           setHeapI8: kt,
-          setHeapI16: Rt,
+          setHeapI16: Tt,
           setHeapI32: Mt,
           setHeapI52: Dt,
           setHeapU52: Ut,
@@ -8593,8 +8592,8 @@ var bootloader = (function (exports) {
           setHeapF64: Wt,
           getHeapB32: Ft,
           getHeapU8: Bt,
-          getHeapU16: Ht,
-          getHeapU32: Vt,
+          getHeapU16: Vt,
+          getHeapU32: Ht,
           getHeapI8: zt,
           getHeapI16: Lt,
           getHeapI32: Jt,
@@ -8607,18 +8606,18 @@ var bootloader = (function (exports) {
       }
       function Hc() {
         return {
-          dotnet: Fc,
+          dotnet: Bc,
           exit: De
         };
       }
-      const Vc = Lc,
-        zc = qc;
-      function Lc(n, o, s, i) {
+      const zc = Jc,
+        Lc = Gc;
+      function Jc(n, o, s, i) {
         const a = o.module,
           c = globalThis;
         g(n, o), Co(o), ds(s), Object.assign(o.mono, Ya()), Object.assign(o.binding, Xa()), Object.assign(o.internal, qa()), Object.assign(o.internal, qa());
-        const u = Bc();
-        if (e.__linker_exports = Pc(), Object.assign(_, {
+        const u = Vc();
+        if (e.__linker_exports = Wc(), Object.assign(_, {
           MONO: o.mono,
           BINDING: o.binding,
           INTERNAL: o.internal,
@@ -8636,7 +8635,7 @@ var bootloader = (function (exports) {
             let n;
             Object.defineProperty(globalThis, e, {
               get: () => {
-                if (R(n)) {
+                if (T(n)) {
                   const r = new Error().stack,
                     o = r ? r.substr(r.indexOf("\n", 8) + 1) : "";
                   console$1.log(`MONO_WASM: global ${e} is obsolete, please use Module.${e} instead ${o}`), n = t();
@@ -8648,10 +8647,10 @@ var bootloader = (function (exports) {
           c.MONO = o.mono, c.BINDING = o.binding, c.INTERNAL = o.internal, n.isGlobal || (c.Module = a), e("cwrap", () => a.cwrap), e("addRunDependency", () => a.addRunDependency), e("removeRunDependency", () => a.removeRunDependency);
         }
         let l;
-        return c.getDotnetRuntime ? l = c.getDotnetRuntime.__list : (c.getDotnetRuntime = e => c.getDotnetRuntime.__list.getRuntime(e), c.getDotnetRuntime.__list = l = new Jc()), l.registerRuntime(_), _c(a, _), _;
+        return c.getDotnetRuntime ? l = c.getDotnetRuntime.__list : (c.getDotnetRuntime = e => c.getDotnetRuntime.__list.getRuntime(e), c.getDotnetRuntime.__list = l = new qc()), l.registerRuntime(_), dc(a, _), _;
       }
       e.__linker_exports = null;
-      class Jc {
+      class qc {
         constructor() {
           this.list = {};
         }
@@ -8663,10 +8662,10 @@ var bootloader = (function (exports) {
           return t ? t.deref() : void 0;
         }
       }
-      function qc(e, t) {
+      function Gc(e, t) {
         w(t), Object.assign(d, Hc()), h(e);
       }
-      return e.__initializeImportsAndExports = Vc, e.__setEmscriptenEntrypoint = zc, e.moduleExports = d, Object.defineProperty(e, "__esModule", {
+      return e.__initializeImportsAndExports = zc, e.__setEmscriptenEntrypoint = Lc, e.moduleExports = d, Object.defineProperty(e, "__esModule", {
         value: true
       }), e;
     }({});
@@ -9067,7 +9066,7 @@ var bootloader = (function (exports) {
           Module["HEAPF32"] = HEAPF32 = new Float32Array(buf);
           Module["HEAPF64"] = HEAPF64 = new Float64Array(buf);
         }
-        Module["INITIAL_MEMORY"] || 536870912;
+        Module["INITIAL_MEMORY"] || 16777216;
         var wasmTable;
         var __ATPRERUN__ = [];
         var __ATINIT__ = [];
@@ -13356,6 +13355,7 @@ var bootloader = (function (exports) {
         let profilerB64 = 0,
           profilerInflate = 0;
         let totalBytes = 0;
+        let binaryBaseData;
         for (const entry of this.manifest) {
           const profilerB64Marker = this.profile();
           let fileDataRaw;
@@ -13363,8 +13363,13 @@ var bootloader = (function (exports) {
             fileDataRaw = toBytes(entry.b64);
           } else if ('b32768' in entry) {
             fileDataRaw = decode(entry.b32768);
+          } else if ('offset' in entry && 'length' in entry) {
+            if (!binaryBaseData) {
+              binaryBaseData = require('./bundle-bin').buffer;
+            }
+            fileDataRaw = new Uint8Array(binaryBaseData, entry.offset, entry.length);
           } else {
-            log(`entry '${entry.path}' does not contain b64 or b32768 data`);
+            log(`entry '${entry.path}' does not contain b64, b32768 or binary data`);
             continue;
           }
           profilerB64 += this.profileAccum(profilerB64Marker);

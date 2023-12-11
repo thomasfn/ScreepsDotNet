@@ -34,21 +34,63 @@ namespace ScreepsDotNet.Bundler
         [Output]
         public string[] BundleFilePaths { get; set; } = null!;
 
+        private readonly struct TextEncodedData
+        {
+            public readonly string Encoding;
+            public readonly string Encoded;
+
+            public TextEncodedData(string encoding, string encoded)
+            {
+                Encoding = encoding;
+                Encoded = encoded;
+            }
+        }
+
+        private readonly struct BinaryEncodedData
+        {
+            public readonly int Offset;
+            public readonly int Length;
+
+            public BinaryEncodedData(int offset, int length)
+            {
+                Offset = offset;
+                Length = length;
+            }
+        }
+
         private readonly struct BundledAsset
         {
             public readonly string Path;
             public readonly int OriginalSize;
             public readonly bool Compressed;
-            public readonly string Encoding;
-            public readonly string Encoded;
+            public readonly TextEncodedData? TextEncodedData;
+            public readonly BinaryEncodedData? BinaryEncodedData;
 
-            public BundledAsset(string path, int originalSize, bool compressed, string encoding, string encoded)
+            public BundledAsset(string path, int originalSize, bool compressed, TextEncodedData? textEncodedData, BinaryEncodedData? binaryEncodedData)
             {
                 Path = path;
                 OriginalSize = originalSize;
                 Compressed = compressed;
-                Encoding = encoding;
-                Encoded = encoded;
+                TextEncodedData = textEncodedData;
+                BinaryEncodedData = binaryEncodedData;
+            }
+
+            public BundledAsset(string path, int originalSize, bool compressed, TextEncodedData textEncodedData)
+            {
+                Path = path;
+                OriginalSize = originalSize;
+                Compressed = compressed;
+                TextEncodedData = textEncodedData;
+                BinaryEncodedData = null;
+            }
+
+            public BundledAsset(string path, int originalSize, bool compressed, BinaryEncodedData binaryEncodedData)
+            {
+                Path = path;
+                OriginalSize = originalSize;
+                Compressed = compressed;
+                TextEncodedData = null;
+                BinaryEncodedData = binaryEncodedData;
             }
         }
 
@@ -62,7 +104,9 @@ namespace ScreepsDotNet.Bundler
             }
             monoConfig.Assets = monoConfig.Assets.Where(ShouldBundleAsset);
 
-            IList<BundledAsset> bundledAssets = new List<BundledAsset>();
+            var bundledAssets = new List<BundledAsset>();
+            var rawDatas = new List<byte[]>();
+            int rawDataHead = 0;
             foreach (var asset in monoConfig.Assets)
             {
                 var localPath = GetAssetLocalPath(asset);
@@ -77,17 +121,53 @@ namespace ScreepsDotNet.Bundler
                         fileStream.CopyTo(deflateStream);
                         originalSize = (int)fileStream.Position;
                     }
-                    bundledAssets.Add(new BundledAsset(localPath.Replace('\\', '/'), originalSize, true, Encoding, Encode(memoryStream.ToArray())));
+                    byte[] rawData = memoryStream.ToArray();
+                    if (Encoding == "bin")
+                    {
+                        bundledAssets.Add(new BundledAsset(localPath.Replace('\\', '/'), originalSize, true, new BinaryEncodedData(rawDataHead, rawData.Length)));
+                        rawDatas.Add(rawData);
+                        rawDataHead += rawData.Length;
+                    }
+                    else
+                    {
+                        bundledAssets.Add(new BundledAsset(localPath.Replace('\\', '/'), originalSize, true, new TextEncodedData(Encoding, Encode(rawData))));
+                    }
                 }
                 else
                 {
-                    byte[] data = File.ReadAllBytes(sourcePath);
-                    bundledAssets.Add(new BundledAsset(localPath.Replace('\\', '/'), data.Length, false, Encoding, Encode(data)));
+                    byte[] rawData = File.ReadAllBytes(sourcePath);
+                    if (Encoding == "bin")
+                    {
+                        bundledAssets.Add(new BundledAsset(localPath.Replace('\\', '/'), rawData.Length, false, new BinaryEncodedData(rawDataHead, rawData.Length)));
+                        rawDatas.Add(rawData);
+                        rawDataHead += rawData.Length;
+                    }
+                    else
+                    {
+                        bundledAssets.Add(new BundledAsset(localPath.Replace('\\', '/'), rawData.Length, false, new TextEncodedData(Encoding, Encode(rawData))));
+                    }
                 }
             }
 
             var arenaFilePaths = BuildArena(Path.Combine(AppBundleDir, "arena"), monoConfig, bundledAssets);
             var worldFilePaths = BuildWorld(Path.Combine(AppBundleDir, "world"), monoConfig, bundledAssets);
+
+            if (Encoding == "bin")
+            {
+                byte[] binaryData = new byte[rawDataHead];
+                rawDataHead = 0;
+                foreach (byte[] rawData in rawDatas)
+                {
+                    Array.Copy(rawData, 0, binaryData, rawDataHead, rawData.Length);
+                    rawDataHead += rawData.Length;
+                }
+                var arenaBundleBinFilename = Path.Combine(Path.Combine(AppBundleDir, "arena"), "bundle-bin.wasm");
+                File.WriteAllBytes(arenaBundleBinFilename, binaryData);
+                arenaFilePaths = arenaFilePaths.Append(arenaBundleBinFilename);
+                var worldBundleBinFilename = Path.Combine(Path.Combine(AppBundleDir, "world"), "bundle-bin.wasm");
+                File.WriteAllBytes(worldBundleBinFilename, binaryData);
+                worldFilePaths = worldFilePaths.Append(worldBundleBinFilename);
+            }
 
             BundleFilePaths = Enumerable.Empty<string>()
                 .Concat(arenaFilePaths)
@@ -101,12 +181,14 @@ namespace ScreepsDotNet.Bundler
         {
             "b64" => Convert.ToBase64String(data),
             "b32768" => Base32768.Encode(data),
+            "bin" => "",
             _ => throw new InvalidOperationException($"Encoding '{Encoding}' is unsupported")
         };
 
         private Encoding GetOutputEncoding() => Encoding switch
         {
             "b64" => System.Text.Encoding.UTF8,
+            "bin" => System.Text.Encoding.UTF8,
             "b32768" => System.Text.Encoding.Unicode,
             _ => throw new InvalidOperationException($"Encoding '{Encoding}' is unsupported")
         };
@@ -123,9 +205,19 @@ namespace ScreepsDotNet.Bundler
                 writer.WriteLine($"export const manifest = [");
                 foreach (var bundledAsset in bundledAssets)
                 {
-                    writer.Write($"  {{ path: './{bundledAsset.Path}', originalSize: {bundledAsset.OriginalSize}, compressed: {(bundledAsset.Compressed ? "true" : "false")}, {bundledAsset.Encoding}: '");
-                    writer.Write(bundledAsset.Encoded);
-                    writer.WriteLine($"' }},");
+                    writer.Write($"  {{ path: './{bundledAsset.Path}', originalSize: {bundledAsset.OriginalSize}, compressed: {(bundledAsset.Compressed ? "true" : "false")}");
+                    if (bundledAsset.TextEncodedData != null)
+                    {
+                        writer.Write($", {bundledAsset.TextEncodedData.Value.Encoding}: '");
+                        writer.Write(bundledAsset.TextEncodedData.Value.Encoded);
+                        writer.Write("'");
+                    }
+                    if (bundledAsset.BinaryEncodedData != null)
+                    {
+                        writer.Write($", offset: {bundledAsset.BinaryEncodedData.Value.Offset}");
+                        writer.Write($", length: {bundledAsset.BinaryEncodedData.Value.Length}");
+                    }
+                    writer.WriteLine($" }},");
                 }
                 writer.WriteLine($"];");
                 writer.Write($"export const config = ");
@@ -158,9 +250,19 @@ namespace ScreepsDotNet.Bundler
                 writer.WriteLine($"const manifest = [");
                 foreach (var bundledAsset in bundledAssets)
                 {
-                    writer.Write($"  {{ path: './{bundledAsset.Path}', originalSize: {bundledAsset.OriginalSize}, compressed: {(bundledAsset.Compressed ? "true" : "false")}, {bundledAsset.Encoding}: '");
-                    writer.Write(bundledAsset.Encoded);
-                    writer.WriteLine($"' }},");
+                    writer.Write($"  {{ path: './{bundledAsset.Path}', originalSize: {bundledAsset.OriginalSize}, compressed: {(bundledAsset.Compressed ? "true" : "false")}");
+                    if (bundledAsset.TextEncodedData != null)
+                    {
+                        writer.Write($", {bundledAsset.TextEncodedData.Value.Encoding}: '");
+                        writer.Write(bundledAsset.TextEncodedData.Value.Encoded);
+                        writer.Write("'");
+                    }
+                    if (bundledAsset.BinaryEncodedData != null)
+                    {
+                        writer.Write($", offset: {bundledAsset.BinaryEncodedData.Value.Offset}");
+                        writer.Write($", length: {bundledAsset.BinaryEncodedData.Value.Length}");
+                    }
+                    writer.WriteLine($" }},");
                 }
                 writer.WriteLine($"];");
                 writer.Write($"const config = ");

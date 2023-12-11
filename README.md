@@ -226,6 +226,18 @@ Screeps DotNet is made up of the following pieces:
 - The Screeps script size limit is 5mb for both Screeps Arena and Screeps World. This limit is for all of your scripts total, not individual files.
 - The bootloader js takes up around ~530kb and the main js contributes too, so you should aim for a rough bundle size limit of 4mb.
 - If you need to get your bundle size down, you can try disabling AOT and making a release build. In my tests you can the bundle size down to almost 1mb in this case.
+- By default the bundle js is encoded to UTF8 contains the wasm and assemblies encoded as base64 strings. You can try the base32768 encoding that will create a UTF16 bundle js file which will cut down the size a little bit, but some Screeps clients (including the official steam one) seem to have issues deploying UTF16 files to the server. This is achieved by setting the `ScreepsEncoding` property in your csproj to `b32768` (the default is `b64`), for example:
+  ```
+  <PropertyGroup>
+	<ScreepsEncoding>b32768</ScreepsEncoding>
+  </PropertyGroup>
+  ```
+- You can also try the binary encoding that will put the actual data in a fake wasm file and have the bundle js file just reference it, which should turn out to be smaller than both of the text encodings. This is not supported on Arena. This is achieved by setting the `ScreepsEncoding` property in your csproj to `bin`, for example:
+  ```
+  <PropertyGroup>
+	<ScreepsEncoding>bin</ScreepsEncoding>
+  </PropertyGroup>
+  ```
 
 ### CPU time
 - Screeps Arena gives you 1000ms of cpu during the first tick and 50ms for every subsequent tick. Screeps World gives you 500ms hard limit every tick and a bucket system to limit average cpu usage based on GCL. If the script takes too long, it will be forcefully terminated, which could have disastrous consequences for the .Net runtime, especially if it happens during GC.

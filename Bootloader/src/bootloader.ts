@@ -11,18 +11,33 @@ import createDotnetRuntime from './dotnet'
 import { advanceFrame, cancelAdvanceFrame } from './timeouts';
 import Promise from 'promise-polyfill';
 
-export interface ManifestEntry {
+export interface BaseManifestEntry {
     path: string;
     originalSize: number;
     compressed: boolean;
-    b64?: string;
-    b32768?: string;
 }
+
+export interface B64EncodedData {
+    b64: string;
+}
+
+export interface B32768TextEncodedData {
+    b32768: string;
+}
+
+export interface BinEncodedData {
+    offset: number;
+    length: number;
+}
+
+export type ManifestEntry = BaseManifestEntry & (B64EncodedData | B32768TextEncodedData | BinEncodedData);
 
 export interface Manifest {
     manifest: ManifestEntry[];
     config: MonoConfig;
 }
+
+declare function require(moduleName: string): unknown;
 
 export class DotNet {
     private readonly manifest: readonly Readonly<ManifestEntry>[];
@@ -114,15 +129,21 @@ export class DotNet {
         let profiler = this.profile();
         let profilerB64 = 0, profilerInflate = 0;
         let totalBytes = 0;
+        let binaryBaseData: ArrayBuffer | undefined;
         for (const entry of this.manifest) {
             const profilerB64Marker = this.profile();
             let fileDataRaw: Uint8Array;
             if ('b64' in entry) {
-                fileDataRaw = decodeB64(entry.b64!);
+                fileDataRaw = decodeB64(entry.b64);
             } else if ('b32768' in entry) {
-                fileDataRaw = decodeB32768(entry.b32768!);
+                fileDataRaw = decodeB32768(entry.b32768);
+            } else if ('offset' in entry && 'length' in entry) {
+                if (!binaryBaseData) {
+                    binaryBaseData = (require('./bundle-bin') as Uint8Array).buffer;
+                }
+                fileDataRaw = new Uint8Array(binaryBaseData, entry.offset, entry.length);
             } else {
-                log(`entry '${entry.path}' does not contain b64 or b32768 data`);
+                log(`entry '${(entry as BaseManifestEntry).path}' does not contain b64, b32768 or binary data`);
                 continue;
             }
             profilerB64 += this.profileAccum(profilerB64Marker);
