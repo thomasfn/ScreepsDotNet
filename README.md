@@ -140,6 +140,7 @@ namespace ScreepsDotNet
         internal static void Loop()
         {
             if (game == null) { return; }
+            game.Tick();
             Console.WriteLine($"Hello world from C#, the current tick is {game.Time}");
         }
     }
