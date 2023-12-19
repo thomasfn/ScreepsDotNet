@@ -47,6 +47,7 @@ namespace ScreepsDotNet.Native.World
             base.ClearNativeCache();
             cooldownCache = null;
             mineralTypeCache = null;
+            storeCache?.Dispose();
             storeCache = null;
         }
 

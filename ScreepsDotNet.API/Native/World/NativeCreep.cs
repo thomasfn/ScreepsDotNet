@@ -266,6 +266,7 @@ namespace ScreepsDotNet.Native.World
             hitsCache = null;
             hitsMaxCache = null;
             memoryCache = null;
+            storeCache?.Dispose();
             storeCache = null;
             ticksToLiveCache = null;
         }

@@ -35,6 +35,7 @@ namespace ScreepsDotNet.Native.World
         protected override void ClearNativeCache()
         {
             base.ClearNativeCache();
+            storeCache?.Dispose();
             storeCache = null;
         }
 

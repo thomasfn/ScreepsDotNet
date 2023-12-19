@@ -11,7 +11,7 @@ namespace ScreepsDotNet.Native.World
     using BodyType = BodyType<BodyPartType>;
 
     [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
-    internal partial class NativeSpawning : ISpawning
+    internal partial class NativeSpawning : ISpawning, IDisposable
     {
         #region Imports
 
@@ -27,6 +27,7 @@ namespace ScreepsDotNet.Native.World
 
         private readonly INativeRoot nativeRoot;
         private readonly JSObject proxyObject;
+        private bool disposedValue;
 
         public int NeedTime => proxyObject.GetPropertyAsInt32("needTime");
 
@@ -59,6 +60,25 @@ namespace ScreepsDotNet.Native.World
 
         public SpawningSetDirectionsResult SetDirections(IEnumerable<Direction> directions)
             => (SpawningSetDirectionsResult)Native_SetDirections(proxyObject, directions.Cast<int>().ToArray());
+
+        #region IDisposable
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                proxyObject.Dispose();
+                disposedValue = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
+        }
+
+        #endregion
     }
 
     [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
@@ -105,20 +125,13 @@ namespace ScreepsDotNet.Native.World
 
         private NativeMemoryObject? memoryCache;
         private NativeStore? storeCache;
+        private NativeSpawning? spawningCache;
 
         public IMemoryObject Memory => CachePerTick(ref memoryCache) ??= new NativeMemoryObject(ProxyObject.GetPropertyAsJSObject("memory")!);
 
         public string Name => CacheLifetime(ref nameCache) ??= ProxyObject.GetPropertyAsString("name")!;
 
-        public ISpawning? Spawning
-        {
-            get
-            {
-                var spawningObj = ProxyObject.GetPropertyAsJSObject("spawning");
-                if (spawningObj == null) { return null; }
-                return new NativeSpawning(nativeRoot, spawningObj);
-            }
-        }
+        public ISpawning? Spawning => CachePerTick(ref spawningCache) ??= GetSpawning();
 
         public IStore Store => CachePerTick(ref storeCache) ??= new NativeStore(ProxyObject.GetPropertyAsJSObject("store"));
 
@@ -130,7 +143,10 @@ namespace ScreepsDotNet.Native.World
         {
             base.ClearNativeCache();
             memoryCache = null;
+            storeCache?.Dispose();
             storeCache = null;
+            spawningCache?.Dispose();
+            spawningCache = null;
         }
 
         public SpawnCreepResult SpawnCreep(IEnumerable<BodyPartType> body, string name, SpawnCreepOptions? opts = null)
@@ -154,6 +170,13 @@ namespace ScreepsDotNet.Native.World
 
         public RenewCreepResult RenewCreep(ICreep target)
             => (RenewCreepResult)Native_RenewCreep(ProxyObject, target.ToJS());
+
+        private NativeSpawning? GetSpawning()
+        {
+            var spawningObj = ProxyObject.GetPropertyAsJSObject("spawning");
+            if (spawningObj == null) { return null; }
+            return new NativeSpawning(nativeRoot, spawningObj);
+        }
 
         public override string ToString()
             => $"StructureSpawn[{(Exists ? $"'{Name}'" : Id.ToString())}]({(Exists ? $"{RoomPosition}" : "DEAD")})";

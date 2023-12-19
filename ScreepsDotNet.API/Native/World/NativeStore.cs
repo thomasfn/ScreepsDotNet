@@ -45,7 +45,7 @@ namespace ScreepsDotNet.Native.World
     }
 
     [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
-    internal partial class NativeStore : IStore
+    internal partial class NativeStore : IStore, IDisposable
     {
         #region Imports
 
@@ -68,16 +68,13 @@ namespace ScreepsDotNet.Native.World
         internal readonly JSObject? ProxyObject;
 
         private int[]? resourceCache;
-
-        public NativeStore(JSObject? proxyObject)
-        {
-            ProxyObject = proxyObject;
-        }
+        private bool disposedValue;
 
         public int this[ResourceType resourceType]
         {
             get
             {
+                if (disposedValue) { throw new ObjectDisposedException("this"); }
                 if (resourceCache == null)
                 {
                     resourceCache = new int[ResourceCount];
@@ -89,6 +86,7 @@ namespace ScreepsDotNet.Native.World
             }
             set
             {
+                if (disposedValue) { throw new ObjectDisposedException("this"); }
                 if (resourceCache == null)
                 {
                     resourceCache = new int[ResourceCount];
@@ -98,13 +96,55 @@ namespace ScreepsDotNet.Native.World
             }
         }
 
+        public NativeStore(JSObject? proxyObject)
+        {
+            ProxyObject = proxyObject;
+        }
+
         public int? GetCapacity(ResourceType? resourceType = null)
-            => ProxyObject != null ? Native_GetCapacity(ProxyObject, resourceType?.ToJS()) : null;
+        {
+            if (disposedValue) { throw new ObjectDisposedException("this"); }
+            return ProxyObject != null ? Native_GetCapacity(ProxyObject, resourceType?.ToJS()) : null;
+        }
 
         public int? GetFreeCapacity(ResourceType? resourceType = null)
-            => ProxyObject != null ? Native_GetFreeCapacity(ProxyObject, resourceType?.ToJS()) : null;
+        {
+            if (disposedValue) { throw new ObjectDisposedException("this"); }
+            return ProxyObject != null ? Native_GetFreeCapacity(ProxyObject, resourceType?.ToJS()) : null;
+        }
 
         public int? GetUsedCapacity(ResourceType? resourceType = null)
-            => ProxyObject != null ? Native_GetUsedCapacity(ProxyObject, resourceType?.ToJS()) : null;
+        {
+            if (disposedValue) { throw new ObjectDisposedException("this"); }
+            return ProxyObject != null ? Native_GetUsedCapacity(ProxyObject, resourceType?.ToJS()) : null;
+        }
+
+        #region Disposable
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    resourceCache = null;
+                }
+                ProxyObject?.Dispose();
+                disposedValue = true;
+            }
+        }
+
+        ~NativeStore()
+        {
+            Dispose(disposing: false);
+        }
+
+        public void Dispose()
+        {
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
+        }
+
+        #endregion
     }
 }

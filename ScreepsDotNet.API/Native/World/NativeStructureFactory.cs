@@ -35,6 +35,7 @@ namespace ScreepsDotNet.Native.World
             base.ClearNativeCache();
             cooldownCache = null;
             levelCache = null;
+            storeCache?.Dispose();
             storeCache = null;
         }
 
