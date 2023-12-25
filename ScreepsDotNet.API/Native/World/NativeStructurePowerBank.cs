@@ -10,9 +10,9 @@ namespace ScreepsDotNet.Native.World
         private int? powerCache;
         private int? ticksToDecayCache;
 
-        public int Power => CacheLifetime(ref powerCache) ??= ProxyObject.GetPropertyAsInt32("level");
+        public int Power => CacheLifetime(ref powerCache) ??= ProxyObject.GetPropertyAsInt32("power");
 
-        public int TicksToDecay => CacheLifetime(ref ticksToDecayCache) ??= ProxyObject.GetPropertyAsInt32("level");
+        public int TicksToDecay => CacheLifetime(ref ticksToDecayCache) ??= ProxyObject.GetPropertyAsInt32("ticksToDecay");
 
         public NativeStructurePowerBank(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
             : base(nativeRoot, proxyObject, id)
