@@ -19,11 +19,11 @@ namespace ScreepsDotNet.Native.World
             {
                 if (ownershipCanChange)
                 {
-                    return CachePerTick(ref myCache) ??= ProxyObject.GetPropertyAsBoolean("my");
+                    return CachePerTick(ref myCache) ??= (ProxyObject.TryGetPropertyAsBoolean("my") ?? false);
                 }
                 else
                 {
-                    return CacheLifetime(ref myCache) ??= ProxyObject.GetPropertyAsBoolean("my");
+                    return CacheLifetime(ref myCache) ??= (ProxyObject.TryGetPropertyAsBoolean("my") ?? false);
                 }
             }
         }
