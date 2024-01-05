@@ -1132,6 +1132,6 @@ namespace ScreepsDotNet.API.World
         /// <param name="resourceType"></param>
         /// <param name="amount"></param>
         /// <returns></returns>
-        // CreepWithdrawResult Withdraw(IRuin target, ResourceType resourceType, int? amount = null);
+        CreepWithdrawResult Withdraw(IRuin target, ResourceType resourceType, int? amount = null);
     }
 }
