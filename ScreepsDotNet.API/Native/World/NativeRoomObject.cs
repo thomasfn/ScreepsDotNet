@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+
 using ScreepsDotNet.Interop;
 
+using ScreepsDotNet.API;
 using ScreepsDotNet.API.World;
 
 namespace ScreepsDotNet.Native.World
@@ -19,6 +21,8 @@ namespace ScreepsDotNet.Native.World
         internal static partial void Native_GetEncodedRoomPosition(JSObject proxyObject, IntPtr outPtr);
 
         #endregion
+
+        private UserDataStorage userDataStorage;
 
         protected RoomPosition? positionCache;
 
@@ -69,6 +73,22 @@ namespace ScreepsDotNet.Native.World
                 positionCache = null;
             }
         }
+
+        #region User Data
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SetUserData<T>(T? userData) where T : class => userDataStorage.SetUserData<T>(userData);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryGetUserData<T>([MaybeNullWhen(false)] out T userData) where T : class => userDataStorage.TryGetUserData<T>(out userData);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public T? GetUserData<T>() where T : class => userDataStorage.GetUserData<T>();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool HasUserData<T>() where T : class => userDataStorage.HasUserData<T>();
+
+        #endregion
 
         private RoomPosition FetchRoomPosition()
         {

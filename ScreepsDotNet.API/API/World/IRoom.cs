@@ -97,7 +97,7 @@ namespace ScreepsDotNet.API.World
     /// It can be used to look around, find paths, etc.
     /// Every RoomObject in the room contains its linked Room instance in the room property.
     /// </summary>
-    public interface IRoom : IWithName
+    public interface IRoom : IWithName, IWithUserData
     {
         /// <summary>
         /// Gets if this room still exists and is visible.

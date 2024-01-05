@@ -31,7 +31,7 @@ namespace ScreepsDotNet.API.World
     /// <summary>
     /// Any object with a position in a room. Almost all game objects prototypes are derived from RoomObject.
     /// </summary>
-    public interface IRoomObject
+    public interface IRoomObject : IWithUserData
     {
         /// <summary>
         /// Gets if this object still exists.

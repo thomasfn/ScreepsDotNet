@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using ScreepsDotNet.Interop;
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using System.Linq;
+
+using ScreepsDotNet.Interop;
 
 using ScreepsDotNet.API;
 using ScreepsDotNet.API.World;
@@ -79,6 +82,8 @@ namespace ScreepsDotNet.Native.World
 
         #endregion
 
+        private UserDataStorage userDataStorage;
+
         private IStructureController? controllerCache;
         private int? energyAvailableCache;
         private int? energyCapacityAvailableCache;
@@ -132,6 +137,22 @@ namespace ScreepsDotNet.Native.World
             terminalCache = null;
             visualCache = null;
         }
+
+        #region User Data
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SetUserData<T>(T? userData) where T : class => userDataStorage.SetUserData<T>(userData);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryGetUserData<T>([MaybeNullWhen(false)] out T userData) where T : class => userDataStorage.TryGetUserData<T>(out userData);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public T? GetUserData<T>() where T : class => userDataStorage.GetUserData<T>();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool HasUserData<T>() where T : class => userDataStorage.HasUserData<T>();
+
+        #endregion
 
         public RoomCreateConstructionSiteResult CreateConstructionSite<T>(Position position, string? name = null) where T : class, IStructure
         {

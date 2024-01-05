@@ -86,7 +86,7 @@ namespace ScreepsDotNet.Native.World
             => pathStep.Position.ToJS();
 
         public static SearchPathResult ToSearchPathResult(this JSObject obj) => new(
-                JSUtils.GetObjectArrayOnObject(obj, "path")!.Select(x => x.ToRoomPosition()).ToArray(),
+                JSUtils.GetObjectArrayOnObject(obj, "path")?.Select(x => x.ToRoomPosition()).ToArray() ?? ReadOnlySpan<RoomPosition>.Empty,
                 (int)obj.GetPropertyAsDouble("ops"),
                 (int)obj.GetPropertyAsDouble("cost"),
                 obj.GetPropertyAsBoolean("incomplete")
