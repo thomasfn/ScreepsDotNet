@@ -12,45 +12,6 @@ type GamePrototype = {};
 
 type GameConstructor = { readonly prototype: GamePrototype };
 
-const GAME_CONSTRUCTORS: Record<string, GameConstructor> = {
-    StructureContainer,
-    StructureController,
-    StructureExtension,
-    StructureExtractor,
-    StructureFactory,
-    StructureInvaderCore,
-    StructureKeeperLair,
-    StructureLab,
-    StructureLink,
-    StructureNuker,
-    StructureObserver,
-    StructurePowerBank,
-    StructurePowerSpawn,
-    StructurePortal,
-    StructureRampart,
-    StructureRoad,
-    StructureSpawn,
-    StructureStorage,
-    StructureTerminal,
-    StructureTower,
-    StructureWall,
-    OwnedStructure,
-    Structure,
-    Source,
-    Mineral,
-    Deposit,
-    Creep,
-    Flag,
-    Resource,
-    ConstructionSite,
-    Tombstone,
-    Ruin,
-    RoomObject,
-    Room,
-    RoomVisual,
-    Nuke,
-};
-
 export class WorldBindings extends BaseBindings {
     private _copyBufferSize: number = 0;
     private _copyBufferPtr: number | null = null;
@@ -83,6 +44,44 @@ export class WorldBindings extends BaseBindings {
 
     protected setupImports(): void {
         super.setupImports();
+        const gameConstructors: Record<string, GameConstructor> = {
+            StructureContainer,
+            StructureController,
+            StructureExtension,
+            StructureExtractor,
+            StructureFactory,
+            StructureInvaderCore,
+            StructureKeeperLair,
+            StructureLab,
+            StructureLink,
+            StructureNuker,
+            StructureObserver,
+            StructurePowerBank,
+            StructurePowerSpawn,
+            StructurePortal,
+            StructureRampart,
+            StructureRoad,
+            StructureSpawn,
+            StructureStorage,
+            StructureTerminal,
+            StructureTower,
+            StructureWall,
+            OwnedStructure,
+            Structure,
+            Source,
+            Mineral,
+            Deposit,
+            Creep,
+            Flag,
+            Resource,
+            ConstructionSite,
+            Tombstone,
+            Ruin,
+            RoomObject,
+            Room,
+            RoomVisual,
+            Nuke,
+        }
         this.imports['object'] = {
             getConstructorOf: (x: object) => Object.getPrototypeOf(x).constructor,
             interpretDateTime: (x: Date) => x.getTime() / 1000,
@@ -93,7 +92,7 @@ export class WorldBindings extends BaseBindings {
             getMemoryObj: () => this._memoryCache,
             getConstantsObj: () => global,
             getRawMemoryObj: () => RawMemory,
-            getPrototypes: () => GAME_CONSTRUCTORS,
+            getPrototypes: () => gameConstructors,
             createRoomPosition: (x, y, roomName) => new RoomPosition(x, y, roomName),
             createCostMatrix: () => new PathFinder.CostMatrix(),
             createRoomVisual: (roomName) => new RoomVisual(roomName),
@@ -163,7 +162,7 @@ export class WorldBindings extends BaseBindings {
                 import: (data: string) => Game.map.visual.import(data),
             },
         };
-        const wrappedPrototypes = this.buildWrappedPrototypes(GAME_CONSTRUCTORS);
+        const wrappedPrototypes = this.buildWrappedPrototypes(gameConstructors);
         this.imports['game/prototypes/wrapped'] = {
             ...wrappedPrototypes,
             RoomObject: {

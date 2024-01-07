@@ -87,7 +87,9 @@ export class Bootloader {
     public get profilingEnabled() { return this._profilingEnabled; }
     public set profilingEnabled(value) { this._profilingEnabled = value; }
 
-    constructor(env: 'world'|'arena', profileFn: () => number) {
+    public get exports() { return this._wasmInstance!.exports; }
+
+    constructor(env: 'world'|'arena'|'test', profileFn: () => number) {
         this._deferLogsToTick = env === 'arena';
         this._profileFn = profileFn;
 
@@ -170,7 +172,7 @@ export class Bootloader {
         this._compiled = true;
     }
 
-    public start(): void {
+    public start(customInitExportNames?: ReadonlyArray<string>): void {
         if (!this._wasmInstance || !this._compiled || this._started || !this._memoryManager) { return; }
 
         // Start WASI
@@ -193,6 +195,11 @@ export class Bootloader {
         // Run usercode init
         {
             const t0 = this._profileFn();
+            if (customInitExportNames) {
+                for (const exportName of customInitExportNames) {
+                    (this._wasmInstance.exports as unknown as Record<string, () => void>)[exportName]();
+                }
+            }
             this._wasmInstance.exports.screepsdotnet_init();
             const t1 = this._profileFn();
             if (this._profilingEnabled) {
