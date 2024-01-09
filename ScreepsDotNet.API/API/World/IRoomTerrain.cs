@@ -2,11 +2,13 @@
 
 namespace ScreepsDotNet.API.World
 {
+    [Flags]
     public enum Terrain : byte
     {
         Plain = 0,
         Wall = 1,
-        Swamp = 2
+        Swamp = 2,
+        Lava = 4
     }
 
     /// <summary>
