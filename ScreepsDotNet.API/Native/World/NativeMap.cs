@@ -39,7 +39,7 @@ namespace ScreepsDotNet.Native.World
         #region Imports
 
         [JSImport("map.describeExits", "game")]
-        internal static partial JSObject Native_DescribeExits(string roomName);
+        internal static partial JSObject? Native_DescribeExits(string roomName);
 
         [JSImport("map.findExit", "game")]
         internal static partial int Native_FindExit(string fromRoom, string toRoom, JSObject? opts);
@@ -67,7 +67,8 @@ namespace ScreepsDotNet.Native.World
 
         public RoomExits DescribeExits(string roomName)
         {
-            var obj = Native_DescribeExits(roomName);
+            using var obj = Native_DescribeExits(roomName);
+            if (obj == null) { return new(); }
             return new(obj.GetPropertyAsString("1"), obj.GetPropertyAsString("3"), obj.GetPropertyAsString("5"), obj.GetPropertyAsString("7"));
         }
 
