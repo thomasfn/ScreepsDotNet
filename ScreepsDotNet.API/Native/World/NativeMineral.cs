@@ -25,7 +25,7 @@ namespace ScreepsDotNet.Native.World
 
         public ObjectId Id => id;
 
-        public int TicksToRegeneration => CachePerTick(ref ticksToRegenerationCache) ??= ProxyObject.GetPropertyAsInt32("ticksToRegeneration");
+        public int? TicksToRegeneration => CachePerTick(ref ticksToRegenerationCache) ??= ProxyObject.TryGetPropertyAsInt32("ticksToRegeneration");
 
         public NativeMineral(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
             : base(nativeRoot, proxyObject)

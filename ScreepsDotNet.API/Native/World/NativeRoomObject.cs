@@ -20,15 +20,20 @@ namespace ScreepsDotNet.Native.World
         
         internal static partial void Native_GetEncodedRoomPosition(JSObject proxyObject, IntPtr outPtr);
 
+        [JSImport("getProperty", "__object")]
+
+        internal static partial JSObject[] Native_GetEffects(JSObject proxyObject, string key);
+
         #endregion
 
         private UserDataStorage userDataStorage;
 
         protected RoomPosition? positionCache;
+        protected Effect[]? effectsCache;
 
         protected virtual bool CanMove { get => false; }
 
-        public IEnumerable<Effect> Effects => throw new NotImplementedException();
+        public IEnumerable<Effect> Effects => CachePerTick(ref effectsCache) ??= FetchEffects();
 
         public RoomPosition RoomPosition
         {
@@ -102,6 +107,29 @@ namespace ScreepsDotNet.Native.World
                 }
             }
             return MemoryMarshal.Cast<byte, RoomPosition>(buffer[16..])[0];
+        }
+
+        private Effect[] FetchEffects()
+        {
+            var effectsArr = Native_GetEffects(ProxyObject, "effects");
+            var result = new Effect[effectsArr.Length];
+            try
+            {
+                for (int i = 0; i < effectsArr.Length; ++i)
+                {
+                    var obj = effectsArr[i];
+                    result[i] = new(
+                        effectType: (EffectType)obj.GetPropertyAsInt32("effect"),
+                        level: obj.TryGetPropertyAsInt32("level"),
+                        ticksRemaining: obj.GetPropertyAsInt32("ticksRemaining")
+                    );
+                }
+                return result;
+            }
+            finally
+            {
+                effectsArr.DisposeAll();
+            }
         }
     }
 
@@ -290,13 +318,13 @@ namespace ScreepsDotNet.Native.World
 
         internal static Type? GetWrapperTypeForConstructor(JSObject constructor)
         {
-            int typeId = constructor.GetPropertyAsInt32(TypeIdKey) - 1;
-            if (typeId < 0)
+            int? typeId = constructor.TryGetPropertyAsInt32(TypeIdKey) - 1;
+            if (typeId == null || typeId < 0)
             {
                 Console.WriteLine($"Failed to retrieve wrapper type for {constructor} - typeId not found");
                 return null;
             }
-            return prototypeTypeMappings[typeId];
+            return prototypeTypeMappings[typeId.Value];
         }
 
         internal static Type? GetWrapperTypeForObject(JSObject jsObject)

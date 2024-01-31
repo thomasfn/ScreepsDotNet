@@ -3,12 +3,37 @@ using System.Collections.Generic;
 
 namespace ScreepsDotNet.API.World
 {
+    public enum EffectType
+    {
+        PowerGenerateOps = 1,
+        PowerOperateSpawn = 2,
+        PowerOperateTower = 3,
+        PowerOperateStorage = 4,
+        PowerOperateLab = 5,
+        PowerOperateExtension = 6,
+        PowerOperateObserver = 7,
+        PowerOperateTerminal = 8,
+        PowerDisruptSpawn = 9,
+        PowerDisruptTower = 10,
+        PowerDisruptSource = 11,
+        PowerShield = 12,
+        PowerRegen_source = 13,
+        PowerRegen_mineral = 14,
+        PowerDisrupt_terminal = 15,
+        PowerOperate_power = 16,
+        PowerFortify = 17,
+        PowerOperate_controller = 18,
+        PowerOperate_factory = 19,
+        Invulnerability = 1001,
+        CollapseTimer = 1002,
+    }
+
     public readonly struct Effect
     {
         /// <summary>
         /// Effect ID of the applied effect. Can be either natural effect ID or Power ID.
         /// </summary>
-        public readonly int EffectId;
+        public readonly EffectType EffectType;
 
         /// <summary>
         /// Power level of the applied effect. Absent if the effect is not a Power effect.
@@ -20,9 +45,9 @@ namespace ScreepsDotNet.API.World
         /// </summary>
         public readonly int TicksRemaining;
 
-        public Effect(int effectId, int? level, int ticksRemaining)
+        public Effect(EffectType effectType, int? level, int ticksRemaining)
         {
-            EffectId = effectId;
+            EffectType = effectType;
             Level = level;
             TicksRemaining = ticksRemaining;
         }

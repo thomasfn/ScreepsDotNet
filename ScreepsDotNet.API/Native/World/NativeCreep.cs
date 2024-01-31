@@ -289,7 +289,7 @@ namespace ScreepsDotNet.Native.World
             => Native_CancelOrder(ProxyObject, orderType.ToJS());
 
         public CreepClaimControllerResult ClaimController(IStructureController controller)
-            => (CreepClaimControllerResult)Native_AttackController(ProxyObject, controller.ToJS());
+            => (CreepClaimControllerResult)Native_ClaimController(ProxyObject, controller.ToJS());
 
         public CreepDismantleResult Dismantle(IStructure target)
             => (CreepDismantleResult)Native_Dismantle(ProxyObject, target.ToJS());
