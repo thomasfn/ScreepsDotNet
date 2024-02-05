@@ -24,6 +24,7 @@ namespace ScreepsDotNet.Native.World
             "cell", "phlegm", "tissue", "muscle", "organoid", "organism",
             "alloy", "tube", "fixtures", "frame", "hydraulics", "machine",
             "condensate", "concentrate", "extract", "spirit", "emanation", "essence",
+            "season",
             ""
         }.ToImmutableArray();
 
@@ -81,7 +82,7 @@ namespace ScreepsDotNet.Native.World
                     resourceCache.AsSpan().Fill(-1);
                 }
                 ref int amount = ref resourceCache[(int)resourceType];
-                if (amount < 0) { amount = ProxyObject?.GetPropertyAsInt32(resourceType.ToJS()) ?? 0; }
+                if (amount < 0) { amount = ProxyObject?.TryGetPropertyAsInt32(resourceType.ToJS()) ?? 0; }
                 return amount;
             }
             set

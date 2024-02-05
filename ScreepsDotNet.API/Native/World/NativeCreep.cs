@@ -239,7 +239,7 @@ namespace ScreepsDotNet.Native.World
 
         public IStore Store => CachePerTick(ref storeCache) ??= new NativeStore(ProxyObject.GetPropertyAsJSObject("store"));
 
-        public int TicksToLive => CachePerTick(ref ticksToLiveCache) ??= ProxyObject.GetPropertyAsInt32("ticksToLive");
+        public int TicksToLive => CachePerTick(ref ticksToLiveCache) ??= FetchTTL();
 
         public NativeCreep(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
             : base(nativeRoot, proxyObject)
@@ -397,6 +397,15 @@ namespace ScreepsDotNet.Native.World
 
         public CreepWithdrawResult Withdraw(IRuin target, ResourceType resourceType, int? amount = null)
             => (CreepWithdrawResult)Native_Withdraw(ProxyObject, target.ToJS(), resourceType.ToJS(), amount);
+
+        private int FetchTTL()
+        {
+            var ttlMaybe = ProxyObject.TryGetPropertyAsInt32("ticksToLive");
+            if (ttlMaybe != null) { return ttlMaybe.Value; }
+            // This can return null on the first tick of an invader's existence, so compensate for that and hard code in 1500 for now
+            if (Owner.Username == "Invader") { return 1500; }
+            throw new JSException($"Creep.ticksToLive returned null");
+        }
 
         public override string ToString()
             => $"Creep[{(Exists ? $"'{Name}'" : id.ToString())}]({(Exists ? $"{RoomPosition}" : "DEAD")})";

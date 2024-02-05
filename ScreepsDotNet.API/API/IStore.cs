@@ -100,6 +100,8 @@
         Emanation,
         Essence,
 
+        Season,
+
         Unknown
     }
 

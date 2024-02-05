@@ -30,9 +30,9 @@ namespace ScreepsDotNet.Native.World
         private int? hitsCache;
         private int? hitsMaxCache;
 
-        public int Hits => CachePerTick(ref hitsCache) ??= ProxyObject.GetPropertyAsInt32("hits");
+        public int Hits => CachePerTick(ref hitsCache) ??= ProxyObject.TryGetPropertyAsInt32("hits") ?? 0;
 
-        public int HitsMax => CachePerTick(ref hitsMaxCache) ??= ProxyObject.GetPropertyAsInt32("hitsMax");
+        public int HitsMax => CachePerTick(ref hitsMaxCache) ??= ProxyObject.TryGetPropertyAsInt32("hitsMax") ?? 0;
 
         public ObjectId Id => id;
 
