@@ -15,7 +15,7 @@ namespace ScreepsDotNet.Native.World
 
         public PortalInterShardDestination? InterShardDestination => CacheLifetime(ref interShardDestinationCache) ??= GetInterShardDestination();
 
-        public int? TicksToDecay => CachePerTick(ref ticksToDecayCache) ??= ProxyObject.TryGetPropertyAsInt32("ticksToDecay");
+        public int? TicksToDecay => CachePerTick(ref ticksToDecayCache) ??= ProxyObject.TryGetPropertyAsInt32(Names.TicksToDecay);
 
         public NativeStructurePortal(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
             : base(nativeRoot, proxyObject, id)
@@ -23,7 +23,7 @@ namespace ScreepsDotNet.Native.World
 
         private RoomPosition? GetInterRoomDestination()
         {
-            using var obj = ProxyObject.GetPropertyAsJSObject("destination");
+            using var obj = ProxyObject.GetPropertyAsJSObject(Names.Destination);
             if (obj == null) { return null; }
             if (!obj.HasProperty("x")) { return null; }
             return obj.ToRoomPosition();
@@ -31,11 +31,11 @@ namespace ScreepsDotNet.Native.World
 
         private PortalInterShardDestination? GetInterShardDestination()
         {
-            using var obj = ProxyObject.GetPropertyAsJSObject("destination");
+            using var obj = ProxyObject.GetPropertyAsJSObject(Names.Destination);
             if (obj == null) { return null; }
-            var shard = obj.GetPropertyAsString("shard");
+            var shard = obj.GetPropertyAsString(Names.Shard);
             if (string.IsNullOrEmpty(shard)) { return null; }
-            var roomCoord = new RoomCoord(obj.GetPropertyAsString("room")!);
+            var roomCoord = new RoomCoord(obj.GetPropertyAsString(Names.Room)!);
             return new(shard, roomCoord);
         }
 

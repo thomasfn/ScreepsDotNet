@@ -17,6 +17,7 @@ const enum InteropValueType {
     Str = 13,
     Obj = 14,
     Arr = 15,
+    Nme = 16,
 }
 
 const INTEROP_VALUE_TYPE_NAMES: Record<InteropValueType, string> = [
@@ -36,6 +37,7 @@ const INTEROP_VALUE_TYPE_NAMES: Record<InteropValueType, string> = [
     'char*',
     'JSObject',
     '[]',
+    'Name',
 ];
 
 interface ParamSpec {
@@ -68,8 +70,6 @@ interface BoundImportSymbol {
 
 const CLR_TRACKING_ID = Symbol('clr-tracking-id');
 
-const TEMP_PROPERTY_DESCRIPTOR: PropertyDescriptor = {};
-
 export type MallocFunction = (sz: number) => number;
 
 export interface ImportTable {
@@ -87,6 +87,8 @@ export class Interop {
     private readonly _boundImportList: BoundImportFunction[] = [];
     private readonly _boundImportSymbolList: BoundImportSymbol[] = [];
     private readonly _objectTrackingList: Record<number, object> = {};
+    private readonly _nameList: string[] = [];
+    private readonly _nameTable: Record<string, number> = {};
 
     private _memoryManager?: WasmMemoryManager;
     private _malloc?: MallocFunction;
@@ -114,6 +116,7 @@ export class Interop {
         this.interopImport.js_bind_import = this.js_bind_import.bind(this);
         this.interopImport.js_invoke_import = this.js_invoke_import.bind(this);
         this.interopImport.js_release_object_reference = this.js_release_object_reference.bind(this);
+        this.interopImport.js_set_name = this.js_set_name.bind(this);
     }
 
     public setImports(moduleName: string, importTable: ImportTable): void {
@@ -195,6 +198,14 @@ export class Interop {
         --this._numTotalTrackingObjects;
     }
 
+    private js_set_name(nameIndex: number, valuePtr: number): void {
+        if (!this._memoryManager) { return; }
+        const value = this.stringToJs(this._memoryManager.view, valuePtr);
+        this._nameList[nameIndex] = value;
+        this._nameTable[value] = nameIndex;
+        console.log(`mapped name index ${nameIndex} to '${value}'`);
+    }
+
     private createImportBinding(importFunction: (...args: unknown[]) => unknown, functionSpec: Readonly<FunctionSpec>, importIndex: number): BoundImportFunction {
         return (paramsBufferPtr) => {
             if (!this._memoryManager) { return 0; }
@@ -267,6 +278,7 @@ export class Interop {
                     throw new Error(`malformed param spec (array with no element spec)`);
                 }
                 return this.arrayToJs(memoryView, memoryView.i32[valuePtr >> 2], memoryView.i32[(valuePtr + 8) >> 2], paramSpec.elementSpec);
+            case InteropValueType.Nme: return this._nameList[memoryView.i32[valuePtr >> 2]];
             default: throw new Error(`failed to marshal ${stringifyParamSpec(paramSpec)} from '${INTEROP_VALUE_TYPE_NAMES[valueType] ?? 'unknown'}'`);
         }
     }
@@ -334,6 +346,17 @@ export class Interop {
                 }
                 memoryView.i32[(valuePtr + 8) >> 2] = value.length;
                 memoryView.u8[valuePtr + 12] = InteropValueType.Arr;
+                break;
+            case InteropValueType.Nme:
+                const valueAsStr = typeof value === 'string' ? value : `${value}`;
+                const nameIndex = this._nameTable[valueAsStr];
+                if (nameIndex == null) {
+                    memoryView.i32[valuePtr >> 2] = this.stringToClr(memoryView, valueAsStr);
+                    memoryView.u8[valuePtr + 12] = InteropValueType.Str;
+                } else {
+                    memoryView.i32[valuePtr >> 2] = nameIndex;
+                    memoryView.u8[valuePtr + 12] = InteropValueType.Nme;
+                }
                 break;
             default: throw new Error(`failed to marshal '${typeof value}' as '${stringifyParamSpec(paramSpec)}' (not yet implemented)`);
         }
@@ -487,14 +510,12 @@ export class Interop {
     }
 
     private getClrTrackingId(obj: object): number | undefined {
-        return Object.getOwnPropertyDescriptor(obj, CLR_TRACKING_ID)?.value;
+        return (obj as { [CLR_TRACKING_ID]: number | undefined })[CLR_TRACKING_ID];
     }
 
     private assignClrTrackingId(obj: object): number {
         const clrTrackingId = this._nextClrTrackingId++;
-        TEMP_PROPERTY_DESCRIPTOR.value = clrTrackingId;
-        TEMP_PROPERTY_DESCRIPTOR.configurable = true;
-        Object.defineProperty(obj, CLR_TRACKING_ID, TEMP_PROPERTY_DESCRIPTOR);
+        (obj as { [CLR_TRACKING_ID]: number | undefined })[CLR_TRACKING_ID] = clrTrackingId;
         this._objectTrackingList[clrTrackingId] = obj;
         ++this._numBeginTrackingObjects;
         ++this._numTotalTrackingObjects;
@@ -502,9 +523,7 @@ export class Interop {
     }
 
     private clearClrTrackingId(obj: object): void {
-        TEMP_PROPERTY_DESCRIPTOR.value = undefined;
-        TEMP_PROPERTY_DESCRIPTOR.configurable = true;
-        Object.defineProperty(obj, CLR_TRACKING_ID, TEMP_PROPERTY_DESCRIPTOR);
+        (obj as { [CLR_TRACKING_ID]: number | undefined })[CLR_TRACKING_ID] = undefined;
     }
 
     private stringifyValueForDisplay(value: unknown): string {

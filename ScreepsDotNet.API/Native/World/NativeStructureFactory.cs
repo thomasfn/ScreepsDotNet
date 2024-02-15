@@ -12,7 +12,7 @@ namespace ScreepsDotNet.Native.World
 
         [JSImport("StructureFactory.produce", "game/prototypes/wrapped")]
         
-        internal static partial int Native_Produce(JSObject proxyObject, string resourceType);
+        internal static partial int Native_Produce(JSObject proxyObject, Name resourceType);
 
         #endregion
 
@@ -20,11 +20,11 @@ namespace ScreepsDotNet.Native.World
         private int? levelCache;
         private NativeStore? storeCache;
 
-        public int Cooldown => CachePerTick(ref cooldownCache) ??= ProxyObject.GetPropertyAsInt32("cooldown");
+        public int Cooldown => CachePerTick(ref cooldownCache) ??= ProxyObject.GetPropertyAsInt32(Names.Cooldown);
 
-        public int Level => CachePerTick(ref levelCache) ??= ProxyObject.GetPropertyAsInt32("level");
+        public int Level => CachePerTick(ref levelCache) ??= ProxyObject.GetPropertyAsInt32(Names.Level);
 
-        public IStore Store => CachePerTick(ref storeCache) ??= new NativeStore(ProxyObject.GetPropertyAsJSObject("store"));
+        public IStore Store => CachePerTick(ref storeCache) ??= new NativeStore(ProxyObject.GetPropertyAsJSObject(Names.Store));
 
         public NativeStructureFactory(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
             : base(nativeRoot, proxyObject, id)

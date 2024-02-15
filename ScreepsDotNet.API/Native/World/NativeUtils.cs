@@ -9,7 +9,7 @@ namespace ScreepsDotNet.Native.World
     internal static class PositionExtensions
     {
         public static RoomPosition ToRoomPosition(this JSObject obj)
-            => new(obj.ToPosition(), obj.GetPropertyAsString("roomName")!);
+            => new(obj.ToPosition(), obj.GetPropertyAsString(Names.RoomName)!);
 
         public static RoomPosition? ToRoomPositionNullable(this JSObject? obj)
             => obj != null ? new RoomPosition?(obj.ToRoomPosition()) : null;

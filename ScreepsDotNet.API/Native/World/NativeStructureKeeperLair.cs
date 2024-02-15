@@ -9,7 +9,7 @@ namespace ScreepsDotNet.Native.World
     {
         private int? ticksToSpawnCache;
 
-        public int TicksToSpawn => CachePerTick(ref ticksToSpawnCache) ??= ProxyObject.GetPropertyAsInt32("ticksToSpawn");
+        public int TicksToSpawn => CachePerTick(ref ticksToSpawnCache) ??= ProxyObject.GetPropertyAsInt32(Names.TicksToSpawn);
 
         public NativeStructureKeeperLair(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
             : base(nativeRoot, proxyObject, id)

@@ -12,7 +12,6 @@ namespace ScreepsDotNet.Native.World
         #region Imports
 
         [JSImport("ConstructionSite.remove", "game/prototypes/wrapped")]
-        
         internal static partial int Native_Remove(JSObject proxyObject);
 
         #endregion
@@ -27,15 +26,15 @@ namespace ScreepsDotNet.Native.World
 
         public ObjectId Id => id;
 
-        public bool My => CacheLifetime(ref myCache) ??= ProxyObject.GetPropertyAsBoolean("my");
+        public bool My => CacheLifetime(ref myCache) ??= ProxyObject.GetPropertyAsBoolean(Names.My);
 
-        public OwnerInfo Owner => CacheLifetime(ref ownerInfoCache) ??= new(ProxyObject.GetPropertyAsJSObject("owner")!.GetPropertyAsString("username")!);
+        public OwnerInfo Owner => CacheLifetime(ref ownerInfoCache) ??= new(ProxyObject.GetPropertyAsJSObject(Names.Owner)!.GetPropertyAsString(Names.Username)!);
 
-        public int Progress => CachePerTick(ref progressCache) ??= ProxyObject.GetPropertyAsInt32("progress");
+        public int Progress => CachePerTick(ref progressCache) ??= ProxyObject.GetPropertyAsInt32(Names.Progress);
 
-        public int ProgressTotal => CachePerTick(ref progressTotalCache) ??= ProxyObject.GetPropertyAsInt32("progressTotal");
+        public int ProgressTotal => CachePerTick(ref progressTotalCache) ??= ProxyObject.GetPropertyAsInt32(Names.ProgressTotal);
 
-        public Type StructureType => CacheLifetime(ref structureTypeCache) ??= (NativeRoomObjectUtils.GetInterfaceTypeForStructureConstant(ProxyObject.GetPropertyAsString("structureType")!) ?? typeof(IStructure));
+        public Type StructureType => CacheLifetime(ref structureTypeCache) ??= (NativeRoomObjectUtils.GetInterfaceTypeForStructureConstant(ProxyObject.GetPropertyAsString(Names.StructureType)!) ?? typeof(IStructure));
 
         public NativeConstructionSite(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
             : base(nativeRoot, proxyObject)

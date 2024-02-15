@@ -17,15 +17,15 @@ namespace ScreepsDotNet.Native.World
         private int? lastCooldownCache;
         private int? ticksToDecayCache;
 
-        public int Cooldown => CachePerTick(ref cooldownCache) ??= ProxyObject.GetPropertyAsInt32("cooldown");
+        public int Cooldown => CachePerTick(ref cooldownCache) ??= ProxyObject.GetPropertyAsInt32(Names.Cooldown);
 
-        public ResourceType DepositType => CacheLifetime(ref depositTypeCache) ??= ProxyObject.GetPropertyAsString("depositType")!.ParseResourceType();
+        public ResourceType DepositType => CacheLifetime(ref depositTypeCache) ??= ProxyObject.GetPropertyAsName(Names.DepositType)!.ParseResourceType();
 
         public ObjectId Id => id;
 
-        public int LastCooldown => CachePerTick(ref lastCooldownCache) ??= ProxyObject.GetPropertyAsInt32("lastCooldown");
+        public int LastCooldown => CachePerTick(ref lastCooldownCache) ??= ProxyObject.GetPropertyAsInt32(Names.LastCooldown);
 
-        public int TicksToDecay => CachePerTick(ref ticksToDecayCache) ??= ProxyObject.GetPropertyAsInt32("ticksToDecay");
+        public int TicksToDecay => CachePerTick(ref ticksToDecayCache) ??= ProxyObject.GetPropertyAsInt32(Names.TicksToDecay);
 
 
         public NativeDeposit(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)

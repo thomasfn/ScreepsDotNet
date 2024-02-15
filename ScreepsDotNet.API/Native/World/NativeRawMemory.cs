@@ -157,19 +157,19 @@ namespace ScreepsDotNet.Native.World
         private NativeRawMemorySegments? segmentsCache;
         private ForeignSegment? foreignSegmentCache;
 
-        public IDictionary<int, string> Segments => segmentsCache ??= new NativeRawMemorySegments(proxyObject.GetPropertyAsJSObject("segments")!);
+        public IDictionary<int, string> Segments => segmentsCache ??= new NativeRawMemorySegments(proxyObject.GetPropertyAsJSObject(Names.Segments)!);
 
         public ForeignSegment? ForeignSegment
         {
             get
             {
                 if (foreignSegmentCache != null) { return foreignSegmentCache.Value; }
-                var obj = proxyObject.GetPropertyAsJSObject("foreignSegment");
+                var obj = proxyObject.GetPropertyAsJSObject(Names.ForeignSegment);
                 if (obj == null) { return null; }
                 return foreignSegmentCache = new(
-                    obj.GetPropertyAsString("username") ?? "",
-                    obj.GetPropertyAsInt32("id"),
-                    obj.GetPropertyAsString("data") ?? ""
+                    obj.GetPropertyAsString(Names.Username) ?? "",
+                    obj.GetPropertyAsInt32(Names.Id),
+                    obj.GetPropertyAsString(Names.Data) ?? ""
                 );
             }
         }

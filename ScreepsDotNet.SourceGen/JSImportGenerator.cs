@@ -21,7 +21,7 @@ namespace ScreepsDotNet.SourceGen
 
         static JSImportGenerator()
         {
-            var primitiveMarshallers = new BaseMarshaller[] { new VoidMarshaller(), new NumericMarshaller(), new StringMarshaller(), new JSObjectMarshaller() };
+            var primitiveMarshallers = new BaseMarshaller[] { new VoidMarshaller(), new NumericMarshaller(), new StringMarshaller(), new JSObjectMarshaller(), new NameMarshaller() };
             var unlayerableMarshallers = new BaseMarshaller[] { new DataViewMarshaller(), new StringArrayMarshaller() };
             var layeredMarshallers = new BaseMarshaller[] { new ArrayMarshaller(primitiveMarshallers.ToImmutableArray()) };
 

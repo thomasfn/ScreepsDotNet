@@ -18,10 +18,11 @@ namespace ScreepsDotNet.Native.World
         #endregion
 
         private NativeStore? storeCache;
+        private int? cooldownCache;
 
-        public IStore Store => CachePerTick(ref storeCache) ??= new NativeStore(ProxyObject.GetPropertyAsJSObject("store"));
+        public IStore Store => CachePerTick(ref storeCache) ??= new NativeStore(ProxyObject.GetPropertyAsJSObject(Names.Store));
 
-        public int Cooldown => ProxyObject.GetPropertyAsInt32("cooldown");
+        public int Cooldown => CachePerTick(ref cooldownCache) ??= ProxyObject.GetPropertyAsInt32(Names.Cooldown);
 
         public NativeStructureLink(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
             : base(nativeRoot, proxyObject, id)
@@ -32,6 +33,7 @@ namespace ScreepsDotNet.Native.World
             base.ClearNativeCache();
             storeCache?.Dispose();
             storeCache = null;
+            cooldownCache = null;
         }
 
         public LinkTransferEnergyResult TransferEnergy(IStructureLink target, int? amount = null)

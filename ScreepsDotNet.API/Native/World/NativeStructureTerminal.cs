@@ -12,16 +12,15 @@ namespace ScreepsDotNet.Native.World
         #region Imports
 
         [JSImport("StructureTerminal.send", "game/prototypes/wrapped")]
-        
-        internal static partial int Native_Send(JSObject proxyObject, string resourceType, int amount, string destination, string? description);
+        internal static partial int Native_Send(JSObject proxyObject, Name resourceType, int amount, string destination, string? description);
 
         #endregion
 
         private NativeStore? storeCache;
 
-        public int Cooldown => ProxyObject.GetPropertyAsInt32("cooldown");
+        public int Cooldown => ProxyObject.GetPropertyAsInt32(Names.Cooldown);
 
-        public IStore Store => CachePerTick(ref storeCache) ??= new NativeStore(ProxyObject.GetPropertyAsJSObject("store"));
+        public IStore Store => CachePerTick(ref storeCache) ??= new NativeStore(ProxyObject.GetPropertyAsJSObject(Names.Store));
 
         public NativeStructureTerminal(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
             : base(nativeRoot, proxyObject, id)

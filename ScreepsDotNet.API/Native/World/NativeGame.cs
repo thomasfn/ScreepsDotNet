@@ -144,20 +144,20 @@ namespace ScreepsDotNet.Native.World
 
         public IReadOnlyDictionary<string, IStructure> Structures => structureLazyLookup;
 
-        public long Time => timeCache ??= ProxyObject.GetPropertyAsInt32("time");
+        public long Time => timeCache ??= ProxyObject.GetPropertyAsInt32(Names.Time);
 
         public NativeGame()
         {
             ProxyObject = Native_GetGameObject();
-            CreepsObj = ProxyObject.GetPropertyAsJSObject("creeps")!;
-            FlagsObj = ProxyObject.GetPropertyAsJSObject("flags")!;
-            RoomsObj = ProxyObject.GetPropertyAsJSObject("rooms")!;
-            SpawnsObj = ProxyObject.GetPropertyAsJSObject("spawns")!;
-            StructuresObj = ProxyObject.GetPropertyAsJSObject("structures")!;
-            nativeCpu = new NativeCpu(ProxyObject.GetPropertyAsJSObject("cpu")!);
+            CreepsObj = ProxyObject.GetPropertyAsJSObject(Names.Creeps)!;
+            FlagsObj = ProxyObject.GetPropertyAsJSObject(Names.Flags)!;
+            RoomsObj = ProxyObject.GetPropertyAsJSObject(Names.Rooms)!;
+            SpawnsObj = ProxyObject.GetPropertyAsJSObject(Names.Spawns)!;
+            StructuresObj = ProxyObject.GetPropertyAsJSObject(Names.Structures)!;
+            nativeCpu = new NativeCpu(ProxyObject.GetPropertyAsJSObject(Names.Cpu)!);
             nativeInterShardMemory = new NativeInterShardMemory();
             nativeMap = new NativeMap();
-            nativeMarket = new NativeMarket(ProxyObject.GetPropertyAsJSObject("market")!);
+            nativeMarket = new NativeMarket(ProxyObject.GetPropertyAsJSObject(Names.Market)!);
             nativePathFinder = new NativePathFinder();
             nativeConstants = new NativeConstants();
             nativeRawMemory = new NativeRawMemory(Native_GetRawMemoryObj());
@@ -175,19 +175,19 @@ namespace ScreepsDotNet.Native.World
             ProxyObject.Dispose();
             ProxyObject = Native_GetGameObject();
             CreepsObj.Dispose();
-            CreepsObj = ProxyObject.GetPropertyAsJSObject("creeps")!;
+            CreepsObj = ProxyObject.GetPropertyAsJSObject(Names.Creeps)!;
             FlagsObj.Dispose();
-            FlagsObj = ProxyObject.GetPropertyAsJSObject("flags")!;
+            FlagsObj = ProxyObject.GetPropertyAsJSObject(Names.Flags)!;
             RoomsObj.Dispose();
-            RoomsObj = ProxyObject.GetPropertyAsJSObject("rooms")!;
+            RoomsObj = ProxyObject.GetPropertyAsJSObject(Names.Rooms)!;
             SpawnsObj.Dispose();
-            SpawnsObj = ProxyObject.GetPropertyAsJSObject("spawns")!;
+            SpawnsObj = ProxyObject.GetPropertyAsJSObject(Names.Spawns)!;
             StructuresObj.Dispose();
-            StructuresObj = ProxyObject.GetPropertyAsJSObject("structures")!;
+            StructuresObj = ProxyObject.GetPropertyAsJSObject(Names.Structures)!;
             nativeCpu.ProxyObject.Dispose();
-            nativeCpu.ProxyObject = ProxyObject.GetPropertyAsJSObject("cpu")!;
+            nativeCpu.ProxyObject = ProxyObject.GetPropertyAsJSObject(Names.Cpu)!;
             nativeMarket.ProxyObject.Dispose();
-            nativeMarket.ProxyObject = ProxyObject.GetPropertyAsJSObject("market")!;
+            nativeMarket.ProxyObject = ProxyObject.GetPropertyAsJSObject(Names.Market)!;
             nativeRawMemory.ProxyObject.Dispose();
             nativeRawMemory.ProxyObject = Native_GetRawMemoryObj();
             creepLazyLookup.InvalidateProxyObject();

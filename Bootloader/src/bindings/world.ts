@@ -12,6 +12,52 @@ type GamePrototype = {};
 
 type GameConstructor = { readonly prototype: GamePrototype };
 
+type ResourceConstantEx = ResourceConstant | "season";
+
+const RESOURCE_LIST: readonly ResourceConstantEx[] = [
+    "energy", "power",
+    "H", "O", "U", "L", "K", "Z", "X", "G",
+    "silicon", "metal", "biomass", "mist",
+    "OH", "ZK", "UL", "UH", "UO", "KH", "KO", "LH", "LO", "ZH", "ZO", "GH", "GO",
+    "UH2O", "UHO2", "KH2O", "KHO2", "LH2O", "LHO2", "ZH2O", "ZHO2", "GH2O", "GHO2",
+    "XUH2O", "XUHO2", "XKH2O", "XKHO2", "XLH2O", "XLHO2", "XZH2O", "XZHO2", "XGH2O", "XGHO2",
+    "ops",
+    "utrium_bar", "lemergium_bar", "zynthium_bar", "keanium_bar", "ghodium_melt", "oxidant", "reductant", "purifier", "battery",
+    "composite", "crystal", "liquid",
+    "wire", "switch", "transistor", "microchip", "circuit", "device",
+    "cell", "phlegm", "tissue", "muscle", "organoid", "organism",
+    "alloy", "tube", "fixtures", "frame", "hydraulics", "machine",
+    "condensate", "concentrate", "extract", "spirit", "emanation", "essence",
+    "season",
+]; // 85 total
+
+const RESOURCE_TO_ENUM_MAP: Record<ResourceConstantEx, number> = {} as Record<ResourceConstantEx, number>;
+{
+    let i = 0;
+    for (const resourceName of RESOURCE_LIST) {
+        RESOURCE_TO_ENUM_MAP[resourceName] = i++;
+    }
+}
+
+const BODYPART_LIST: readonly BodyPartConstant[] = [
+    MOVE,
+    WORK,
+    CARRY,
+    ATTACK,
+    RANGED_ATTACK,
+    TOUGH,
+    HEAL,
+    CLAIM,
+]; // 8 total
+
+const BODYPART_TO_ENUM_MAP: Record<BodyPartConstant, number> = {} as Record<BodyPartConstant, number>;
+{
+    let i = 0;
+    for (const bodyPart of BODYPART_LIST) {
+        BODYPART_TO_ENUM_MAP[bodyPart] = i++;
+    }
+}
+
 export class WorldBindings extends BaseBindings {
     private _copyBufferSize: number = 0;
     private _copyBufferPtr: number | null = null;
@@ -205,6 +251,10 @@ export class WorldBindings extends BaseBindings {
                 lookForAtFast: (thisObj: Room, type: LookConstant, x: number, y: number) => this.encodeRoomObjectArray(this._memoryManager!.view, thisObj.lookForAt(type, x, y) as unknown as Record<string, unknown>[]),
                 lookForAtAreaFast: (thisObj: Room, type: LookConstant, top: number, left: number, bottom: number, right: number) => this.encodeRoomObjectArray(this._memoryManager!.view, thisObj.lookForAtArea(type, top, left, bottom, right, true), type),
             },
+            Creep: {
+                ...wrappedPrototypes.Creep,
+                getEncodedBody: (thisObj: Creep, outPtr: number) => this.encodeCreepBody(this._memoryManager!.view, thisObj.body, outPtr),
+            },
             PathFinder: {
                 ...(PathFinder as unknown as Importable),
                 compileRoomCallback: (opts: PathFinderOpts, roomCostMap: { allowUnspecifiedRooms: boolean, [roomName: string]: boolean | CostMatrix }) => {
@@ -230,7 +280,7 @@ export class WorldBindings extends BaseBindings {
         };
     }
 
-    private encodeRoomPosition(memoryView: WasmMemoryView, {x, y, roomName}: RoomPosition, outPtr: number) {
+    private encodeRoomPosition(memoryView: WasmMemoryView, {x, y, roomName}: RoomPosition, outPtr: number): void {
         // X:i32(4), y:i32(4), roomName:6i8(6), padding:2i8(2) total=16
         const { u8, i32 } = memoryView;
         i32[(outPtr + 0) >>> 2] = x;
@@ -249,7 +299,7 @@ export class WorldBindings extends BaseBindings {
         }
     }
     
-    private encodeObjectId(memoryView: WasmMemoryView, id: string, outPtr: number) {
+    private encodeObjectId(memoryView: WasmMemoryView, id: string, outPtr: number): void {
         const { u8, i32 } = memoryView;
         if (id) {
             const l = id.length;
@@ -266,7 +316,7 @@ export class WorldBindings extends BaseBindings {
         }
     }
 
-    private encodeRoomObjectArray(memoryView: WasmMemoryView, arr: Record<string, unknown>[], key?: string) {
+    private encodeRoomObjectArray(memoryView: WasmMemoryView, arr: Record<string, unknown>[], key?: string): number {
         const { i32 } = memoryView;
         if (this._copyBufferPtr == null) { throw new Error(`encodeRoomObjectArray failed as copy buffer was not allocated`); }
         // room object packet (54b):
@@ -303,6 +353,25 @@ export class WorldBindings extends BaseBindings {
             copyBufferHead += PACKET_SIZE_IN_BYTES;
         }
         return numEncoded;
+    }
+
+    private encodeCreepBody(memoryView: WasmMemoryView, body: readonly BodyPartDefinition[], outPtr: number): number {
+        const { i32 } = memoryView;
+        for (let i = 0; i < body.length; ++i) {
+            const { type, hits, boost } = body[i];
+            // Encode each body part to a 32 bit int as 4 bytes
+            // unused: b3
+            // type: 0-8 (4 bits 0-15) b2
+            // hits: 0-100 (7 bits 0-127) b1
+            // boost: null or 0-85 (7 bits 0-127, 127 means null) b0
+            let encodedBodyPart = 0;
+            encodedBodyPart |= (BODYPART_TO_ENUM_MAP[type] << 16);
+            encodedBodyPart |= (hits << 8);
+            encodedBodyPart |= (boost == null ? 127 : RESOURCE_TO_ENUM_MAP[boost as ResourceConstantEx]);
+            i32[outPtr >> 2] = encodedBodyPart;
+            outPtr += 4;
+        }
+        return body.length;
     }
 
     private buildWrappedPrototypes(prototypes: Record<string, GameConstructor>): Record<string, GamePrototype> {

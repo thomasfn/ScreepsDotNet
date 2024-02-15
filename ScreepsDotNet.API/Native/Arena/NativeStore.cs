@@ -1,6 +1,8 @@
 ﻿using System;
 using ScreepsDotNet.Interop;
 using ScreepsDotNet.API;
+using System.Collections.Generic;
+using System.Collections.Immutable;
 
 namespace ScreepsDotNet.Native.Arena
 {
@@ -53,6 +55,9 @@ namespace ScreepsDotNet.Native.Arena
         internal readonly JSObject? ProxyObject;
 
         private int[]? resourceCache;
+        private ResourceType[]? resourceTypes;
+
+        public IEnumerable<ResourceType> ContainedResourceTypes => throw new NotImplementedException();
 
         public NativeStore(JSObject? proxyObject)
         {

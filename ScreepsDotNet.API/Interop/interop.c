@@ -15,11 +15,15 @@ extern int js_invoke_import(int importIndex, void* paramsBufferPtr);
 __attribute__((__import_module__("js"), __import_name__("js_release_object_reference")))
 extern int js_release_object_reference(void* jsHandle);
 
+__attribute__((__import_module__("js"), __import_name__("js_set_name")))
+extern void js_set_name(int nameIndex, const char* valuePtr);
+
 void interop_attach_internal_calls()
 {
 	mono_add_internal_call("ScreepsDotNet_Interop::BindImport", js_bind_import);
 	mono_add_internal_call("ScreepsDotNet_Interop::InvokeImport", js_invoke_import);
 	mono_add_internal_call("ScreepsDotNet_Interop::ReleaseObjectReference", js_release_object_reference);
+	mono_add_internal_call("ScreepsDotNet_Interop::SetName", js_set_name);
 }
 
 MonoMethod* method_Init;

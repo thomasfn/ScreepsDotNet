@@ -1,5 +1,4 @@
 ﻿using ScreepsDotNet.API.World;
-using System;
 using ScreepsDotNet.Interop;
 
 namespace ScreepsDotNet.Native.World

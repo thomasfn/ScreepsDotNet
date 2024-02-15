@@ -29,21 +29,21 @@ namespace ScreepsDotNet.Native.World
         private readonly JSObject proxyObject;
         private bool disposedValue;
 
-        public int NeedTime => proxyObject.GetPropertyAsInt32("needTime");
+        public int NeedTime => proxyObject.GetPropertyAsInt32(Names.NeedTime);
 
-        public int RemainingTime => proxyObject.GetPropertyAsInt32("remainingTime");
+        public int RemainingTime => proxyObject.GetPropertyAsInt32(Names.RemainingTime);
 
         public IEnumerable<Direction> Directions =>
-            (JSUtils.GetIntArrayOnObject(proxyObject, "directions") ?? Enumerable.Empty<int>())
+            (JSUtils.GetIntArrayOnObject(proxyObject, Names.Directions) ?? Enumerable.Empty<int>())
                 .Cast<Direction>();
 
-        public string Name => proxyObject.GetPropertyAsString("name")!;
+        public string Name => proxyObject.GetPropertyAsString(Names.Name)!;
 
         public IStructureSpawn Spawn
         {
             get
             {
-                var spawn = nativeRoot.GetOrCreateWrapperObject<IStructureSpawn>(proxyObject.GetPropertyAsJSObject("spawn"));
+                var spawn = nativeRoot.GetOrCreateWrapperObject<IStructureSpawn>(proxyObject.GetPropertyAsJSObject(Names.Spawn));
                 if (spawn == null) { throw new InvalidOperationException($"ISpawning failed to retrieve spawn"); }
                 return spawn;
             }
@@ -87,12 +87,12 @@ namespace ScreepsDotNet.Native.World
         public static JSObject ToJS(this SpawnCreepOptions spawnCreepOptions)
         {
             using var obj = JSObject.Create();
-            if (spawnCreepOptions.Memory != null) { obj.SetProperty("memory", spawnCreepOptions.Memory.ToJS()); }
-            if (spawnCreepOptions.EnergyStructures != null) { JSUtils.SetObjectArrayOnObject(obj, "energyStructures", spawnCreepOptions.EnergyStructures.Select(x => x.ToJS()).ToArray()); }
-            if (spawnCreepOptions.DryRun != null) { obj.SetProperty("dryRun", spawnCreepOptions.DryRun.Value); }
+            if (spawnCreepOptions.Memory != null) { obj.SetProperty(Names.Memory, spawnCreepOptions.Memory.ToJS()); }
+            if (spawnCreepOptions.EnergyStructures != null) { JSUtils.SetObjectArrayOnObject(obj, Names.EnergyStructures, spawnCreepOptions.EnergyStructures.Select(x => x.ToJS()).ToArray()); }
+            if (spawnCreepOptions.DryRun != null) { obj.SetProperty(Names.DryRun, spawnCreepOptions.DryRun.Value); }
             if (spawnCreepOptions.Directions != null)
             {
-                JSUtils.SetIntArrayOnObject(obj, "directions", spawnCreepOptions.Directions.Cast<int>().ToArray());
+                JSUtils.SetIntArrayOnObject(obj, Names.Directions, spawnCreepOptions.Directions.Cast<int>().ToArray());
             }
             return obj;
         }
@@ -127,13 +127,13 @@ namespace ScreepsDotNet.Native.World
         private NativeStore? storeCache;
         private NativeSpawning? spawningCache;
 
-        public IMemoryObject Memory => CachePerTick(ref memoryCache) ??= new NativeMemoryObject(ProxyObject.GetPropertyAsJSObject("memory")!);
+        public IMemoryObject Memory => CachePerTick(ref memoryCache) ??= new NativeMemoryObject(ProxyObject.GetPropertyAsJSObject(Names.Memory)!);
 
-        public string Name => CacheLifetime(ref nameCache) ??= ProxyObject.GetPropertyAsString("name")!;
+        public string Name => CacheLifetime(ref nameCache) ??= ProxyObject.GetPropertyAsString(Names.Name)!;
 
         public ISpawning? Spawning => CachePerTick(ref spawningCache) ??= GetSpawning();
 
-        public IStore Store => CachePerTick(ref storeCache) ??= new NativeStore(ProxyObject.GetPropertyAsJSObject("store"));
+        public IStore Store => CachePerTick(ref storeCache) ??= new NativeStore(ProxyObject.GetPropertyAsJSObject(Names.Store));
 
         public NativeStructureSpawn(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
             : base(nativeRoot, proxyObject, id)
@@ -173,7 +173,7 @@ namespace ScreepsDotNet.Native.World
 
         private NativeSpawning? GetSpawning()
         {
-            var spawningObj = ProxyObject.GetPropertyAsJSObject("spawning");
+            var spawningObj = ProxyObject.GetPropertyAsJSObject(Names.Spawning);
             if (spawningObj == null) { return null; }
             return new NativeSpawning(nativeRoot, spawningObj);
         }

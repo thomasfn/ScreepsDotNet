@@ -21,6 +21,7 @@ namespace ScreepsDotNet.Interop
         Str = 13,
         Obj = 14,
         Arr = 15,
+        Nme = 16,
     }
 
     [Flags]

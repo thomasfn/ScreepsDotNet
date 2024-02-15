@@ -47,17 +47,17 @@ namespace ScreepsDotNet.Native.World
             }
         }
 
-        public double Limit => ProxyObject.GetPropertyAsDouble("limit");
+        public double Limit => ProxyObject.GetPropertyAsDouble(Names.Limit);
 
-        public double TickLimit => ProxyObject.GetPropertyAsDouble("tickLimit");
+        public double TickLimit => ProxyObject.GetPropertyAsDouble(Names.TickLimit);
 
-        public double Bucket => ProxyObject.GetPropertyAsDouble("bucket");
+        public double Bucket => ProxyObject.GetPropertyAsDouble(Names.Bucket);
 
         public IReadOnlyDictionary<string, double> ShardLimits => throw new NotImplementedException();
 
-        public bool Unlocked =>  ProxyObject.GetPropertyAsBoolean("unlocked");
+        public bool Unlocked =>  ProxyObject.GetPropertyAsBoolean(Names.Unlocked);
 
-        public long? UnlockedTime => ProxyObject.TryGetPropertyAsInt32("unlockedTime");
+        public long? UnlockedTime => ProxyObject.TryGetPropertyAsInt32(Names.UnlockedTime);
 
         public NativeCpu(JSObject proxyObject)
         {

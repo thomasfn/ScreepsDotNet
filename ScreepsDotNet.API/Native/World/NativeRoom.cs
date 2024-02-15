@@ -98,29 +98,29 @@ namespace ScreepsDotNet.Native.World
 
         public RoomCoord Coord { get; }
 
-        public IStructureController? Controller => CachePerTick(ref controllerCache) ??= nativeRoot.GetOrCreateWrapperObject<IStructureController>(ProxyObject.GetPropertyAsJSObject("controller"));
+        public IStructureController? Controller => CachePerTick(ref controllerCache) ??= nativeRoot.GetOrCreateWrapperObject<IStructureController>(ProxyObject.GetPropertyAsJSObject(Names.Controller));
 
-        public int EnergyAvailable => CachePerTick(ref energyAvailableCache) ??= ProxyObject.GetPropertyAsInt32("energyAvailable");
+        public int EnergyAvailable => CachePerTick(ref energyAvailableCache) ??= ProxyObject.GetPropertyAsInt32(Names.EnergyAvailable);
 
-        public int EnergyCapacityAvailable => CachePerTick(ref energyCapacityAvailableCache) ??= ProxyObject.GetPropertyAsInt32("energyCapacityAvailable");
+        public int EnergyCapacityAvailable => CachePerTick(ref energyCapacityAvailableCache) ??= ProxyObject.GetPropertyAsInt32(Names.EnergyCapacityAvailable);
 
-        public IMemoryObject Memory => CachePerTick(ref memoryCache) ??= new NativeMemoryObject(ProxyObject.GetPropertyAsJSObject("memory")!);
+        public IMemoryObject Memory => CachePerTick(ref memoryCache) ??= new NativeMemoryObject(ProxyObject.GetPropertyAsJSObject(Names.Memory)!);
 
-        public IStructureStorage? Storage => CachePerTick(ref storageCache) ??= nativeRoot.GetOrCreateWrapperObject<IStructureStorage>(ProxyObject.GetPropertyAsJSObject("storage"));
+        public IStructureStorage? Storage => CachePerTick(ref storageCache) ??= nativeRoot.GetOrCreateWrapperObject<IStructureStorage>(ProxyObject.GetPropertyAsJSObject(Names.Storage));
 
-        public IStructureTerminal? Terminal => CachePerTick(ref terminalCache) ??= nativeRoot.GetOrCreateWrapperObject<IStructureTerminal>(ProxyObject.GetPropertyAsJSObject("terminal"));
+        public IStructureTerminal? Terminal => CachePerTick(ref terminalCache) ??= nativeRoot.GetOrCreateWrapperObject<IStructureTerminal>(ProxyObject.GetPropertyAsJSObject(Names.Terminal));
 
-        public IRoomVisual Visual => CachePerTick(ref visualCache) ??= new NativeRoomVisual(ProxyObject.GetPropertyAsJSObject("visual")!);
+        public IRoomVisual Visual => CachePerTick(ref visualCache) ??= new NativeRoomVisual(ProxyObject.GetPropertyAsJSObject(Names.Visual)!);
 
         public NativeRoom(INativeRoot nativeRoot, JSObject proxyObject, string? knownName)
             : base(nativeRoot, proxyObject)
         {
-            Name = knownName ?? proxyObject.GetPropertyAsString("name")!;
+            Name = knownName ?? proxyObject.GetPropertyAsString(Names.Name)!;
             Coord = new(Name);
         }
 
         public NativeRoom(INativeRoot nativeRoot, JSObject proxyObject)
-            : this(nativeRoot, proxyObject, proxyObject.GetPropertyAsString("name"))
+            : this(nativeRoot, proxyObject, proxyObject.GetPropertyAsString(Names.Name))
         { }
 
         public override JSObject? ReacquireProxyObject()
@@ -171,8 +171,8 @@ namespace ScreepsDotNet.Native.World
         public RoomCreateFlagResult CreateFlag(Position position, out string newFlagName, string? name = null, FlagColor? color = null, FlagColor? secondaryColor = null)
         {
             using var resultJs = Native_CreateFlag(ProxyObject, position.X, position.Y, name, (int?)color, (int?)secondaryColor);
-            newFlagName = resultJs.GetPropertyAsString("name") ?? string.Empty;
-            return (RoomCreateFlagResult)resultJs.GetPropertyAsInt32("code");
+            newFlagName = resultJs.GetPropertyAsString(Names.Name) ?? string.Empty;
+            return (RoomCreateFlagResult)resultJs.GetPropertyAsInt32(Names.Code);
         }
 
         public IEnumerable<T> Find<T>(bool? my = null) where T : class, IRoomObject
@@ -267,7 +267,7 @@ namespace ScreepsDotNet.Native.World
 
         private JSObject? InterpretLookElement(JSObject lookElement)
         {
-            var typeStr = lookElement.GetPropertyAsString("type")!;
+            var typeStr = lookElement.GetPropertyAsString(Names.Type)!;
             if (lookElement.GetTypeOfProperty(typeStr) != JSPropertyType.Object) { return null; }
             return lookElement.GetPropertyAsJSObject(typeStr);
         }

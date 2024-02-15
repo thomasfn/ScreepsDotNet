@@ -22,7 +22,7 @@ namespace ScreepsDotNet.Native.World
 
         [JSImport("getProperty", "__object")]
 
-        internal static partial JSObject[] Native_GetEffects(JSObject proxyObject, string key);
+        internal static partial JSObject[] Native_GetEffects(JSObject proxyObject, Name key);
 
         #endregion
 
@@ -111,7 +111,7 @@ namespace ScreepsDotNet.Native.World
 
         private Effect[] FetchEffects()
         {
-            var effectsArr = Native_GetEffects(ProxyObject, "effects");
+            var effectsArr = Native_GetEffects(ProxyObject, Names.Effects);
             var result = new Effect[effectsArr.Length];
             try
             {
@@ -119,9 +119,9 @@ namespace ScreepsDotNet.Native.World
                 {
                     var obj = effectsArr[i];
                     result[i] = new(
-                        effectType: (EffectType)obj.GetPropertyAsInt32("effect"),
-                        level: obj.TryGetPropertyAsInt32("level"),
-                        ticksRemaining: obj.GetPropertyAsInt32("ticksRemaining")
+                        effectType: (EffectType)obj.GetPropertyAsInt32(Names.Effect),
+                        level: obj.TryGetPropertyAsInt32(Names.Level),
+                        ticksRemaining: obj.GetPropertyAsInt32(Names.TicksRemaining)
                     );
                 }
                 return result;

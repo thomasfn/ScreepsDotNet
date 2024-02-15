@@ -21,7 +21,7 @@ namespace ScreepsDotNet.Native.World
 
         public int MineralAmount => CachePerTick(ref mineralAmountCache) ??= ProxyObject.GetPropertyAsInt32("mineralAmount");
 
-        public ResourceType MineralType => CacheLifetime(ref mineralTypeCache) ??= ProxyObject.GetPropertyAsString("mineralType")!.ParseResourceType();
+        public ResourceType MineralType => CacheLifetime(ref mineralTypeCache) ??= ProxyObject.GetPropertyAsName("mineralType")!.ParseResourceType();
 
         public ObjectId Id => id;
 

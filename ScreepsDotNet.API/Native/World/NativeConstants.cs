@@ -164,16 +164,16 @@ namespace ScreepsDotNet.Native.World
         {
             var result = new Dictionary<(ResourceType, ResourceType), ResourceType>();
             using var reactionsObj = constantsObj.GetPropertyAsJSObject("REACTIONS")!;
-            var topLevelKeys = reactionsObj.GetPropertyNames();
+            var topLevelKeys = reactionsObj.GetPropertyNamesAsNames();
             foreach (var res1Raw in topLevelKeys)
             {
                 var res1 = res1Raw.ParseResourceType();
                 using var subObj = reactionsObj.GetPropertyAsJSObject(res1Raw)!;
-                var subKeys = subObj.GetPropertyNames();
+                var subKeys = subObj.GetPropertyNamesAsNames();
                 foreach (var res2Raw in subKeys)
                 {
                     var res2 = res2Raw.ParseResourceType();
-                    var productRaw = subObj.GetPropertyAsString(res2Raw)!;
+                    var productRaw = subObj.GetPropertyAsName(res2Raw)!;
                     var product = productRaw.ParseResourceType();
                     result.Add((res1, res2), product);
                 }

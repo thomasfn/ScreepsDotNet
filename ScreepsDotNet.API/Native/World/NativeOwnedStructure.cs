@@ -19,11 +19,11 @@ namespace ScreepsDotNet.Native.World
             {
                 if (ownershipCanChange)
                 {
-                    return CachePerTick(ref myCache) ??= (ProxyObject.TryGetPropertyAsBoolean("my") ?? false);
+                    return CachePerTick(ref myCache) ??= (ProxyObject.TryGetPropertyAsBoolean(Names.My) ?? false);
                 }
                 else
                 {
-                    return CacheLifetime(ref myCache) ??= (ProxyObject.TryGetPropertyAsBoolean("my") ?? false);
+                    return CacheLifetime(ref myCache) ??= (ProxyObject.TryGetPropertyAsBoolean(Names.My) ?? false);
                 }
             }
         }
@@ -61,9 +61,9 @@ namespace ScreepsDotNet.Native.World
 
         private OwnerInfo? GetOwnerInfo()
         {
-            using var ownerObj = ProxyObject.GetPropertyAsJSObject("owner");
+            using var ownerObj = ProxyObject.GetPropertyAsJSObject(Names.Owner);
             if (ownerObj == null) { return null; }
-            return new(ownerObj.GetPropertyAsString("username")!);
+            return new(ownerObj.GetPropertyAsString(Names.Username)!);
         }
     }
 }

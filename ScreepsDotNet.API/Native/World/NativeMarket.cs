@@ -18,7 +18,7 @@ namespace ScreepsDotNet.Native.World
                     time: obj.GetPropertyAsInt32("time"),
                     senderUsername: obj.GetPropertyAsJSObject("sender")!.GetPropertyAsString("username")!,
                     recipientUsername: obj.GetPropertyAsJSObject("recipient")!.GetPropertyAsString("username")!,
-                    resourceType: obj.GetPropertyAsString("resourceType")!.ParseResourceType(),
+                    resourceType: obj.GetPropertyAsName("resourceType")!.ParseResourceType(),
                     amount: obj.GetPropertyAsInt32("amount"),
                     from: new(obj.GetPropertyAsString("from")!),
                     to: new(obj.GetPropertyAsString("to")!),
@@ -55,7 +55,7 @@ namespace ScreepsDotNet.Native.World
                     created: obj.GetPropertyAsInt32("created"),
                     createdTimestamp: obj.HasProperty("createdTimestamp") ? DateTime.UnixEpoch + TimeSpan.FromMilliseconds(obj.GetPropertyAsDouble("createdTimestamp")) : null,
                     type: obj.GetPropertyAsString("type")!.ParseOrderType(),
-                    resourceType: obj.GetPropertyAsString("resourceType")!.ParseResourceType(),
+                    resourceType: obj.GetPropertyAsName("resourceType")!.ParseResourceType(),
                     room: RoomCoord.ParseNullSafe(obj.GetPropertyAsString("roomName")),
                     amount: obj.GetPropertyAsInt32("amount"),
                     remainingAmount: obj.GetPropertyAsInt32("remainingAmount"),
@@ -71,7 +71,7 @@ namespace ScreepsDotNet.Native.World
 
         public static PriceHistory ToPriceHistory(this JSObject obj)
             => new(
-                    resourceType: obj.GetPropertyAsString("resourceType")!.ParseResourceType(),
+                    resourceType: obj.GetPropertyAsName("resourceType")!.ParseResourceType(),
                     date: DateOnly.Parse(obj.GetPropertyAsString("date")!),
                     transactions: obj.GetPropertyAsInt32("transactions"),
                     volume: obj.GetPropertyAsInt32("volume"),
@@ -115,7 +115,7 @@ namespace ScreepsDotNet.Native.World
 
         [JSImport("market.getHistory", "game")]
         
-        internal static partial JSObject[] Native_GetHistory(string? resourceType);
+        internal static partial JSObject[] Native_GetHistory(Name? resourceType);
 
         [JSImport("market.getOrderById", "game")]
         

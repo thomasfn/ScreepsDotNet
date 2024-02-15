@@ -104,7 +104,7 @@ namespace ScreepsDotNet.Native.Arena
 
         public IEnumerable<BodyPart<BodyPartType>> Body
             => JSUtils.GetObjectArrayOnObject(ProxyObject, "body")!
-                .Select(x => new BodyPart<BodyPartType>(x.GetPropertyAsString("type")!.ParseBodyPartType(), x.GetPropertyAsInt32("hits")))
+                .Select(x => new BodyPart<BodyPartType>(x.GetPropertyAsString("type")!.ParseBodyPartType(), x.GetPropertyAsInt32("hits"), null))
                 .ToArray();
 
         public BodyType<BodyPartType> BodyType => cachedBodyType ??= new(Body.Select(x => x.Type));

@@ -10,15 +10,15 @@ namespace ScreepsDotNet.Native.World
         private int? levelCache;
         private int? ticksToDeployCache;
 
-        public int Level => CacheLifetime(ref levelCache) ??= ProxyObject.GetPropertyAsInt32("level");
+        public int Level => CacheLifetime(ref levelCache) ??= ProxyObject.GetPropertyAsInt32(Names.Level);
 
-        public int? TicksToDeploy => CachePerTick(ref ticksToDeployCache) ??= ProxyObject.TryGetPropertyAsInt32("ticksToDeploy");
+        public int? TicksToDeploy => CachePerTick(ref ticksToDeployCache) ??= ProxyObject.TryGetPropertyAsInt32(Names.TicksToDeploy);
 
         public ISpawning? Spawning
         {
             get
             {
-                var spawningObj = ProxyObject.GetPropertyAsJSObject("spawning");
+                using var spawningObj = ProxyObject.GetPropertyAsJSObject(Names.Spawning);
                 if (spawningObj == null) { return null; }
                 return new NativeSpawning(nativeRoot, spawningObj);
             }

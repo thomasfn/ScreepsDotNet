@@ -1,17 +1,27 @@
-﻿namespace ScreepsDotNet.API
+﻿using System.Collections.Generic;
+
+namespace ScreepsDotNet.API
 {
     public enum ResourceType
     {
         Energy,
         Power,
 
+        /// <summary>H</summary>
         Hydrogen,
+        /// <summary>O</summary>
         Oxygen,
+        /// <summary>U</summary>
         Utrium,
+        /// <summary>L</summary>
         Lemergium,
+        /// <summary>K</summary>
         Keanium,
+        /// <summary>Z</summary>
         Zynthium,
+        /// <summary>X</summary>
         Catalyst,
+        /// <summary>G</summary>
         Ghodium,
 
         Silicon,
@@ -19,41 +29,74 @@
         Biomass,
         Mist,
 
+        /// <summary>OH</summary>
         Hydroxide,
+        /// <summary>ZK</summary>
         ZynthiumKeanite,
+        /// <summary>UL</summary>
         UtriumLemergite,
 
+        /// <summary>UH</summary>
         UtriumHydride,
+        /// <summary>UO</summary>
         UtriumOxide,
+        /// <summary>KH</summary>
         KeaniumHydride,
+        /// <summary>KO</summary>
         KeaniumOxide,
+        /// <summary>LH</summary>
         LemergiumHydride,
+        /// <summary>LO</summary>
         LemergiumOxide,
+        /// <summary>ZH</summary>
         ZynthiumHydride,
+        /// <summary>ZO</summary>
         ZynthiumOxide,
+        /// <summary>GH</summary>
         GhodiumHydride,
+        /// <summary>GO</summary>
         GhodiumOxide,
 
+        /// <summary>UH2O</summary>
         UtriumAcid,
+        /// <summary>UHO2</summary>
         UtriumAlkalide,
+        /// <summary>KH2O</summary>
         KeaniumAcid,
+        /// <summary>KHO2</summary>
         KeaniumAlkalide,
+        /// <summary>LH2O</summary>
         LemergiumAcid,
+        /// <summary>LHO2</summary>
         LemergiumAlkalide,
+        /// <summary>ZH2O</summary>
         ZynthiumAcid,
+        /// <summary>ZHO2</summary>
         ZynthiumAlkalide,
+        /// <summary>GH2O</summary>
         GhodiumAcid,
+        /// <summary>GHO2</summary>
         GhodiumAlkalide,
 
+        /// <summary>XUH2O</summary>
         CatalyzedUtriumAcid,
+        /// <summary>XUHO2</summary>
         CatalyzedUtriumAlkalide,
+        /// <summary>XKH2O</summary>
         CatalyzedKeaniumAcid,
+        /// <summary>XKHO2</summary>
         CatalyzedKeaniumAlkalide,
+        /// <summary>XLH2O</summary>
         CatalyzedLemergiumAcid,
+        /// <summary>XLHO2</summary>
         CatalyzedLemergiumAlkalide,
+        /// <summary>XZH2O</summary>
         CatalyzedZynthiumAcid,
+        /// <summary>XZHO2</summary>
         CatalyzedZynthiumAlkalide,
+        /// <summary>XGH2O</summary>
         CatalyzedGhodiumAcid,
+        /// <summary>XGHO2</summary>
         CatalyzedGhodiumAlkalide,
 
         Ops,
@@ -130,6 +173,11 @@
         /// <param name="resourceType"></param>
         /// <returns></returns>
         int? GetFreeCapacity(ResourceType? resourceType = null);
+
+        /// <summary>
+        /// Gets all resource types contained within this store.
+        /// </summary>
+        IEnumerable<ResourceType> ContainedResourceTypes { get; }
 
         /// <summary>
         /// Gets or sets how much of each resource is in this store.

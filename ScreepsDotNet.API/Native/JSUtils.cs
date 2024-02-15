@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using ScreepsDotNet.Interop;
 
+using ScreepsDotNet.Interop;
 using ScreepsDotNet.API;
 
 namespace ScreepsDotNet.Native
@@ -17,14 +17,26 @@ namespace ScreepsDotNet.Native
         [JSImport("setProperty", "__object")]
         internal static partial void SetObjectArrayOnObject(JSObject obj, string key, JSObject[] val);
 
+        [JSImport("setProperty", "__object")]
+        internal static partial void SetObjectArrayOnObject(JSObject obj, Name key, JSObject[] val);
+
         [JSImport("getProperty", "__object")]
         internal static partial JSObject[]? GetObjectArrayOnObject(JSObject obj, string key);
+
+        [JSImport("getProperty", "__object")]
+        internal static partial JSObject[]? GetObjectArrayOnObject(JSObject obj, Name key);
 
         [JSImport("setProperty", "__object")]
         internal static partial void SetIntArrayOnObject(JSObject obj, string key, int[] val);
 
+        [JSImport("setProperty", "__object")]
+        internal static partial void SetIntArrayOnObject(JSObject obj, Name key, int[] val);
+
         [JSImport("getProperty", "__object")]
         internal static partial int[]? GetIntArrayOnObject(JSObject obj, string key);
+
+        [JSImport("getProperty", "__object")]
+        internal static partial int[]? GetIntArrayOnObject(JSObject obj, Name key);
 
         [JSImport("setProperty", "__object")]
         internal static partial void SetStringArrayOnObject(JSObject obj, string key, string[] val);

@@ -14,11 +14,11 @@ namespace ScreepsDotNet.Native.World
         private int? amountCache;
         private ResourceType? resourceTypeCache;
 
-        public int Amount => CachePerTick(ref amountCache) ??= ProxyObject.GetPropertyAsInt32("amount");
+        public int Amount => CachePerTick(ref amountCache) ??= ProxyObject.GetPropertyAsInt32(Names.Amount);
 
         public ObjectId Id => id;
 
-        public ResourceType ResourceType => CacheLifetime(ref resourceTypeCache) ??= ProxyObject.GetPropertyAsString("resourceType")!.ParseResourceType();
+        public ResourceType ResourceType => CacheLifetime(ref resourceTypeCache) ??= ProxyObject.GetPropertyAsName(Names.ResourceType)!.ParseResourceType();
 
         public NativeResource(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
             : base(nativeRoot, proxyObject)

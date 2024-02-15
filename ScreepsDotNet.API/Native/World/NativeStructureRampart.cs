@@ -15,13 +15,23 @@ namespace ScreepsDotNet.Native.World
 
         #endregion
 
-        public bool IsPublic => ProxyObject.GetPropertyAsBoolean("isPublic");
+        private bool? isPublicCache;
+        private int? ticksToDecayCache;
 
-        public int TicksToDecay => ProxyObject.GetPropertyAsInt32("ticksToDecay");
+        public bool IsPublic => CachePerTick(ref isPublicCache) ??= ProxyObject.GetPropertyAsBoolean("isPublic");
+
+        public int TicksToDecay => CachePerTick(ref ticksToDecayCache) ??= ProxyObject.GetPropertyAsInt32(Names.TicksToDecay);
 
         public NativeStructureRampart(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
             : base(nativeRoot, proxyObject, id)
         { }
+
+        protected override void ClearNativeCache()
+        {
+            base.ClearNativeCache();
+            isPublicCache = null;
+            ticksToDecayCache = null;
+        }
 
         public RampartSetPublicResult SetPublic(bool isPublic)
             => (RampartSetPublicResult)Native_SetPublic(ProxyObject, isPublic);

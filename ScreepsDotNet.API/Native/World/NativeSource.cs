@@ -15,13 +15,13 @@ namespace ScreepsDotNet.Native.World
         private int? energyCapacityCache;
         private int? ticksToRegenerationCache;
 
-        public int Energy => CachePerTick(ref energyCache) ??= ProxyObject.GetPropertyAsInt32("energy");
+        public int Energy => CachePerTick(ref energyCache) ??= ProxyObject.GetPropertyAsInt32(Names.Energy);
 
-        public int EnergyCapacity => CachePerTick(ref energyCapacityCache) ??= ProxyObject.GetPropertyAsInt32("energyCapacity");
+        public int EnergyCapacity => CachePerTick(ref energyCapacityCache) ??= ProxyObject.GetPropertyAsInt32(Names.EnergyCapacity);
 
         public ObjectId Id => id;
 
-        public int TicksToRegeneration => CachePerTick(ref ticksToRegenerationCache) ??= ProxyObject.GetPropertyAsInt32("ticksToRegeneration");
+        public int TicksToRegeneration => CachePerTick(ref ticksToRegenerationCache) ??= ProxyObject.GetPropertyAsInt32(Names.TicksToRegeneration);
 
         public NativeSource(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
             : base(nativeRoot, proxyObject)

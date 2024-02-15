@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -15,11 +14,13 @@ internal static class ScreepsDotNet_Interop
 
     [MethodImpl(MethodImplOptions.InternalCall)]
     public static unsafe extern int ReleaseObjectReference(IntPtr jsHandle);
+
+    [MethodImpl(MethodImplOptions.InternalCall)]
+    public static unsafe extern void SetName(int nameIndex, char* namePtr);
 }
 
 namespace ScreepsDotNet.Interop
 {
-
     [Serializable]
     public class JSException : Exception
     {
@@ -151,149 +152,153 @@ namespace ScreepsDotNet.Interop
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe InteropValue(void* value, int length) => Slot = new InteropValueImpl { IntPtrValue = (IntPtr)value, Type = InteropValueType.Ptr, Length = length };
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public InteropValue(Name name) => Slot = new InteropValueImpl { Int32Value = name.NameIndex, Type = InteropValueType.Nme };
+
         #endregion
 
         #region Accessors
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool AsBool()
+        public readonly bool AsBool()
         {
             Debug.Assert(Slot.Type == InteropValueType.U1);
             return Slot.BooleanValue;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool? AsBoolNullable() => Slot.Type == InteropValueType.Void ? null : AsBool();
+        public readonly bool? AsBoolNullable() => Slot.Type == InteropValueType.Void ? null : AsBool();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public byte AsByte()
+        public readonly byte AsByte()
         {
             Debug.Assert(Slot.Type == InteropValueType.U8);
             return Slot.ByteValue;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public byte? AsByteNullable() => Slot.Type == InteropValueType.Void ? null : AsByte();
+        public readonly byte? AsByteNullable() => Slot.Type == InteropValueType.Void ? null : AsByte();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public sbyte AsSByte()
+        public readonly sbyte AsSByte()
         {
             Debug.Assert(Slot.Type == InteropValueType.I8);
             return Slot.SByteValue;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public sbyte? AsSByteNullable() => Slot.Type == InteropValueType.Void ? null : AsSByte();
+        public readonly sbyte? AsSByteNullable() => Slot.Type == InteropValueType.Void ? null : AsSByte();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public char AsChar()
+        public readonly char AsChar()
         {
             Debug.Assert(Slot.Type == InteropValueType.U16);
             return Slot.CharValue;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public char? AsCharNullable() => Slot.Type == InteropValueType.Void ? null : AsChar();
+        public readonly char? AsCharNullable() => Slot.Type == InteropValueType.Void ? null : AsChar();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ushort AsUInt16()
+        public readonly ushort AsUInt16()
         {
             Debug.Assert(Slot.Type == InteropValueType.U16);
             return Slot.UInt16Value;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ushort? AsUInt16Nullable() => Slot.Type == InteropValueType.Void ? null : AsUInt16();
+        public readonly ushort? AsUInt16Nullable() => Slot.Type == InteropValueType.Void ? null : AsUInt16();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public short AsInt16()
+        public readonly short AsInt16()
         {
             Debug.Assert(Slot.Type == InteropValueType.I16);
             return Slot.Int16Value;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public short? AsInt16Nullable() => Slot.Type == InteropValueType.Void ? null : AsInt16();
+        public readonly short? AsInt16Nullable() => Slot.Type == InteropValueType.Void ? null : AsInt16();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public uint AsUInt32()
+        public readonly uint AsUInt32()
         {
             Debug.Assert(Slot.Type == InteropValueType.U32);
             return Slot.UInt32Value;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public uint? AsUInt32Nullable() => Slot.Type == InteropValueType.Void ? null : AsUInt32();
+        public readonly uint? AsUInt32Nullable() => Slot.Type == InteropValueType.Void ? null : AsUInt32();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int AsInt32()
+        public readonly int AsInt32()
         {
             Debug.Assert(Slot.Type == InteropValueType.I32);
             return Slot.Int32Value;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int? AsInt32Nullable() => Slot.Type == InteropValueType.Void ? null : AsInt32();
+        public readonly int? AsInt32Nullable() => Slot.Type == InteropValueType.Void ? null : AsInt32();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ulong AsUInt64()
+        public readonly ulong AsUInt64()
         {
             Debug.Assert(Slot.Type == InteropValueType.U64);
             return Slot.UInt64Value;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ulong? AsUInt64Nullable() => Slot.Type == InteropValueType.Void ? null : AsUInt64();
+        public readonly ulong? AsUInt64Nullable() => Slot.Type == InteropValueType.Void ? null : AsUInt64();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public long AsInt64()
+        public readonly long AsInt64()
         {
             Debug.Assert(Slot.Type == InteropValueType.I64);
             return Slot.Int64Value;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public long? AsInt64Nullable() => Slot.Type == InteropValueType.Void ? null : AsInt64();
+        public readonly long? AsInt64Nullable() => Slot.Type == InteropValueType.Void ? null : AsInt64();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public float AsSingle()
+        public readonly float AsSingle()
         {
             Debug.Assert(Slot.Type == InteropValueType.F32);
             return Slot.SingleValue;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public float? AsSingleNullable() => Slot.Type == InteropValueType.Void ? null : AsSingle();
+        public readonly float? AsSingleNullable() => Slot.Type == InteropValueType.Void ? null : AsSingle();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public double AsDouble()
+        public readonly double AsDouble()
         {
             Debug.Assert(Slot.Type == InteropValueType.F64);
             return Slot.DoubleValue;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public double? AsDoubleNullable() => Slot.Type == InteropValueType.Void ? null : AsDouble();
+        public readonly double? AsDoubleNullable() => Slot.Type == InteropValueType.Void ? null : AsDouble();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public IntPtr AsIntPtr()
+        public readonly IntPtr AsIntPtr()
         {
             Debug.Assert(Slot.Type == InteropValueType.Void || Slot.Type == InteropValueType.Ptr);
             return Slot.Type == InteropValueType.Void ? IntPtr.Zero : Slot.IntPtrValue;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe string? AsString(bool freeMem = true)
+        public readonly unsafe string? AsString(bool freeMem = true)
         {
             if (Slot.Type == InteropValueType.Void) { return null; }
-            Debug.Assert(Slot.Type == InteropValueType.Str);
+            Debug.Assert(Slot.Type == InteropValueType.Str || Slot.Type == InteropValueType.Nme);
+            if (Slot.Type == InteropValueType.Nme) { return Name.GetNameValue(Slot.Int32Value); }
             var str = new string((char*)Slot.IntPtrValue);
             if (freeMem) { Marshal.FreeHGlobal(Slot.IntPtrValue); }
             return str;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe T[]? AsArray<T>(Func<InteropValue, T> elementMarshaller, bool freeMem = true)
+        public readonly unsafe T[]? AsArray<T>(Func<InteropValue, T> elementMarshaller, bool freeMem = true)
         {
             if (Slot.Type == InteropValueType.Void) { return null; }
             Debug.Assert(Slot.Type == InteropValueType.Arr);
@@ -308,7 +313,23 @@ namespace ScreepsDotNet.Interop
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe string[]? AsStringArray(bool freeMem = true)
+        public readonly unsafe Name AsName(bool freeMem = true)
+        {
+            Debug.Assert(Slot.Type == InteropValueType.Str || Slot.Type == InteropValueType.Nme);
+            if (Slot.Type == InteropValueType.Str)
+            {
+                var str = new string((char*)Slot.IntPtrValue);
+                if (freeMem) { Marshal.FreeHGlobal(Slot.IntPtrValue); }
+                return Name.Create(str);
+            }
+            return new Name(Slot.Int32Value);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly unsafe Name? AsNameNullable() => Slot.Type == InteropValueType.Void ? null : AsName();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly unsafe string[]? AsStringArray(bool freeMem = true)
         {
             if (Slot.Type == InteropValueType.Void) { return null; }
             Debug.Assert(Slot.Type == InteropValueType.Arr);
@@ -325,7 +346,7 @@ namespace ScreepsDotNet.Interop
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe string?[]? AsNullableStringArray(bool freeMem = true)
+        public readonly unsafe string?[]? AsNullableStringArray(bool freeMem = true)
         {
             if (Slot.Type == InteropValueType.Void) { return null; }
             Debug.Assert(Slot.Type == InteropValueType.Arr);
@@ -350,7 +371,7 @@ namespace ScreepsDotNet.Interop
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public JSObject? AsObject()
+        public readonly JSObject? AsObject()
         {
             if (Slot.Type == InteropValueType.Void) { return null; }
             Debug.Assert(Slot.Type == InteropValueType.Obj);

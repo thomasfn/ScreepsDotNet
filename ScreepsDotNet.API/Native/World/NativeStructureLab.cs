@@ -32,11 +32,11 @@ namespace ScreepsDotNet.Native.World
         private ResourceType? mineralTypeCache;
         private NativeStore? storeCache;
 
-        public int Cooldown => CachePerTick(ref cooldownCache) ??= ProxyObject.GetPropertyAsInt32("cooldown");
+        public int Cooldown => CachePerTick(ref cooldownCache) ??= ProxyObject.GetPropertyAsInt32(Names.Cooldown);
 
-        public ResourceType MineralType => CachePerTick(ref mineralTypeCache) ??= ProxyObject.GetPropertyAsString("mineralType")!.ParseResourceType();
+        public ResourceType MineralType => CachePerTick(ref mineralTypeCache) ??= ProxyObject.GetPropertyAsName(Names.MineralType)!.ParseResourceType();
 
-        public IStore Store => CachePerTick(ref storeCache) ??= new NativeStore(ProxyObject.GetPropertyAsJSObject("store"));
+        public IStore Store => CachePerTick(ref storeCache) ??= new NativeStore(ProxyObject.GetPropertyAsJSObject(Names.Store));
 
         public NativeStructureLab(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
             : base(nativeRoot, proxyObject, id)

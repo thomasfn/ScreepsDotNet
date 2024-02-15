@@ -37,18 +37,18 @@ namespace ScreepsDotNet.Native.World
 
         private IMemoryObject? memoryCache;
 
-        public FlagColor Color => (FlagColor)ProxyObject.GetPropertyAsInt32("color");
+        public FlagColor Color => (FlagColor)ProxyObject.GetPropertyAsInt32(Names.Color);
 
-        public IMemoryObject Memory => CachePerTick(ref memoryCache) ??= new NativeMemoryObject(ProxyObject.GetPropertyAsJSObject("memory")!);
+        public IMemoryObject Memory => CachePerTick(ref memoryCache) ??= new NativeMemoryObject(ProxyObject.GetPropertyAsJSObject(Names.Memory)!);
 
         public string Name => name;
 
-        public FlagColor SecondaryColor => (FlagColor)ProxyObject.GetPropertyAsInt32("secondaryColor");
+        public FlagColor SecondaryColor => (FlagColor)ProxyObject.GetPropertyAsInt32(Names.SecondaryColor);
 
         public NativeFlag(INativeRoot nativeRoot, JSObject? proxyObject)
             : base(nativeRoot, proxyObject)
         {
-            name = proxyObject?.GetPropertyAsString("name") ?? string.Empty;
+            name = proxyObject?.GetPropertyAsString(Names.Name) ?? string.Empty;
         }
 
         public override JSObject? ReacquireProxyObject()

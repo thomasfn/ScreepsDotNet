@@ -12,17 +12,19 @@ namespace ScreepsDotNet.Native.World
     {
         private readonly ObjectId id;
 
+        private int? deathTimeCache;
         private NativeStore? storeCache;
+        private int? ticksToDecayCache;
 
-        public ICreep? Creep => nativeRoot.GetOrCreateWrapperObject<ICreep>(ProxyObject.GetPropertyAsJSObject("creep"));
+        public ICreep? Creep => nativeRoot.GetOrCreateWrapperObject<ICreep>(ProxyObject.GetPropertyAsJSObject(Names.Creep));
 
-        public int DeathTime => ProxyObject.GetPropertyAsInt32("deathTime");
+        public int DeathTime => CacheLifetime(ref deathTimeCache) ??= ProxyObject.GetPropertyAsInt32(Names.DeathTime);
 
         public ObjectId Id => id;
 
-        public IStore Store => CachePerTick(ref storeCache) ??= new NativeStore(ProxyObject.GetPropertyAsJSObject("store"));
+        public IStore Store => CachePerTick(ref storeCache) ??= new NativeStore(ProxyObject.GetPropertyAsJSObject(Names.Store));
 
-        public int TicksToDecay => ProxyObject.GetPropertyAsInt32("ticksToDecay");
+        public int TicksToDecay => CachePerTick(ref ticksToDecayCache) ??= ProxyObject.GetPropertyAsInt32(Names.TicksToDecay);
 
         public NativeTombstone(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
             : base(nativeRoot, proxyObject)
@@ -38,6 +40,7 @@ namespace ScreepsDotNet.Native.World
             base.ClearNativeCache();
             storeCache?.Dispose();
             storeCache = null;
+            ticksToDecayCache = null;
         }
 
         public override string ToString()
