@@ -38,7 +38,7 @@ namespace ScreepsDotNet.Native.World
         internal static partial int Native_GetSize(JSObject proxyObject);
 
         [JSImport("RoomVisual.export", "game/prototypes/wrapped")]
-        internal static partial string Native_Export(JSObject proxyObject);
+        internal static partial string? Native_Export(JSObject proxyObject);
 
         [JSImport("RoomVisual.import", "game/prototypes/wrapped")]
         internal static partial void Native_Import(JSObject proxyObject, string value);
@@ -115,7 +115,7 @@ namespace ScreepsDotNet.Native.World
         public int GetSize()
             => Native_GetSize(ProxyObject);
 
-        public string Export()
+        public string? Export()
             => Native_Export(ProxyObject);
 
         public void Import(string str)

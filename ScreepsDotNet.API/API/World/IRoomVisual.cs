@@ -78,7 +78,7 @@ namespace ScreepsDotNet.API.World
         /// Returns a compact representation of all visuals added in the room in the current tick.
         /// </summary>
         /// <returns></returns>
-        string Export();
+        string? Export();
 
         /// <summary>
         /// Add previously exported (with RoomVisual.export) room visuals to the room visual data of the current tick.
