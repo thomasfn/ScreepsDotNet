@@ -87,5 +87,11 @@ namespace ScreepsDotNet.Native.World
         public static readonly Name DeathTime = Name.CreateNew("deathTime");
         public static readonly Name Creep = Name.CreateNew("creep");
         public static readonly Name RoomName = Name.CreateNew("roomName");
+        public static readonly Name Timestamp = Name.CreateNew("timestamp");
+        public static readonly Name Status = Name.CreateNew("status");
+        public static readonly Name Normal = Name.CreateNew("normal");
+        public static readonly Name Closed = Name.CreateNew("closed");
+        public static readonly Name Novice = Name.CreateNew("novice");
+        public static readonly Name Respawn = Name.CreateNew("respawn");
     }
 }

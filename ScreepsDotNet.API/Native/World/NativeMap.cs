@@ -13,6 +13,14 @@ namespace ScreepsDotNet.Native.World
         [JSImport("set", "object")]
         internal static partial void SetRouteCallbackOnObject(JSObject obj, string key, Func<string, string, double> func);
 
+        private static readonly Dictionary<Name, RoomStatusType> nameToRoomStatusTypeMap = new()
+        {
+            { Names.Normal, RoomStatusType.Normal },
+            { Names.Closed, RoomStatusType.Closed },
+            { Names.Novice, RoomStatusType.Novice },
+            { Names.Respawn, RoomStatusType.Respawn }
+        };
+
         public static JSObject ToJS(this MapFindRouteOptions mapFindRouteOptions)
         {
             var obj = JSObject.Create();
@@ -23,14 +31,7 @@ namespace ScreepsDotNet.Native.World
         public static MapFindRouteStep ToMapFindRouteStep(this JSObject obj)
             => new((ExitDirection)obj.GetPropertyAsInt32("exit"), obj.GetPropertyAsString("room")!);
 
-        public static RoomStatusType ParseRoomStatusType(this string str) => str switch
-        {
-            "normal" => RoomStatusType.Normal,
-            "closed" => RoomStatusType.Closed,
-            "novice" => RoomStatusType.Novice,
-            "respawn" => RoomStatusType.Respawn,
-            _ => throw new InvalidOperationException($"Unknown room status type '{str}'"),
-        };
+        public static RoomStatusType ParseRoomStatusType(this Name name) => nameToRoomStatusTypeMap[name];
     }
 
     [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
@@ -116,8 +117,9 @@ namespace ScreepsDotNet.Native.World
         public RoomStatus GetRoomStatus(string roomName)
         {
             var obj = Native_GetRoomStatus(roomName);
-            double timestamp = obj.GetPropertyAsDouble("timestamp");
-            return new(obj.GetPropertyAsString("status")!.ParseRoomStatusType(), timestamp > 0.0 ? DateTime.UnixEpoch + TimeSpan.FromMilliseconds(timestamp) : null);
+            var timestamp = obj.TryGetPropertyAsDouble(Names.Timestamp) ?? 0.0;
+            var status = obj.GetPropertyAsName(Names.Status);
+            return new(status!.ParseRoomStatusType(), timestamp > 0.0 ? DateTime.UnixEpoch + TimeSpan.FromMilliseconds(timestamp) : null);
         }
     }
 }
