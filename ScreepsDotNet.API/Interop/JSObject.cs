@@ -164,6 +164,8 @@ namespace ScreepsDotNet.Interop
 
         internal IntPtr JSHandle => jsHandle;
 
+        public bool IsDisposed => disposedValue;
+
         internal JSObject(IntPtr jsHandle)
         {
             this.jsHandle = jsHandle;

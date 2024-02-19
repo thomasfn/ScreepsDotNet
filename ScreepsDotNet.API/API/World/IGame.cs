@@ -177,5 +177,19 @@ namespace ScreepsDotNet.API.World
         /// </summary>
         /// <returns></returns>
         IMemoryObject CreateMemoryObject();
+
+        /// <summary>
+        /// Efficiently "renew" a set of room objects. This will refresh any stale references to the underlying js objects while minimising interop calls.
+        /// This is not required for normal usage of any room objects, but if done strategically can reduce the overall cpu usage due to js interop.
+        /// </summary>
+        /// <param name="roomObjects"></param>
+        void BatchRenewObjects(IEnumerable<IRoomObject> roomObjects);
+
+        /// <summary>
+        /// Efficiently fetch the room positions for a set of room objects. This is more efficient than invidually fetching each room position as it's done in a single interop call.
+        /// </summary>
+        /// <param name="roomObjects"></param>
+        /// <param name="outRoomPositions"></param>
+        // void BatchFetchRoomPositions(IEnumerable<IRoomObject> roomObjects, Span<RoomPosition> outRoomPositions);
     }
 }

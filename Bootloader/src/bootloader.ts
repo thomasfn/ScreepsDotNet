@@ -112,7 +112,7 @@ export class Bootloader {
 
         switch (env) {
             case 'world':
-                this._bindings = new WorldBindings(this.log.bind(this));
+                this._bindings = new WorldBindings(this.log.bind(this), this._interop);
                 break;
             case 'arena':
                 // this._bindings = new ArenaBindings(this.log.bind(this));
@@ -231,13 +231,6 @@ export class Bootloader {
         }
     }
 
-    private checkMemoryDidGrow(): void {
-        if (!this._wasmInstance || !this._compiled) { return; }
-        const newMemorySize = this._wasmInstance.exports.memory.buffer.byteLength;
-        if (newMemorySize === this._memorySize) { return; }
-
-    }
-
     private getWasmImports(): WebAssembly.Imports {
         return {
             wasi_snapshot_preview1: {
@@ -251,6 +244,9 @@ export class Bootloader {
             js: {
                 ...this._interop.interopImport,
             },
+            bindings: {
+                ...this._bindings?.bindingsImport,
+            }
         };
     }
 

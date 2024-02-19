@@ -1,17 +1,22 @@
 import { ScreepsDotNetExports } from '../common.js';
-import type { ImportTable, MallocFunction } from '../interop.js';
+import type { ImportTable, Interop, MallocFunction } from '../interop.js';
 import { WasmMemoryManager } from '../memory.js';
 
 export abstract class BaseBindings {
+    public readonly bindingsImport: Record<string, (...args: any[]) => unknown>;
     public readonly imports: Record<string, ImportTable> = {};
 
-    private readonly logFunc: (text: string) => void;
+    protected readonly _interop: Interop;
 
+    private readonly logFunc: (text: string) => void;
+    
     protected _memoryManager?: WasmMemoryManager;
     protected _malloc?: MallocFunction;
 
-    constructor(logFunc: (text: string) => void) {
+    constructor(logFunc: (text: string) => void, interop: Interop) {
         this.logFunc = logFunc;
+        this._interop = interop;
+        this.bindingsImport = {};
         this.setupImports();
     }
 

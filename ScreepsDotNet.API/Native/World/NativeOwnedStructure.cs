@@ -53,12 +53,6 @@ namespace ScreepsDotNet.Native.World
             this.ownershipCanChange = ownershipCanChange;
         }
 
-        public override void UpdateFromDataPacket(RoomObjectDataPacket dataPacket)
-        {
-            base.UpdateFromDataPacket(dataPacket);
-            myCache = dataPacket.My;
-        }
-
         private OwnerInfo? GetOwnerInfo()
         {
             using var ownerObj = ProxyObject.GetPropertyAsJSObject(Names.Owner);

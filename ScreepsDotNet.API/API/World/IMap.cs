@@ -16,9 +16,9 @@ namespace ScreepsDotNet.API.World
         public static (int dx, int dy) ToLinear(this ExitDirection exitDirection)
             => exitDirection switch
             {
-                ExitDirection.Top => (0, 1),
+                ExitDirection.Top => (0, -1),
                 ExitDirection.Right => (1, 0),
-                ExitDirection.Bottom => (0, -1),
+                ExitDirection.Bottom => (0, 1),
                 ExitDirection.Left => (-1, 0),
                 _ => throw new ArgumentException("Unknown exit direction", nameof(exitDirection)),
             };

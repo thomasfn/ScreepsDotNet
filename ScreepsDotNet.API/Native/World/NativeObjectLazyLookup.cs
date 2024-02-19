@@ -8,7 +8,7 @@ using System.Linq;
 namespace ScreepsDotNet.Native.World
 {
     [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
-    internal partial class NativeObjectLazyLookup<TConcrete, TInterface> : IReadOnlyDictionary<string, TInterface> where TInterface : class where TConcrete : class, INativeObject, TInterface
+    internal partial class NativeObjectLazyLookup<TConcrete, TInterface> : IReadOnlyDictionary<string, TInterface> where TInterface : class where TConcrete : NativeObject, TInterface
     {
         private readonly Func<JSObject> proxyObjectReacquireFn;
         private readonly Func<TConcrete, string> getObjectKeyFn;

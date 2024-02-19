@@ -93,5 +93,6 @@ namespace ScreepsDotNet.Native.World
         public static readonly Name Closed = Name.CreateNew("closed");
         public static readonly Name Novice = Name.CreateNew("novice");
         public static readonly Name Respawn = Name.CreateNew("respawn");
+        public static readonly Name Ptr = Name.CreateNew("ptr");
     }
 }

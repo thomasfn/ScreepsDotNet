@@ -5,6 +5,8 @@ import { BaseBindings } from './base.js';
 
 declare const global: typeof globalThis;
 
+const CPU_HALT_WHEN_NO_CHECKIN_FOR = 10;
+
 const PACKET_SIZE_IN_BYTES = 56;
 const PACKET_FLAG_MY = (1 << 0);
 
@@ -59,10 +61,6 @@ const BODYPART_TO_ENUM_MAP: Record<BodyPartConstant, number> = {} as Record<Body
 }
 
 export class WorldBindings extends BaseBindings {
-    private _copyBufferSize: number = 0;
-    private _copyBufferPtr: number | null = null;
-    private _copyBufferHeadI32: number = 0;
-
     private _lastCheckIn: number = 0;
 
     private _memoryCache?: Memory;
@@ -74,10 +72,10 @@ export class WorldBindings extends BaseBindings {
           this.log(`failed to call 'screepsdotnet_init_world' (not found in wasm exports)`);
           return;
         }
-        this._copyBufferSize = 1024 * 1024;
-        this._copyBufferPtr = entrypointFn(this._copyBufferSize);
+        entrypointFn();
         this._memoryCache = Memory;
         this._memoryCache = (RawMemory as unknown as { _parsed: Memory })._parsed;
+        this._lastCheckIn = Game.time;
     }
 
     public loop(): void {
@@ -86,10 +84,20 @@ export class WorldBindings extends BaseBindings {
         delete _global.Memory;
         _global.Memory = this._memoryCache;
         (RawMemory as unknown as { _parsed: Memory })._parsed = this._memoryCache!;
+        const ticksSinceLestCheckIn = Game.time - this._lastCheckIn;
+        if (ticksSinceLestCheckIn >= CPU_HALT_WHEN_NO_CHECKIN_FOR) {
+            Game.cpu.halt && Game.cpu.halt();
+        } else if (ticksSinceLestCheckIn >= CPU_HALT_WHEN_NO_CHECKIN_FOR - 1) {
+            this.log(`no checkin for ${ticksSinceLestCheckIn} ticks, halting cpu next tick...`);
+        }
     }
 
     protected setupImports(): void {
         super.setupImports();
+        this.bindingsImport.js_renew_object = this.js_renew_object.bind(this);
+        this.bindingsImport.js_batch_renew_objects = this.js_batch_renew_objects.bind(this);
+        this.bindingsImport.js_fetch_object_room_position = this.js_fetch_object_room_position.bind(this);
+        this.bindingsImport.js_batch_fetch_object_room_positions = this.js_batch_fetch_object_room_positions.bind(this);
         const gameConstructors: Record<string, GameConstructor> = {
             StructureContainer,
             StructureController,
@@ -211,10 +219,6 @@ export class WorldBindings extends BaseBindings {
         const wrappedPrototypes = this.buildWrappedPrototypes(gameConstructors);
         this.imports['game/prototypes/wrapped'] = {
             ...wrappedPrototypes,
-            RoomObject: {
-                ...wrappedPrototypes.RoomObject,
-                getEncodedRoomPosition: (thisObj: RoomObject, outPtr: number) => this.encodeRoomPosition(this._memoryManager!.view, thisObj.pos, outPtr),
-            },
             Spawning: this.buildWrappedPrototype(StructureSpawn.Spawning),
             Store: {
                 getCapacity: (thisObj: Store<ResourceConstant, boolean>, resourceType: ResourceConstant) => thisObj.getCapacity(resourceType),
@@ -245,11 +249,16 @@ export class WorldBindings extends BaseBindings {
                         return { code: result };
                     }
                 },
-                findFast: (thisObj: Room, type: FindConstant) => this.encodeRoomObjectArray(this._memoryManager!.view, thisObj.find(type) as unknown as Record<string, unknown>[]),
-                lookAtFast: (thisObj: Room, x: number, y: number) => this.encodeRoomObjectArray(this._memoryManager!.view, thisObj.lookAt(x, y)),
-                lookAtAreaFast: (thisObj: Room, top: number, left: number, bottom: number, right: number) => this.encodeRoomObjectArray(this._memoryManager!.view, thisObj.lookAtArea(top, left, bottom, right, true)),
-                lookForAtFast: (thisObj: Room, type: LookConstant, x: number, y: number) => this.encodeRoomObjectArray(this._memoryManager!.view, thisObj.lookForAt(type, x, y) as unknown as Record<string, unknown>[]),
-                lookForAtAreaFast: (thisObj: Room, type: LookConstant, top: number, left: number, bottom: number, right: number) => this.encodeRoomObjectArray(this._memoryManager!.view, thisObj.lookForAtArea(type, top, left, bottom, right, true), type),
+                findFast: (thisObj: Room, type: FindConstant, outRawObjectIdPtr: number, outRoomObjectMetadataPtr: number, maxObjectCount: number) =>
+                    this.encodeRoomObjectArray(this._memoryManager!.view, thisObj.find(type) as unknown as Record<string, unknown>[], undefined, outRawObjectIdPtr, outRoomObjectMetadataPtr, maxObjectCount),
+                lookAtFast: (thisObj: Room, x: number, y: number, outRawObjectIdPtr: number, outRoomObjectMetadataPtr: number, maxObjectCount: number) =>
+                    this.encodeRoomObjectArray(this._memoryManager!.view, thisObj.lookAt(x, y), undefined, outRawObjectIdPtr, outRoomObjectMetadataPtr, maxObjectCount),
+                lookAtAreaFast: (thisObj: Room, top: number, left: number, bottom: number, right: number, outRawObjectIdPtr: number, outRoomObjectMetadataPtr: number, maxObjectCount: number) =>
+                    this.encodeRoomObjectArray(this._memoryManager!.view, thisObj.lookAtArea(top, left, bottom, right, true), undefined, outRawObjectIdPtr, outRoomObjectMetadataPtr, maxObjectCount),
+                lookForAtFast: (thisObj: Room, type: LookConstant, x: number, y: number, outRawObjectIdPtr: number, outRoomObjectMetadataPtr: number, maxObjectCount: number) =>
+                    this.encodeRoomObjectArray(this._memoryManager!.view, thisObj.lookForAt(type, x, y) as unknown as Record<string, unknown>[], undefined, outRawObjectIdPtr, outRoomObjectMetadataPtr, maxObjectCount),
+                lookForAtAreaFast: (thisObj: Room, type: LookConstant, top: number, left: number, bottom: number, right: number, outRawObjectIdPtr: number, outRoomObjectMetadataPtr: number, maxObjectCount: number) =>
+                    this.encodeRoomObjectArray(this._memoryManager!.view, thisObj.lookForAtArea(type, top, left, bottom, right, true), type, outRawObjectIdPtr, outRoomObjectMetadataPtr, maxObjectCount),
             },
             Creep: {
                 ...wrappedPrototypes.Creep,
@@ -280,26 +289,58 @@ export class WorldBindings extends BaseBindings {
         };
     }
 
-    private encodeRoomPosition(memoryView: WasmMemoryView, {x, y, roomName}: RoomPosition, outPtr: number): void {
-        // X:i32(4), y:i32(4), roomName:6i8(6), padding:2i8(2) total=16
-        const { u8, i32 } = memoryView;
-        i32[(outPtr + 0) >>> 2] = x;
-        i32[(outPtr + 4) >>> 2] = y;
-        if (roomName.length < 4) {
-            u8[outPtr + 8] = 0;
-        } else {
-            u8[outPtr + 8] = roomName.charCodeAt(0);
-            u8[outPtr + 9] = roomName.charCodeAt(1);
-            u8[outPtr + 10] = roomName.charCodeAt(2);
-            u8[outPtr + 11] = roomName.charCodeAt(3);
-            u8[outPtr + 12] = roomName.length >= 5 ? roomName.charCodeAt(4) : 0;
-            u8[outPtr + 13] = roomName.length >= 6 ? roomName.charCodeAt(5) : 0;
-            u8[outPtr + 14] = 0;
-            u8[outPtr + 15] = 0;
+    private js_renew_object(jsHandle: number): number {
+        const oldObject = this._interop.getClrTrackedObject(jsHandle);
+        if (oldObject == null) { return 1; } // clr tracked object not found (clr object disposed?)
+        if (oldObject instanceof Room) {
+            const newRoom = Game.rooms[oldObject.name];
+            if (newRoom == null) { return 3; } // no longer exists (lost visibilty)
+            this._interop.replaceClrTrackedObject(jsHandle, newRoom);
+            return 0; // success
+        }
+        if (oldObject instanceof Flag) {
+            const newFlag = Game.flags[oldObject.name];
+            if (newFlag == null) { return 3; } // no longer exists (removed or lost visibilty)
+            this._interop.replaceClrTrackedObject(jsHandle, newFlag);
+            return 0; // success
+        }
+        const id = (oldObject as { id: string | undefined }).id;
+        if (id == null) { return 2; } // unrenewable (not a room object, e.g. unrelated js object)
+        const newRoomObject = Game.getObjectById(id);
+        if (newRoomObject == null) { return 3; } // no longer exists (destroyed or lost visibilty)
+        this._interop.replaceClrTrackedObject(jsHandle, newRoomObject);
+        return 0;
+    }
+
+    private js_batch_renew_objects(jsHandleListPtr: number, count: number): number {
+        const { i32 } = this._memoryManager!.view;
+        const baseIdx = jsHandleListPtr >> 2;
+        let numSuccess = 0;
+        for (let i = 0; i < count; ++i) {
+            if (this.js_renew_object(i32[baseIdx + i]) === 0) {
+                ++numSuccess;
+            }
+        }
+        return numSuccess;
+    }
+
+    private js_fetch_object_room_position(jsHandle: number): number {
+        const roomObject = this._interop.getClrTrackedObject(jsHandle);
+        const pos = (roomObject as { pos: RoomPosition | undefined }).pos;
+        if (pos == null) { return 0; }
+        return (pos as unknown as { __packedPos: number }).__packedPos;
+    }
+
+    private js_batch_fetch_object_room_positions(jsHandleListPtr: number, count: number, outRoomPosListPtr: number): void {
+        const { i32 } = this._memoryManager!.view;
+        const baseJsHandleIdx = jsHandleListPtr >> 2;
+        const baseOutRoomPostListIdx = outRoomPosListPtr >> 2;
+        for (let i = 0; i < count; ++i) {
+            i32[baseOutRoomPostListIdx + i] = this.js_fetch_object_room_position(i32[baseJsHandleIdx + i]);
         }
     }
     
-    private encodeObjectId(memoryView: WasmMemoryView, id: string, outPtr: number): void {
+    private copyRawObjectId(memoryView: WasmMemoryView, id: string, outPtr: number): void {
         const { u8, i32 } = memoryView;
         if (id) {
             const l = id.length;
@@ -311,30 +352,18 @@ export class WorldBindings extends BaseBindings {
             }
         } else {
             for (let j = 0; j < 6; ++j) {
-                i32[this._copyBufferHeadI32 + j] = 0;
+                i32[outPtr + j] = 0;
             }
         }
     }
 
-    private encodeRoomObjectArray(memoryView: WasmMemoryView, arr: Record<string, unknown>[], key?: string): number {
+    private encodeRoomObjectArray(memoryView: WasmMemoryView, arr: readonly Record<string, unknown>[], key: string | undefined, outRawObjectIdPtr: number, outRoomObjectMetadataPtr: number, maxObjectCount: number): number {
         const { i32 } = memoryView;
-        if (this._copyBufferPtr == null) { throw new Error(`encodeRoomObjectArray failed as copy buffer was not allocated`); }
-        // room object packet (54b):
-        // - id (0..24)
-        // - type id (24..28)
-        // - flags (28..32)
-        // - hits/progress/energy/mineralAmount (32..36)
-        // - hitsMax/progressTotal/energyCapacity/density (36..40)
-        // - roomPosition (40..54)
-
-        let copyBufferHead = this._copyBufferPtr;
         let numEncoded = 0;
-        for (let i = 0; i < arr.length; ++i) {
-            if (copyBufferHead + PACKET_SIZE_IN_BYTES > this._copyBufferPtr + this._copyBufferSize) {
-                console.log(`BUFFER OVERFLOW in encodeRoomObjectArray (trying to encode ${arr.length} room objects but only space for ${(this._copyBufferSize / PACKET_SIZE_IN_BYTES)|0})`);
-                break;
-            }
-            const copyBufferHeadI32 = copyBufferHead >>> 2;
+        let nextRawObjectIdPtr = outRawObjectIdPtr;
+        let nextRoomObjectMetadataPtr = outRoomObjectMetadataPtr;
+        for (let i = 0; i < Math.min(maxObjectCount, arr.length); ++i) {
+            // Lookup object
             let obj = arr[i];
             if (key) {
                 obj = obj[key] as Record<string, unknown>;
@@ -343,14 +372,17 @@ export class WorldBindings extends BaseBindings {
                 obj = obj[obj.type as string] as Record<string, unknown>;
             }
             if (!(obj instanceof RoomObject)) { continue; }
+
+            // Copy id
+            this.copyRawObjectId(memoryView, obj.id as string, nextRawObjectIdPtr);
+            nextRawObjectIdPtr += 24;
+            
+            // Copy metadata
+            i32[(nextRoomObjectMetadataPtr + 0) >> 2] = Object.getPrototypeOf(obj).constructor.__dotnet_typeId || 0;
+            i32[(nextRoomObjectMetadataPtr + 4) >> 2] = this._interop.getClrTrackingId(obj) ?? this._interop.assignClrTrackingId(obj);
+            nextRoomObjectMetadataPtr += 8;
+
             ++numEncoded;
-            this.encodeObjectId(memoryView, obj.id as string, copyBufferHead);
-            i32[copyBufferHeadI32 + 6] = Object.getPrototypeOf(obj).constructor.__dotnet_typeId || 0;
-            i32[copyBufferHeadI32 + 7] = obj.my ? PACKET_FLAG_MY : 0;
-            i32[copyBufferHeadI32 + 8] = (obj.hits || obj.progress || obj.energy || obj.mineralAmount || 0) as number;
-            i32[copyBufferHeadI32 + 9] = (obj.hitsMax || obj.progressTotal || obj.energyCapacity || obj.density || 0) as number;
-            this.encodeRoomPosition(memoryView, obj.pos, copyBufferHead + 40);
-            copyBufferHead += PACKET_SIZE_IN_BYTES;
         }
         return numEncoded;
     }

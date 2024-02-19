@@ -1,22 +1,28 @@
 ﻿using System;
 using System.Numerics;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace ScreepsDotNet.API.World
 {
     /// <summary>
     /// Represents a coordinate of a room in the world map.
-    /// Positive X and Y corresponds to north and east, negative to south and west. For example,
-    /// N15E5 would be (5, 15) and S5W10 would be (-11, -6)
-    /// If running in the simulator, the sim room is represented as (int.MaxValue, int.MaxValue).
+    /// Positive X and Y corresponds to south and east, negative to north and west. For example,
+    /// S15E5 would be (5, 15) and N5W10 would be (-11, -6)
+    /// If running in the simulator, the sim room is represented as (-128, -128).
     /// </summary>
+    [StructLayout(LayoutKind.Sequential, Pack = 1, Size = 8)]
     public readonly struct RoomCoord : IEquatable<RoomCoord>
     {
+        internal const int kMaxWorldSize = 256;
+        internal const int kMaxWorldSize2 = kMaxWorldSize >> 1;
+
         public static readonly RoomCoord Sim = new("sim");
 
         public readonly int X;
         public readonly int Y;
 
-        public bool IsSim => X == int.MaxValue && Y == int.MaxValue;
+        public bool IsSim => X == -kMaxWorldSize2 && Y == -kMaxWorldSize2;
 
         public RoomCoord(int x, int y)
         {
@@ -28,8 +34,8 @@ namespace ScreepsDotNet.API.World
         {
             if (roomName.Equals("sim", StringComparison.InvariantCultureIgnoreCase))
             {
-                X = int.MaxValue;
-                Y = int.MaxValue;
+                X = -kMaxWorldSize2;
+                Y = -kMaxWorldSize2;
                 return;
             }
             if (roomName.Length < 4) { throw new ArgumentException($"Invalid room name '{roomName}'", nameof(roomName)); }
@@ -65,7 +71,7 @@ namespace ScreepsDotNet.API.World
             {
                 throw new InvalidOperationException($"Room name '{roomName}' does not follow standard pattern");
             }
-            if (roomName[ptr] == 'S')
+            if (roomName[ptr] == 'N')
             {
                 if (roomName.Length > ptr + 2 && char.IsDigit(roomName[ptr + 2]))
                 {
@@ -79,7 +85,7 @@ namespace ScreepsDotNet.API.World
                 }
 
             }
-            else if (roomName[ptr] == 'N')
+            else if (roomName[ptr] == 'S')
             {
                 if (roomName.Length > ptr + 2 && char.IsDigit(roomName[ptr + 2]))
                 {
@@ -98,56 +104,76 @@ namespace ScreepsDotNet.API.World
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static RoomCoord? ParseNullSafe(string? roomName)
             => string.IsNullOrEmpty(roomName) ? null : new(roomName);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int LinearDistanceTo(RoomCoord other)
             => Math.Max(Math.Abs(X - other.X), Math.Abs(Y - other.Y));
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double CartesianDistanceTo(RoomCoord other)
             => Math.Sqrt((X - other.X) * (X - other.X) + (Y - other.Y) * (Y - other.Y));
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsNextTo(RoomCoord other)
             => LinearDistanceTo(other) <= 1;
 
         public override bool Equals(object? obj) => obj is RoomCoord position && Equals(position);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Equals(RoomCoord other)
             => X == other.X
             && Y == other.Y;
 
         public override int GetHashCode() => HashCode.Combine(X, Y);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(RoomCoord left, RoomCoord right) => left.Equals(right);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator !=(RoomCoord left, RoomCoord right) => !(left == right);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator RoomCoord(Tuple<int, int> tuple) => new(tuple.Item1, tuple.Item2);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator RoomCoord((int, int) tuple) => new(tuple.Item1, tuple.Item2);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Vector2(RoomCoord pos) => new(pos.X, pos.Y);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static RoomCoord operator +(RoomCoord lhs, (int dx, int dy) rhs)
             => new(lhs.X + rhs.dx, lhs.Y + rhs.dy);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static RoomCoord operator +(RoomCoord lhs, ExitDirection rhs)
             => lhs + rhs.ToLinear();
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static RoomCoord operator -(RoomCoord lhs, (int dx, int dy) rhs)
             => new(lhs.X - rhs.dx, lhs.Y - rhs.dy);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static RoomCoord operator -(RoomCoord lhs, ExitDirection rhs)
             => lhs - rhs.ToLinear();
 
         public static ExitDirection operator -(RoomCoord lhs, RoomCoord rhs)
         {
             int dx = lhs.X - rhs.X;
-            int dy = rhs.Y - lhs.Y;
+            int dy = lhs.Y - rhs.Y;
             var ang = Math.Atan2(dy, dx) + Math.PI * 0.5;
             if (ang < 0.0) { ang += (Math.PI * 2.0); }
             return (ExitDirection)((int)Math.Round(ang / (Math.PI * 0.25)) % 8 + 1);
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static RoomCoord FromEncodedInt(int encodedInt) => new((int)((uint)encodedInt >> 24) - kMaxWorldSize2, ((int)((uint)encodedInt >> 16) & 255) - kMaxWorldSize2);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int ToEncodedInt() => (X + kMaxWorldSize2) << 24 | (Y + kMaxWorldSize2) << 16;
 
         public int ToString(Span<char> outRoomName)
         {
@@ -157,60 +183,66 @@ namespace ScreepsDotNet.API.World
                 return 3;
             }
             int ptr = 0;
-            if (X < -10)
+            //int x = X - kMaxWorldSize2;
+            //int y = Y - kMaxWorldSize2;
+            int x = X;
+            int y = Y;
+            if (x < -10)
             {
                 outRoomName[ptr++] = 'W';
-                outRoomName[ptr++] = (char)('0' - ((X + 1) / 10));
-                outRoomName[ptr++] = (char)('0' - ((X + 1) % 10));
+                outRoomName[ptr++] = (char)('0' - ((x + 1) / 10));
+                outRoomName[ptr++] = (char)('0' - ((x + 1) % 10));
             }
-            else if (X < 0)
+            else if (x < 0)
             {
                 outRoomName[ptr++] = 'W';
-                outRoomName[ptr++] = (char)('0' - ((X + 1) % 10));
+                outRoomName[ptr++] = (char)('0' - ((x + 1) % 10));
             }
-            else if (X > 9)
+            else if (x > 9)
             {
                 outRoomName[ptr++] = 'E';
-                outRoomName[ptr++] = (char)('0' + (X / 10));
-                outRoomName[ptr++] = (char)('0' + (X % 10));
+                outRoomName[ptr++] = (char)('0' + (x / 10));
+                outRoomName[ptr++] = (char)('0' + (x % 10));
             }
             else
             {
                 outRoomName[ptr++] = 'E';
-                outRoomName[ptr++] = (char)('0' + (X % 10));
+                outRoomName[ptr++] = (char)('0' + (x % 10));
             }
-            if (Y < -10)
-            {
-                outRoomName[ptr++] = 'S';
-                outRoomName[ptr++] = (char)('0' - ((Y + 1) / 10));
-                outRoomName[ptr++] = (char)('0' - ((Y + 1) % 10));
-            }
-            else if (Y < 0)
-            {
-                outRoomName[ptr++] = 'S';
-                outRoomName[ptr++] = (char)('0' - ((Y + 1) % 10));
-            }
-            else if (Y > 9)
+            if (y < -10)
             {
                 outRoomName[ptr++] = 'N';
-                outRoomName[ptr++] = (char)('0' + (Y / 10));
-                outRoomName[ptr++] = (char)('0' + (Y % 10));
+                outRoomName[ptr++] = (char)('0' - ((y + 1) / 10));
+                outRoomName[ptr++] = (char)('0' - ((y + 1) % 10));
+            }
+            else if (y < 0)
+            {
+                outRoomName[ptr++] = 'N';
+                outRoomName[ptr++] = (char)('0' - ((y + 1) % 10));
+            }
+            else if (y > 9)
+            {
+                outRoomName[ptr++] = 'S';
+                outRoomName[ptr++] = (char)('0' + (y / 10));
+                outRoomName[ptr++] = (char)('0' + (y % 10));
             }
             else
             {
-                outRoomName[ptr++] = 'N';
-                outRoomName[ptr++] = (char)('0' + (Y % 10));
+                outRoomName[ptr++] = 'S';
+                outRoomName[ptr++] = (char)('0' + (y % 10));
             }
             return ptr;
         }
 
         public override string ToString()
         {
+            if (IsSim) { return "sim"; }
             Span<char> roomName = stackalloc char[6];
             return new string(roomName[..ToString(roomName)]);
         }
     }
 
+    [StructLayout(LayoutKind.Sequential, Pack = 1, Size = 16)]
     public readonly struct RoomPosition : IEquatable<RoomPosition>
     {
         /// <summary>
@@ -242,50 +274,22 @@ namespace ScreepsDotNet.API.World
 
         public override bool Equals(object? obj) => obj is RoomPosition position && Equals(position);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Equals(RoomPosition other) => Position.Equals(other.Position) && RoomCoord.Equals(other.RoomCoord);
 
         public override int GetHashCode() => HashCode.Combine(Position, RoomCoord);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(RoomPosition left, RoomPosition right) => left.Equals(right);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator !=(RoomPosition left, RoomPosition right) => !(left == right);
 
-        public static RoomPosition FromEncodedInt(int encodedInt)
-        {
-            // bit 0-0   (1): sim room
-            // bit 1-7   (7): room x
-            // bit 8-14  (7): room y
-            // bit 15-20 (6): local x
-            // bit 21-26 (6): local y
-            bool isSimRoom = (encodedInt & 1) != 0;
-            int roomX = ((encodedInt >> 1) & 127) - 64;
-            int roomY = ((encodedInt >> 8) & 127) - 64;
-            int localX = (encodedInt >> 15) & 63;
-            int localY = (encodedInt >> 21) & 63;
-            return new(new(localX, localY), isSimRoom ? RoomCoord.Sim : new(roomX, roomY));
-        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static RoomPosition FromEncodedInt(int encodedInt) => new(new Position((encodedInt >> 8) & 255, encodedInt & 255), RoomCoord.FromEncodedInt(encodedInt));
 
-        public int ToEncodedInt()
-        {
-            // bit 0-0   (1): sim room
-            // bit 1-7   (7): room x
-            // bit 8-14  (7): room y
-            // bit 15-20 (6): local x
-            // bit 21-26 (6): local y
-            int result = 0;
-            if (RoomCoord.IsSim)
-            {
-                result |= 1;
-            }
-            else
-            {
-                result |= (RoomCoord.X + 64) << 1;
-                result |= (RoomCoord.Y + 64) << 8;
-            }
-            result |= Position.X << 15;
-            result |= Position.Y << 21;
-            return result;
-        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int ToEncodedInt() => RoomCoord.ToEncodedInt() | Position.X << 8 | Position.Y;
 
         public override string ToString()
             => $"[{Position.X},{Position.Y}:{RoomCoord}]";

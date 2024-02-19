@@ -203,7 +203,6 @@ export class Interop {
         const value = this.stringToJs(this._memoryManager.view, valuePtr);
         this._nameList[nameIndex] = value;
         this._nameTable[value] = nameIndex;
-        console.log(`mapped name index ${nameIndex} to '${value}'`);
     }
 
     private createImportBinding(importFunction: (...args: unknown[]) => unknown, functionSpec: Readonly<FunctionSpec>, importIndex: number): BoundImportFunction {
@@ -509,21 +508,41 @@ export class Interop {
         return result;
     }
 
-    private getClrTrackingId(obj: object): number | undefined {
+    public getClrTrackingId(obj: object): number | undefined {
         return (obj as { [CLR_TRACKING_ID]: number | undefined })[CLR_TRACKING_ID];
     }
 
-    private assignClrTrackingId(obj: object): number {
-        const clrTrackingId = this._nextClrTrackingId++;
-        (obj as { [CLR_TRACKING_ID]: number | undefined })[CLR_TRACKING_ID] = clrTrackingId;
-        this._objectTrackingList[clrTrackingId] = obj;
-        ++this._numBeginTrackingObjects;
-        ++this._numTotalTrackingObjects;
-        return clrTrackingId;
+    public assignClrTrackingId(obj: object, newClrTrackingId?: number): number {
+        if (newClrTrackingId == null) {
+            newClrTrackingId = this._nextClrTrackingId++;
+            ++this._numBeginTrackingObjects;
+            ++this._numTotalTrackingObjects;
+        }
+        (obj as { [CLR_TRACKING_ID]: number | undefined })[CLR_TRACKING_ID] = newClrTrackingId;
+        this._objectTrackingList[newClrTrackingId] = obj;
+        return newClrTrackingId;
     }
 
     private clearClrTrackingId(obj: object): void {
         (obj as { [CLR_TRACKING_ID]: number | undefined })[CLR_TRACKING_ID] = undefined;
+    }
+
+    public replaceClrTrackedObject(oldObj: object, newObj: object): void;
+
+    public replaceClrTrackedObject(clrTrackingId: number, newObj: object): void;
+
+    public replaceClrTrackedObject(p0: object | number, newObj: object): void {
+        const clrTrackingId = typeof p0 === 'number' ? p0 : this.getClrTrackingId(p0);
+        if (clrTrackingId == null) { return; }
+        const oldObj = typeof p0 === 'number' ? this._objectTrackingList[clrTrackingId] : p0;
+        if (oldObj != null) {
+            this.clearClrTrackingId(oldObj);
+        }
+        this.assignClrTrackingId(newObj, clrTrackingId);
+    }
+
+    public getClrTrackedObject(clrTrackingId: number): object | undefined {
+        return this._objectTrackingList[clrTrackingId];
     }
 
     private stringifyValueForDisplay(value: unknown): string {

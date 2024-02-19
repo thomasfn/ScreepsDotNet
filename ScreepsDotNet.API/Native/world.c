@@ -2,196 +2,167 @@
 
 #include <mono/metadata/loader.h>
 
-void* copyBufferPtr = 0;
-
-void DecodeRoomPosition(void* encodedRoomPositionPtr, void* outPtr);
-
-void DecodeRoomPositions(void* encodedRoomPositionPtr, int encodedRoomPositionStride, void* outPtr, int outStride, int count);
-
-void DecodeObjectId(void* encodedIdPtr, void* outPtr);
-
-void DecodeObjectIds(void* encodedIdPtr, int encodedIdStride, void* outPtr, int outStride, int count);
-
-void DecodeRoomObjectListFromCopyBuffer(void* outPtr, int count);
-
-__attribute__((export_name("screepsdotnet_init_world")))
-void* screepsdotnet_init_world(int copyBufferSize)
-{
-    copyBufferPtr = malloc(copyBufferSize);
-	mono_add_internal_call("ScreepsDotNet_Native::DecodeRoomPosition", DecodeRoomPosition);
-    mono_add_internal_call("ScreepsDotNet_Native::DecodeRoomPositions", DecodeRoomPositions);
-    mono_add_internal_call("ScreepsDotNet_Native::DecodeObjectId", DecodeObjectId);
-    mono_add_internal_call("ScreepsDotNet_Native::DecodeObjectIds", DecodeObjectIds);
-    mono_add_internal_call("ScreepsDotNet_Native::DecodeRoomObjectListFromCopyBuffer", DecodeRoomObjectListFromCopyBuffer);
-    return copyBufferPtr;
-}
-
-void DecodeRoomPosition(void* encodedRoomPositionPtr, void* outPtr)
-{
-    int* out = (int*)outPtr;
-    // X:i32(4), y:i32(4), roomName:6i8(6), total=14
-    out[0] = ((int*)encodedRoomPositionPtr)[0];
-    out[1] = ((int*)encodedRoomPositionPtr)[1];
-    char* inRoomName = ((char*)encodedRoomPositionPtr) + 8;
-    if (inRoomName[0] == 0)
-    {
-        // Unknown room, maybe sim or invalid room name
-        out[2] = 0x7fffffff;
-        out[3] = 0x7fffffff;
-        return;
-    }
-
-    char _0 = inRoomName[0], _1 = inRoomName[1], _2 = inRoomName[2];
-    if (_0 == 'W')
-    {
-        if (_2 >= '0' && _2 <= '9')
-        {
-            out[2] = -((_1 - '0') * 10 + (_2 - '0') + 1);
-            inRoomName += 3;
-        }
-        else
-        {
-            out[2] = -(_1 - '0' + 1);
-            inRoomName += 2;
-        }
-    }
-    else if (_0 == 'E')
-    {
-        if (_2 >= '0' && _2 <= '9')
-        {
-            out[2] = (_1 - '0') * 10 + (_2 - '0');
-            inRoomName += 3;
-        }
-        else
-        {
-            out[2] = _1 - '0';
-            inRoomName += 2;
-        }
-    }
-
-    _0 = inRoomName[0], _1 = inRoomName[1], _2 = inRoomName[2];
-    if (_0 == 'S') {
-        if (_2 >= '0' && _2 <= '9')
-        {
-            out[3] = -((_1 - '0') * 10 + (_2 - '0') + 1);
-            inRoomName += 3;
-        }
-        else
-        {
-            out[3] = -(_1 - '0' + 1);
-            inRoomName += 2;
-        }
-    }
-    else if (_0 == 'N')
-    {
-        if (_2 >= '0' && _2 <= '9')
-        {
-            out[3] = (_1 - '0') * 10 + (_2 - '0');
-            inRoomName += 3;
-        }
-        else
-        {
-            out[3] = _1 - '0';
-            inRoomName += 2;
-        }
-    }
-}
-
-void DecodeRoomPositions(void* encodedRoomPositionPtr, int encodedRoomPositionStride, void* outPtr, int outStride, int count)
-{
-    for (int i = 0; i < count; ++i)
-    {
-        DecodeRoomPosition(encodedRoomPositionPtr, outPtr);
-        encodedRoomPositionPtr = (char*)encodedRoomPositionPtr + encodedRoomPositionStride;
-        outPtr = (char*)outPtr + outStride;
-    }
-}
-
-__attribute__((always_inline)) int DecodeHexDigit(int digit)
-{
-    return digit >= 97 ? 10 + (digit - 97) : digit - 48;
-}
-
-__attribute__((always_inline)) int Decode4HexDigits(int digits)
-{
-    return (DecodeHexDigit(digits & 255) << 12) | (DecodeHexDigit((digits >> 8) & 255) << 8) | (DecodeHexDigit((digits >> 16) & 255) << 4) | DecodeHexDigit(digits >> 24);
-}
-
-void DecodeObjectId(void* encodedIdPtr, void* outPtr)
-{
-    int* encodedId = (int*)encodedIdPtr;
-    int* out = (int*)outPtr;
-    int len;
-    for (len = 0; len < 24; ++len)
-    {
-        if (((char*)encodedIdPtr)[len] == 0) { break; }
-    }
-    for (int i = len; i < 24; ++i)
-    {
-        ((char*)encodedIdPtr)[len] = '0';
-    }
-    out[0] = (Decode4HexDigits(encodedId[0]) << 16) | Decode4HexDigits(encodedId[1]);
-    out[1] = (Decode4HexDigits(encodedId[2]) << 16) | Decode4HexDigits(encodedId[3]);
-    out[2] = (Decode4HexDigits(encodedId[4]) << 16) | Decode4HexDigits(encodedId[5]);
-    int hash = ((17 * 31 + out[0]) * 31 + out[1]) * 31 + out[2];
-    out[3] = (hash & ~31) | len;
-}
-
-void DecodeObjectIds(void* encodedIdPtr, int encodedIdStride, void* outPtr, int outStride, int count)
-{
-    for (int i = 0; i < count; ++i)
-    {
-        DecodeObjectId(encodedIdPtr, outPtr);
-        encodedIdPtr = (char*)encodedIdPtr + encodedIdStride;
-        outPtr = (char*)outPtr + outStride;
-    }
-}
+const int kMaxWorldSize = 256;
+const int kMaxWorldSize2 = kMaxWorldSize >> 1;
 
 #pragma pack(push)
 #pragma pack(1)
 
-struct InRoomObjectDataPacket
+// 16b
+struct ObjectId
 {
-    unsigned char Id[24];
-    int TypeId;
-    int Flags;
-    int Hits;
-    int HitsMax;
-    unsigned char RoomPos[14];
-    unsigned char unused0[2];
+    int A;
+    int B;
+    int C;
+    int H;
 };
 
-struct OutRoomObjectDataPacket
+// 8b
+struct Position
 {
-    unsigned char Id[16];
-    int TypeId;
-    int Flags;
-    int Hits;
-    int HitsMax;
-    unsigned char RoomPos[16];
+    int X;
+    int Y;
+};
+
+// 8b
+struct RoomCoord
+{
+    int X;
+    int Y;
+};
+
+// 16b
+struct RoomPosition
+{
+    struct Position Position;
+    struct RoomCoord RoomCoord;
+};
+
+// 24b
+struct RawObjectId
+{
+    unsigned char Id[24];
 };
 
 #pragma pack(pop)
 
+__attribute__((__import_module__("bindings"), __import_name__("js_renew_object")))
+extern int js_renew_object(void* jsHandle);
 
-void DecodeRoomObjectListFromCopyBuffer(void* outPtr, int count)
+__attribute__((__import_module__("bindings"), __import_name__("js_batch_renew_objects")))
+extern int js_batch_renew_objects(void** jsHandleList, int count);
+
+__attribute__((__import_module__("bindings"), __import_name__("js_fetch_object_room_position")))
+extern int js_fetch_object_room_position(void* jsHandle);
+
+__attribute__((__import_module__("bindings"), __import_name__("js_batch_fetch_object_room_positions")))
+extern void js_batch_fetch_object_room_positions(void** jsHandleList, int count, int* outPackedRoomPosList);
+
+__attribute__((__import_module__("bindings"), __import_name__("js_get_object_by_id")))
+extern void* js_get_object_by_id(struct RawObjectId* rawObjectId);
+
+__attribute__((always_inline))
+void DecodeRoomPosition(int packedRoomPos, struct RoomPosition* outPos)
 {
-    static_assert(sizeof(struct InRoomObjectDataPacket) == 56, "InRoomObjectDataPacket unexpected size");
-    static_assert(sizeof(struct OutRoomObjectDataPacket) == 48, "OutRoomObjectDataPacket unexpected size");
+    outPos->Position.X = (packedRoomPos >> 8) & 0xff;
+    outPos->Position.Y = packedRoomPos & 0xff;
+    outPos->RoomCoord.X = (int)((unsigned int)packedRoomPos >> 24) - kMaxWorldSize2;
+    outPos->RoomCoord.Y = (int)(((unsigned int)packedRoomPos >> 16) & 0xff) - kMaxWorldSize2;
+}
 
-    struct InRoomObjectDataPacket* inPackets = (struct InRoomObjectDataPacket*)copyBufferPtr;
-    struct OutRoomObjectDataPacket* outPackets = (struct OutRoomObjectDataPacket*)outPtr;
+__attribute__((always_inline))
+int DecodeHexDigit(int digit)
+{
+    return digit >= 97 ? 10 + (digit - 97) : digit - 48;
+}
 
+__attribute__((always_inline))
+int Decode4HexDigits(int digits)
+{
+    return (DecodeHexDigit(digits & 255) << 12) | (DecodeHexDigit((digits >> 8) & 255) << 8) | (DecodeHexDigit((digits >> 16) & 255) << 4) | DecodeHexDigit(digits >> 24);
+}
+
+void DecodeObjectId(struct RawObjectId* rawObjectId, struct ObjectId* outObjectIdPtr)
+{
+    int* encodedId = (int*)rawObjectId->Id;
+    int len;
+    for (len = 23; len >= 0; --len)
+    {
+        if (rawObjectId->Id[len] != 0) { break; }
+    }
+    ++len;
+    for (int i = len; i < 24; ++i)
+    {
+        rawObjectId->Id[len] = '0';
+    }
+    outObjectIdPtr->A = (Decode4HexDigits(encodedId[0]) << 16) | Decode4HexDigits(encodedId[1]);
+    outObjectIdPtr->B = (Decode4HexDigits(encodedId[2]) << 16) | Decode4HexDigits(encodedId[3]);
+    outObjectIdPtr->C = (Decode4HexDigits(encodedId[4]) << 16) | Decode4HexDigits(encodedId[5]);
+    outObjectIdPtr->H = ((((17 * 31 + outObjectIdPtr->A) * 31 + outObjectIdPtr->B) * 31 + outObjectIdPtr->C) & ~31) | len;
+}
+
+void DecodeObjectIds(struct RawObjectId* rawObjectIdList, int count, struct ObjectId* outObjectIdList)
+{
     for (int i = 0; i < count; ++i)
     {
-        struct InRoomObjectDataPacket* inPacket = inPackets + i;
-        struct OutRoomObjectDataPacket* outPacket = outPackets + i;
-
-        DecodeObjectId(inPacket->Id, outPacket->Id);
-        outPacket->TypeId = inPacket->TypeId;
-        outPacket->Flags = inPacket->Flags;
-        outPacket->Hits = inPacket->Hits;
-        outPacket->HitsMax = inPacket->HitsMax;
-        DecodeRoomPosition(inPacket->RoomPos, outPacket->RoomPos);
+        DecodeObjectId(rawObjectIdList + i, outObjectIdList + i);
     }
+}
+
+__attribute__((always_inline))
+char EncodeHexDigit(int nibble)
+{
+    return nibble >= 10 ? 97 + (nibble - 10) : 48 + nibble;
+}
+
+__attribute__((always_inline))
+int Encode4HexDigits(int value)
+{
+    return (EncodeHexDigit(value & 0xf) << 24) | (EncodeHexDigit((value >> 4) & 0xf) << 16) | (EncodeHexDigit((value >> 8) & 0xf) << 8) | EncodeHexDigit((value >> 12) & 0xf);
+}
+
+void EncodeObjectId(struct ObjectId* objectId, struct RawObjectId* outRawObjectId)
+{
+    int* encodedId = (int*)outRawObjectId->Id;
+    encodedId[0] = Encode4HexDigits(objectId->A >> 16);
+    encodedId[1] = Encode4HexDigits(objectId->A & 0xffff);
+    encodedId[2] = Encode4HexDigits(objectId->B >> 16);
+    encodedId[3] = Encode4HexDigits(objectId->B & 0xffff);
+    encodedId[4] = Encode4HexDigits(objectId->C >> 16);
+    encodedId[5] = Encode4HexDigits(objectId->C & 0xffff);
+    int len = objectId->H & 31;
+    if (len < 24) { outRawObjectId->Id[len] = '\0'; }
+}
+
+void FetchObjectRoomPosition(void* jsHandle, struct RoomPosition* outRoomPos)
+{
+    DecodeRoomPosition(js_fetch_object_room_position(jsHandle), outRoomPos);
+}
+
+void BatchFetchObjectRoomPositions(void** jsHandleList, int count, struct RoomPosition* outRoomPosList)
+{
+    int packedRoomPositions[count];
+    js_batch_fetch_object_room_positions(jsHandleList, count, packedRoomPositions);
+    for (int i = 0; i < count; ++i)
+    {
+        DecodeRoomPosition(packedRoomPositions[i], outRoomPosList + i);
+    }
+}
+
+void* GetObjectById(struct ObjectId* objectId)
+{
+    struct RawObjectId rawObjectId;
+    EncodeObjectId(objectId, &rawObjectId);
+    return js_get_object_by_id(&rawObjectId);
+}
+
+__attribute__((export_name("screepsdotnet_init_world")))
+void screepsdotnet_init_world()
+{
+    mono_add_internal_call("ScreepsDotNet_Native::RenewObject", js_renew_object);
+    mono_add_internal_call("ScreepsDotNet_Native::BatchRenewObjects", js_batch_renew_objects);
+    mono_add_internal_call("ScreepsDotNet_Native::DecodeObjectIds", DecodeObjectIds);
+    mono_add_internal_call("ScreepsDotNet_Native::FetchObjectRoomPosition", FetchObjectRoomPosition);
+    mono_add_internal_call("ScreepsDotNet_Native::BatchFetchObjectRoomPositions", BatchFetchObjectRoomPositions);
+    mono_add_internal_call("ScreepsDotNet_Native::GetObjectById", GetObjectById);
 }

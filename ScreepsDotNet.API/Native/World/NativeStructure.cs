@@ -42,13 +42,6 @@ namespace ScreepsDotNet.Native.World
             this.id = id;
         }
 
-        public override void UpdateFromDataPacket(RoomObjectDataPacket dataPacket)
-        {
-            base.UpdateFromDataPacket(dataPacket);
-            hitsCache = dataPacket.Hits;
-            hitsMaxCache = dataPacket.HitsMax;
-        }
-
         public override JSObject? ReacquireProxyObject()
             => nativeRoot.GetProxyObjectById(id);
 
