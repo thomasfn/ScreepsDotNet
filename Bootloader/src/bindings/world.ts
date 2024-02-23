@@ -98,6 +98,7 @@ export class WorldBindings extends BaseBindings {
         this.bindingsImport.js_batch_renew_objects = this.js_batch_renew_objects.bind(this);
         this.bindingsImport.js_fetch_object_room_position = this.js_fetch_object_room_position.bind(this);
         this.bindingsImport.js_batch_fetch_object_room_positions = this.js_batch_fetch_object_room_positions.bind(this);
+        this.bindingsImport.js_get_object_by_id = this.js_get_object_by_id.bind(this);
         const gameConstructors: Record<string, GameConstructor> = {
             StructureContainer,
             StructureController,
@@ -319,6 +320,8 @@ export class WorldBindings extends BaseBindings {
         for (let i = 0; i < count; ++i) {
             if (this.js_renew_object(i32[baseIdx + i]) === 0) {
                 ++numSuccess;
+            } else {
+                i32[baseIdx + i] = -1;
             }
         }
         return numSuccess;
@@ -338,6 +341,22 @@ export class WorldBindings extends BaseBindings {
         for (let i = 0; i < count; ++i) {
             i32[baseOutRoomPostListIdx + i] = this.js_fetch_object_room_position(i32[baseJsHandleIdx + i]);
         }
+    }
+
+    private js_get_object_by_id(objectIdPtr: number): number {
+        const { u8 } = this._memoryManager!.view;
+        let id = '';
+        for (let i = 0; i < 24; ++i) {
+            const code = u8[objectIdPtr + i];
+            if (code === 0) { break; }
+            id += String.fromCharCode(code);
+        }
+        const obj = Game.getObjectById(id);
+        if (obj == null) {
+            //this.log(`js_get_object_by_id: failed to retrieve '${id}'`);
+            return -1;
+        }
+        return this._interop.getClrTrackingId(obj) ?? this._interop.assignClrTrackingId(obj);
     }
     
     private copyRawObjectId(memoryView: WasmMemoryView, id: string, outPtr: number): void {
@@ -379,7 +398,9 @@ export class WorldBindings extends BaseBindings {
             
             // Copy metadata
             i32[(nextRoomObjectMetadataPtr + 0) >> 2] = Object.getPrototypeOf(obj).constructor.__dotnet_typeId || 0;
-            i32[(nextRoomObjectMetadataPtr + 4) >> 2] = this._interop.getClrTrackingId(obj) ?? this._interop.assignClrTrackingId(obj);
+            // For now do not assign clr tracking ids here because if we get here before clr has a chance to renew the objects, we memory leak as the old reference is lost and the object sticks around in the tracking list
+            // i32[(nextRoomObjectMetadataPtr + 4) >> 2] = this._interop.getClrTrackingId(obj) ?? this._interop.assignClrTrackingId(obj);
+            i32[(nextRoomObjectMetadataPtr + 4) >> 2] = -1;
             nextRoomObjectMetadataPtr += 8;
 
             ++numEncoded;

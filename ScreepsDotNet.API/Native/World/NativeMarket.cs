@@ -86,39 +86,30 @@ namespace ScreepsDotNet.Native.World
         #region Imports
 
         [JSImport("market.calcTransactionCost", "game")]
-        
         internal static partial int Native_CalcTransactionCost(int amount, string roomName1, string roomName2);
 
         [JSImport("market.cancelOrder", "game")]
-        
         internal static partial int Native_CancelOrder(string orderId);
 
         [JSImport("market.changeOrderPrice", "game")]
-        
         internal static partial int Native_ChangeOrderPrice(string orderId, double newPrice);
 
         [JSImport("market.createOrder", "game")]
-        
         internal static partial int Native_CreateOrder(JSObject orderParams);
 
         [JSImport("market.deal", "game")]
-        
         internal static partial int Native_Deal(string orderId, int amount, string? yourRoomName);
 
         [JSImport("market.extendOrder", "game")]
-        
         internal static partial int Native_ExtendOrder(string orderId, int addAmount);
 
         [JSImport("market.getAllOrders", "game")]
-        
         internal static partial JSObject[] Native_GetAllOrders(JSObject? filter);
 
         [JSImport("market.getHistory", "game")]
-        
-        internal static partial JSObject[] Native_GetHistory(Name? resourceType);
+        internal static partial JSObject[]? Native_GetHistory(Name? resourceType);
 
         [JSImport("market.getOrderById", "game")]
-        
         internal static partial JSObject? Native_GetOrderById(string id);
 
         #endregion
@@ -201,7 +192,7 @@ namespace ScreepsDotNet.Native.World
         }
 
         public IEnumerable<PriceHistory> GetHistory(ResourceType? resourceType = null)
-            => Native_GetHistory(resourceType?.ToJS()).Select(x => x.ToPriceHistory());
+            => (Native_GetHistory(resourceType?.ToJS()) ?? Enumerable.Empty<JSObject>()).Select(x => x.ToPriceHistory());
 
         public OrderDetails? GetOrderById(string id)
         {
