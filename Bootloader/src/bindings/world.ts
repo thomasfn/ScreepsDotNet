@@ -7,9 +7,6 @@ declare const global: typeof globalThis;
 
 const CPU_HALT_WHEN_NO_CHECKIN_FOR = 10;
 
-const PACKET_SIZE_IN_BYTES = 56;
-const PACKET_FLAG_MY = (1 << 0);
-
 type GamePrototype = {};
 
 type GameConstructor = { readonly prototype: GamePrototype };
@@ -42,14 +39,14 @@ const RESOURCE_TO_ENUM_MAP: Record<ResourceConstantEx, number> = {} as Record<Re
 }
 
 const BODYPART_LIST: readonly BodyPartConstant[] = [
-    MOVE,
-    WORK,
-    CARRY,
-    ATTACK,
-    RANGED_ATTACK,
-    TOUGH,
-    HEAL,
-    CLAIM,
+    'move',
+    'work',
+    'carry',
+    'attack',
+    'ranged_attack',
+    'tough',
+    'heal',
+    'claim',
 ]; // 8 total
 
 const BODYPART_TO_ENUM_MAP: Record<BodyPartConstant, number> = {} as Record<BodyPartConstant, number>;

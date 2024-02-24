@@ -40,7 +40,7 @@ export default {
             writeBundle(bundle) {
                 if (bundle.file !== 'dist/bootloader.js') { return; }
                 const str = fs.readFileSync(bundle.file, { encoding: 'utf8' });
-                const arenaStr = `${str}\nexport const Bootloader = bootloader.Bootloader;\n`;
+                const arenaStr = `${str}\nexport const Bootloader = bootloader.Bootloader;\nexport const decodeWasm = bootloader.decodeWasm;\nexport const decompressWasm = bootloader.decompressWasm;\n`;
                 fs.writeFileSync(bundle.file.replace(path.extname(bundle.file), '-arena.mjs'), arenaStr);
                 const worldStr = `${str}\nmodule.exports = bootloader;\n`;
                 fs.writeFileSync(bundle.file.replace(path.extname(bundle.file), '-world.js'), worldStr);

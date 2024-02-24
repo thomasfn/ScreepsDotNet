@@ -17,12 +17,6 @@
 		<WasiSdkVersion>15</WasiSdkVersion>
 	</PropertyGroup>
 
-	<ItemGroup>
-		<_WasmCommonCFlags Include="-mno-bulk-memory" />
-		<_WasiSdkClangArgs Include="-Wl,--features=mutable-globals" />
-		<!-- TODO: Figure out how to get it to legalise js interface - are we using wasm-opt in this pipeline? if so the 'legalize-js-interface' flag works nicely for this -->
-	</ItemGroup>
-
 	<PropertyGroup>
 		<ScreepsEncoding>b64</ScreepsEncoding>
 	</PropertyGroup>
@@ -43,10 +37,8 @@
 
 	<Import Project="..\ScreepsDotNet.API\build\ScreepsDotNet.API.props" />
 
-	<!--
 	<ItemGroup>
-		<PackageReference Include="ScreepsDotNet.Bundler" Version="1.1.0" PrivateAssets="All" />
+		<PackageReference Include="ScreepsDotNet.Bundler" Version="2.0.0" PrivateAssets="All" />
 	</ItemGroup>
-	-->
 
 </Project>

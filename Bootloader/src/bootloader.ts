@@ -1,5 +1,8 @@
 import 'fastestsmallesttextencoderdecoder';
 import { WASI, File, OpenFile, Fd } from '@bjorn3/browser_wasi_shim';
+import base64Decode from 'fast-base64-decode'
+import { decode as base32768Decode } from 'base32768';
+import * as fflate from 'fflate';
 
 import { ImportTable, Interop } from './interop.js';
 import { ScreepsDotNetExports } from './common.js';
@@ -57,6 +60,22 @@ const JSTYPE_TO_ENUM: Readonly<Record<'undefined' | 'string' | 'number' | 'bigin
     function: 6,
     symbol: 7,
 };
+
+export function decompressWasm(compressedBytes: Uint8Array, originalSize: number): Uint8Array {
+    const decompressedBytes = new Uint8Array(originalSize);
+    return fflate.inflateSync(compressedBytes, { out: decompressedBytes });
+}
+
+export function decodeWasm(encodedWasm: string, originalSize: number, encoding: 'b64'|'b32768'): Uint8Array {
+    let bytes: Uint8Array;
+    if (encoding == 'b64') {
+        bytes = new Uint8Array(originalSize);
+        base64Decode(encodedWasm, bytes);
+    } else {
+        bytes = base32768Decode(encodedWasm);
+    }
+    return bytes;
+}
 
 export class Bootloader {
     private readonly _pendingLogs: string[] = [];

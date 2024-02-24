@@ -1,6 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 	<ItemGroup>
+		<_WasmCommonCFlags Include="-mno-bulk-memory" />
+		<_WasiSdkClangArgs Include="-Wl,--features=mutable-globals" />
+	</ItemGroup>
+	<ItemGroup>
 		<_WasmRuntimePackSrcFile Include="$(MSBuildThisFileDirectory)..\Native\world.c" />
 		<_WasmRuntimePackSrcFile Include="$(MSBuildThisFileDirectory)..\Interop\interop.c" />
 	</ItemGroup>

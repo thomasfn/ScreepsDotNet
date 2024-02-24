@@ -12,8 +12,13 @@
 	<UsingTask TaskName="ScreepsDotNet.Bundler.BundlerBuildTask" AssemblyFile="$(ScreepsDotNetBundlerAssemblyPath)ScreepsDotNet.Bundler.dll" />
 
 	<PropertyGroup>
-		<ScreepsCompressAssemblies>true</ScreepsCompressAssemblies>
-		<ScreepsCompressWasm>true</ScreepsCompressWasm>
+		<ScreepsCompressWasm>false</ScreepsCompressWasm>
 		<ScreepsEncoding>b64</ScreepsEncoding>
 	</PropertyGroup>
+
+	<ItemGroup>
+		<WasmOptConfigurationFlags Include="-mvp" />
+		<WasmOptConfigurationFlags Include="--legalize-js-interface" />
+		<WasmOptConfigurationFlags Include="-Oz" />
+	</ItemGroup>
 </Project>
