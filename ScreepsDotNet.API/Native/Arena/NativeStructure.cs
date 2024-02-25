@@ -10,9 +10,9 @@ namespace ScreepsDotNet.Native.Arena
         private int? hitsCache;
         private int? hitsMaxCache;
 
-        public int Hits => CachePerTick(ref hitsCache) ??= proxyObject.GetPropertyAsInt32(Names.Hits);
+        public int? Hits => CachePerTick(ref hitsCache) ??= proxyObject.TryGetPropertyAsInt32(Names.Hits);
 
-        public int HitsMax => CacheLifetime(ref hitsMaxCache) ??= proxyObject.GetPropertyAsInt32(Names.HitsMax);
+        public int? HitsMax => CacheLifetime(ref hitsMaxCache) ??= proxyObject.TryGetPropertyAsInt32(Names.HitsMax);
 
         public NativeStructure(INativeRoot nativeRoot, JSObject proxyObject)
             : base(nativeRoot, proxyObject, false)

@@ -2713,10 +2713,12 @@ var bootloader = (function (exports) {
             return new pathFinder.CostMatrix();
           }
         });
-        // this.imports['game/visual'] = {
-        //     Visual: this.buildWrappedPrototype(visual.Visual),
-        //     createVisual: (layer, persistent) => new visual.Visual(layer, persistent),
-        // };
+        this.imports['game/visual'] = {
+          Visual: this.buildWrappedPrototype(visual.Visual),
+          createVisual: function createVisual(layer, persistent) {
+            return new visual.Visual(layer, persistent);
+          }
+        };
         this.imports['game'] = {
           getUtils: function getUtils() {
             return utils;
@@ -2758,6 +2760,7 @@ var bootloader = (function (exports) {
       key: "encodeCreepBody",
       value: function encodeCreepBody(memoryView, body, outPtr) {
         var i16 = memoryView.i16;
+        var ptrI16 = outPtr >> 1;
         for (var _i5 = 0; _i5 < body.length; ++_i5) {
           var _body$_i = body[_i5],
             type = _body$_i.type,
@@ -2768,8 +2771,8 @@ var bootloader = (function (exports) {
           var encodedBodyPart = 0;
           encodedBodyPart |= BODYPART_TO_ENUM_MAP$1[type] << 8;
           encodedBodyPart |= hits;
-          i16[outPtr >> 1] = encodedBodyPart;
-          outPtr += 2;
+          i16[ptrI16] = encodedBodyPart;
+          ++ptrI16;
         }
         return body.length;
       }
@@ -2777,12 +2780,11 @@ var bootloader = (function (exports) {
       key: "copyPath",
       value: function copyPath(memoryView, path, outPtr) {
         var i32 = memoryView.i32;
-        var ptr = outPtr;
+        var ptrI32 = outPtr >> 2;
         for (var _i6 = 0; _i6 < path.length; ++_i6) {
-          i32[ptr >> 2] = path[_i6].x;
-          ++ptr;
-          i32[ptr >> 2] = path[_i6].y;
-          ++ptr;
+          i32[ptrI32 + 0] = path[_i6].x;
+          i32[ptrI32 + 1] = path[_i6].y;
+          ptrI32 += 2;
         }
         return path.length;
       }

@@ -8,17 +8,12 @@ import { BaseBindings } from './base.js';
 import type { RoomPosition, GameObject, Store } from 'game/prototypes';
 import type { FindPathResult, FindPathOpts } from 'game/path-finder';
 
-// Missing export in ts definitions
-declare module "game/prototypes" {
-    export const GameObject: _Constructor<GameObject>;
-}
-
 // Note: We're assuming these imports are prepended to the final bootloader.mjs file by rollup and so they're essentially available globally for us to use
 declare const utils: typeof import('game/utils');
 declare const prototypes: typeof import('game/prototypes');
 declare const constants: typeof import('game/constants');
 declare const pathFinder: typeof import('game/path-finder');
-//declare const visual: typeof import('game/visual');
+declare const visual: typeof import('game/visual');
 
 type GamePrototype = {};
 
@@ -142,10 +137,10 @@ export class ArenaBindings extends BaseBindings {
             },
             createCostMatrix: () => new pathFinder.CostMatrix(),
         };
-        // this.imports['game/visual'] = {
-        //     Visual: this.buildWrappedPrototype(visual.Visual),
-        //     createVisual: (layer, persistent) => new visual.Visual(layer, persistent),
-        // };
+        this.imports['game/visual'] = {
+            Visual: this.buildWrappedPrototype(visual.Visual),
+            createVisual: (layer, persistent) => new visual.Visual(layer, persistent),
+        };
         this.imports['game'] = {
             getUtils: () => utils,
             getPrototypes: () => prototypes,
@@ -175,6 +170,7 @@ export class ArenaBindings extends BaseBindings {
 
     private encodeCreepBody(memoryView: WasmMemoryView, body: readonly BodyPartDefinition[], outPtr: number): number {
         const { i16 } = memoryView;
+        let ptrI16 = outPtr >> 1;
         for (let i = 0; i < body.length; ++i) {
             const { type, hits } = body[i];
             // Encode each body part to a 16 bit int as 2 bytes
@@ -183,20 +179,19 @@ export class ArenaBindings extends BaseBindings {
             let encodedBodyPart = 0;
             encodedBodyPart |= (BODYPART_TO_ENUM_MAP[type] << 8);
             encodedBodyPart |= hits;
-            i16[outPtr >> 1] = encodedBodyPart;
-            outPtr += 2;
+            i16[ptrI16] = encodedBodyPart;
+            ++ptrI16;
         }
         return body.length;
     }
 
     private copyPath(memoryView: WasmMemoryView, path: readonly RoomPosition[], outPtr: number): number {
         const { i32 } = memoryView;
-        let ptr = outPtr;
+        let ptrI32 = outPtr >> 2;
         for (let i = 0; i < path.length; ++i) {
-            i32[ptr >> 2] = path[i].x;
-            ++ptr;
-            i32[ptr >> 2] = path[i].y;
-            ++ptr;
+            i32[ptrI32 + 0] = path[i].x;
+            i32[ptrI32 + 1] = path[i].y;
+            ptrI32 += 2;
         }
         return path.length;
     }

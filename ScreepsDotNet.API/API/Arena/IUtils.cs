@@ -175,7 +175,7 @@ namespace ScreepsDotNet.API.Arena
         /// Get CPU wall time elapsed in the current tick in nanoseconds
         /// </summary>
         /// <returns></returns>
-        long GetCpuTime();
+        double GetCpuTime();
 
         /// <summary>
         /// Get linear direction by differences of x and y.

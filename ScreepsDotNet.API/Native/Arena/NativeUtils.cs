@@ -65,7 +65,7 @@ namespace ScreepsDotNet.Native.Arena
         internal static partial JSObject[] Native_FindPath(JSObject fromPos, JSObject toPos, JSObject? options);
 
         [JSImport("getCpuTime", "game/utils")]
-        internal static partial long Native_GetCpuTime();
+        internal static partial double Native_GetCpuTime();
 
         [JSImport("getDirection", "game/utils")]
         internal static partial int Native_GetDirection(int dx, int dy);
@@ -150,7 +150,7 @@ namespace ScreepsDotNet.Native.Arena
                 .Select(x => x.ToPosition())
                 .ToArray();
 
-        public long GetCpuTime()
+        public double GetCpuTime()
             => Native_GetCpuTime();
 
         public Direction GetDirection(int dx, int dy)
