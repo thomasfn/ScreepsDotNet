@@ -1,52 +1,59 @@
 ﻿using System;
-using ScreepsDotNet.Interop;
-using ScreepsDotNet.API;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
+using System.Runtime.CompilerServices;
+
+using ScreepsDotNet.Interop;
+
+using ScreepsDotNet.API.Arena;
 
 namespace ScreepsDotNet.Native.Arena
 {
     internal static class ResourceTypeExtensions
     {
-        public static string ToJS(this ResourceType resourceType)
-            => resourceType switch
-            {
-                ResourceType.Energy => "energy",
-                _ => throw new NotImplementedException($"Unknown resource type '{resourceType}'"),
-            };
+        private static readonly ImmutableArray<Name> resourceToName =
+        [
+            Names.Energy,
+            Name.CreateNew("score"),
+            Name.CreateNew("score_x"),
+            Name.CreateNew("score_y"),
+            Name.CreateNew("score_z"),
+            Name.CreateNew("unknown")
+        ];
 
-        public static string? ToJS(this ResourceType? resourceType)
-            => resourceType switch
-            {
-                null => null,
-                ResourceType.Energy => "energy",
-                _ => throw new NotImplementedException($"Unknown resource type '{resourceType}'"),
-            };
+        private static readonly Dictionary<Name, ResourceType> nameToResource = [];
 
-        public static ResourceType ParseResourceType(this string str)
-            => str switch
+        static ResourceTypeExtensions()
+        {
+            for (int i = 0; i < resourceToName.Length; ++i)
             {
-                "energy" => ResourceType.Energy,
-                _ => throw new NotImplementedException($"Unknown resource type '{str}'"),
-            };
+                nameToResource.Add(resourceToName[i], (ResourceType)i);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Name ToJS(this ResourceType resourceType)
+            => resourceToName[(int)resourceType];
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ResourceType ParseResourceType(this Name str)
+            => nameToResource.TryGetValue(str, out var resourceType) ? resourceType : ResourceType.Unknown;
     }
 
     [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
-    internal partial class NativeStore : IStore
+    internal partial class NativeStore : IStore, IDisposable
     {
         #region Imports
 
         [JSImport("Store.getCapacity", "game/prototypes/wrapped")]
-        
-        internal static partial int? Native_GetCapacity(JSObject proxyObject, string? resourceType);
+        internal static partial int? Native_GetCapacity(JSObject proxyObject, Name? resourceType);
 
         [JSImport("Store.getFreeCapacity", "game/prototypes/wrapped")]
-        
-        internal static partial int? Native_GetFreeCapacity(JSObject proxyObject, string? resourceType);
+        internal static partial int? Native_GetFreeCapacity(JSObject proxyObject, Name? resourceType);
 
         [JSImport("Store.getUsedCapacity", "game/prototypes/wrapped")]
-        
-        internal static partial int? Native_GetUsedCapacity(JSObject proxyObject, string? resourceType);
+        internal static partial int? Native_GetUsedCapacity(JSObject proxyObject, Name? resourceType);
 
         #endregion
 
@@ -56,8 +63,17 @@ namespace ScreepsDotNet.Native.Arena
 
         private int[]? resourceCache;
         private ResourceType[]? resourceTypes;
+        private bool disposedValue;
 
-        public IEnumerable<ResourceType> ContainedResourceTypes => throw new NotImplementedException();
+        public IEnumerable<ResourceType> ContainedResourceTypes
+        {
+            get
+            {
+                ObjectDisposedException.ThrowIf(disposedValue, this);
+                if (ProxyObject == null) { return Enumerable.Empty<ResourceType>(); }
+                return ProxyObject.GetPropertyNamesAsNames().Select(x => x.ParseResourceType());
+            }
+        }
 
         public NativeStore(JSObject? proxyObject)
         {
@@ -68,6 +84,7 @@ namespace ScreepsDotNet.Native.Arena
         {
             get
             {
+                ObjectDisposedException.ThrowIf(disposedValue, this);
                 if (resourceCache == null)
                 {
                     resourceCache = new int[ResourceCount];
@@ -79,6 +96,7 @@ namespace ScreepsDotNet.Native.Arena
             }
             set
             {
+                ObjectDisposedException.ThrowIf(disposedValue, this);
                 if (resourceCache == null)
                 {
                     resourceCache = new int[ResourceCount];
@@ -89,12 +107,39 @@ namespace ScreepsDotNet.Native.Arena
         }
 
         public int? GetCapacity(ResourceType? resourceType = null)
-            => ProxyObject != null ? Native_GetCapacity(ProxyObject, resourceType?.ToJS()) : null;
+        {
+            ObjectDisposedException.ThrowIf(disposedValue, this);
+            return ProxyObject != null ? Native_GetCapacity(ProxyObject, resourceType?.ToJS()) : null;
+        }
 
         public int? GetFreeCapacity(ResourceType? resourceType = null)
-            => ProxyObject != null ? Native_GetFreeCapacity(ProxyObject, resourceType?.ToJS()) : null;
+        {
+            ObjectDisposedException.ThrowIf(disposedValue, this);
+            return ProxyObject != null ? Native_GetFreeCapacity(ProxyObject, resourceType?.ToJS()) : null;
+        }
 
         public int? GetUsedCapacity(ResourceType? resourceType = null)
-            => ProxyObject != null ? Native_GetUsedCapacity(ProxyObject, resourceType?.ToJS()) : null;
+        {
+            ObjectDisposedException.ThrowIf(disposedValue, this);
+            return ProxyObject != null ? Native_GetUsedCapacity(ProxyObject, resourceType?.ToJS()) : null;
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    ProxyObject?.Dispose();
+                }
+                disposedValue = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
+        }
     }
 }

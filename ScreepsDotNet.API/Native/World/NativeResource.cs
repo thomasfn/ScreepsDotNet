@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using ScreepsDotNet.Interop;
-using ScreepsDotNet.API;
 using ScreepsDotNet.API.World;
 
 namespace ScreepsDotNet.Native.World

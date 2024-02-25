@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using ScreepsDotNet.API.World;
 
 namespace ScreepsDotNet.API.Arena
 {

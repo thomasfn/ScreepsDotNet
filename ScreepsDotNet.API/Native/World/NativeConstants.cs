@@ -4,7 +4,6 @@ using ScreepsDotNet.Interop;
 using System.Linq;
 
 using ScreepsDotNet.API.World;
-using ScreepsDotNet.API;
 
 namespace ScreepsDotNet.Native.World
 {

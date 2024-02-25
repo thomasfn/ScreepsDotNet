@@ -5,7 +5,8 @@ import type { ImportTable } from '../interop.js';
 import { WasmMemoryManager, WasmMemoryView } from '../memory.js';
 import { BaseBindings } from './base.js';
 
-import type { RoomPosition } from 'game/prototypes';
+import type { RoomPosition, GameObject, Store } from 'game/prototypes';
+import type { FindPathResult, FindPathOpts } from 'game/path-finder';
 
 // Missing export in ts definitions
 declare module "game/prototypes" {
@@ -56,8 +57,6 @@ const BODYPART_TO_ENUM_MAP: Record<BodyPartConstant, number> = {} as Record<Body
 }
 
 export class ArenaBindings extends BaseBindings {
-    private _lastCheckIn: number = 0;
-
     public init(exports: ScreepsDotNetExports, memoryManager: WasmMemoryManager): void {
         super.init(exports, memoryManager);
     }
@@ -98,6 +97,37 @@ export class ArenaBindings extends BaseBindings {
         };
         this.imports['game/pathFinder'] = {
             ...pathFinder,
+            searchPath: (origin: number, goalsPtr: number, goalsCnt: number, options?: FindPathOpts) => {
+                const { i32 } = this._memoryManager!.view;
+                let goal:
+                    | RoomPosition
+                    | { pos: RoomPosition; range: number }
+                    | Array<RoomPosition | { pos: RoomPosition; range: number }>;
+                let goalsPtrI32 = goalsPtr >> 2;
+                if (goalsCnt == 1) {
+                    const r = i32[goalsPtrI32 + 2];
+                    if (r === 0) {
+                        goal = { x: i32[goalsPtrI32 + 0], y: i32[goalsPtrI32 + 1] };
+                    } else {
+                        goal = { pos: { x: i32[goalsPtrI32 + 0], y: i32[goalsPtrI32 + 1] }, range: r };
+                    }
+                } else {
+                    goal = [];
+                    goal.length = goalsCnt;
+                    for (let i = 0; i < goalsCnt; ++i) {
+                        const r = i32[goalsPtrI32 + 2];
+                        if (r === 0) {
+                            goal[i] = { x: i32[goalsPtrI32 + 0], y: i32[goalsPtrI32 + 1] };
+                        } else {
+                            goal[i] = { pos: { x: i32[goalsPtrI32 + 0], y: i32[goalsPtrI32 + 1] }, range: r };
+                        }
+                        goalsPtrI32 += 3;
+                    }
+                }
+                const originPos: RoomPosition = { x: origin >> 16, y: origin & 0xffff };
+                return pathFinder.searchPath(originPos, goal, options);
+            },
+            decodePath: (resultObj: FindPathResult, outPtr: number) => this.copyPath(this._memoryManager!.view, resultObj.path, outPtr),
             CostMatrix: {
                 ...this.buildWrappedPrototype(pathFinder.CostMatrix),
                 setRect: (thisObj: typeof pathFinder.CostMatrix, minX: number, minY: number, maxX: number, maxY: number, memoryView: DataView) => {
@@ -123,61 +153,24 @@ export class ArenaBindings extends BaseBindings {
         const wrappedPrototypes = this.buildWrappedPrototypes(prototypes as unknown as Record<string, _Constructor<unknown>>);
         this.imports['game/prototypes/wrapped'] = {
             ...wrappedPrototypes,
+            GameObject: {
+                ...wrappedPrototypes.GameObject,
+                findPathTo: (thisObj: GameObject, pos: RoomPosition, opts: FindPathOpts | undefined, outPtr: number) => {
+                    const result = thisObj.findPathTo(pos, opts != null ? opts : undefined);
+                    if (!result) { return 0; }
+                    return this.copyPath(this._memoryManager!.view, result, outPtr);
+                },
+            },
             Store: {
-                getCapacity: (thisObj, resourceType) => thisObj.getCapacity(resourceType),
-                getUsedCapacity: (thisObj, resourceType) => thisObj.getUsedCapacity(resourceType),
-                getFreeCapacity: (thisObj, resourceType) => thisObj.getFreeCapacity(resourceType),
+                getCapacity: (thisObj: Store<'energy'>, resourceType?: 'energy') => thisObj.getCapacity(resourceType),
+                getUsedCapacity: (thisObj: Store<'energy'>, resourceType?: 'energy') => thisObj.getUsedCapacity(resourceType),
+                getFreeCapacity: (thisObj: Store<'energy'>, resourceType?: 'energy') => thisObj.getFreeCapacity(resourceType),
+            },
+            Creep: {
+                ...wrappedPrototypes.Creep,
+                getEncodedBody: (thisObj: Creep, outPtr: number) => this.encodeCreepBody(this._memoryManager!.view, thisObj.body, outPtr),
             },
         };
-    }
-
-    private copyRawObjectId(memoryView: WasmMemoryView, id: string, outPtr: number): void {
-        const { u8, i32 } = memoryView;
-        if (id) {
-            const l = id.length;
-            for (let j = 0; j < l; ++j) {
-                u8[outPtr + j] = id.charCodeAt(j);
-            }
-            for (let j = l; j < 24; ++j) {
-                u8[outPtr + j] = 0;
-            }
-        } else {
-            for (let j = 0; j < 6; ++j) {
-                i32[outPtr + j] = 0;
-            }
-        }
-    }
-
-    private encodeRoomObjectArray(memoryView: WasmMemoryView, arr: readonly Record<string, unknown>[], key: string | undefined, outRawObjectIdPtr: number, outRoomObjectMetadataPtr: number, maxObjectCount: number): number {
-        const { i32 } = memoryView;
-        let numEncoded = 0;
-        let nextRawObjectIdPtr = outRawObjectIdPtr;
-        let nextRoomObjectMetadataPtr = outRoomObjectMetadataPtr;
-        for (let i = 0; i < Math.min(maxObjectCount, arr.length); ++i) {
-            // Lookup object
-            let obj = arr[i];
-            if (key) {
-                obj = obj[key] as Record<string, unknown>;
-            }
-            if (!(obj instanceof prototypes.GameObject) && obj.type) {
-                obj = obj[obj.type as string] as Record<string, unknown>;
-            }
-            if (!(obj instanceof prototypes.GameObject)) { continue; }
-
-            // Copy id
-            this.copyRawObjectId(memoryView, obj.id as string, nextRawObjectIdPtr);
-            nextRawObjectIdPtr += 24;
-            
-            // Copy metadata
-            i32[(nextRoomObjectMetadataPtr + 0) >> 2] = Object.getPrototypeOf(obj).constructor.__dotnet_typeId || 0;
-            // For now do not assign clr tracking ids here because if we get here before clr has a chance to renew the objects, we memory leak as the old reference is lost and the object sticks around in the tracking list
-            // i32[(nextRoomObjectMetadataPtr + 4) >> 2] = this._interop.getClrTrackingId(obj) ?? this._interop.assignClrTrackingId(obj);
-            i32[(nextRoomObjectMetadataPtr + 4) >> 2] = -1;
-            nextRoomObjectMetadataPtr += 8;
-
-            ++numEncoded;
-        }
-        return numEncoded;
     }
 
     private encodeCreepBody(memoryView: WasmMemoryView, body: readonly BodyPartDefinition[], outPtr: number): number {
@@ -194,6 +187,18 @@ export class ArenaBindings extends BaseBindings {
             outPtr += 2;
         }
         return body.length;
+    }
+
+    private copyPath(memoryView: WasmMemoryView, path: readonly RoomPosition[], outPtr: number): number {
+        const { i32 } = memoryView;
+        let ptr = outPtr;
+        for (let i = 0; i < path.length; ++i) {
+            i32[ptr >> 2] = path[i].x;
+            ++ptr;
+            i32[ptr >> 2] = path[i].y;
+            ++ptr;
+        }
+        return path.length;
     }
 
     private buildWrappedPrototypes(prototypes: Record<string, _Constructor<unknown>>): Record<string, GamePrototype> {

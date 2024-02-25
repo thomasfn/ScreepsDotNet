@@ -1,4 +1,6 @@
-﻿namespace ScreepsDotNet.API.Arena
+﻿using ScreepsDotNet.API.World;
+
+namespace ScreepsDotNet.API.Arena
 {
     public enum TowerActionResult
     {

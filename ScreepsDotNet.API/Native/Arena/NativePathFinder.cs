@@ -1,6 +1,7 @@
-﻿using System.Collections.Generic;
-using ScreepsDotNet.Interop;
+﻿using System;
 using System.Linq;
+
+using ScreepsDotNet.Interop;
 
 using ScreepsDotNet.API;
 using ScreepsDotNet.API.Arena;
@@ -15,14 +16,14 @@ namespace ScreepsDotNet.Native.Arena
             var obj = JSObject.Create();
             if (options.CostMatrix is NativeCostMatrix nativeCostMatrix)
             {
-                obj.SetProperty("costMatrix", nativeCostMatrix.ProxyObject);
+                obj.SetProperty(Names.CostMatrix, nativeCostMatrix.ProxyObject);
             }
-            obj.SetProperty("plainCost", options.PlainCost);
-            obj.SetProperty("swampCost", options.SwampCost);
-            obj.SetProperty("flee", options.Flee);
-            obj.SetProperty("maxOps", options.MaxOps);
-            obj.SetProperty("maxCost", options.MaxCost);
-            obj.SetProperty("heuristicWeight", options.HeuristicWeight);
+            obj.SetProperty(Names.PlainCost, options.PlainCost);
+            obj.SetProperty(Names.SwampCost, options.SwampCost);
+            obj.SetProperty(Names.Flee, options.Flee);
+            obj.SetProperty(Names.MaxOps, options.MaxOps);
+            obj.SetProperty(Names.MaxCost, options.MaxCost);
+            obj.SetProperty(Names.HeuristicWeight, options.HeuristicWeight);
             return obj;
         }
 
@@ -33,31 +34,23 @@ namespace ScreepsDotNet.Native.Arena
         {
             var obj = options.BaseOptions.ToJS();
             var ignore = options.Ignore.ToArray().Select(x => x.ToJS()).ToArray();
-            JSUtils.SetObjectArrayOnObject(obj, "ignore", ignore);
+            JSUtils.SetObjectArrayOnObject(obj, Names.Ignore, ignore);
             return obj;
         }
 
         public static JSObject? ToJS(this FindPathOptions? options)
             => options?.ToJS();
-
-        public static JSObject ToJS(this Goal goal)
-        {
-            var obj = JSObject.Create();
-            obj.SetProperty("pos", goal.Position.ToJS());
-            if (goal.Range != null) { obj.SetProperty("range", goal.Range.Value); }
-            return obj;
-        }
     }
 
     [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal static class SearchPathResultExtensions
     {
-        public static SearchPathResult ToSearchPathResult(this JSObject obj)
+        public static SearchPathResult ToSearchPathResult(this JSObject obj, ReadOnlySpan<Position> path)
             => new(
-                    (JSUtils.GetObjectArrayOnObject(obj, "path")?.Select(x => x.ToPosition()) ?? Enumerable.Empty<Position>()).ToArray(),
-                    obj.GetPropertyAsInt32("ops"),
-                    obj.GetPropertyAsDouble("cost"),
-                    obj.GetPropertyAsBoolean("incomplete")
+                    path,
+                    obj.GetPropertyAsInt32(Names.Ops),
+                    obj.GetPropertyAsDouble(Names.Cost),
+                    obj.GetPropertyAsBoolean(Names.Incomplete)
                 );
     }
 
@@ -67,32 +60,65 @@ namespace ScreepsDotNet.Native.Arena
         #region Imports
 
         [JSImport("searchPath", "game/pathFinder")]
-        
-        internal static partial JSObject Native_SearchPath(JSObject origin, JSObject goal, JSObject options);
+        internal static partial JSObject Native_SearchPath(int origin, IntPtr goalsPtr, int goalsCnt, JSObject? options);
 
-        [JSImport("searchPath", "game/pathFinder")]
-        
-        internal static partial JSObject Native_SearchPath(JSObject origin, JSObject[] goals, JSObject options);
-
-        [JSImport("searchPath", "game/pathFinder")]
-        
-        internal static partial JSObject Native_SearchPath(JSObject origin, JSObject goal);
-
-        [JSImport("searchPath", "game/pathFinder")]
-        
-        internal static partial JSObject Native_SearchPath(JSObject origin, JSObject[] goals);
+        [JSImport("decodePath", "game/pathFinder")]
+        internal static partial int Native_DecodePath(JSObject result, IntPtr outPtr);
 
         #endregion
+
+        internal static readonly Position[] pathPositionBuffer = new Position[100 * 100];
 
         public ICostMatrix CreateCostMatrix()
             => new NativeCostMatrix();
 
-        public SearchPathResult SearchPath(Position origin, Goal goal, SearchPathOptions? options)
-            => (options != null ? Native_SearchPath(origin.ToJS(), goal.ToJS(), options.Value.ToJS()) : Native_SearchPath(origin.ToJS(), goal.ToJS()))
-                .ToSearchPathResult();
+        public SearchPathResult SearchPath(Position origin, Goal goal, SearchPathOptions? options = null)
+        {
+            using var optionsJs = options?.ToJS();
+            JSObject? resultObj = null;
+            int pathLength;
+            try
+            {
+                unsafe
+                {
+                    resultObj = Native_SearchPath((origin.X << 16) | origin.Y, (IntPtr)(&goal), 1, optionsJs);
+                    fixed (Position* pathPositionBufferPtr = pathPositionBuffer)
+                    {
+                        pathLength = Native_DecodePath(resultObj, (IntPtr)pathPositionBufferPtr);
+                    }
+                }
+                return resultObj.ToSearchPathResult(pathPositionBuffer.AsSpan()[..pathLength]);
+            }
+            finally
+            {
+                resultObj?.Dispose();
+            }
+        }
 
-        public SearchPathResult SearchPath(Position origin, IEnumerable<Goal> goal, SearchPathOptions? options)
-            => (options != null ? Native_SearchPath(origin.ToJS(), goal.Select(x => x.ToJS()).ToArray(), options.Value.ToJS()) : Native_SearchPath(origin.ToJS(), goal.Select(x => x.ToJS()).ToArray()))
-                .ToSearchPathResult();
+        public SearchPathResult SearchPath(Position origin, ReadOnlySpan<Goal> goals, SearchPathOptions? options = null)
+        {
+            using var optionsJs = options?.ToJS();
+            JSObject? resultObj = null;
+            int pathLength;
+            try
+            {
+                unsafe
+                {
+                    fixed (Goal* goalsPtr = goals)
+                    {
+                        resultObj = Native_SearchPath((origin.X << 16) | origin.Y, (IntPtr)goalsPtr, goals.Length, optionsJs);
+                    }
+                    fixed (Position* pathPositionBufferPtr = pathPositionBuffer)
+                    {
+                        pathLength = Native_DecodePath(resultObj, (IntPtr)pathPositionBufferPtr);
+                    }
+                }
+                return resultObj.ToSearchPathResult(pathPositionBuffer.AsSpan()[..pathLength]);
+            }
+            finally
+            {
+                resultObj?.Dispose();
+            }
+        }
     }
 }

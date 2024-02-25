@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using ScreepsDotNet.Interop;
 using System.Linq;
+
+using ScreepsDotNet.Interop;
 
 using ScreepsDotNet.API;
 using ScreepsDotNet.API.Arena;
@@ -12,7 +13,7 @@ namespace ScreepsDotNet.Native.Arena
     internal static class PositionExtensions
     {
         public static Position ToPosition(this JSObject obj)
-            => (obj.GetPropertyAsInt32("x"), obj.GetPropertyAsInt32("y"));
+            => (obj.GetPropertyAsInt32(Names.X), obj.GetPropertyAsInt32(Names.Y));
 
         public static Position? ToPositionNullable(this JSObject? obj)
             => obj != null ? new Position?(obj.ToPosition()) : null;
@@ -20,16 +21,16 @@ namespace ScreepsDotNet.Native.Arena
         public static JSObject ToJS(this Position pos)
         {
             var obj = JSObject.Create();
-            obj.SetProperty("x", pos.X);
-            obj.SetProperty("y", pos.Y);
+            obj.SetProperty(Names.X, pos.X);
+            obj.SetProperty(Names.Y, pos.Y);
             return obj;
         }
 
         public static JSObject ToJS(this FractionalPosition pos)
         {
             var obj = JSObject.Create();
-            obj.SetProperty("x", pos.X);
-            obj.SetProperty("y", pos.Y);
+            obj.SetProperty(Names.X, pos.X);
+            obj.SetProperty(Names.Y, pos.Y);
             return obj;
         }
 
@@ -95,13 +96,20 @@ namespace ScreepsDotNet.Native.Arena
 
         #endregion
 
+        private readonly INativeRoot nativeRoot;
+
+        public NativeUtils(INativeRoot nativeRoot)
+        {
+            this.nativeRoot = nativeRoot;
+        }
+
         public CreateConstructionSiteResult CreateConstructionSite<T>(Position position) where T : class, IStructure
         {
             var resultObj = Native_CreateConstructionSite(position.ToJS(), NativeGameObjectPrototypes<T>.ConstructorObj!);
             if (resultObj == null) { throw new InvalidOperationException($"Native_CreateConstructionSite returned null or undefined"); }
-            var constructionSiteObj = resultObj.GetPropertyAsJSObject("object");
-            var constructionSite = constructionSiteObj.ToGameObject<IConstructionSite>();
-            CreateConstructionSiteError? error = resultObj.GetTypeOfProperty("error") == JSPropertyType.Number ? (CreateConstructionSiteError)resultObj.GetPropertyAsInt32("error") : null;
+            var constructionSiteObj = resultObj.GetPropertyAsJSObject(Names.Object);
+            var constructionSite = constructionSiteObj.ToGameObject<IConstructionSite>(nativeRoot);
+            var error = (CreateConstructionSiteError?)resultObj.TryGetPropertyAsInt32(Names.Error);
             return new CreateConstructionSiteResult(constructionSite, error);
         }
 
@@ -109,20 +117,20 @@ namespace ScreepsDotNet.Native.Arena
             => new NativeVisual(Native_CreateVisual(layer, persistent));
 
         public T? FindClosestByPath<T>(Position fromPos, IEnumerable<T> positions, FindPathOptions? options) where T : class, IPosition
-            => Native_FindClosestByPath(fromPos.ToJS(), positions.Select(x => x.ToJS()).ToArray(), options.ToJS()).ToGameObject<IGameObject>() as T;
+            => Native_FindClosestByPath(fromPos.ToJS(), positions.Select(x => x.ToJS()).ToArray(), options.ToJS()).ToGameObject<IGameObject>(nativeRoot) as T;
 
         public Position? FindClosestByPath(Position fromPos, IEnumerable<Position> positions, FindPathOptions? options)
             => Native_FindClosestByPath(fromPos.ToJS(), positions.Select(x => x.ToJS()).ToArray(), options.ToJS()).ToPositionNullable();
 
         public T? FindClosestByRange<T>(Position fromPos, IEnumerable<T> positions) where T : class, IPosition
-            => Native_FindClosestByRange(fromPos.ToJS(), positions.Select(x => x.ToJS()).ToArray()).ToGameObject<IGameObject>() as T;
+            => Native_FindClosestByRange(fromPos.ToJS(), positions.Select(x => x.ToJS()).ToArray()).ToGameObject<IGameObject>(nativeRoot) as T;
 
         public Position? FindClosestByRange(Position fromPos, IEnumerable<Position> positions)
             => Native_FindClosestByRange(fromPos.ToJS(), positions.Select(x => x.ToJS()).ToArray()).ToPositionNullable();
 
         public IEnumerable<T> FindInRange<T>(Position fromPos, IEnumerable<T> positions, int range) where T : class, IPosition
             => Native_FindInRange(fromPos.ToJS(), positions.Select(x => x.ToJS()).ToArray(), range)
-                .Select(x => x.ToGameObject<IGameObject>())
+                .Select(x => x.ToGameObject<IGameObject>(nativeRoot))
                 .Where(x => x is T)
                 .Cast<T>()
                 .ToArray();
@@ -166,18 +174,16 @@ namespace ScreepsDotNet.Native.Arena
         }
 
         public IGameObject? GetObjectById(string id)
-            => Native_GetObjectById(id).ToGameObject<IGameObject>();
+            => Native_GetObjectById(id).ToGameObject<IGameObject>(nativeRoot);
 
         public IEnumerable<IGameObject> GetObjects()
             => Native_GetObjects()
-                .Select(NativeGameObjectUtils.CreateWrapperForObject)
-                .ToArray();
+                .Select(nativeRoot.GetOrCreateWrapperForObject);
 
         public IEnumerable<T> GetObjectsByType<T>() where T : class, IGameObject
             => Native_GetObjectsByPrototype(NativeGameObjectPrototypes<T>.ConstructorObj!)
-                .Select(NativeGameObjectUtils.CreateWrapperForObject)
-                .Cast<T>()
-                .ToArray();
+                .Select(nativeRoot.GetOrCreateWrapperForObject)
+                .Cast<T>();
 
         public int GetRange(IPosition a, IPosition b)
             => Native_GetRange(a.ToJS(), b.ToJS());

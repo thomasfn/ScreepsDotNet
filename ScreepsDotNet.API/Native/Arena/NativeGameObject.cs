@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using ScreepsDotNet.Interop;
 using System.Runtime.CompilerServices;
 using System.Linq;
+using System.Collections.Immutable;
+
+using ScreepsDotNet.Interop;
 
 using ScreepsDotNet.API;
 using ScreepsDotNet.API.Arena;
@@ -11,7 +13,7 @@ using ScreepsDotNet.API.Arena;
 namespace ScreepsDotNet.Native.Arena
 {
     [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
-    internal partial class NativeGameObject : IGameObject, IEquatable<NativeGameObject?>
+    internal partial class NativeGameObject : IGameObject, IWithUserData, IEquatable<NativeGameObject?>
     {
         #region Imports
 
@@ -28,82 +30,150 @@ namespace ScreepsDotNet.Native.Arena
         internal static partial JSObject[] Native_FindInRange(JSObject proxyObject, JSObject[] positions, int range);
 
         [JSImport("GameObject.findPathTo", "game/prototypes/wrapped")]
-        internal static partial JSObject[] Native_FindPathTo_NoOpts(JSObject proxyObject, JSObject pos);
-
-        [JSImport("GameObject.findPathTo", "game/prototypes/wrapped")]
-        internal static partial JSObject[] Native_FindPathTo(JSObject proxyObject, JSObject pos, JSObject options);
-
-        [JSImport("GameObject.getRangeTo", "game/prototypes/wrapped")]
-        internal static partial int Native_GetRangeTo(JSObject proxyObject, JSObject pos);
+        internal static partial int Native_FindPathTo(JSObject proxyObject, JSObject pos, JSObject? options, IntPtr outPtr);
 
         #endregion
 
-        internal readonly JSObject ProxyObject;
+        protected readonly INativeRoot nativeRoot;
+        protected readonly JSObject proxyObject;
 
-        public bool Exists => ProxyObject.GetPropertyAsBoolean("exists");
+        private UserDataStorage userDataStorage;
+        private int cacheValidAsOf;
+        private bool canMove;
 
-        public string Id => ProxyObject.GetTypeOfProperty("id") == JSPropertyType.Number ? ProxyObject.GetPropertyAsInt32("id").ToString() : (ProxyObject.GetPropertyAsString("id") ?? ProxyObject.ToString() ?? "");
+        private bool? existsCache;
+        private string? idCache;
+        private int? ticksToDecayCache;
+        private Position? positionCache;
 
-        public int? TicksToDecay => ProxyObject.GetTypeOfProperty("ticksToDecay") == JSPropertyType.Number ? ProxyObject.GetPropertyAsInt32("ticksToDecay") : null;
+        public bool Exists => CachePerTick(ref existsCache) ??= proxyObject.GetPropertyAsBoolean(Names.Exists);
 
-        public int X => ProxyObject.GetPropertyAsInt32("x");
+        public string Id => CacheLifetime(ref idCache) ??= proxyObject.GetPropertyAsString(Names.Id) ?? throw new NotSpawnedYetException();
 
-        public int Y => ProxyObject.GetPropertyAsInt32("y");
+        public int? TicksToDecay => CachePerTick(ref ticksToDecayCache) ??= proxyObject.TryGetPropertyAsInt32(Names.TicksToDecay);
 
-        public Position Position => new(X, Y);
+        public int X => Position.X;
 
-        public NativeGameObject(JSObject wrappedJsObject)
+        public int Y => Position.Y;
+
+        public Position Position => (canMove ? ref CachePerTick(ref positionCache) : ref CacheLifetime(ref positionCache)) ??= FetchPosition();
+
+        internal JSObject ProxyObject => proxyObject;
+
+        public NativeGameObject(INativeRoot nativeRoot, JSObject proxyObject, bool canMove)
         {
-            this.ProxyObject = wrappedJsObject;
+            this.nativeRoot = nativeRoot;
+            this.proxyObject = proxyObject;
+            this.canMove = canMove;
+            cacheValidAsOf = nativeRoot.TickIndex;
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        protected ref T CacheLifetime<T>(ref T cacheValue) => ref cacheValue;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        protected ref T CachePerTick<T>(ref T cacheValue)
+        {
+            int tickIndex = nativeRoot.TickIndex;
+            if (tickIndex > cacheValidAsOf)
+            {
+                ClearNativeCache();
+                cacheValidAsOf = tickIndex;
+            }
+            return ref cacheValue;
+        }
+
+        protected virtual void ClearNativeCache()
+        {
+            existsCache = null;
+            ticksToDecayCache = null;
+            if (canMove) { positionCache = null; }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private Position FetchPosition() => Exists ? (proxyObject.GetPropertyAsInt32(Names.X), proxyObject.GetPropertyAsInt32(Names.Y)) : throw new NotSpawnedYetException();
+
+        #region User Data
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SetUserData<T>(T? userData) where T : class => userDataStorage.SetUserData<T>(userData);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryGetUserData<T>([MaybeNullWhen(false)] out T userData) where T : class => userDataStorage.TryGetUserData<T>(out userData);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public T? GetUserData<T>() where T : class => userDataStorage.GetUserData<T>();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool HasUserData<T>() where T : class => userDataStorage.HasUserData<T>();
+
+        #endregion
 
         public T? FindClosestByPath<T>(IEnumerable<T> positions, FindPathOptions? options) where T : class, IPosition
             => (options != null
-                ? Native_FindClosestByPath(ProxyObject, positions.Select(x => x.ToJS()).ToArray(), options.Value.ToJS())
-                : Native_FindClosestByPath_NoOpts(ProxyObject, positions.Select(x => x.ToJS()).ToArray())
-            ).ToGameObject<IGameObject>() as T;
+                ? Native_FindClosestByPath(proxyObject, positions.Select(x => x.ToJS()).ToArray(), options.Value.ToJS())
+                : Native_FindClosestByPath_NoOpts(proxyObject, positions.Select(x => x.ToJS()).ToArray())
+            ).ToGameObject<IGameObject>(nativeRoot) as T;
 
         public Position? FindClosestByPath(IEnumerable<Position> positions, FindPathOptions? options)
             => (options != null
-                ? Native_FindClosestByPath(ProxyObject, positions.Select(x => x.ToJS()).ToArray(), options.Value.ToJS())
-                : Native_FindClosestByPath_NoOpts(ProxyObject, positions.Select(x => x.ToJS()).ToArray())
+                ? Native_FindClosestByPath(proxyObject, positions.Select(x => x.ToJS()).ToArray(), options.Value.ToJS())
+                : Native_FindClosestByPath_NoOpts(proxyObject, positions.Select(x => x.ToJS()).ToArray())
             ).ToPositionNullable();
 
         public T? FindClosestByRange<T>(IEnumerable<T> positions) where T : class, IPosition
-            => Native_FindClosestByRange(ProxyObject, positions.Select(x => x.ToJS()).ToArray()).ToGameObject<IGameObject>() as T;
+            => Native_FindClosestByRange(proxyObject, positions.Select(x => x.ToJS()).ToArray()).ToGameObject<IGameObject>(nativeRoot) as T;
 
         public Position? FindClosestByRange(IEnumerable<Position> positions)
-            => Native_FindClosestByRange(ProxyObject, positions.Select(x => x.ToJS()).ToArray()).ToPosition();
+            => Native_FindClosestByRange(proxyObject, positions.Select(x => x.ToJS()).ToArray()).ToPosition();
 
         public IEnumerable<T> FindInRange<T>(IEnumerable<T> positions, int range) where T : class, IPosition
-            => Native_FindInRange(ProxyObject, positions.Select(x => x.ToJS()).ToArray(), range)
-                .Select(NativeGameObjectUtils.CreateWrapperForObject)
-                .Cast<T>()
-                .ToArray();
+            => Native_FindInRange(proxyObject, positions.Select(x => x.ToJS()).ToArray(), range)
+                .Select(nativeRoot.GetOrCreateWrapperForObject)
+                .OfType<T>();
 
         public IEnumerable<Position> FindInRange(IEnumerable<Position> positions, int range)
-            => Native_FindInRange(ProxyObject, positions.Select(x => x.ToJS()).ToArray(), range)
-                .Select(x => x.ToPosition())
-                .ToArray();
+            => Native_FindInRange(proxyObject, positions.Select(x => x.ToJS()).ToArray(), range)
+                .Select(x => x.ToPosition());
 
-        public IEnumerable<Position> FindPathTo(IPosition pos, FindPathOptions? options)
-            => (options.HasValue ? Native_FindPathTo(ProxyObject, pos.ToJS(), options.Value.ToJS()) : Native_FindPathTo_NoOpts(ProxyObject, pos.ToJS()))
-                .Select(x => x.ToPosition())
-                .ToArray();
+        public ImmutableArray<Position> FindPathTo(IPosition pos, FindPathOptions? options)
+        {
+            using var optionsJs = options?.ToJS();
+            int pathLength;
+            unsafe
+            {
+                fixed (Position* pathPositionBufferPtr = NativePathFinder.pathPositionBuffer)
+                {
+                    pathLength = Native_FindPathTo(proxyObject, pos.ToJS(), optionsJs, (IntPtr)pathPositionBufferPtr);
+                }
+            }
+            if (pathLength == 0) { return []; }
+            return NativePathFinder.pathPositionBuffer.AsSpan()[..pathLength].ToImmutableArray();
+        }
 
-        public IEnumerable<Position> FindPathTo(Position pos, FindPathOptions? options)
-            => (options.HasValue ? Native_FindPathTo(ProxyObject, pos.ToJS(), options.Value.ToJS()) : Native_FindPathTo_NoOpts(ProxyObject, pos.ToJS()))
-                .Select(x => x.ToPosition())
-                .ToArray();
+        public ImmutableArray<Position> FindPathTo(Position pos, FindPathOptions? options)
+        {
+            using var optionsJs = options?.ToJS();
+            int pathLength;
+            unsafe
+            {
+                fixed (Position* pathPositionBufferPtr = NativePathFinder.pathPositionBuffer)
+                {
+                    pathLength = Native_FindPathTo(proxyObject, pos.ToJS(), optionsJs, (IntPtr)pathPositionBufferPtr);
+                }
+            }
+            if (pathLength == 0) { return []; }
+            return NativePathFinder.pathPositionBuffer.AsSpan()[..pathLength].ToImmutableArray();
+        }
 
         public int GetRangeTo(IPosition pos)
-            => Native_GetRangeTo(ProxyObject, pos.ToJS());
+            => Position.LinearDistanceTo(pos.Position);
 
         public int GetRangeTo(Position pos)
-            => Native_GetRangeTo(ProxyObject, pos.ToJS());
+            => Position.LinearDistanceTo(pos);
 
         public override string ToString()
-            => Exists ? $"GameObject({Id}, {Position})" : $"GameObject({Id})";
+            => Exists ? $"GameObject({Id}, {Position})" : idCache != null ? $"GameObject({idCache})" : $"GameObject({ProxyObject})";
 
         public override bool Equals(object? obj) => Equals(obj as NativeGameObject);
 
@@ -130,18 +200,16 @@ namespace ScreepsDotNet.Native.Arena
     [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal static partial class NativeGameObjectUtils
     {
-        private const string TypeIdKey = "__dotnet_typeId";
+        private static readonly Name TypeIdKey = Name.CreateNew("__dotnet_typeId");
 
         private static readonly JSObject prototypesObject;
-        private static readonly IList<Type> prototypeTypeMappings = new List<Type>();
-        private static readonly IDictionary<Type, string> prototypeNameMappings = new Dictionary<Type, string>();
+        private static readonly List<Type> prototypeTypeMappings = [];
+        private static readonly Dictionary<Type, string> prototypeNameMappings = [];
 
         [JSImport("getUtils", "game")]
-        
         internal static partial JSObject GetUtilsObject();
 
         [JSImport("getPrototypes", "game")]
-        
         internal static partial JSObject GetPrototypesObject();
 
         internal static void RegisterPrototypeTypeMapping<TInterface, TConcrete>(string prototypeName)
@@ -182,14 +250,14 @@ namespace ScreepsDotNet.Native.Arena
         internal static Type? GetWrapperTypeForObject(JSObject jsObject)
             => GetWrapperTypeForConstructor(JSUtils.GetConstructorOf(jsObject));
 
-        internal static NativeGameObject? CreateWrapperForObjectNullSafe(JSObject? proxyObject)
-            => proxyObject == null ? null : CreateWrapperForObject(proxyObject);
+        internal static NativeGameObject? CreateWrapperForObjectNullSafe(INativeRoot nativeRoot, JSObject? proxyObject)
+            => proxyObject == null ? null : CreateWrapperForObject(nativeRoot, proxyObject);
 
-        internal static NativeGameObject CreateWrapperForObject(JSObject proxyObject)
+        internal static NativeGameObject CreateWrapperForObject(INativeRoot nativeRoot, JSObject proxyObject)
         {
             var wrapperType = GetWrapperTypeForObject(proxyObject);
-            if (wrapperType == null) { return new NativeGameObject(proxyObject); }
-            return (Activator.CreateInstance(wrapperType, new object[] { proxyObject }) as NativeGameObject)!;
+            if (wrapperType == null) { return new NativeGameObject(nativeRoot, proxyObject, true); }
+            return (Activator.CreateInstance(wrapperType, [nativeRoot, proxyObject]) as NativeGameObject)!;
         }
 
         internal static string GetPrototypeName(Type type)
@@ -242,12 +310,12 @@ namespace ScreepsDotNet.Native.Arena
         {
             if (position is NativeGameObject nativeGameObject) { return nativeGameObject.ProxyObject; }
             var obj = JSObject.Create();
-            obj.SetProperty("x", position.X);
-            obj.SetProperty("y", position.Y);
+            obj.SetProperty(Names.X, position.X);
+            obj.SetProperty(Names.Y, position.Y);
             return obj;
         }
 
-        public static T? ToGameObject<T>(this JSObject? proxyObject) where T : class, IGameObject
-            => NativeGameObjectUtils.CreateWrapperForObjectNullSafe(proxyObject) as T;
+        public static T? ToGameObject<T>(this JSObject? proxyObject, INativeRoot nativeRoot) where T : class, IGameObject
+            => proxyObject != null ? nativeRoot.GetOrCreateWrapperForObject(proxyObject) as T : null;
     }
 }

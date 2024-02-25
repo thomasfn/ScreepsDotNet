@@ -1,3 +1,5 @@
+/// <reference path="../../node_modules/@types/screeps/index.d.ts" />
+
 import { ScreepsDotNetExports } from '../common.js';
 import type { Importable } from '../interop.js';
 import { WasmMemoryManager, WasmMemoryView } from '../memory.js';

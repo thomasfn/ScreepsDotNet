@@ -1,7 +1,5 @@
 ﻿using System;
 using ScreepsDotNet.Interop;
-
-using ScreepsDotNet.API;
 using ScreepsDotNet.API.World;
 
 namespace ScreepsDotNet.Native.World

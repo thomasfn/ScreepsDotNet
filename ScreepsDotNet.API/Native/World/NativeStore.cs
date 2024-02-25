@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Immutable;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+
 using ScreepsDotNet.Interop;
 
-using ScreepsDotNet.API;
-using System.Runtime.CompilerServices;
+using ScreepsDotNet.API.World;
 
 namespace ScreepsDotNet.Native.World
 {

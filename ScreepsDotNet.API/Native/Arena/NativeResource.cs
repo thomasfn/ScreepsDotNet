@@ -1,5 +1,4 @@
 ﻿using ScreepsDotNet.Interop;
-using ScreepsDotNet.API;
 using ScreepsDotNet.API.Arena;
 
 namespace ScreepsDotNet.Native.Arena
@@ -7,15 +6,24 @@ namespace ScreepsDotNet.Native.Arena
     [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal partial class NativeResource : NativeGameObject, IResource
     {
-        public int Amount => ProxyObject.GetPropertyAsInt32("amount");
+        private int? amountCache;
+        private ResourceType? resourceTypeCache;
 
-        public ResourceType ResourceType => ProxyObject.GetPropertyAsString("resourceType")!.ParseResourceType();
+        public int Amount => CachePerTick(ref amountCache) ??= proxyObject.GetPropertyAsInt32(Names.Amount);
 
-        public NativeResource(JSObject proxyObject)
-            : base(proxyObject)
+        public ResourceType ResourceType => CacheLifetime(ref resourceTypeCache) ??= proxyObject.GetPropertyAsName(Names.ResourceType)!.ParseResourceType();
+
+        public NativeResource(INativeRoot nativeRoot, JSObject proxyObject)
+            : base(nativeRoot, proxyObject, false)
         { }
 
+        protected override void ClearNativeCache()
+        {
+            base.ClearNativeCache();
+            amountCache = null;
+        }
+
         public override string ToString()
-            => $"Resource({Id}, {Position})";
+            => Exists ? $"Resource({Id}, {Position})" : "Resource(DEAD)";
     }
 }

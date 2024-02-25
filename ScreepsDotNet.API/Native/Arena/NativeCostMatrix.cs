@@ -20,7 +20,7 @@ namespace ScreepsDotNet.Native.Arena
         internal static partial void Native_Set(JSObject proxyObject, int x, int y, byte cost);
 
         [JSImport("CostMatrix.setRect", "game/pathFinder")]
-        internal static partial void Native_SetRect(JSObject proxyObject, int minX, int minY, int maxX, int maxY, [JSMarshalAsDataView] Span<byte> values);
+        internal static partial void Native_SetRect(JSObject proxyObject, int minX, int minY, int maxX, int maxY, [JSMarshalAsDataView] ReadOnlySpan<byte> values);
 
         [JSImport("CostMatrix.get", "game/pathFinder")]
         internal static partial JSObject Native_Clone(JSObject proxyObject);
@@ -55,11 +55,7 @@ namespace ScreepsDotNet.Native.Arena
         { }
 
         public void SetRect(Position min, Position max, ReadOnlySpan<byte> values)
-        {
-            Span<byte> tmp = stackalloc byte[values.Length];
-            values.CopyTo(tmp);
-            Native_SetRect(ProxyObject, min.X, min.Y, max.X, max.Y, tmp);
-        }
+            => Native_SetRect(ProxyObject, min.X, min.Y, max.X, max.Y, values);
 
         public ICostMatrix Clone()
         {
@@ -67,7 +63,5 @@ namespace ScreepsDotNet.Native.Arena
             Array.Copy(localCache, newObj.localCache, localCache.Length);
             return newObj;
         }
-
-        
     }
 }

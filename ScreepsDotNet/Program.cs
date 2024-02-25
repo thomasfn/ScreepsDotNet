@@ -53,9 +53,7 @@ namespace ScreepsDotNet
         {
             try
             {
-#if WORLD
                 game?.Tick();
-#endif
                 tutorialScript?.Loop();
 #if WORLD
                 CheckHeap(game!.Cpu.GetHeapStatistics());

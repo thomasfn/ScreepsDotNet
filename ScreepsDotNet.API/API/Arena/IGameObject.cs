@@ -1,11 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Collections.Immutable;
 
 namespace ScreepsDotNet.API.Arena
 {
+    /// <summary>
+    /// Thrown when accessing a property on an object that does not yet exist.
+    /// </summary>
+    [Serializable]
+    public class NotSpawnedYetException : Exception
+    {
+        public NotSpawnedYetException() { }
+        public NotSpawnedYetException(string message) : base(message) { }
+        public NotSpawnedYetException(string message, Exception inner) : base(message, inner) { }
+    }
+
     public interface IPosition
     {
         /// <summary>
@@ -101,16 +110,16 @@ namespace ScreepsDotNet.API.Arena
         /// </summary>
         /// <param name="pos"></param>
         /// <param name="options"></param>
-        /// <returns></returns>
-        IEnumerable<Position> FindPathTo(IPosition pos, FindPathOptions? options);
+        /// <returns>An empty array if no path was found, or an array of the positions along the path</returns>
+        ImmutableArray<Position> FindPathTo(IPosition pos, FindPathOptions? options);
 
         /// <summary>
         /// Find a path from this object to the given position
         /// </summary>
         /// <param name="pos"></param>
         /// <param name="options"></param>
-        /// <returns></returns>
-        IEnumerable<Position> FindPathTo(Position pos, FindPathOptions? options);
+        /// <returns>An empty array if no path was found, or an array of the positions along the path</returns>
+        ImmutableArray<Position> FindPathTo(Position pos, FindPathOptions? options);
 
         /// <summary>
         /// Get linear range between this and target object

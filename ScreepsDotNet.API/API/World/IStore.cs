@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace ScreepsDotNet.API
+namespace ScreepsDotNet.API.World
 {
     public enum ResourceType
     {

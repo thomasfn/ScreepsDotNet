@@ -7,11 +7,11 @@ namespace ScreepsDotNet.Native.Arena
     [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal partial class NativeStructureWall : NativeStructure, IStructureWall
     {
-        public NativeStructureWall(JSObject proxyObject)
-            : base(proxyObject)
+        public NativeStructureWall(INativeRoot nativeRoot, JSObject proxyObject)
+            : base(nativeRoot, proxyObject)
         { }
 
         public override string ToString()
-            => $"StructureWall({Id}, {Position})";
+            => Exists ? $"StructureWall({Id}, {Position})" : "StructureWall(DEAD)";
     }
 }

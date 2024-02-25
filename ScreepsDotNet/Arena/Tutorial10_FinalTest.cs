@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using ScreepsDotNet.API;
+
 using ScreepsDotNet.API.Arena;
 
 namespace ScreepsDotNet.Arena
@@ -43,9 +43,6 @@ namespace ScreepsDotNet.Arena
             myCreeps = allCreeps.Where(x => x.Exists && x.My && (mySpawn == null || x.Position != mySpawn.Position)).ToArray();
             enemyCreeps = allCreeps.Where(x => x.Exists && !x.My).ToArray();
 
-            // Skip first tick as JIT often causes us to time out here
-            if (game.Utils.GetTicks() <= 1) { return; }
-
             // Process all our owned objects
             ProcessCreeps();
             ProcessSpawn();
@@ -85,19 +82,19 @@ namespace ScreepsDotNet.Arena
             {
                 // Check what body parts the creep has and defer to different logic based on their archetype
                 var body = myCreep.Body;
-                if (body.Any(x => x.Type == BodyPartType.Work))
+                if (myCreep.BodyType[BodyPartType.Work] > 0)
                 {
                     ProcessWorker(myCreep);
                 }
-                else if (body.Any(x => x.Type == BodyPartType.Heal))
+                else if (myCreep.BodyType[BodyPartType.Heal] > 0)
                 {
                     ProcessHealer(myCreep);
                 }
-                else if (body.Any(x => x.Type == BodyPartType.RangedAttack))
+                else if (myCreep.BodyType[BodyPartType.RangedAttack] > 0)
                 {
                     ProcessRangedAttacker(myCreep);
                 }
-                else if (body.Any(x => x.Type == BodyPartType.Attack))
+                else if (myCreep.BodyType[BodyPartType.Attack] > 0)
                 {
                     ProcessAttacker(myCreep);
                 }

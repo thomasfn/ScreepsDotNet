@@ -7,11 +7,11 @@ namespace ScreepsDotNet.Native.Arena
     [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal partial class NativeStructureRoad : NativeStructure, IStructureRoad
     {
-        public NativeStructureRoad(JSObject proxyObject)
-            : base(proxyObject)
+        public NativeStructureRoad(INativeRoot nativeRoot, JSObject proxyObject)
+            : base(nativeRoot, proxyObject)
         { }
 
         public override string ToString()
-            => $"StructureRoad({Id}, {Position})";
+            => Exists ? $"StructureRoad({Id}, {Position})" : "StructureRoad(DEAD)";
     }
 }

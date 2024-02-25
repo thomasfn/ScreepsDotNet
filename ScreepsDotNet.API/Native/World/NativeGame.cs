@@ -78,8 +78,8 @@ namespace ScreepsDotNet.Native.World
         private readonly NativeConstants nativeConstants;
         private readonly NativeRawMemory nativeRawMemory;
 
-        private readonly Dictionary<ObjectId, WeakReference<IWithId>> objectsByIdCache = new();
-        private readonly Dictionary<RoomCoord, WeakReference<NativeRoom>> roomsByCoordCache = new();
+        private readonly Dictionary<ObjectId, WeakReference<IWithId>> objectsByIdCache = [];
+        private readonly Dictionary<RoomCoord, WeakReference<NativeRoom>> roomsByCoordCache = [];
 
         private readonly NativeObjectLazyLookup<NativeCreep, ICreep> creepLazyLookup;
         private readonly NativeObjectLazyLookup<NativeFlag, IFlag> flagLazyLookup;

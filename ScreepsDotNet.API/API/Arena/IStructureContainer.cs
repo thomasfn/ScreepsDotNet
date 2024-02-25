@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using ScreepsDotNet.API.World;
 
 namespace ScreepsDotNet.API.Arena
 {

@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-using ScreepsDotNet.API.Arena;
-
 namespace ScreepsDotNet.API
 {
     /// <summary>
@@ -15,7 +13,7 @@ namespace ScreepsDotNet.API
     (
         TBodyPartType Type,
         int Hits,
-        ResourceType? Boost
+        World.ResourceType? Boost
     ) where TBodyPartType : unmanaged, Enum;
 
     /// <summary>

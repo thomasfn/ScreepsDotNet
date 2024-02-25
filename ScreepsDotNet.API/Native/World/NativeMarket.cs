@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using ScreepsDotNet.Interop;
-
-using ScreepsDotNet.API;
 using ScreepsDotNet.API.World;
 using System.Collections.Immutable;
 

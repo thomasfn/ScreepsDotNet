@@ -160,6 +160,7 @@ namespace ScreepsDotNet.Interop
         #endregion
 
         private readonly IntPtr jsHandle;
+        private readonly int hash;
         private bool disposedValue;
 
         internal IntPtr JSHandle => jsHandle;
@@ -169,6 +170,7 @@ namespace ScreepsDotNet.Interop
         internal JSObject(IntPtr jsHandle)
         {
             this.jsHandle = jsHandle;
+            hash = HashCode.Combine(jsHandle);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -302,12 +304,15 @@ namespace ScreepsDotNet.Interop
 
         public override bool Equals(object? obj) => Equals(obj as JSObject);
 
-        public bool Equals(JSObject? other) => other is not null && jsHandle.Equals(other.jsHandle);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool Equals(JSObject? other) => other is not null && jsHandle == other.jsHandle;
 
-        public override int GetHashCode() => HashCode.Combine(jsHandle);
+        public override int GetHashCode() => hash;
 
-        public static bool operator ==(JSObject? left, JSObject? right) => EqualityComparer<JSObject>.Default.Equals(left, right);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator ==(JSObject? left, JSObject? right) => left is null ? right is null : left.Equals(right);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator !=(JSObject? left, JSObject? right) => !(left == right);
 
         #region IDisposable

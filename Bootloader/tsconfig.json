@@ -12,9 +12,6 @@
             "esnext",
             "DOM"
         ],
-        "types": [
-            "@types/screeps"
-        ],
         "rootDirs": [
             "."
         ],

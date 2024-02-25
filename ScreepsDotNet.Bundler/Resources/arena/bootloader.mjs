@@ -2592,14 +2592,8 @@ var bootloader = (function (exports) {
     _inherits(ArenaBindings, _BaseBindings);
     var _super = _createSuper(ArenaBindings);
     function ArenaBindings() {
-      var _this;
       _classCallCheck(this, ArenaBindings);
-      for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
-        args[_key] = arguments[_key];
-      }
-      _this = _super.call.apply(_super, [this].concat(args));
-      _defineProperty(_assertThisInitialized(_this), "_lastCheckIn", 0);
-      return _this;
+      return _super.apply(this, arguments);
     }
     _createClass(ArenaBindings, [{
       key: "init",
@@ -2614,6 +2608,7 @@ var bootloader = (function (exports) {
     }, {
       key: "setupImports",
       value: function setupImports() {
+        var _this = this;
         _get(_getPrototypeOf(ArenaBindings.prototype), "setupImports", this).call(this);
         this.bindingsImport.js_renew_object = function () {};
         this.bindingsImport.js_batch_renew_objects = function () {};
@@ -2652,6 +2647,57 @@ var bootloader = (function (exports) {
           }
         };
         this.imports['game/pathFinder'] = _objectSpread2(_objectSpread2({}, pathFinder), {}, {
+          searchPath: function searchPath(origin, goalsPtr, goalsCnt, options) {
+            var i32 = _this._memoryManager.view.i32;
+            var goal;
+            var goalsPtrI32 = goalsPtr >> 2;
+            if (goalsCnt == 1) {
+              var r = i32[goalsPtrI32 + 2];
+              if (r === 0) {
+                goal = {
+                  x: i32[goalsPtrI32 + 0],
+                  y: i32[goalsPtrI32 + 1]
+                };
+              } else {
+                goal = {
+                  pos: {
+                    x: i32[goalsPtrI32 + 0],
+                    y: i32[goalsPtrI32 + 1]
+                  },
+                  range: r
+                };
+              }
+            } else {
+              goal = [];
+              goal.length = goalsCnt;
+              for (var _i4 = 0; _i4 < goalsCnt; ++_i4) {
+                var _r = i32[goalsPtrI32 + 2];
+                if (_r === 0) {
+                  goal[_i4] = {
+                    x: i32[goalsPtrI32 + 0],
+                    y: i32[goalsPtrI32 + 1]
+                  };
+                } else {
+                  goal[_i4] = {
+                    pos: {
+                      x: i32[goalsPtrI32 + 0],
+                      y: i32[goalsPtrI32 + 1]
+                    },
+                    range: _r
+                  };
+                }
+                goalsPtrI32 += 3;
+              }
+            }
+            var originPos = {
+              x: origin >> 16,
+              y: origin & 0xffff
+            };
+            return pathFinder.searchPath(originPos, goal, options);
+          },
+          decodePath: function decodePath(resultObj, outPtr) {
+            return _this.copyPath(_this._memoryManager.view, resultObj.path, outPtr);
+          },
           CostMatrix: _objectSpread2(_objectSpread2({}, this.buildWrappedPrototype(pathFinder.CostMatrix)), {}, {
             setRect: function setRect(thisObj, minX, minY, maxX, maxY, memoryView) {
               var i = 0;
@@ -2681,6 +2727,15 @@ var bootloader = (function (exports) {
         };
         var wrappedPrototypes = this.buildWrappedPrototypes(prototypes);
         this.imports['game/prototypes/wrapped'] = _objectSpread2(_objectSpread2({}, wrappedPrototypes), {}, {
+          GameObject: _objectSpread2(_objectSpread2({}, wrappedPrototypes.GameObject), {}, {
+            findPathTo: function findPathTo(thisObj, pos, opts, outPtr) {
+              var result = thisObj.findPathTo(pos, opts != null ? opts : undefined);
+              if (!result) {
+                return 0;
+              }
+              return _this.copyPath(_this._memoryManager.view, result, outPtr);
+            }
+          }),
           Store: {
             getCapacity: function getCapacity(thisObj, resourceType) {
               return thisObj.getCapacity(resourceType);
@@ -2691,59 +2746,13 @@ var bootloader = (function (exports) {
             getFreeCapacity: function getFreeCapacity(thisObj, resourceType) {
               return thisObj.getFreeCapacity(resourceType);
             }
-          }
+          },
+          Creep: _objectSpread2(_objectSpread2({}, wrappedPrototypes.Creep), {}, {
+            getEncodedBody: function getEncodedBody(thisObj, outPtr) {
+              return _this.encodeCreepBody(_this._memoryManager.view, thisObj.body, outPtr);
+            }
+          })
         });
-      }
-    }, {
-      key: "copyRawObjectId",
-      value: function copyRawObjectId(memoryView, id, outPtr) {
-        var u8 = memoryView.u8,
-          i32 = memoryView.i32;
-        if (id) {
-          var l = id.length;
-          for (var j = 0; j < l; ++j) {
-            u8[outPtr + j] = id.charCodeAt(j);
-          }
-          for (var _j = l; _j < 24; ++_j) {
-            u8[outPtr + _j] = 0;
-          }
-        } else {
-          for (var _j2 = 0; _j2 < 6; ++_j2) {
-            i32[outPtr + _j2] = 0;
-          }
-        }
-      }
-    }, {
-      key: "encodeRoomObjectArray",
-      value: function encodeRoomObjectArray(memoryView, arr, key, outRawObjectIdPtr, outRoomObjectMetadataPtr, maxObjectCount) {
-        var i32 = memoryView.i32;
-        var numEncoded = 0;
-        var nextRawObjectIdPtr = outRawObjectIdPtr;
-        var nextRoomObjectMetadataPtr = outRoomObjectMetadataPtr;
-        for (var _i4 = 0; _i4 < Math.min(maxObjectCount, arr.length); ++_i4) {
-          // Lookup object
-          var obj = arr[_i4];
-          if (key) {
-            obj = obj[key];
-          }
-          if (!(obj instanceof prototypes.GameObject) && obj.type) {
-            obj = obj[obj.type];
-          }
-          if (!(obj instanceof prototypes.GameObject)) {
-            continue;
-          }
-          // Copy id
-          this.copyRawObjectId(memoryView, obj.id, nextRawObjectIdPtr);
-          nextRawObjectIdPtr += 24;
-          // Copy metadata
-          i32[nextRoomObjectMetadataPtr + 0 >> 2] = Object.getPrototypeOf(obj).constructor.__dotnet_typeId || 0;
-          // For now do not assign clr tracking ids here because if we get here before clr has a chance to renew the objects, we memory leak as the old reference is lost and the object sticks around in the tracking list
-          // i32[(nextRoomObjectMetadataPtr + 4) >> 2] = this._interop.getClrTrackingId(obj) ?? this._interop.assignClrTrackingId(obj);
-          i32[nextRoomObjectMetadataPtr + 4 >> 2] = -1;
-          nextRoomObjectMetadataPtr += 8;
-          ++numEncoded;
-        }
-        return numEncoded;
       }
     }, {
       key: "encodeCreepBody",
@@ -2763,6 +2772,19 @@ var bootloader = (function (exports) {
           outPtr += 2;
         }
         return body.length;
+      }
+    }, {
+      key: "copyPath",
+      value: function copyPath(memoryView, path, outPtr) {
+        var i32 = memoryView.i32;
+        var ptr = outPtr;
+        for (var _i6 = 0; _i6 < path.length; ++_i6) {
+          i32[ptr >> 2] = path[_i6].x;
+          ++ptr;
+          i32[ptr >> 2] = path[_i6].y;
+          ++ptr;
+        }
+        return path.length;
       }
     }, {
       key: "buildWrappedPrototypes",
@@ -2794,8 +2816,8 @@ var bootloader = (function (exports) {
                 return 0; // continue
               }
               wrappedPrototype[key] = function (thisObj) {
-                for (var _len2 = arguments.length, args = new Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
-                  args[_key2 - 1] = arguments[_key2];
+                for (var _len = arguments.length, args = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+                  args[_key - 1] = arguments[_key];
                 }
                 return value.call.apply(value, [thisObj].concat(args));
               };
