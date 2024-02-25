@@ -177,6 +177,6 @@ namespace ScreepsDotNet.Native.Arena
             => (CreepTransferResult)Native_Withdraw(ProxyObject, target.ToJS(), resourceType.ToJS(), amount);
 
         public override string ToString()
-            => $"Creep({Id}, {Position})";
+            => Exists ? $"Creep({Id}, {Position})" : $"Creep({Id})";
     }
 }

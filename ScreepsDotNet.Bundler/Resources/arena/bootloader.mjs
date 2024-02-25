@@ -1,3 +1,8 @@
+import * as utils from 'game/utils';
+import * as prototypes from 'game/prototypes';
+import * as constants from 'game/constants';
+import * as pathFinder from 'game/path-finder';
+import * as visual from 'game/visual';
 var bootloader = (function (exports) {
   'use strict';
 
@@ -1890,6 +1895,7 @@ var bootloader = (function (exports) {
       _defineProperty(this, "_boundImportList", []);
       _defineProperty(this, "_boundImportSymbolList", []);
       _defineProperty(this, "_objectTrackingList", {});
+      _defineProperty(this, "_nonExtensibleObjectTrackingMap", new WeakMap());
       _defineProperty(this, "_nameList", []);
       _defineProperty(this, "_nameTable", {});
       _defineProperty(this, "_memoryManager", void 0);
@@ -2416,7 +2422,8 @@ var bootloader = (function (exports) {
     }, {
       key: "getClrTrackingId",
       value: function getClrTrackingId(obj) {
-        return obj[CLR_TRACKING_ID];
+        var _obj$CLR_TRACKING_ID;
+        return (_obj$CLR_TRACKING_ID = obj[CLR_TRACKING_ID]) !== null && _obj$CLR_TRACKING_ID !== void 0 ? _obj$CLR_TRACKING_ID : this._nonExtensibleObjectTrackingMap.get(obj);
       }
     }, {
       key: "assignClrTrackingId",
@@ -2426,14 +2433,22 @@ var bootloader = (function (exports) {
           ++this._numBeginTrackingObjects;
           ++this._numTotalTrackingObjects;
         }
-        obj[CLR_TRACKING_ID] = newClrTrackingId;
+        if (Object.isExtensible(obj)) {
+          obj[CLR_TRACKING_ID] = newClrTrackingId;
+        } else {
+          this._nonExtensibleObjectTrackingMap.set(obj, newClrTrackingId);
+        }
         this._objectTrackingList[newClrTrackingId] = obj;
         return newClrTrackingId;
       }
     }, {
       key: "clearClrTrackingId",
       value: function clearClrTrackingId(obj) {
-        obj[CLR_TRACKING_ID] = undefined;
+        if (Object.isExtensible(obj)) {
+          obj[CLR_TRACKING_ID] = undefined;
+        } else {
+          this._nonExtensibleObjectTrackingMap["delete"](obj);
+        }
       }
     }, {
       key: "replaceClrTrackedObject",
@@ -2557,6 +2572,249 @@ var bootloader = (function (exports) {
     }]);
     return BaseBindings;
   }();
+
+  var RESOURCE_LIST$1 = ["energy", "score", "score_x", "score_y", "score_z"]; // 5 total
+  {
+    for (var _i$1 = 0, _RESOURCE_LIST$1 = RESOURCE_LIST$1; _i$1 < _RESOURCE_LIST$1.length; _i$1++) {
+      _RESOURCE_LIST$1[_i$1];
+    }
+  }
+  var BODYPART_LIST$1 = ['move', 'work', 'carry', 'attack', 'ranged_attack', 'heal', 'tough']; // 7 total
+  var BODYPART_TO_ENUM_MAP$1 = {};
+  {
+    var _i2$1 = 0;
+    for (var _i3$1 = 0, _BODYPART_LIST$1 = BODYPART_LIST$1; _i3$1 < _BODYPART_LIST$1.length; _i3$1++) {
+      var bodyPart$1 = _BODYPART_LIST$1[_i3$1];
+      BODYPART_TO_ENUM_MAP$1[bodyPart$1] = _i2$1++;
+    }
+  }
+  var ArenaBindings = /*#__PURE__*/function (_BaseBindings) {
+    _inherits(ArenaBindings, _BaseBindings);
+    var _super = _createSuper(ArenaBindings);
+    function ArenaBindings() {
+      var _this;
+      _classCallCheck(this, ArenaBindings);
+      for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+        args[_key] = arguments[_key];
+      }
+      _this = _super.call.apply(_super, [this].concat(args));
+      _defineProperty(_assertThisInitialized(_this), "_lastCheckIn", 0);
+      return _this;
+    }
+    _createClass(ArenaBindings, [{
+      key: "init",
+      value: function init(exports, memoryManager) {
+        _get(_getPrototypeOf(ArenaBindings.prototype), "init", this).call(this, exports, memoryManager);
+      }
+    }, {
+      key: "loop",
+      value: function loop() {
+        _get(_getPrototypeOf(ArenaBindings.prototype), "loop", this).call(this);
+      }
+    }, {
+      key: "setupImports",
+      value: function setupImports() {
+        _get(_getPrototypeOf(ArenaBindings.prototype), "setupImports", this).call(this);
+        this.bindingsImport.js_renew_object = function () {};
+        this.bindingsImport.js_batch_renew_objects = function () {};
+        this.bindingsImport.js_fetch_object_room_position = function () {};
+        this.bindingsImport.js_batch_fetch_object_room_positions = function () {};
+        this.bindingsImport.js_get_object_by_id = function () {};
+        this.imports['object'] = {
+          getConstructorOf: function getConstructorOf(x) {
+            return Object.getPrototypeOf(x).constructor;
+          },
+          interpretDateTime: function interpretDateTime(x) {
+            return x.getTime() / 1000;
+          }
+        };
+        this.imports['game/utils'] = _objectSpread2(_objectSpread2({}, utils), {}, {
+          getTerrain: function getTerrain(minX, minY, maxX, maxY, outMemoryView) {
+            var pos = {
+              x: 0,
+              y: 0
+            };
+            var i = 0;
+            for (var y = minY; y <= maxY; ++y) {
+              pos.y = y;
+              for (var x = minX; x <= maxX; ++x) {
+                pos.x = x;
+                outMemoryView.setInt8(i, utils.getTerrainAt(pos));
+                ++i;
+              }
+            }
+          }
+        });
+        this.imports['game/prototypes'] = prototypes;
+        this.imports['game/constants'] = {
+          get: function get() {
+            return constants;
+          }
+        };
+        this.imports['game/pathFinder'] = _objectSpread2(_objectSpread2({}, pathFinder), {}, {
+          CostMatrix: _objectSpread2(_objectSpread2({}, this.buildWrappedPrototype(pathFinder.CostMatrix)), {}, {
+            setRect: function setRect(thisObj, minX, minY, maxX, maxY, memoryView) {
+              var i = 0;
+              for (var y = minY; y <= maxY; ++y) {
+                for (var x = minX; x <= maxX; ++x) {
+                  thisObj.set(x, y, memoryView.getInt8(i));
+                  ++i;
+                }
+              }
+            }
+          }),
+          createCostMatrix: function createCostMatrix() {
+            return new pathFinder.CostMatrix();
+          }
+        });
+        // this.imports['game/visual'] = {
+        //     Visual: this.buildWrappedPrototype(visual.Visual),
+        //     createVisual: (layer, persistent) => new visual.Visual(layer, persistent),
+        // };
+        this.imports['game'] = {
+          getUtils: function getUtils() {
+            return utils;
+          },
+          getPrototypes: function getPrototypes() {
+            return prototypes;
+          }
+        };
+        var wrappedPrototypes = this.buildWrappedPrototypes(prototypes);
+        this.imports['game/prototypes/wrapped'] = _objectSpread2(_objectSpread2({}, wrappedPrototypes), {}, {
+          Store: {
+            getCapacity: function getCapacity(thisObj, resourceType) {
+              return thisObj.getCapacity(resourceType);
+            },
+            getUsedCapacity: function getUsedCapacity(thisObj, resourceType) {
+              return thisObj.getUsedCapacity(resourceType);
+            },
+            getFreeCapacity: function getFreeCapacity(thisObj, resourceType) {
+              return thisObj.getFreeCapacity(resourceType);
+            }
+          }
+        });
+      }
+    }, {
+      key: "copyRawObjectId",
+      value: function copyRawObjectId(memoryView, id, outPtr) {
+        var u8 = memoryView.u8,
+          i32 = memoryView.i32;
+        if (id) {
+          var l = id.length;
+          for (var j = 0; j < l; ++j) {
+            u8[outPtr + j] = id.charCodeAt(j);
+          }
+          for (var _j = l; _j < 24; ++_j) {
+            u8[outPtr + _j] = 0;
+          }
+        } else {
+          for (var _j2 = 0; _j2 < 6; ++_j2) {
+            i32[outPtr + _j2] = 0;
+          }
+        }
+      }
+    }, {
+      key: "encodeRoomObjectArray",
+      value: function encodeRoomObjectArray(memoryView, arr, key, outRawObjectIdPtr, outRoomObjectMetadataPtr, maxObjectCount) {
+        var i32 = memoryView.i32;
+        var numEncoded = 0;
+        var nextRawObjectIdPtr = outRawObjectIdPtr;
+        var nextRoomObjectMetadataPtr = outRoomObjectMetadataPtr;
+        for (var _i4 = 0; _i4 < Math.min(maxObjectCount, arr.length); ++_i4) {
+          // Lookup object
+          var obj = arr[_i4];
+          if (key) {
+            obj = obj[key];
+          }
+          if (!(obj instanceof prototypes.GameObject) && obj.type) {
+            obj = obj[obj.type];
+          }
+          if (!(obj instanceof prototypes.GameObject)) {
+            continue;
+          }
+          // Copy id
+          this.copyRawObjectId(memoryView, obj.id, nextRawObjectIdPtr);
+          nextRawObjectIdPtr += 24;
+          // Copy metadata
+          i32[nextRoomObjectMetadataPtr + 0 >> 2] = Object.getPrototypeOf(obj).constructor.__dotnet_typeId || 0;
+          // For now do not assign clr tracking ids here because if we get here before clr has a chance to renew the objects, we memory leak as the old reference is lost and the object sticks around in the tracking list
+          // i32[(nextRoomObjectMetadataPtr + 4) >> 2] = this._interop.getClrTrackingId(obj) ?? this._interop.assignClrTrackingId(obj);
+          i32[nextRoomObjectMetadataPtr + 4 >> 2] = -1;
+          nextRoomObjectMetadataPtr += 8;
+          ++numEncoded;
+        }
+        return numEncoded;
+      }
+    }, {
+      key: "encodeCreepBody",
+      value: function encodeCreepBody(memoryView, body, outPtr) {
+        var i16 = memoryView.i16;
+        for (var _i5 = 0; _i5 < body.length; ++_i5) {
+          var _body$_i = body[_i5],
+            type = _body$_i.type,
+            hits = _body$_i.hits;
+          // Encode each body part to a 16 bit int as 2 bytes
+          // type: 0-8 (4 bits 0-15) b1
+          // hits: 0-100 (7 bits 0-127) b0
+          var encodedBodyPart = 0;
+          encodedBodyPart |= BODYPART_TO_ENUM_MAP$1[type] << 8;
+          encodedBodyPart |= hits;
+          i16[outPtr >> 1] = encodedBodyPart;
+          outPtr += 2;
+        }
+        return body.length;
+      }
+    }, {
+      key: "buildWrappedPrototypes",
+      value: function buildWrappedPrototypes(prototypes) {
+        var wrappedPrototypes = {};
+        for (var prototypeName in prototypes) {
+          wrappedPrototypes[prototypeName] = this.buildWrappedPrototype(prototypes[prototypeName]);
+        }
+        return wrappedPrototypes;
+      }
+    }, {
+      key: "buildWrappedPrototype",
+      value: function buildWrappedPrototype(constructor) {
+        /** @type {Record<string, Function>} */
+        var wrappedPrototype = {};
+        var prototype = constructor.prototype;
+        var keys = Object.getOwnPropertyNames(prototype);
+        var _iterator = _createForOfIteratorHelper(keys),
+          _step;
+        try {
+          var _loop = function _loop() {
+              var _Object$getOwnPropert;
+              var key = _step.value;
+              if (key === 'constructor') {
+                return 0; // continue
+              }
+              var value = (_Object$getOwnPropert = Object.getOwnPropertyDescriptor(prototype, key)) === null || _Object$getOwnPropert === void 0 ? void 0 : _Object$getOwnPropert.value;
+              if (typeof value !== 'function') {
+                return 0; // continue
+              }
+              wrappedPrototype[key] = function (thisObj) {
+                for (var _len2 = arguments.length, args = new Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
+                  args[_key2 - 1] = arguments[_key2];
+                }
+                return value.call.apply(value, [thisObj].concat(args));
+              };
+            },
+            _ret;
+          for (_iterator.s(); !(_step = _iterator.n()).done;) {
+            _ret = _loop();
+            if (_ret === 0) continue;
+          }
+        } catch (err) {
+          _iterator.e(err);
+        } finally {
+          _iterator.f();
+        }
+        return wrappedPrototype;
+      }
+    }]);
+    return ArenaBindings;
+  }(BaseBindings);
 
   var CPU_HALT_WHEN_NO_CHECKIN_FOR = 10;
   var RESOURCE_LIST = ["energy", "power", "H", "O", "U", "L", "K", "Z", "X", "G", "silicon", "metal", "biomass", "mist", "OH", "ZK", "UL", "UH", "UO", "KH", "KO", "LH", "LO", "ZH", "ZO", "GH", "GO", "UH2O", "UHO2", "KH2O", "KHO2", "LH2O", "LHO2", "ZH2O", "ZHO2", "GH2O", "GHO2", "XUH2O", "XUHO2", "XKH2O", "XKHO2", "XLH2O", "XLHO2", "XZH2O", "XZHO2", "XGH2O", "XGHO2", "ops", "utrium_bar", "lemergium_bar", "zynthium_bar", "keanium_bar", "ghodium_melt", "oxidant", "reductant", "purifier", "battery", "composite", "crystal", "liquid", "wire", "switch", "transistor", "microchip", "circuit", "device", "cell", "phlegm", "tissue", "muscle", "organoid", "organism", "alloy", "tube", "fixtures", "frame", "hydraulics", "machine", "condensate", "concentrate", "extract", "spirit", "emanation", "essence", "season"]; // 85 total
@@ -3286,6 +3544,9 @@ var bootloader = (function (exports) {
       switch (env) {
         case 'world':
           this._bindings = new WorldBindings(this.log.bind(this), this._interop);
+          break;
+        case 'arena':
+          this._bindings = new ArenaBindings(this.log.bind(this), this._interop);
           break;
       }
       if (this._bindings) {

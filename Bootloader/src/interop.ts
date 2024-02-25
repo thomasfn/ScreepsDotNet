@@ -87,6 +87,7 @@ export class Interop {
     private readonly _boundImportList: BoundImportFunction[] = [];
     private readonly _boundImportSymbolList: BoundImportSymbol[] = [];
     private readonly _objectTrackingList: Record<number, object> = {};
+    private readonly _nonExtensibleObjectTrackingMap: WeakMap<object, number> = new WeakMap();
     private readonly _nameList: string[] = [];
     private readonly _nameTable: Record<string, number> = {};
 
@@ -509,7 +510,7 @@ export class Interop {
     }
 
     public getClrTrackingId(obj: object): number | undefined {
-        return (obj as { [CLR_TRACKING_ID]: number | undefined })[CLR_TRACKING_ID];
+        return (obj as { [CLR_TRACKING_ID]: number | undefined })[CLR_TRACKING_ID] ?? this._nonExtensibleObjectTrackingMap.get(obj);
     }
 
     public assignClrTrackingId(obj: object, newClrTrackingId?: number): number {
@@ -518,13 +519,21 @@ export class Interop {
             ++this._numBeginTrackingObjects;
             ++this._numTotalTrackingObjects;
         }
-        (obj as { [CLR_TRACKING_ID]: number | undefined })[CLR_TRACKING_ID] = newClrTrackingId;
+        if (Object.isExtensible(obj)) {
+            (obj as { [CLR_TRACKING_ID]: number | undefined })[CLR_TRACKING_ID] = newClrTrackingId;
+        } else {
+            this._nonExtensibleObjectTrackingMap.set(obj, newClrTrackingId);
+        }
         this._objectTrackingList[newClrTrackingId] = obj;
         return newClrTrackingId;
     }
 
     private clearClrTrackingId(obj: object): void {
-        (obj as { [CLR_TRACKING_ID]: number | undefined })[CLR_TRACKING_ID] = undefined;
+        if (Object.isExtensible(obj)) {
+            (obj as { [CLR_TRACKING_ID]: number | undefined })[CLR_TRACKING_ID] = undefined;
+        } else {
+            this._nonExtensibleObjectTrackingMap.delete(obj);
+        }
     }
 
     public replaceClrTrackedObject(oldObj: object, newObj: object): void;

@@ -40,9 +40,24 @@ export default {
             writeBundle(bundle) {
                 if (bundle.file !== 'dist/bootloader.js') { return; }
                 const str = fs.readFileSync(bundle.file, { encoding: 'utf8' });
-                const arenaStr = `${str}\nexport const Bootloader = bootloader.Bootloader;\nexport const decodeWasm = bootloader.decodeWasm;\nexport const decompressWasm = bootloader.decompressWasm;\n`;
+                const arenaStr = [
+                    `import * as utils from 'game/utils';`,
+                    `import * as prototypes from 'game/prototypes';`,
+                    `import * as constants from 'game/constants';`,
+                    `import * as pathFinder from 'game/path-finder';`,
+                    `import * as visual from 'game/visual';`,
+                    `${str}`,
+                    `export const Bootloader = bootloader.Bootloader;`,
+                    `export const decodeWasm = bootloader.decodeWasm;`,
+                    `export const decompressWasm = bootloader.decompressWasm;`,
+                    ``,
+                ].join('\n');
                 fs.writeFileSync(bundle.file.replace(path.extname(bundle.file), '-arena.mjs'), arenaStr);
-                const worldStr = `${str}\nmodule.exports = bootloader;\n`;
+                const worldStr = [
+                    `${str}`,
+                    `module.exports = bootloader;`,
+                    ``,
+                ].join('\n');
                 fs.writeFileSync(bundle.file.replace(path.extname(bundle.file), '-world.js'), worldStr);
             }
         }

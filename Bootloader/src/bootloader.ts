@@ -8,6 +8,7 @@ import { ImportTable, Interop } from './interop.js';
 import { ScreepsDotNetExports } from './common.js';
 import { WasmMemoryManager } from './memory.js';
 import { BaseBindings } from './bindings/base.js';
+import { ArenaBindings } from './bindings/arena.js';
 import { WorldBindings } from './bindings/world.js';
 
 const utf8Decoder = new TextDecoder();
@@ -134,7 +135,7 @@ export class Bootloader {
                 this._bindings = new WorldBindings(this.log.bind(this), this._interop);
                 break;
             case 'arena':
-                // this._bindings = new ArenaBindings(this.log.bind(this));
+                 this._bindings = new ArenaBindings(this.log.bind(this), this._interop);
                 break;
         }
         if (this._bindings) {

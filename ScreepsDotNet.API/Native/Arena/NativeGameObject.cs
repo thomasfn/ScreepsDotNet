@@ -16,31 +16,24 @@ namespace ScreepsDotNet.Native.Arena
         #region Imports
 
         [JSImport("GameObject.findClosestByPath", "game/prototypes/wrapped")]
-        
-        internal static partial JSObject Native_FindClosestByPath_NoOpts(JSObject proxyObject, JSObject[] positions);
+        internal static partial JSObject? Native_FindClosestByPath_NoOpts(JSObject proxyObject, JSObject[] positions);
 
         [JSImport("GameObject.findClosestByPath", "game/prototypes/wrapped")]
-        
-        internal static partial JSObject Native_FindClosestByPath(JSObject proxyObject, JSObject[] positions, JSObject options);
+        internal static partial JSObject? Native_FindClosestByPath(JSObject proxyObject, JSObject[] positions, JSObject options);
 
         [JSImport("GameObject.findClosestByRange", "game/prototypes/wrapped")]
-        
         internal static partial JSObject Native_FindClosestByRange(JSObject proxyObject, JSObject[] positions);
 
         [JSImport("GameObject.findInRange", "game/prototypes/wrapped")]
-        
         internal static partial JSObject[] Native_FindInRange(JSObject proxyObject, JSObject[] positions, int range);
 
         [JSImport("GameObject.findPathTo", "game/prototypes/wrapped")]
-        
         internal static partial JSObject[] Native_FindPathTo_NoOpts(JSObject proxyObject, JSObject pos);
 
         [JSImport("GameObject.findPathTo", "game/prototypes/wrapped")]
-        
         internal static partial JSObject[] Native_FindPathTo(JSObject proxyObject, JSObject pos, JSObject options);
 
         [JSImport("GameObject.getRangeTo", "game/prototypes/wrapped")]
-        
         internal static partial int Native_GetRangeTo(JSObject proxyObject, JSObject pos);
 
         #endregion
@@ -110,7 +103,7 @@ namespace ScreepsDotNet.Native.Arena
             => Native_GetRangeTo(ProxyObject, pos.ToJS());
 
         public override string ToString()
-            => $"GameObject({Id}, {Position})";
+            => Exists ? $"GameObject({Id}, {Position})" : $"GameObject({Id})";
 
         public override bool Equals(object? obj) => Equals(obj as NativeGameObject);
 
