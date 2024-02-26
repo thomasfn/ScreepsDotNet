@@ -37,7 +37,7 @@ namespace ScreepsDotNet.API.Arena
     /// Basic prototype for game objects.
     /// All objects and classes are inherited from this class
     /// </summary>
-    public interface IGameObject : IPosition
+    public interface IGameObject : IPosition, IWithUserData
     {
         /// <summary>
         /// True if this object is live in the game at the moment

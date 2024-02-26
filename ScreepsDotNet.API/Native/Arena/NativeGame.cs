@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 using ScreepsDotNet.API.Arena;
 using ScreepsDotNet.Interop;
@@ -34,6 +35,7 @@ namespace ScreepsDotNet.Native.Arena
         public NativeGame()
         {
             Utils = new NativeUtils(this);
+            RuntimeHelpers.RunClassConstructor(typeof(NativeGameObjectUtils).TypeHandle);
         }
 
         public void Tick()

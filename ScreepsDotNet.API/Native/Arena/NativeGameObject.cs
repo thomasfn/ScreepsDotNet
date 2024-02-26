@@ -13,7 +13,7 @@ using ScreepsDotNet.API.Arena;
 namespace ScreepsDotNet.Native.Arena
 {
     [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
-    internal partial class NativeGameObject : IGameObject, IWithUserData, IEquatable<NativeGameObject?>
+    internal partial class NativeGameObject : IGameObject, IEquatable<NativeGameObject?>
     {
         #region Imports
 
@@ -268,6 +268,7 @@ namespace ScreepsDotNet.Native.Arena
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeOwnedStructure))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureTower))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureContainer))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureExtension))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureRampart))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureRoad))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureSpawn))]
@@ -284,6 +285,7 @@ namespace ScreepsDotNet.Native.Arena
                 // This is to avoid a nasty bug where the runtime gets objects and their prototype objects mixed up due to the tracking id being set as a property on the object
                 RegisterPrototypeTypeMapping<IStructureTower, NativeStructureTower>("StructureTower");
                 RegisterPrototypeTypeMapping<IStructureContainer, NativeStructureContainer>("StructureContainer");
+                RegisterPrototypeTypeMapping<IStructureExtension, NativeStructureExtension>("StructureExtension");
                 RegisterPrototypeTypeMapping<IStructureRampart, NativeStructureRampart>("StructureRampart");
                 RegisterPrototypeTypeMapping<IStructureRoad, NativeStructureRoad>("StructureRoad");
                 RegisterPrototypeTypeMapping<IStructureSpawn, NativeStructureSpawn>("StructureSpawn");

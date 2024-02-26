@@ -1,7 +1,4 @@
-﻿using System.ComponentModel;
-using ScreepsDotNet.API.World;
-
-namespace ScreepsDotNet.API.Arena
+﻿namespace ScreepsDotNet.API.Arena
 {
     /// <summary>
     /// A small container that can be used to store resources.
@@ -11,7 +8,7 @@ namespace ScreepsDotNet.API.Arena
     public interface IStructureContainer : IOwnedStructure
     {
         /// <summary>
-        ///  A Store object that contains cargo of this structure.
+        /// A Store object that contains cargo of this structure.
         /// </summary>
         IStore Store { get; }
     }

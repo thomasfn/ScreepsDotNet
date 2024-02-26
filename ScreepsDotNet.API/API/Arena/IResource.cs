@@ -1,6 +1,4 @@
-﻿using ScreepsDotNet.API.World;
-
-namespace ScreepsDotNet.API.Arena
+﻿namespace ScreepsDotNet.API.Arena
 {
     /// <summary>
     /// A dropped piece of resource. Dropped resource pile decays for ceil(amount/1000) units per tick

@@ -1,6 +1,4 @@
-﻿using System.ComponentModel;
-
-namespace ScreepsDotNet.API.Arena
+﻿namespace ScreepsDotNet.API.Arena
 {
     /// <summary>
     /// Blocks movement of all creeps.
