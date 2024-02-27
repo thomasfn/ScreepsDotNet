@@ -18,13 +18,8 @@
 	</PropertyGroup>
 
 	<PropertyGroup>
-		<ScreepsEncoding>b64</ScreepsEncoding>
-	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)' == 'Release'">
-		<RunAOTCompilation>false</RunAOTCompilation>
-		<ScreepsCompressAssemblies>false</ScreepsCompressAssemblies>
 		<ScreepsCompressWasm>false</ScreepsCompressWasm>
+		<ScreepsEncoding>b64</ScreepsEncoding>
 	</PropertyGroup>
 
 	<ItemGroup>
