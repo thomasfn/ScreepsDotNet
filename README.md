@@ -6,6 +6,7 @@ A toolset and API to build bots for [Screeps Arena](https://store.steampowered.c
 * [Quickstart](#quickstart)
 * [Migration from .Net 7](#migration)
 * [API](#api)
+* [Native](#native)
 * [Project structure](#project-structure)
 * [Limitations, Issues and Implications](#limitations-issues-and-implications)
 * [Troubleshooting](#troubleshooting)
@@ -256,6 +257,116 @@ More details and documentation for the API is planned.
 - JS interop is expensive. The first access of a property on a game object will always involve an interop call (two if this is the first time the object has been used in a tick, as it has to refresh the stale instance first). However, the API will cache the property for the remainder of the tick, so subsequent accesses of that property will be cheap.
 - You can't store properties directly on objects like in the JS API, nor can you extend the objects yourself. You can, however, use `IGameObject` as the key of a `Dictionary` or safely store it in any other collection like `HashSet`. Don't forget to clean up the collection when the game object is destroyed.
 - You can associate user data with any game object, using `gameObject.SetUserData<T>(T instance)` and other sibling user data methods. Only reference types can be stored in this way, and the generic type parameter itself is used as the key. You should consider user data stored in this manner to be ephemeral, e.g. it might go away at any time, so always handle the case where user data is not set. You can store as many instances of different types as you like on a game object but only one instance per type. User data lookups are more efficient than a dictionary lookup.
+
+## Native
+
+It is possible to write some of your bot in native C and call into it from C# via icalls. Native C compiles directly to wasm whereas C# compiles to CIL which is executed by the Mono IL interpreter. The Mono IL interpreter is generally fast enough for most workloads you'll end up running in Screeps but for some compute-heavy algorithms such as pathfinding, mincut or distance transforms, every instruction counts. The following guide will demonstrate how to write a compute-heavy algorithm in native C and call it from C#.
+
+- Add a C file to your project. The name of the file and location within the project tree does not matter, but it should have the `.c` extension.
+- For the purposes of this guide we'll add two simple methods that sum either two values or `n` values. Add the following code:
+
+    ```C
+    #include <mono/metadata/loader.h>
+
+    int AddTwo(int a, int b)
+    {
+        return a + b;
+    }
+
+    int Sum(int* values, int n)
+    {
+        int result = 0;
+        for (int i = 0; i < n; i++)
+        {
+            result += values[i];
+        }
+        return result;
+    }
+
+    __attribute__((export_name("myproject_initnative")))
+    void myproject_initnative()
+    {
+        mono_add_internal_call("MyProject_Native::AddTwo", AddTwo);
+        mono_add_internal_call("MyProject_Native::Sum", Sum);
+    }
+    ```
+- Add the following item group to your `.csproj` file:
+    ```xml
+    <ItemGroup>
+        <_WasmRuntimePackSrcFile Include="$(MSBuildThisFileDirectory)MyNativeCFile.c" />
+        <UpToDateCheckInput Include="MyNativeCFile.c" />
+        <ScreepsCustomInitExportNames Include="myproject_initnative" />
+    </ItemGroup>
+    ```
+- Add a C# file to your project to bind the native code. It should contain the following code:
+    ```CSharp
+    using System.Runtime.CompilerServices;
+
+    internal static class MyProject_Native
+    {
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern int AddTwo(int a, int b);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern unsafe int Sum(int* values, int n);
+    }
+    ```
+    Note that this binding class must not be contained in any namespace and must be both internal and static. The name and signature of the icalls must match that of the native C functions exactly.
+- Call the native method somewhere:
+    ```CSharp
+    Console.WriteLine($"1 + 2 = {AddTwo(1, 2)}!");
+
+    Span<int> values = [1, 2, 3];
+    unsafe
+    {
+        fixed (int* valuesPtr = values)
+        {
+            Console.WriteLine($"1 + 2 + 3 = {Sum(valuesPtr, values.Length)}!");
+        }
+    }
+    ```
+  Note that any code with dependencies on a native method will only run within a wasm environment and will no longer work when being unit tested. You can solve this by encapsulating the icalls in an api and providing both managed and native implementations of your code, switching as needed. For example:
+    ```CSharp
+    using System.Runtime.InteropServices;
+
+    public void AddTwo(int a, int b)
+    {
+        if (RuntimeInformation.OSArchitecture == Architecture.Wasm)
+        {
+            return MyProject_Native.AddTwo(a, b);
+        }
+        else
+        {
+            return a + b;
+        }
+    }
+
+    public void Sum(ReadOnlySpan<int> values)
+    {
+        if (RuntimeInformation.OSArchitecture == Architecture.Wasm)
+        {
+            unsafe
+            {
+                fixed (int* valuesPtr = values)
+                {
+                    return MyProject_Native.Sum(valuesPtr, values.Length);
+                }
+            }
+            
+        }
+        else
+        {
+            int result = 0;
+            foreach (int value in values)
+            {
+                result += value;
+            }
+            return result;
+        }
+    }
+    ```
+
+All the usual rules of using unsafe code apply when you're passing pointers to managed data to native code. All the safety barriers are lifted and there's alot you can do wrong to very badly break the runtime. Don't be afraid to use `assert` liberally to check everything until you're confident your native code is working properly.
 
 ## Project Structure
 
