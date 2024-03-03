@@ -34,13 +34,6 @@ namespace ScreepsDotNet.API.Arena
         public static bool operator !=(CreateConstructionSiteResult left, CreateConstructionSiteResult right) => !(left == right);
     }
 
-    public enum Terrain
-    {
-        Wall = 1,
-        Swamp = 2,
-        Plain = 0
-    }
-
     /// <summary>
     /// Represents a rectangular view of the room's terrain.
     /// </summary>

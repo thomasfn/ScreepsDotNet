@@ -2,15 +2,6 @@
 
 namespace ScreepsDotNet.API.World
 {
-    [Flags]
-    public enum Terrain : byte
-    {
-        Plain = 0,
-        Wall = 1,
-        Swamp = 2,
-        Lava = 4
-    }
-
     /// <summary>
     /// An object which provides fast access to room terrain data.
     /// </summary>
