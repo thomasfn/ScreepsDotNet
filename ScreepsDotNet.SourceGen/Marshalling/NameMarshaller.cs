@@ -49,14 +49,14 @@ namespace ScreepsDotNet.SourceGen.Marshalling
 
         public override void MarshalFromJS(ITypeSymbol returnTypeSymbol, string jsParamName, SourceEmitter emitter)
         {
-            if (returnTypeSymbol.NullableAnnotation == NullableAnnotation.NotAnnotated)
+            if (returnTypeSymbol.NullableAnnotation == NullableAnnotation.Annotated)
             {
-                emitter.WriteLine($"var retObj = {jsParamName}.AsName();");
-                emitter.WriteLine($"if (retObj == null) {{ throw new NullReferenceException($\"Expecting Name, got null\"); }}");
-                emitter.WriteLine($"return retObj;");
-                return;
+                emitter.WriteLine($"return {jsParamName}.AsNameNullable();");
             }
-            emitter.WriteLine($"return {jsParamName}.AsName();");
+            else
+            {
+                emitter.WriteLine($"return {jsParamName}.AsName();");
+            }
         }
 
         public override ParamSpec GenerateParamSpec(ITypeSymbol paramTypeSymbol) => new(InteropValueType.Nme, paramTypeSymbol.NullableAnnotation == NullableAnnotation.Annotated ? InteropValueFlags.Nullable : InteropValueFlags.None);

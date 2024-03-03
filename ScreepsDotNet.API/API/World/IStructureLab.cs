@@ -78,10 +78,15 @@
     public interface IStructureLab : IOwnedStructure, IWithStore
     {
         /// <summary>
+        /// The amount of game ticks the lab has to wait until the next reaction or unboost operation is possible.
+        /// </summary>
+        int Cooldown { get; }
+
+        /// <summary>
         /// The type of minerals containing in the lab.
         /// Labs can contain only one mineral type at the same time.
         /// </summary>
-        ResourceType MineralType { get; }
+        ResourceType? MineralType { get; }
 
         /// <summary>
         /// Boosts creep body parts using the containing mineral compound.

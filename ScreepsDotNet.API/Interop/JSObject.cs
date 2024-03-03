@@ -89,6 +89,12 @@ namespace ScreepsDotNet.Interop
         private static partial Name GetPropertyAsNameOnObject(JSObject obj, Name key);
 
         [JSImport("getProperty", "__object")]
+        private static partial Name? GetPropertyAsNullableNameOnObject(JSObject obj, string key);
+
+        [JSImport("getProperty", "__object")]
+        private static partial Name? GetPropertyAsNullableNameOnObject(JSObject obj, Name key);
+
+        [JSImport("getProperty", "__object")]
         private static partial JSObject? GetPropertyAsJSObjectOnObject(JSObject obj, string key);
 
         [JSImport("getProperty", "__object")]
@@ -238,6 +244,12 @@ namespace ScreepsDotNet.Interop
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Name GetPropertyAsName(Name propertyName) => GetPropertyAsNameOnObject(this, propertyName);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Name? TryGetPropertyAsName(string propertyName) => GetPropertyAsNullableNameOnObject(this, propertyName);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Name? TryGetPropertyAsName(Name propertyName) => GetPropertyAsNullableNameOnObject(this, propertyName);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public JSObject? GetPropertyAsJSObject(string propertyName) => GetPropertyAsJSObjectOnObject(this, propertyName);
