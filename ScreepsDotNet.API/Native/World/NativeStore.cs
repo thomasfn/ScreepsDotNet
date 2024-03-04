@@ -2,6 +2,7 @@
 using System.Collections.Immutable;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using System.Linq;
 
 using ScreepsDotNet.Interop;
 
@@ -144,9 +145,17 @@ namespace ScreepsDotNet.Native.World
         internal readonly JSObject? ProxyObject;
 
         private int[]? resourceCache;
+        private ImmutableArray<ResourceType>? containedResourceTypesCache;
         private bool disposedValue;
 
-        public IEnumerable<ResourceType> ContainedResourceTypes => throw new NotImplementedException();
+        public IEnumerable<ResourceType> ContainedResourceTypes
+        {
+            get
+            {
+                ObjectDisposedException.ThrowIf(disposedValue, this);
+                return containedResourceTypesCache ??= (ProxyObject?.GetPropertyNamesAsNames() ?? []).Select(static x => x.ParseResourceType()).ToImmutableArray();
+            }
+        }
 
         public int this[ResourceType resourceType]
         {

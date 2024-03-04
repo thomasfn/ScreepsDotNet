@@ -57,12 +57,12 @@ namespace ScreepsDotNet.Native.Arena
 
         #endregion
 
-        private const int ResourceCount = 1;
+        private const int ResourceCount = (int)ResourceType.Unknown + 1;
 
         internal readonly JSObject? ProxyObject;
 
         private int[]? resourceCache;
-        private ResourceType[]? resourceTypes;
+        private ImmutableArray<ResourceType>? containedResourceTypesCache;
         private bool disposedValue;
 
         public IEnumerable<ResourceType> ContainedResourceTypes
@@ -70,8 +70,7 @@ namespace ScreepsDotNet.Native.Arena
             get
             {
                 ObjectDisposedException.ThrowIf(disposedValue, this);
-                if (ProxyObject == null) { return Enumerable.Empty<ResourceType>(); }
-                return ProxyObject.GetPropertyNamesAsNames().Select(x => x.ParseResourceType());
+                return containedResourceTypesCache ??= (ProxyObject?.GetPropertyNamesAsNames() ?? []).Select(static x => x.ParseResourceType()).ToImmutableArray();
             }
         }
 
