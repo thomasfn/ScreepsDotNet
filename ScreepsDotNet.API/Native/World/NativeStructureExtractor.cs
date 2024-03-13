@@ -9,8 +9,11 @@ namespace ScreepsDotNet.Native.World
     {
         public int Cooldown => ProxyObject.GetPropertyAsInt32(Names.Cooldown);
 
-        public NativeStructureExtractor(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
-            : base(nativeRoot, proxyObject, id)
+        public NativeStructureExtractor(INativeRoot nativeRoot, JSObject proxyObject)
+            : base(nativeRoot, proxyObject)
         { }
+
+        public override string ToString()
+            => $"StructureExtractor[{Id}]";
     }
 }

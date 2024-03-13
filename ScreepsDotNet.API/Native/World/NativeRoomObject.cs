@@ -56,13 +56,13 @@ namespace ScreepsDotNet.Native.World
         {
             get
             {
-                var roomObj = ProxyObject.GetPropertyAsJSObject("room");
+                var roomObj = ProxyObject.GetPropertyAsJSObject(Names.Room);
                 if (roomObj == null) { return null; }
                 return nativeRoot.GetRoomByProxyObject(roomObj);
             }
         }
 
-        public NativeRoomObject(INativeRoot nativeRoot, JSObject? proxyObject)
+        public NativeRoomObject(INativeRoot nativeRoot, JSObject proxyObject)
             : base(nativeRoot, proxyObject)
         { }
 
@@ -124,6 +124,56 @@ namespace ScreepsDotNet.Native.World
                 effectsArr.DisposeAll();
             }
         }
+    }
+
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
+    internal abstract partial class NativeRoomObjectWithId : NativeRoomObject, IWithId, IEquatable<NativeRoomObjectWithId?>
+    {
+        private ObjectId? idCache;
+
+        public ObjectId Id => CacheLifetime(ref idCache) ??= FetchId(ProxyObject);
+
+        protected NativeRoomObjectWithId(INativeRoot nativeRoot, JSObject proxyObject)
+            : base(nativeRoot, proxyObject)
+        {
+        }
+
+        public override JSObject? ReacquireProxyObject()
+        {
+            if (idCache == null) { throw new InvalidOperationException($"Failed to reacquire proxy object (id was never cached)"); }
+            return nativeRoot.GetProxyObjectById(idCache.Value);
+        }
+
+        protected override void OnLoseProxyObject(JSObject proxyObject)
+        {
+            base.OnLoseProxyObject(proxyObject);
+            // Here we are losing the proxy object, e.g. we lost visibility of the object
+            // If we haven't already cached the id, do so now so that we can recover the object via getObjectById if we regain visibility of it later
+            if (idCache == null) { idCache = FetchId(proxyObject); }
+        }
+
+        private static ObjectId FetchId(JSObject from)
+        {
+            ObjectId objectId = default;
+            unsafe
+            {
+                if (ScreepsDotNet_Native.GetObjectId(from.JSHandle, &objectId) == 0)
+                {
+                    throw new InvalidOperationException($"Failed to fetch object id for {from} (native call returned null)");
+                }
+            }
+            return objectId;
+        }
+
+        public override bool Equals(object? obj) => Equals(obj as NativeRoomObjectWithId);
+
+        public bool Equals(NativeRoomObjectWithId? other) => other is not null && Id.Equals(other.Id);
+
+        public override int GetHashCode() => Id.GetHashCode();
+
+        public static bool operator ==(NativeRoomObjectWithId? left, NativeRoomObjectWithId? right) => EqualityComparer<NativeRoomObjectWithId>.Default.Equals(left, right);
+
+        public static bool operator !=(NativeRoomObjectWithId? left, NativeRoomObjectWithId? right) => !(left == right);
     }
 
     internal enum FindConstant
@@ -190,15 +240,12 @@ namespace ScreepsDotNet.Native.World
         #region Imports
 
         [JSImport("getPrototypes", "game")]
-        
         internal static partial JSObject GetPrototypesObject();
 
         [JSImport("createRoomPosition", "game")]
-        
         internal static partial JSObject CreateRoomPosition(int x, int y, string roomName);
 
         [JSImport("interpretDateTime", "object")]
-        
         internal static partial double InterpretDateTime(JSObject obj);
 
         #endregion
@@ -258,46 +305,25 @@ namespace ScreepsDotNet.Native.World
         internal static Type? GetWrapperTypeForObject(JSObject jsObject)
             => GetWrapperTypeForConstructor(JSUtils.GetConstructorOf(jsObject));
 
-        internal static NativeRoomObject? CreateWrapperForRoomObject(INativeRoot nativeRoot, JSObject? proxyObject, Type expectedType)
+        internal static NativeRoomObject? CreateWrapperForRoomObject(INativeRoot nativeRoot, JSObject proxyObject, Type expectedType)
         {
-            if (proxyObject == null) { return null; }
             var wrapperType = GetWrapperTypeForObject(proxyObject);
             if (wrapperType == null) { return null; }
             if (!wrapperType.IsAssignableTo(expectedType)) { return null; }
-            if (wrapperType.IsAssignableTo(typeof(IWithId)))
-            {
-                var id = proxyObject.GetPropertyAsString("id");
-                if (string.IsNullOrEmpty(id)) { return null; }
-                return (Activator.CreateInstance(wrapperType, new object[] { nativeRoot, proxyObject, new ObjectId(id) }) as NativeRoomObject)!;
-            }
-            else
-            {
-                return (Activator.CreateInstance(wrapperType, new object[] { nativeRoot, proxyObject }) as NativeRoomObject)!;
-            }
+            var wrapperObject = (Activator.CreateInstance(wrapperType, new object[] { nativeRoot, proxyObject }) as NativeRoomObject)!;
+            // Console.WriteLine($"Created {wrapperObject} for {proxyObject}");
+            return wrapperObject;
         }
 
-        internal static NativeRoomObject? CreateWrapperForRoomObject(INativeRoot nativeRoot, JSObject? proxyObject, Type expectedType, ObjectId id)
+        internal static NativeRoomObject? CreateWrapperForRoomObject(INativeRoot nativeRoot, JSObject proxyObject, in RoomObjectMetadata metadata, Type expectedType)
         {
-            if (proxyObject == null) { return null; }
-            var wrapperType = GetWrapperTypeForObject(proxyObject);
-            if (wrapperType == null) { return null; }
-            if (!wrapperType.IsAssignableTo(expectedType)) { return null; }
-            return (Activator.CreateInstance(wrapperType, new object[] { nativeRoot, proxyObject, id }) as NativeRoomObject)!;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static T? CreateWrapperForRoomObject<T>(INativeRoot nativeRoot, in ObjectId objectId, in RoomObjectMetadata metadata) where T : class, IRoomObject
-            => CreateWrapperForRoomObject(nativeRoot, objectId, metadata, typeof(T)) as T;
-
-        internal static NativeRoomObject? CreateWrapperForRoomObject(INativeRoot nativeRoot, in ObjectId objectId, in RoomObjectMetadata metadata, Type expectedType)
-        {
-            if (!objectId.IsValid) { return null; }
             int typeId = metadata.TypeId - 1;
             if (typeId < 0) { return null; }
             Type wrapperType = prototypeTypeMappings[typeId];
             if (!wrapperType.IsAssignableTo(expectedType)) { return null; }
-            var proxyObject = metadata.JSHandle >= 0 ? Interop.Native.GetJSObject(metadata.JSHandle) : null;
-            return Activator.CreateInstance(wrapperType, [nativeRoot, proxyObject, objectId]) as NativeRoomObject;
+            var wrapperObject = Activator.CreateInstance(wrapperType, [nativeRoot, proxyObject]) as NativeRoomObject;
+            // Console.WriteLine($"Created {wrapperObject} for {proxyObject} (TypeId={metadata.TypeId}, JSHandle={metadata.JSHandle})");
+            return wrapperObject;
         }
 
         internal static string GetPrototypeName(Type type)

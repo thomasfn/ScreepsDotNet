@@ -54,7 +54,7 @@ namespace ScreepsDotNet.Native.World
     }
 
     [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
-    internal partial class NativeCreep : NativeRoomObject, ICreep, IEquatable<NativeCreep?>
+    internal partial class NativeCreep : NativeRoomObjectWithId, ICreep
     {
         #region Imports
 
@@ -153,7 +153,7 @@ namespace ScreepsDotNet.Native.World
 
         #endregion
 
-        private readonly ObjectId id;
+        private readonly NativeStore store;
 
         private BodyPart<BodyPartType>[]? bodyMemoryCache;
         private BodyPart<BodyPartType>[]? bodyCache;
@@ -165,7 +165,6 @@ namespace ScreepsDotNet.Native.World
         private bool? myCache;
         private string? nameCache;
         private OwnerInfo? ownerInfoCache;
-        private NativeStore? storeCache;
         private int? ticksToLiveCache;
 
         protected override bool CanMove { get => true; }
@@ -180,8 +179,6 @@ namespace ScreepsDotNet.Native.World
 
         public int HitsMax => CachePerTick(ref hitsMaxCache) ??= ProxyObject.GetPropertyAsInt32(Names.HitsMax);
 
-        public ObjectId Id => id;
-
         public IMemoryObject Memory => CachePerTick(ref memoryCache) ??= new NativeMemoryObject(ProxyObject.GetPropertyAsJSObject(Names.Memory)!);
 
         public bool My => CacheLifetime(ref myCache) ??= ProxyObject.GetPropertyAsBoolean(Names.My);
@@ -194,30 +191,32 @@ namespace ScreepsDotNet.Native.World
 
         public bool Spawning => ProxyObject.GetPropertyAsBoolean(Names.Spawning);
 
-        public IStore Store => CachePerTick(ref storeCache) ??= new NativeStore(ProxyObject.GetPropertyAsJSObject(Names.Store));
+        public IStore Store => store;
 
         public int TicksToLive => CachePerTick(ref ticksToLiveCache) ??= FetchTTL();
 
-        public NativeCreep(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
+        public NativeCreep(INativeRoot nativeRoot, JSObject proxyObject)
             : base(nativeRoot, proxyObject)
         {
-            this.id = id;
+            store = new NativeStore(nativeRoot, proxyObject);
         }
-
-        public override JSObject? ReacquireProxyObject()
-            => nativeRoot.GetProxyObjectById(id);
 
         protected override void ClearNativeCache()
         {
             base.ClearNativeCache();
+            store.ClearNativeCache();
             bodyCache = null;
             fatigueCache = null;
             hitsCache = null;
             hitsMaxCache = null;
             memoryCache = null;
-            storeCache?.Dispose();
-            storeCache = null;
             ticksToLiveCache = null;
+        }
+
+        protected override void OnGetNewProxyObject(JSObject newProxyObject)
+        {
+            base.OnGetNewProxyObject(newProxyObject);
+            store.ProxyObject = newProxyObject;
         }
 
         public CreepAttackResult Attack(ICreep target)
@@ -388,16 +387,6 @@ namespace ScreepsDotNet.Native.World
         }
 
         public override string ToString()
-            => $"Creep[{(Exists ? $"'{Name}'" : id.ToString())}]({(Exists ? $"{RoomPosition}" : "DEAD")})";
-
-        public override bool Equals(object? obj) => Equals(obj as NativeCreep);
-
-        public bool Equals(NativeCreep? other) => other is not null && id == other.id;
-
-        public override int GetHashCode() => HashCode.Combine(id);
-
-        public static bool operator ==(NativeCreep? left, NativeCreep? right) => EqualityComparer<NativeCreep>.Default.Equals(left, right);
-
-        public static bool operator !=(NativeCreep? left, NativeCreep? right) => !(left == right);
+            => $"Creep[{(Exists ? $"'{Name}'" : Id.ToString())}]({(Exists ? $"{RoomPosition}" : "DEAD")})";
     }
 }

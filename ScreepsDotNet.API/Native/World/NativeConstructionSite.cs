@@ -7,7 +7,7 @@ using ScreepsDotNet.API.World;
 namespace ScreepsDotNet.Native.World
 {
     [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
-    internal partial class NativeConstructionSite : NativeRoomObject, IConstructionSite, IEquatable<NativeConstructionSite?>
+    internal partial class NativeConstructionSite : NativeRoomObjectWithId, IConstructionSite
     {
         #region Imports
 
@@ -16,15 +16,11 @@ namespace ScreepsDotNet.Native.World
 
         #endregion
 
-        private readonly ObjectId id;
-
         private bool? myCache;
         private OwnerInfo? ownerInfoCache;
         private Type? structureTypeCache;
         private int? progressCache;
         private int? progressTotalCache;
-
-        public ObjectId Id => id;
 
         public bool My => CacheLifetime(ref myCache) ??= ProxyObject.GetPropertyAsBoolean(Names.My);
 
@@ -36,14 +32,9 @@ namespace ScreepsDotNet.Native.World
 
         public Type StructureType => CacheLifetime(ref structureTypeCache) ??= (NativeRoomObjectUtils.GetInterfaceTypeForStructureConstant(ProxyObject.GetPropertyAsString(Names.StructureType)!) ?? typeof(IStructure));
 
-        public NativeConstructionSite(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
+        public NativeConstructionSite(INativeRoot nativeRoot, JSObject proxyObject)
             : base(nativeRoot, proxyObject)
-        {
-            this.id = id;
-        }
-
-        public override JSObject? ReacquireProxyObject()
-            => nativeRoot.GetProxyObjectById(id);
+        { }
 
         protected override void ClearNativeCache()
         {
@@ -55,17 +46,7 @@ namespace ScreepsDotNet.Native.World
         public void Remove()
             => Native_Remove(ProxyObject);
 
-        public override bool Equals(object? obj) => Equals(obj as NativeConstructionSite);
-
-        public bool Equals(NativeConstructionSite? other) => other is not null && id == other.id;
-
-        public override int GetHashCode() => HashCode.Combine(id);
-
-        public static bool operator ==(NativeConstructionSite? left, NativeConstructionSite? right) => EqualityComparer<NativeConstructionSite>.Default.Equals(left, right);
-
-        public static bool operator !=(NativeConstructionSite? left, NativeConstructionSite? right) => !(left == right);
-
         public override string ToString()
-            => $"ConstructionSite[{id}]";
+            => $"ConstructionSite[{Id}]";
     }
 }

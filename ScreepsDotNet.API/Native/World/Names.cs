@@ -94,5 +94,10 @@ namespace ScreepsDotNet.Native.World
         public static readonly Name Novice = Name.CreateNew("novice");
         public static readonly Name Respawn = Name.CreateNew("respawn");
         public static readonly Name Ptr = Name.CreateNew("ptr");
+        public static readonly Name TimeToLand = Name.CreateNew("timeToLand");
+        public static readonly Name LaunchRoomName = Name.CreateNew("launchRoomName");
+        public static readonly Name Density = Name.CreateNew("density");
+        public static readonly Name MineralAmount = Name.CreateNew("mineralAmount");
+        public static readonly Name IsPublic = Name.CreateNew("isPublic");
     }
 }

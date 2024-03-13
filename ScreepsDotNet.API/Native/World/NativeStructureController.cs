@@ -54,8 +54,8 @@ namespace ScreepsDotNet.Native.World
 
         public int UpgradeBlocked => CachePerTick(ref upgradeBlockedCache) ??= ProxyObject.GetPropertyAsInt32(Names.UpgradeBlocked);
 
-        public NativeStructureController(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
-            : base(nativeRoot, proxyObject, id, true)
+        public NativeStructureController(INativeRoot nativeRoot, JSObject proxyObject)
+            : base(nativeRoot, proxyObject, true)
         { }
 
         protected override void ClearNativeCache()

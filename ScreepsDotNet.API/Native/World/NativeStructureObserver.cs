@@ -1,6 +1,5 @@
 ﻿using ScreepsDotNet.Interop;
 
-using ScreepsDotNet.API;
 using ScreepsDotNet.API.World;
 
 namespace ScreepsDotNet.Native.World
@@ -16,14 +15,14 @@ namespace ScreepsDotNet.Native.World
 
         #endregion
 
-        public NativeStructureObserver(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
-            : base(nativeRoot, proxyObject, id)
+        public NativeStructureObserver(INativeRoot nativeRoot, JSObject proxyObject)
+            : base(nativeRoot, proxyObject)
         { }
-
-        public override string ToString()
-            => $"StructureObserver[{Id}]";
 
         public ObserverObserveRoomResult ObserveRoom(RoomCoord roomCoord)
             => (ObserverObserveRoomResult)Native_ObserveRoom(ProxyObject, roomCoord.ToString());
+
+        public override string ToString()
+            => $"StructureObserver[{Id}]";
     }
 }

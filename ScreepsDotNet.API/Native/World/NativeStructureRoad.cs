@@ -11,8 +11,8 @@ namespace ScreepsDotNet.Native.World
 
         public int TicksToDecay => CachePerTick(ref ticksToDecayCache) ??= ProxyObject.GetPropertyAsInt32(Names.TicksToDecay);
 
-        public NativeStructureRoad(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
-            : base(nativeRoot, proxyObject, id)
+        public NativeStructureRoad(INativeRoot nativeRoot, JSObject proxyObject)
+            : base(nativeRoot, proxyObject)
         { }
 
         protected override void ClearNativeCache()
@@ -22,6 +22,6 @@ namespace ScreepsDotNet.Native.World
         }
 
         public override string ToString()
-            => $"StructureRoad[{(Exists ? RoomPosition.ToString() : "DEAD")}]";
+            => $"StructureRoad[{Id}]";
     }
 }

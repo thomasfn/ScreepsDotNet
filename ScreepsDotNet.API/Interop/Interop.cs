@@ -17,6 +17,39 @@ internal static class ScreepsDotNet_Interop
 
     [MethodImpl(MethodImplOptions.InternalCall)]
     public static unsafe extern void SetName(int nameIndex, char* namePtr);
+
+    [MethodImpl(MethodImplOptions.InternalCall)]
+    public static extern int InvokeImport_i_i(int importIndex, int paramA);
+
+    [MethodImpl(MethodImplOptions.InternalCall)]
+    public static extern int InvokeImport_i_ii(int importIndex, int paramA, int paramB);
+
+    [MethodImpl(MethodImplOptions.InternalCall)]
+    public static extern int InvokeImport_i_iii(int importIndex, int paramA, int paramB, int paramC);
+
+    [MethodImpl(MethodImplOptions.InternalCall)]
+    public static extern int InvokeImport_i_o(int importIndex, int paramA);
+
+    [MethodImpl(MethodImplOptions.InternalCall)]
+    public static extern int InvokeImport_i_oi(int importIndex, int paramA, int paramB);
+
+    [MethodImpl(MethodImplOptions.InternalCall)]
+    public static extern int InvokeImport_i_on(int importIndex, int paramA, int paramB);
+
+    [MethodImpl(MethodImplOptions.InternalCall)]
+    public static extern int InvokeImport_i_oii(int importIndex, int paramA, int paramB, int paramC);
+
+    [MethodImpl(MethodImplOptions.InternalCall)]
+    public static extern int InvokeImport_i_oo(int importIndex, int paramA, int paramB);
+
+    [MethodImpl(MethodImplOptions.InternalCall)]
+    public static extern int InvokeImport_i_ooi(int importIndex, int paramA, int paramB, int paramC);
+
+    [MethodImpl(MethodImplOptions.InternalCall)]
+    public static extern int InvokeImport_i_ooii(int importIndex, int paramA, int paramB, int paramC, int paramD);
+
+    [MethodImpl(MethodImplOptions.InternalCall)]
+    public static extern double InvokeImport_d_v(int importIndex);
 }
 
 namespace ScreepsDotNet.Interop

@@ -5,7 +5,7 @@ using ScreepsDotNet.API.World;
 namespace ScreepsDotNet.Native.World
 {
     [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
-    internal partial class NativeStructureTerminal : NativeOwnedStructure, IStructureTerminal
+    internal partial class NativeStructureTerminal : NativeOwnedStructureWithStore, IStructureTerminal
     {
         #region Imports
 
@@ -14,22 +14,11 @@ namespace ScreepsDotNet.Native.World
 
         #endregion
 
-        private NativeStore? storeCache;
-
         public int Cooldown => ProxyObject.GetPropertyAsInt32(Names.Cooldown);
 
-        public IStore Store => CachePerTick(ref storeCache) ??= new NativeStore(ProxyObject.GetPropertyAsJSObject(Names.Store));
-
-        public NativeStructureTerminal(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
-            : base(nativeRoot, proxyObject, id)
+        public NativeStructureTerminal(INativeRoot nativeRoot, JSObject proxyObject)
+            : base(nativeRoot, proxyObject)
         { }
-
-        protected override void ClearNativeCache()
-        {
-            base.ClearNativeCache();
-            storeCache?.Dispose();
-            storeCache = null;
-        }
 
         public TerminalSendResult Send(ResourceType resourceType, int amount, string destination, string? description = null)
             => (TerminalSendResult)Native_Send(ProxyObject, resourceType.ToJS(), amount, destination, description);

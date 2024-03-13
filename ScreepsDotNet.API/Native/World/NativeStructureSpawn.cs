@@ -99,7 +99,7 @@ namespace ScreepsDotNet.Native.World
     }
 
     [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
-    internal partial class NativeStructureSpawn : NativeOwnedStructure, IStructureSpawn
+    internal partial class NativeStructureSpawn : NativeOwnedStructureWithStore, IStructureSpawn
     {
         #region Imports
 
@@ -121,10 +121,8 @@ namespace ScreepsDotNet.Native.World
 
         #endregion
 
-        private string? nameCache;
-
         private NativeMemoryObject? memoryCache;
-        private NativeStore? storeCache;
+        private string? nameCache;
         private NativeSpawning? spawningCache;
 
         public IMemoryObject Memory => CachePerTick(ref memoryCache) ??= new NativeMemoryObject(ProxyObject.GetPropertyAsJSObject(Names.Memory)!);
@@ -133,18 +131,14 @@ namespace ScreepsDotNet.Native.World
 
         public ISpawning? Spawning => CachePerTick(ref spawningCache) ??= GetSpawning();
 
-        public IStore Store => CachePerTick(ref storeCache) ??= new NativeStore(ProxyObject.GetPropertyAsJSObject(Names.Store));
-
-        public NativeStructureSpawn(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
-            : base(nativeRoot, proxyObject, id)
+        public NativeStructureSpawn(INativeRoot nativeRoot, JSObject proxyObject)
+            : base(nativeRoot, proxyObject)
         { }
 
         protected override void ClearNativeCache()
         {
             base.ClearNativeCache();
             memoryCache = null;
-            storeCache?.Dispose();
-            storeCache = null;
             spawningCache?.Dispose();
             spawningCache = null;
         }

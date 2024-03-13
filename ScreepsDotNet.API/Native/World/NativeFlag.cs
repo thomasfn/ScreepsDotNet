@@ -45,7 +45,7 @@ namespace ScreepsDotNet.Native.World
 
         public FlagColor SecondaryColor => (FlagColor)ProxyObject.GetPropertyAsInt32(Names.SecondaryColor);
 
-        public NativeFlag(INativeRoot nativeRoot, JSObject? proxyObject)
+        public NativeFlag(INativeRoot nativeRoot, JSObject proxyObject)
             : base(nativeRoot, proxyObject)
         {
             name = proxyObject?.GetPropertyAsString(Names.Name) ?? string.Empty;

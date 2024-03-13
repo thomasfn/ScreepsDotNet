@@ -4,7 +4,7 @@ using ScreepsDotNet.API.World;
 namespace ScreepsDotNet.Native.World
 {
     [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
-    internal partial class NativeStructureFactory : NativeOwnedStructure, IStructureFactory
+    internal partial class NativeStructureFactory : NativeOwnedStructureWithStore, IStructureFactory
     {
         #region Imports
 
@@ -16,16 +16,13 @@ namespace ScreepsDotNet.Native.World
 
         private int? cooldownCache;
         private int? levelCache;
-        private NativeStore? storeCache;
 
         public int Cooldown => CachePerTick(ref cooldownCache) ??= ProxyObject.GetPropertyAsInt32(Names.Cooldown);
 
         public int Level => CachePerTick(ref levelCache) ??= ProxyObject.GetPropertyAsInt32(Names.Level);
 
-        public IStore Store => CachePerTick(ref storeCache) ??= new NativeStore(ProxyObject.GetPropertyAsJSObject(Names.Store));
-
-        public NativeStructureFactory(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
-            : base(nativeRoot, proxyObject, id)
+        public NativeStructureFactory(INativeRoot nativeRoot, JSObject proxyObject)
+            : base(nativeRoot, proxyObject)
         { }
 
         protected override void ClearNativeCache()
@@ -33,14 +30,12 @@ namespace ScreepsDotNet.Native.World
             base.ClearNativeCache();
             cooldownCache = null;
             levelCache = null;
-            storeCache?.Dispose();
-            storeCache = null;
         }
-
-        public override string ToString()
-            => $"StructureFactory[{Id}]";
 
         public FactoryProduceResult Produce(ResourceType resourceType)
             => (FactoryProduceResult)Native_Produce(ProxyObject, resourceType.ToJS());
+
+        public override string ToString()
+            => $"StructureFactory[{Id}]";
     }
 }

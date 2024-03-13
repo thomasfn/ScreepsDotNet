@@ -63,6 +63,8 @@ const EXCEPTION_PARAM_SPEC: Readonly<ParamSpec> = { type: InteropValueType.Str, 
 
 type BoundImportFunction = (paramsBufferPtr: number) => number;
 
+type BoundRawImportFunction = (...args: unknown[]) => unknown;
+
 interface BoundImportSymbol {
     fullName: string;
     functionSpec: Readonly<FunctionSpec>;
@@ -78,6 +80,11 @@ export interface ImportTable {
 
 export type Importable = ((...args: any[]) => unknown) | ImportTable;
 
+function hasId(obj: object): obj is { id: string } {
+    // TODO: Are we going to have an issue here with pojo's with ids? e.g. an object from Memory which is just { id: 'xyz' }
+    return 'id' in obj;
+}
+
 export class Interop {
     public readonly interopImport: Record<string, (...args: any[]) => unknown>;
 
@@ -85,8 +92,10 @@ export class Interop {
     private readonly _imports: Record<string, ImportTable> = {};
     
     private readonly _boundImportList: BoundImportFunction[] = [];
+    private readonly _boundRawImportList: BoundRawImportFunction[] = [];
     private readonly _boundImportSymbolList: BoundImportSymbol[] = [];
     private readonly _objectTrackingList: Record<number, object> = {};
+    private readonly _objectTrackingListById: Record<string, object> = {};
     private readonly _nonExtensibleObjectTrackingMap: WeakMap<object, number> = new WeakMap();
     private readonly _nameList: string[] = [];
     private readonly _nameTable: Record<string, number> = {};
@@ -118,6 +127,18 @@ export class Interop {
         this.interopImport.js_invoke_import = this.js_invoke_import.bind(this);
         this.interopImport.js_release_object_reference = this.js_release_object_reference.bind(this);
         this.interopImport.js_set_name = this.js_set_name.bind(this);
+
+        this.interopImport.js_invoke_i_i = this.js_invoke_i_i.bind(this);
+        this.interopImport.js_invoke_i_ii = this.js_invoke_i_ii.bind(this);
+        this.interopImport.js_invoke_i_iii = this.js_invoke_i_iii.bind(this);
+        this.interopImport.js_invoke_i_o = this.js_invoke_i_o.bind(this);
+        this.interopImport.js_invoke_i_oi = this.js_invoke_i_oi.bind(this);
+        this.interopImport.js_invoke_i_on = this.js_invoke_i_on.bind(this);
+        this.interopImport.js_invoke_i_oii = this.js_invoke_i_oii.bind(this);
+        this.interopImport.js_invoke_i_oo = this.js_invoke_i_oo.bind(this);
+        this.interopImport.js_invoke_i_ooi = this.js_invoke_i_ooi.bind(this);
+        this.interopImport.js_invoke_i_ooii = this.js_invoke_i_ooii.bind(this);
+        this.interopImport.js_invoke_d_v = this.js_invoke_d_v.bind(this);
     }
 
     public setImports(moduleName: string, importTable: ImportTable): void {
@@ -171,6 +192,7 @@ export class Interop {
         }
         const importName = this.stringToJs(memoryView, importNamePtr);
         const importFunction = this.resolveImport(moduleName, importTable, importName);
+        this._boundRawImportList.push(importFunction);
         const functionSpec = this.functionSpecToJs(memoryView, functionSpecPtr);
         const importIndex = this._boundImportList.length;
         const boundImportFunction = this.createImportBinding(importFunction, functionSpec, importIndex);
@@ -194,6 +216,9 @@ export class Interop {
         const obj = this._objectTrackingList[clrTrackingId];
         if (obj == null) { return; }
         delete this._objectTrackingList[clrTrackingId];
+        if (hasId(obj) && this._objectTrackingListById[(obj as { id: string }).id] === obj) {
+            delete this._objectTrackingListById[(obj as { id: string }).id];
+        }
         this.clearClrTrackingId(obj);
         ++this._numReleaseTrackingObjects;
         --this._numTotalTrackingObjects;
@@ -204,6 +229,105 @@ export class Interop {
         const value = this.stringToJs(this._memoryManager.view, valuePtr);
         this._nameList[nameIndex] = value;
         this._nameTable[value] = nameIndex;
+    }
+
+    private js_invoke_i_i(importIndex: number, p0: number): number {
+        const boundImportFunction = this._boundRawImportList[importIndex];
+        if (!boundImportFunction) {
+            throw new Error(`attempt to invoke invalid import index ${importIndex}`);
+        }
+        ++this._numBoundImportInvokes;
+        return boundImportFunction(p0) as number;
+    }
+
+    private js_invoke_i_ii(importIndex: number, p0: number, p1: number): number {
+        const boundImportFunction = this._boundRawImportList[importIndex];
+        if (!boundImportFunction) {
+            throw new Error(`attempt to invoke invalid import index ${importIndex}`);
+        }
+        ++this._numBoundImportInvokes;
+        return boundImportFunction(p0, p1) as number;
+    }
+
+    private js_invoke_i_iii(importIndex: number, p0: number, p1: number, p2: number): number {
+        const boundImportFunction = this._boundRawImportList[importIndex];
+        if (!boundImportFunction) {
+            throw new Error(`attempt to invoke invalid import index ${importIndex}`);
+        }
+        ++this._numBoundImportInvokes;
+        return boundImportFunction(p0, p1, p2) as number;
+    }
+
+    private js_invoke_i_o(importIndex: number, p0: number): number {
+        const boundImportFunction = this._boundRawImportList[importIndex];
+        if (!boundImportFunction) {
+            throw new Error(`attempt to invoke invalid import index ${importIndex}`);
+        }
+        ++this._numBoundImportInvokes;
+        return boundImportFunction(this._objectTrackingList[p0]) as number;
+    }
+
+    private js_invoke_i_oi(importIndex: number, p0: number, p1: number): number {
+        const boundImportFunction = this._boundRawImportList[importIndex];
+        if (!boundImportFunction) {
+            throw new Error(`attempt to invoke invalid import index ${importIndex}`);
+        }
+        ++this._numBoundImportInvokes;
+        return boundImportFunction(this._objectTrackingList[p0], p1) as number;
+    }
+
+    private js_invoke_i_on(importIndex: number, p0: number, p1: number): number {
+        const boundImportFunction = this._boundRawImportList[importIndex];
+        if (!boundImportFunction) {
+            throw new Error(`attempt to invoke invalid import index ${importIndex}`);
+        }
+        ++this._numBoundImportInvokes;
+        return boundImportFunction(this._objectTrackingList[p0], this._nameList[p1]) as number;
+    }
+
+    private js_invoke_i_oii(importIndex: number, p0: number, p1: number, p2: number): number {
+        const boundImportFunction = this._boundRawImportList[importIndex];
+        if (!boundImportFunction) {
+            throw new Error(`attempt to invoke invalid import index ${importIndex}`);
+        }
+        ++this._numBoundImportInvokes;
+        return boundImportFunction(this._objectTrackingList[p0], p1, p2) as number;
+    }
+
+    private js_invoke_i_oo(importIndex: number, p0: number, p1: number): number {
+        const boundImportFunction = this._boundRawImportList[importIndex];
+        if (!boundImportFunction) {
+            throw new Error(`attempt to invoke invalid import index ${importIndex}`);
+        }
+        ++this._numBoundImportInvokes;
+        return boundImportFunction(this._objectTrackingList[p0], this._objectTrackingList[p1]) as number;
+    }
+
+    private js_invoke_i_ooi(importIndex: number, p0: number, p1: number, p2: number): number {
+        const boundImportFunction = this._boundRawImportList[importIndex];
+        if (!boundImportFunction) {
+            throw new Error(`attempt to invoke invalid import index ${importIndex}`);
+        }
+        ++this._numBoundImportInvokes;
+        return boundImportFunction(this._objectTrackingList[p0], this._objectTrackingList[p1], p2) as number;
+    }
+
+    private js_invoke_i_ooii(importIndex: number, p0: number, p1: number, p2: number, p3: number): number {
+        const boundImportFunction = this._boundRawImportList[importIndex];
+        if (!boundImportFunction) {
+            throw new Error(`attempt to invoke invalid import index ${importIndex}`);
+        }
+        ++this._numBoundImportInvokes;
+        return boundImportFunction(this._objectTrackingList[p0], this._objectTrackingList[p1], p2, p3) as number;
+    }
+
+    private js_invoke_d_v(importIndex: number): number {
+        const boundImportFunction = this._boundRawImportList[importIndex];
+        if (!boundImportFunction) {
+            throw new Error(`attempt to invoke invalid import index ${importIndex}`);
+        }
+        ++this._numBoundImportInvokes;
+        return boundImportFunction() as number;
     }
 
     private createImportBinding(importFunction: (...args: unknown[]) => unknown, functionSpec: Readonly<FunctionSpec>, importIndex: number): BoundImportFunction {
@@ -326,8 +450,7 @@ export class Interop {
                 if (typeof value !== 'object' && typeof value !== 'function') {
                     throw new Error(`failed to marshal ${typeof value} as '${stringifyParamSpec(paramSpec)}' (not an object)`);
                 }
-                const clrTrackingId = this.getClrTrackingId(value) ?? this.assignClrTrackingId(value);
-                memoryView.i32[(valuePtr + 4) >> 2] = clrTrackingId;
+                memoryView.i32[(valuePtr + 4) >> 2] = this.getOrAssignClrTrackingId(value);
                 memoryView.u8[valuePtr + 12] = InteropValueType.Obj;
                 break;
             case InteropValueType.Arr:
@@ -525,6 +648,9 @@ export class Interop {
             this._nonExtensibleObjectTrackingMap.set(obj, newClrTrackingId);
         }
         this._objectTrackingList[newClrTrackingId] = obj;
+        if (hasId(obj)) {
+            this._objectTrackingListById[obj.id] = obj;
+        }
         return newClrTrackingId;
     }
 
@@ -536,22 +662,37 @@ export class Interop {
         }
     }
 
-    public replaceClrTrackedObject(oldObj: object, newObj: object): void;
+    public replaceClrTrackedObject(oldObj: object, newObj: object): number | undefined;
 
-    public replaceClrTrackedObject(clrTrackingId: number, newObj: object): void;
+    public replaceClrTrackedObject(clrTrackingId: number, newObj: object): number;
 
-    public replaceClrTrackedObject(p0: object | number, newObj: object): void {
+    public replaceClrTrackedObject(p0: object | number, newObj: object): number | undefined {
         const clrTrackingId = typeof p0 === 'number' ? p0 : this.getClrTrackingId(p0);
         if (clrTrackingId == null) { return; }
         const oldObj = typeof p0 === 'number' ? this._objectTrackingList[clrTrackingId] : p0;
         if (oldObj != null) {
             this.clearClrTrackingId(oldObj);
         }
-        this.assignClrTrackingId(newObj, clrTrackingId);
+        return this.assignClrTrackingId(newObj, clrTrackingId);
     }
 
     public getClrTrackedObject(clrTrackingId: number): object | undefined {
         return this._objectTrackingList[clrTrackingId];
+    }
+
+    public getOrAssignClrTrackingId(obj: object): number {
+        let clrTrackingId = this.getClrTrackingId(obj);
+        if (clrTrackingId == null) {
+            // It doesn't - if it has an id, see if we're already tracking a stale version of the game object
+            if (hasId(obj)) {
+                let previousVersion = this._objectTrackingListById[obj.id];
+                if (previousVersion != null && previousVersion !== obj) {
+                    // Replace the previous version with this one and reuse the tracking id
+                    clrTrackingId = this.replaceClrTrackedObject(previousVersion, obj);
+                }
+            }
+        }
+        return clrTrackingId ?? this.assignClrTrackingId(obj);
     }
 
     private stringifyValueForDisplay(value: unknown): string {

@@ -61,6 +61,9 @@ extern void js_batch_fetch_object_room_positions(void** jsHandleList, int count,
 __attribute__((__import_module__("bindings"), __import_name__("js_get_object_by_id")))
 extern void* js_get_object_by_id(struct RawObjectId* rawObjectId);
 
+__attribute__((__import_module__("bindings"), __import_name__("js_get_object_id")))
+extern int js_get_object_id(void* jsHandle, struct RawObjectId* outRawObjectId);
+
 __attribute__((always_inline))
 void DecodeRoomPosition(int packedRoomPos, struct RoomPosition* outPos)
 {
@@ -156,6 +159,15 @@ void* GetObjectById(struct ObjectId* objectId)
     return js_get_object_by_id(&rawObjectId);
 }
 
+int GetObjectId(void* jsHandle, struct ObjectId* outObjectId)
+{
+    struct RawObjectId rawObjectId;
+    int result;
+    if ((result = js_get_object_id(jsHandle, &rawObjectId)) == 0) { return 0; }
+    DecodeObjectId(&rawObjectId, outObjectId);
+    return result;
+}
+
 __attribute__((export_name("screepsdotnet_init_world")))
 void screepsdotnet_init_world()
 {
@@ -165,4 +177,5 @@ void screepsdotnet_init_world()
     mono_add_internal_call("ScreepsDotNet_Native::FetchObjectRoomPosition", FetchObjectRoomPosition);
     mono_add_internal_call("ScreepsDotNet_Native::BatchFetchObjectRoomPositions", BatchFetchObjectRoomPositions);
     mono_add_internal_call("ScreepsDotNet_Native::GetObjectById", GetObjectById);
+    mono_add_internal_call("ScreepsDotNet_Native::GetObjectId", GetObjectId);
 }

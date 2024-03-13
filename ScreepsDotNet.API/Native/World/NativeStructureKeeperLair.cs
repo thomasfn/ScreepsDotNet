@@ -11,8 +11,8 @@ namespace ScreepsDotNet.Native.World
 
         public int TicksToSpawn => CachePerTick(ref ticksToSpawnCache) ??= ProxyObject.GetPropertyAsInt32(Names.TicksToSpawn);
 
-        public NativeStructureKeeperLair(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
-            : base(nativeRoot, proxyObject, id)
+        public NativeStructureKeeperLair(INativeRoot nativeRoot, JSObject proxyObject)
+            : base(nativeRoot, proxyObject)
         { }
 
         protected override void ClearNativeCache()

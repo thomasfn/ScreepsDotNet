@@ -5,7 +5,7 @@ using ScreepsDotNet.API.World;
 namespace ScreepsDotNet.Native.World
 {
     [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
-    internal partial class NativeStructureLink : NativeOwnedStructure, IStructureLink
+    internal partial class NativeStructureLink : NativeOwnedStructureWithStore, IStructureLink
     {
         #region Imports
 
@@ -18,19 +18,15 @@ namespace ScreepsDotNet.Native.World
         private NativeStore? storeCache;
         private int? cooldownCache;
 
-        public IStore Store => CachePerTick(ref storeCache) ??= new NativeStore(ProxyObject.GetPropertyAsJSObject(Names.Store));
-
         public int Cooldown => CachePerTick(ref cooldownCache) ??= ProxyObject.GetPropertyAsInt32(Names.Cooldown);
 
-        public NativeStructureLink(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
-            : base(nativeRoot, proxyObject, id)
+        public NativeStructureLink(INativeRoot nativeRoot, JSObject proxyObject)
+            : base(nativeRoot, proxyObject)
         { }
 
         protected override void ClearNativeCache()
         {
             base.ClearNativeCache();
-            storeCache?.Dispose();
-            storeCache = null;
             cooldownCache = null;
         }
 

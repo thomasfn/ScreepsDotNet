@@ -1886,6 +1886,9 @@ var bootloader = (function (exports) {
     nullAsUndefined: false
   };
   var CLR_TRACKING_ID = Symbol('clr-tracking-id');
+  function hasId(obj) {
+    return 'id' in obj;
+  }
   var Interop = /*#__PURE__*/function () {
     function Interop(profileFn) {
       _classCallCheck(this, Interop);
@@ -1893,8 +1896,10 @@ var bootloader = (function (exports) {
       _defineProperty(this, "_profileFn", void 0);
       _defineProperty(this, "_imports", {});
       _defineProperty(this, "_boundImportList", []);
+      _defineProperty(this, "_boundRawImportList", []);
       _defineProperty(this, "_boundImportSymbolList", []);
       _defineProperty(this, "_objectTrackingList", {});
+      _defineProperty(this, "_objectTrackingListById", {});
       _defineProperty(this, "_nonExtensibleObjectTrackingMap", new WeakMap());
       _defineProperty(this, "_nameList", []);
       _defineProperty(this, "_nameTable", {});
@@ -1914,6 +1919,17 @@ var bootloader = (function (exports) {
       this.interopImport.js_invoke_import = this.js_invoke_import.bind(this);
       this.interopImport.js_release_object_reference = this.js_release_object_reference.bind(this);
       this.interopImport.js_set_name = this.js_set_name.bind(this);
+      this.interopImport.js_invoke_i_i = this.js_invoke_i_i.bind(this);
+      this.interopImport.js_invoke_i_ii = this.js_invoke_i_ii.bind(this);
+      this.interopImport.js_invoke_i_iii = this.js_invoke_i_iii.bind(this);
+      this.interopImport.js_invoke_i_o = this.js_invoke_i_o.bind(this);
+      this.interopImport.js_invoke_i_oi = this.js_invoke_i_oi.bind(this);
+      this.interopImport.js_invoke_i_on = this.js_invoke_i_on.bind(this);
+      this.interopImport.js_invoke_i_oii = this.js_invoke_i_oii.bind(this);
+      this.interopImport.js_invoke_i_oo = this.js_invoke_i_oo.bind(this);
+      this.interopImport.js_invoke_i_ooi = this.js_invoke_i_ooi.bind(this);
+      this.interopImport.js_invoke_i_ooii = this.js_invoke_i_ooii.bind(this);
+      this.interopImport.js_invoke_d_v = this.js_invoke_d_v.bind(this);
     }
     _createClass(Interop, [{
       key: "memoryManager",
@@ -1994,6 +2010,7 @@ var bootloader = (function (exports) {
         }
         var importName = this.stringToJs(memoryView, importNamePtr);
         var importFunction = this.resolveImport(moduleName, importTable, importName);
+        this._boundRawImportList.push(importFunction);
         var functionSpec = this.functionSpecToJs(memoryView, functionSpecPtr);
         var importIndex = this._boundImportList.length;
         var boundImportFunction = this.createImportBinding(importFunction, functionSpec, importIndex);
@@ -2024,6 +2041,9 @@ var bootloader = (function (exports) {
           return;
         }
         delete this._objectTrackingList[clrTrackingId];
+        if (hasId(obj) && this._objectTrackingListById[obj.id] === obj) {
+          delete this._objectTrackingListById[obj.id];
+        }
         this.clearClrTrackingId(obj);
         ++this._numReleaseTrackingObjects;
         --this._numTotalTrackingObjects;
@@ -2037,6 +2057,116 @@ var bootloader = (function (exports) {
         var value = this.stringToJs(this._memoryManager.view, valuePtr);
         this._nameList[nameIndex] = value;
         this._nameTable[value] = nameIndex;
+      }
+    }, {
+      key: "js_invoke_i_i",
+      value: function js_invoke_i_i(importIndex, p0) {
+        var boundImportFunction = this._boundRawImportList[importIndex];
+        if (!boundImportFunction) {
+          throw new Error("attempt to invoke invalid import index ".concat(importIndex));
+        }
+        ++this._numBoundImportInvokes;
+        return boundImportFunction(p0);
+      }
+    }, {
+      key: "js_invoke_i_ii",
+      value: function js_invoke_i_ii(importIndex, p0, p1) {
+        var boundImportFunction = this._boundRawImportList[importIndex];
+        if (!boundImportFunction) {
+          throw new Error("attempt to invoke invalid import index ".concat(importIndex));
+        }
+        ++this._numBoundImportInvokes;
+        return boundImportFunction(p0, p1);
+      }
+    }, {
+      key: "js_invoke_i_iii",
+      value: function js_invoke_i_iii(importIndex, p0, p1, p2) {
+        var boundImportFunction = this._boundRawImportList[importIndex];
+        if (!boundImportFunction) {
+          throw new Error("attempt to invoke invalid import index ".concat(importIndex));
+        }
+        ++this._numBoundImportInvokes;
+        return boundImportFunction(p0, p1, p2);
+      }
+    }, {
+      key: "js_invoke_i_o",
+      value: function js_invoke_i_o(importIndex, p0) {
+        var boundImportFunction = this._boundRawImportList[importIndex];
+        if (!boundImportFunction) {
+          throw new Error("attempt to invoke invalid import index ".concat(importIndex));
+        }
+        ++this._numBoundImportInvokes;
+        return boundImportFunction(this._objectTrackingList[p0]);
+      }
+    }, {
+      key: "js_invoke_i_oi",
+      value: function js_invoke_i_oi(importIndex, p0, p1) {
+        var boundImportFunction = this._boundRawImportList[importIndex];
+        if (!boundImportFunction) {
+          throw new Error("attempt to invoke invalid import index ".concat(importIndex));
+        }
+        ++this._numBoundImportInvokes;
+        return boundImportFunction(this._objectTrackingList[p0], p1);
+      }
+    }, {
+      key: "js_invoke_i_on",
+      value: function js_invoke_i_on(importIndex, p0, p1) {
+        var boundImportFunction = this._boundRawImportList[importIndex];
+        if (!boundImportFunction) {
+          throw new Error("attempt to invoke invalid import index ".concat(importIndex));
+        }
+        ++this._numBoundImportInvokes;
+        return boundImportFunction(this._objectTrackingList[p0], this._nameList[p1]);
+      }
+    }, {
+      key: "js_invoke_i_oii",
+      value: function js_invoke_i_oii(importIndex, p0, p1, p2) {
+        var boundImportFunction = this._boundRawImportList[importIndex];
+        if (!boundImportFunction) {
+          throw new Error("attempt to invoke invalid import index ".concat(importIndex));
+        }
+        ++this._numBoundImportInvokes;
+        return boundImportFunction(this._objectTrackingList[p0], p1, p2);
+      }
+    }, {
+      key: "js_invoke_i_oo",
+      value: function js_invoke_i_oo(importIndex, p0, p1) {
+        var boundImportFunction = this._boundRawImportList[importIndex];
+        if (!boundImportFunction) {
+          throw new Error("attempt to invoke invalid import index ".concat(importIndex));
+        }
+        ++this._numBoundImportInvokes;
+        return boundImportFunction(this._objectTrackingList[p0], this._objectTrackingList[p1]);
+      }
+    }, {
+      key: "js_invoke_i_ooi",
+      value: function js_invoke_i_ooi(importIndex, p0, p1, p2) {
+        var boundImportFunction = this._boundRawImportList[importIndex];
+        if (!boundImportFunction) {
+          throw new Error("attempt to invoke invalid import index ".concat(importIndex));
+        }
+        ++this._numBoundImportInvokes;
+        return boundImportFunction(this._objectTrackingList[p0], this._objectTrackingList[p1], p2);
+      }
+    }, {
+      key: "js_invoke_i_ooii",
+      value: function js_invoke_i_ooii(importIndex, p0, p1, p2, p3) {
+        var boundImportFunction = this._boundRawImportList[importIndex];
+        if (!boundImportFunction) {
+          throw new Error("attempt to invoke invalid import index ".concat(importIndex));
+        }
+        ++this._numBoundImportInvokes;
+        return boundImportFunction(this._objectTrackingList[p0], this._objectTrackingList[p1], p2, p3);
+      }
+    }, {
+      key: "js_invoke_d_v",
+      value: function js_invoke_d_v(importIndex) {
+        var boundImportFunction = this._boundRawImportList[importIndex];
+        if (!boundImportFunction) {
+          throw new Error("attempt to invoke invalid import index ".concat(importIndex));
+        }
+        ++this._numBoundImportInvokes;
+        return boundImportFunction();
       }
     }, {
       key: "createImportBinding",
@@ -2142,7 +2272,6 @@ var bootloader = (function (exports) {
     }, {
       key: "marshalToClr",
       value: function marshalToClr(memoryView, valuePtr, paramSpec, value) {
-        var _this$getClrTrackingI;
         if (value == null) {
           if (paramSpec.nullable || paramSpec.type === 0 /* InteropValueType.Void */) {
             memoryView.u8[valuePtr + 12] = 0 /* InteropValueType.Void */;
@@ -2185,8 +2314,7 @@ var bootloader = (function (exports) {
             if (_typeof(value) !== 'object' && typeof value !== 'function') {
               throw new Error("failed to marshal ".concat(_typeof(value), " as '").concat(stringifyParamSpec(paramSpec), "' (not an object)"));
             }
-            var clrTrackingId = (_this$getClrTrackingI = this.getClrTrackingId(value)) !== null && _this$getClrTrackingI !== void 0 ? _this$getClrTrackingI : this.assignClrTrackingId(value);
-            memoryView.i32[valuePtr + 4 >> 2] = clrTrackingId;
+            memoryView.i32[valuePtr + 4 >> 2] = this.getOrAssignClrTrackingId(value);
             memoryView.u8[valuePtr + 12] = 14 /* InteropValueType.Obj */;
             break;
           case 15 /* InteropValueType.Arr */:
@@ -2439,6 +2567,9 @@ var bootloader = (function (exports) {
           this._nonExtensibleObjectTrackingMap.set(obj, newClrTrackingId);
         }
         this._objectTrackingList[newClrTrackingId] = obj;
+        if (hasId(obj)) {
+          this._objectTrackingListById[obj.id] = obj;
+        }
         return newClrTrackingId;
       }
     }, {
@@ -2461,12 +2592,29 @@ var bootloader = (function (exports) {
         if (oldObj != null) {
           this.clearClrTrackingId(oldObj);
         }
-        this.assignClrTrackingId(newObj, clrTrackingId);
+        return this.assignClrTrackingId(newObj, clrTrackingId);
       }
     }, {
       key: "getClrTrackedObject",
       value: function getClrTrackedObject(clrTrackingId) {
         return this._objectTrackingList[clrTrackingId];
+      }
+    }, {
+      key: "getOrAssignClrTrackingId",
+      value: function getOrAssignClrTrackingId(obj) {
+        var _clrTrackingId;
+        var clrTrackingId = this.getClrTrackingId(obj);
+        if (clrTrackingId == null) {
+          // It doesn't - if it has an id, see if we're already tracking a stale version of the game object
+          if (hasId(obj)) {
+            var previousVersion = this._objectTrackingListById[obj.id];
+            if (previousVersion != null && previousVersion !== obj) {
+              // Replace the previous version with this one and reuse the tracking id
+              clrTrackingId = this.replaceClrTrackedObject(previousVersion, obj);
+            }
+          }
+        }
+        return (_clrTrackingId = clrTrackingId) !== null && _clrTrackingId !== void 0 ? _clrTrackingId : this.assignClrTrackingId(obj);
       }
     }, {
       key: "stringifyValueForDisplay",
@@ -2891,10 +3039,12 @@ var bootloader = (function (exports) {
       key: "loop",
       value: function loop() {
         _get(_getPrototypeOf(WorldBindings.prototype), "loop", this).call(this);
+        // Memhack
         var _global = global;
         delete _global.Memory;
         _global.Memory = this._memoryCache;
         RawMemory._parsed = this._memoryCache;
+        // Checkin
         var ticksSinceLestCheckIn = Game.time - this._lastCheckIn;
         if (ticksSinceLestCheckIn >= CPU_HALT_WHEN_NO_CHECKIN_FOR) {
           Game.cpu.halt && Game.cpu.halt();
@@ -2912,6 +3062,7 @@ var bootloader = (function (exports) {
         this.bindingsImport.js_fetch_object_room_position = this.js_fetch_object_room_position.bind(this);
         this.bindingsImport.js_batch_fetch_object_room_positions = this.js_batch_fetch_object_room_positions.bind(this);
         this.bindingsImport.js_get_object_by_id = this.js_get_object_by_id.bind(this);
+        this.bindingsImport.js_get_object_id = this.js_get_object_id.bind(this);
         var gameConstructors = {
           StructureContainer: StructureContainer,
           StructureController: StructureController,
@@ -3131,17 +3282,23 @@ var bootloader = (function (exports) {
         var wrappedPrototypes = this.buildWrappedPrototypes(gameConstructors);
         this.imports['game/prototypes/wrapped'] = _objectSpread2(_objectSpread2({}, wrappedPrototypes), {}, {
           Spawning: this.buildWrappedPrototype(StructureSpawn.Spawning),
-          Store: {
-            getCapacity: function getCapacity(thisObj, resourceType) {
-              return thisObj.getCapacity(resourceType);
+          RoomObject: _objectSpread2(_objectSpread2({}, wrappedPrototypes.RoomObject), {}, {
+            getStoreCapacity: function getStoreCapacity(thisObj, resourceType) {
+              return thisObj.store.getCapacity(resourceType);
             },
-            getUsedCapacity: function getUsedCapacity(thisObj, resourceType) {
-              return thisObj.getUsedCapacity(resourceType);
+            getStoreUsedCapacity: function getStoreUsedCapacity(thisObj, resourceType) {
+              return thisObj.store.getUsedCapacity(resourceType);
             },
-            getFreeCapacity: function getFreeCapacity(thisObj, resourceType) {
-              return thisObj.getFreeCapacity(resourceType);
+            getStoreFreeCapacity: function getStoreFreeCapacity(thisObj, resourceType) {
+              return thisObj.store.getFreeCapacity(resourceType);
+            },
+            getStoreContainedResources: function getStoreContainedResources(thisObj) {
+              return Object.keys(thisObj.store);
+            },
+            indexStore: function indexStore(thisObj, resourceType) {
+              return thisObj.store[resourceType];
             }
-          },
+          }),
           CostMatrix: _objectSpread2(_objectSpread2({}, this.buildWrappedPrototype(PathFinder.CostMatrix)), {}, {
             setRect: function setRect(thisObj, minX, minY, maxX, maxY, dataView) {
               var i = 0;
@@ -3167,20 +3324,20 @@ var bootloader = (function (exports) {
                 };
               }
             },
-            findFast: function findFast(thisObj, type, outRawObjectIdPtr, outRoomObjectMetadataPtr, maxObjectCount) {
-              return _this2.encodeRoomObjectArray(_this2._memoryManager.view, thisObj.find(type), undefined, outRawObjectIdPtr, outRoomObjectMetadataPtr, maxObjectCount);
+            findFast: function findFast(thisObj, type, outRoomObjectArrayPtr, maxObjectCount) {
+              return _this2.encodeRoomObjectArray(_this2._memoryManager.view, thisObj.find(type), undefined, outRoomObjectArrayPtr, maxObjectCount);
             },
-            lookAtFast: function lookAtFast(thisObj, x, y, outRawObjectIdPtr, outRoomObjectMetadataPtr, maxObjectCount) {
-              return _this2.encodeRoomObjectArray(_this2._memoryManager.view, thisObj.lookAt(x, y), undefined, outRawObjectIdPtr, outRoomObjectMetadataPtr, maxObjectCount);
+            lookAtFast: function lookAtFast(thisObj, x, y, outRoomObjectArrayPtr, maxObjectCount) {
+              return _this2.encodeRoomObjectArray(_this2._memoryManager.view, thisObj.lookAt(x, y), undefined, outRoomObjectArrayPtr, maxObjectCount);
             },
-            lookAtAreaFast: function lookAtAreaFast(thisObj, top, left, bottom, right, outRawObjectIdPtr, outRoomObjectMetadataPtr, maxObjectCount) {
-              return _this2.encodeRoomObjectArray(_this2._memoryManager.view, thisObj.lookAtArea(top, left, bottom, right, true), undefined, outRawObjectIdPtr, outRoomObjectMetadataPtr, maxObjectCount);
+            lookAtAreaFast: function lookAtAreaFast(thisObj, top, left, bottom, right, outRoomObjectArrayPtr, maxObjectCount) {
+              return _this2.encodeRoomObjectArray(_this2._memoryManager.view, thisObj.lookAtArea(top, left, bottom, right, true), undefined, outRoomObjectArrayPtr, maxObjectCount);
             },
-            lookForAtFast: function lookForAtFast(thisObj, type, x, y, outRawObjectIdPtr, outRoomObjectMetadataPtr, maxObjectCount) {
-              return _this2.encodeRoomObjectArray(_this2._memoryManager.view, thisObj.lookForAt(type, x, y), undefined, outRawObjectIdPtr, outRoomObjectMetadataPtr, maxObjectCount);
+            lookForAtFast: function lookForAtFast(thisObj, type, x, y, outRoomObjectArrayPtr, maxObjectCount) {
+              return _this2.encodeRoomObjectArray(_this2._memoryManager.view, thisObj.lookForAt(type, x, y), undefined, outRoomObjectArrayPtr, maxObjectCount);
             },
-            lookForAtAreaFast: function lookForAtAreaFast(thisObj, type, top, left, bottom, right, outRawObjectIdPtr, outRoomObjectMetadataPtr, maxObjectCount) {
-              return _this2.encodeRoomObjectArray(_this2._memoryManager.view, thisObj.lookForAtArea(type, top, left, bottom, right, true), type, outRawObjectIdPtr, outRoomObjectMetadataPtr, maxObjectCount);
+            lookForAtAreaFast: function lookForAtAreaFast(thisObj, type, top, left, bottom, right, outRoomObjectArrayPtr, maxObjectCount) {
+              return _this2.encodeRoomObjectArray(_this2._memoryManager.view, thisObj.lookForAtArea(type, top, left, bottom, right, true), type, outRoomObjectArrayPtr, maxObjectCount);
             }
           }),
           Creep: _objectSpread2(_objectSpread2({}, wrappedPrototypes.Creep), {}, {
@@ -3307,6 +3464,20 @@ var bootloader = (function (exports) {
         return (_this$_interop$getClr = this._interop.getClrTrackingId(obj)) !== null && _this$_interop$getClr !== void 0 ? _this$_interop$getClr : this._interop.assignClrTrackingId(obj);
       }
     }, {
+      key: "js_get_object_id",
+      value: function js_get_object_id(jsHandle, outRawObjectIdPtr) {
+        var obj = this._interop.getClrTrackedObject(jsHandle);
+        if (obj == null) {
+          return 0;
+        }
+        var id = obj.id;
+        if (typeof id !== 'string') {
+          return 0;
+        }
+        this.copyRawObjectId(this._memoryManager.view, id, outRawObjectIdPtr);
+        return id.length;
+      }
+    }, {
       key: "copyRawObjectId",
       value: function copyRawObjectId(memoryView, id, outPtr) {
         var u8 = memoryView.u8,
@@ -3327,11 +3498,10 @@ var bootloader = (function (exports) {
       }
     }, {
       key: "encodeRoomObjectArray",
-      value: function encodeRoomObjectArray(memoryView, arr, key, outRawObjectIdPtr, outRoomObjectMetadataPtr, maxObjectCount) {
+      value: function encodeRoomObjectArray(memoryView, arr, key, outRoomObjectArrayPtr, maxObjectCount) {
         var i32 = memoryView.i32;
         var numEncoded = 0;
-        var nextRawObjectIdPtr = outRawObjectIdPtr;
-        var nextRoomObjectMetadataPtr = outRoomObjectMetadataPtr;
+        var nextRoomObjectArrayPtrI32 = outRoomObjectArrayPtr >> 2;
         for (var _i7 = 0; _i7 < Math.min(maxObjectCount, arr.length); ++_i7) {
           // Lookup object
           var obj = arr[_i7];
@@ -3344,15 +3514,9 @@ var bootloader = (function (exports) {
           if (!(obj instanceof RoomObject)) {
             continue;
           }
-          // Copy id
-          this.copyRawObjectId(memoryView, obj.id, nextRawObjectIdPtr);
-          nextRawObjectIdPtr += 24;
           // Copy metadata
-          i32[nextRoomObjectMetadataPtr + 0 >> 2] = Object.getPrototypeOf(obj).constructor.__dotnet_typeId || 0;
-          // For now do not assign clr tracking ids here because if we get here before clr has a chance to renew the objects, we memory leak as the old reference is lost and the object sticks around in the tracking list
-          // i32[(nextRoomObjectMetadataPtr + 4) >> 2] = this._interop.getClrTrackingId(obj) ?? this._interop.assignClrTrackingId(obj);
-          i32[nextRoomObjectMetadataPtr + 4 >> 2] = -1;
-          nextRoomObjectMetadataPtr += 8;
+          i32[nextRoomObjectArrayPtrI32++] = Object.getPrototypeOf(obj).constructor.__dotnet_typeId || 0;
+          i32[nextRoomObjectArrayPtrI32++] = this._interop.getOrAssignClrTrackingId(obj);
           ++numEncoded;
         }
         return numEncoded;

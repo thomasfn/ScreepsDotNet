@@ -173,6 +173,8 @@ namespace ScreepsDotNet.Interop
 
         public bool IsDisposed => disposedValue;
 
+        public object? UserData { get; set; }
+
         internal JSObject(IntPtr jsHandle)
         {
             this.jsHandle = jsHandle;
@@ -333,6 +335,10 @@ namespace ScreepsDotNet.Interop
         {
             if (!disposedValue)
             {
+                if (disposing)
+                {
+                    UserData = null;
+                }
                 Native.ReleaseJSObject(jsHandle);
                 disposedValue = true;
             }

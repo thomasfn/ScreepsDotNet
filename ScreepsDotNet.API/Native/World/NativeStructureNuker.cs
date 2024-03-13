@@ -4,7 +4,7 @@ using ScreepsDotNet.API.World;
 namespace ScreepsDotNet.Native.World
 {
     [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
-    internal partial class NativeStructureNuker : NativeOwnedStructure, IStructureNuker
+    internal partial class NativeStructureNuker : NativeOwnedStructureWithStore, IStructureNuker
     {
         #region Imports
 
@@ -19,27 +19,23 @@ namespace ScreepsDotNet.Native.World
 
         public int Cooldown => CachePerTick(ref cooldownCache) ??= ProxyObject.GetPropertyAsInt32(Names.Cooldown);
 
-        public IStore Store => CachePerTick(ref storeCache) ??= new NativeStore(ProxyObject.GetPropertyAsJSObject(Names.Store));
-
-        public NativeStructureNuker(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
-            : base(nativeRoot, proxyObject, id)
+        public NativeStructureNuker(INativeRoot nativeRoot, JSObject proxyObject)
+            : base(nativeRoot, proxyObject)
         { }
 
         protected override void ClearNativeCache()
         {
             base.ClearNativeCache();
             cooldownCache = null;
-            storeCache?.Dispose();
-            storeCache = null;
         }
-
-        public override string ToString()
-            => $"StructureNuker[{Id}]";
 
         public NukerLaunchNukeResult LaunchNuke(RoomPosition pos)
         {
             using var roomPos = pos.ToJS();
             return (NukerLaunchNukeResult)Native_LaunchNuke(ProxyObject, roomPos);
         }
+
+        public override string ToString()
+            => $"StructureNuker[{Id}]";
     }
 }

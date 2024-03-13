@@ -17,8 +17,8 @@ namespace ScreepsDotNet.Native.World
 
         public int? TicksToDecay => CachePerTick(ref ticksToDecayCache) ??= ProxyObject.TryGetPropertyAsInt32(Names.TicksToDecay);
 
-        public NativeStructurePortal(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
-            : base(nativeRoot, proxyObject, id)
+        public NativeStructurePortal(INativeRoot nativeRoot, JSObject proxyObject)
+            : base(nativeRoot, proxyObject)
         { }
 
         private RoomPosition? GetInterRoomDestination()

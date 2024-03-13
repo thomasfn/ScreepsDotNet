@@ -79,10 +79,14 @@ export class WorldBindings extends BaseBindings {
 
     public loop(): void {
         super.loop();
+
+        // Memhack
         const _global = global as unknown as { Memory?: Memory };
         delete _global.Memory;
         _global.Memory = this._memoryCache;
         (RawMemory as unknown as { _parsed: Memory })._parsed = this._memoryCache!;
+
+        // Checkin
         const ticksSinceLestCheckIn = Game.time - this._lastCheckIn;
         if (ticksSinceLestCheckIn >= CPU_HALT_WHEN_NO_CHECKIN_FOR) {
             Game.cpu.halt && Game.cpu.halt();
@@ -98,6 +102,7 @@ export class WorldBindings extends BaseBindings {
         this.bindingsImport.js_fetch_object_room_position = this.js_fetch_object_room_position.bind(this);
         this.bindingsImport.js_batch_fetch_object_room_positions = this.js_batch_fetch_object_room_positions.bind(this);
         this.bindingsImport.js_get_object_by_id = this.js_get_object_by_id.bind(this);
+        this.bindingsImport.js_get_object_id = this.js_get_object_id.bind(this);
         const gameConstructors: Record<string, GameConstructor> = {
             StructureContainer,
             StructureController,
@@ -220,16 +225,17 @@ export class WorldBindings extends BaseBindings {
         this.imports['game/prototypes/wrapped'] = {
             ...wrappedPrototypes,
             Spawning: this.buildWrappedPrototype(StructureSpawn.Spawning),
-            Store: {
-                getCapacity: (thisObj: Store<ResourceConstant, boolean>, resourceType: ResourceConstant) => thisObj.getCapacity(resourceType),
-                getUsedCapacity: (thisObj: Store<ResourceConstant, boolean>, resourceType: ResourceConstant) => thisObj.getUsedCapacity(resourceType),
-                getFreeCapacity: (thisObj: Store<ResourceConstant, boolean>, resourceType: ResourceConstant) => thisObj.getFreeCapacity(resourceType),
+            RoomObject: {
+                ...wrappedPrototypes.RoomObject,
+                getStoreCapacity: (thisObj: { store: Store<ResourceConstant, boolean> }, resourceType: ResourceConstant) => thisObj.store.getCapacity(resourceType),
+                getStoreUsedCapacity: (thisObj: { store: Store<ResourceConstant, boolean> }, resourceType: ResourceConstant) => thisObj.store.getUsedCapacity(resourceType),
+                getStoreFreeCapacity: (thisObj: { store: Store<ResourceConstant, boolean> }, resourceType: ResourceConstant) => thisObj.store.getFreeCapacity(resourceType),
+                getStoreContainedResources: (thisObj: { store: Store<ResourceConstant, boolean> }) => Object.keys(thisObj.store),
+                indexStore: (thisObj: { store: Store<ResourceConstant, boolean> }, resourceType: ResourceConstant) => thisObj.store[resourceType],
             },
             CostMatrix: {
                 ...this.buildWrappedPrototype(PathFinder.CostMatrix),
                 setRect: (thisObj: CostMatrix, minX: number, minY: number, maxX: number, maxY: number, dataView: DataView) => {
-                    const w = (maxX - minX) + 1;
-                    const h = (maxY - minY) + 1;
                     let i = 0;
                     for (let y = minY; y <= maxY; ++y) {
                         for (let x = minX; x <= maxX; ++x) {
@@ -249,16 +255,16 @@ export class WorldBindings extends BaseBindings {
                         return { code: result };
                     }
                 },
-                findFast: (thisObj: Room, type: FindConstant, outRawObjectIdPtr: number, outRoomObjectMetadataPtr: number, maxObjectCount: number) =>
-                    this.encodeRoomObjectArray(this._memoryManager!.view, thisObj.find(type) as unknown as Record<string, unknown>[], undefined, outRawObjectIdPtr, outRoomObjectMetadataPtr, maxObjectCount),
-                lookAtFast: (thisObj: Room, x: number, y: number, outRawObjectIdPtr: number, outRoomObjectMetadataPtr: number, maxObjectCount: number) =>
-                    this.encodeRoomObjectArray(this._memoryManager!.view, thisObj.lookAt(x, y), undefined, outRawObjectIdPtr, outRoomObjectMetadataPtr, maxObjectCount),
-                lookAtAreaFast: (thisObj: Room, top: number, left: number, bottom: number, right: number, outRawObjectIdPtr: number, outRoomObjectMetadataPtr: number, maxObjectCount: number) =>
-                    this.encodeRoomObjectArray(this._memoryManager!.view, thisObj.lookAtArea(top, left, bottom, right, true), undefined, outRawObjectIdPtr, outRoomObjectMetadataPtr, maxObjectCount),
-                lookForAtFast: (thisObj: Room, type: LookConstant, x: number, y: number, outRawObjectIdPtr: number, outRoomObjectMetadataPtr: number, maxObjectCount: number) =>
-                    this.encodeRoomObjectArray(this._memoryManager!.view, thisObj.lookForAt(type, x, y) as unknown as Record<string, unknown>[], undefined, outRawObjectIdPtr, outRoomObjectMetadataPtr, maxObjectCount),
-                lookForAtAreaFast: (thisObj: Room, type: LookConstant, top: number, left: number, bottom: number, right: number, outRawObjectIdPtr: number, outRoomObjectMetadataPtr: number, maxObjectCount: number) =>
-                    this.encodeRoomObjectArray(this._memoryManager!.view, thisObj.lookForAtArea(type, top, left, bottom, right, true), type, outRawObjectIdPtr, outRoomObjectMetadataPtr, maxObjectCount),
+                findFast: (thisObj: Room, type: FindConstant, outRoomObjectArrayPtr: number, maxObjectCount: number) =>
+                    this.encodeRoomObjectArray(this._memoryManager!.view, thisObj.find(type) as unknown as Record<string, unknown>[], undefined, outRoomObjectArrayPtr, maxObjectCount),
+                lookAtFast: (thisObj: Room, x: number, y: number, outRoomObjectArrayPtr: number, maxObjectCount: number) =>
+                    this.encodeRoomObjectArray(this._memoryManager!.view, thisObj.lookAt(x, y), undefined, outRoomObjectArrayPtr, maxObjectCount),
+                lookAtAreaFast: (thisObj: Room, top: number, left: number, bottom: number, right: number, outRoomObjectArrayPtr: number, maxObjectCount: number) =>
+                    this.encodeRoomObjectArray(this._memoryManager!.view, thisObj.lookAtArea(top, left, bottom, right, true), undefined, outRoomObjectArrayPtr, maxObjectCount),
+                lookForAtFast: (thisObj: Room, type: LookConstant, x: number, y: number, outRoomObjectArrayPtr: number, maxObjectCount: number) =>
+                    this.encodeRoomObjectArray(this._memoryManager!.view, thisObj.lookForAt(type, x, y) as unknown as Record<string, unknown>[], undefined, outRoomObjectArrayPtr, maxObjectCount),
+                lookForAtAreaFast: (thisObj: Room, type: LookConstant, top: number, left: number, bottom: number, right: number, outRoomObjectArrayPtr: number, maxObjectCount: number) =>
+                    this.encodeRoomObjectArray(this._memoryManager!.view, thisObj.lookForAtArea(type, top, left, bottom, right, true), type, outRoomObjectArrayPtr, maxObjectCount),
             },
             Creep: {
                 ...wrappedPrototypes.Creep,
@@ -357,6 +363,15 @@ export class WorldBindings extends BaseBindings {
         }
         return this._interop.getClrTrackingId(obj) ?? this._interop.assignClrTrackingId(obj);
     }
+
+    private js_get_object_id(jsHandle: number, outRawObjectIdPtr: number): number {
+        const obj = this._interop.getClrTrackedObject(jsHandle);
+        if (obj == null) { return 0; }
+        const id = (obj as { id: unknown }).id;
+        if (typeof id !== 'string') { return 0; }
+        this.copyRawObjectId(this._memoryManager!.view, id, outRawObjectIdPtr);
+        return id.length;
+    }
     
     private copyRawObjectId(memoryView: WasmMemoryView, id: string, outPtr: number): void {
         const { u8, i32 } = memoryView;
@@ -375,11 +390,10 @@ export class WorldBindings extends BaseBindings {
         }
     }
 
-    private encodeRoomObjectArray(memoryView: WasmMemoryView, arr: readonly Record<string, unknown>[], key: string | undefined, outRawObjectIdPtr: number, outRoomObjectMetadataPtr: number, maxObjectCount: number): number {
+    private encodeRoomObjectArray(memoryView: WasmMemoryView, arr: readonly Record<string, unknown>[], key: string | undefined, outRoomObjectArrayPtr: number, maxObjectCount: number): number {
         const { i32 } = memoryView;
         let numEncoded = 0;
-        let nextRawObjectIdPtr = outRawObjectIdPtr;
-        let nextRoomObjectMetadataPtr = outRoomObjectMetadataPtr;
+        let nextRoomObjectArrayPtrI32 = outRoomObjectArrayPtr >> 2;
         for (let i = 0; i < Math.min(maxObjectCount, arr.length); ++i) {
             // Lookup object
             let obj = arr[i];
@@ -390,17 +404,10 @@ export class WorldBindings extends BaseBindings {
                 obj = obj[obj.type as string] as Record<string, unknown>;
             }
             if (!(obj instanceof RoomObject)) { continue; }
-
-            // Copy id
-            this.copyRawObjectId(memoryView, obj.id as string, nextRawObjectIdPtr);
-            nextRawObjectIdPtr += 24;
             
             // Copy metadata
-            i32[(nextRoomObjectMetadataPtr + 0) >> 2] = Object.getPrototypeOf(obj).constructor.__dotnet_typeId || 0;
-            // For now do not assign clr tracking ids here because if we get here before clr has a chance to renew the objects, we memory leak as the old reference is lost and the object sticks around in the tracking list
-            // i32[(nextRoomObjectMetadataPtr + 4) >> 2] = this._interop.getClrTrackingId(obj) ?? this._interop.assignClrTrackingId(obj);
-            i32[(nextRoomObjectMetadataPtr + 4) >> 2] = -1;
-            nextRoomObjectMetadataPtr += 8;
+            i32[nextRoomObjectArrayPtrI32++] = Object.getPrototypeOf(obj).constructor.__dotnet_typeId || 0;
+            i32[nextRoomObjectArrayPtrI32++] = this._interop.getOrAssignClrTrackingId(obj);
 
             ++numEncoded;
         }

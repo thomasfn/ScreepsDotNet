@@ -4,7 +4,7 @@ using ScreepsDotNet.API.World;
 namespace ScreepsDotNet.Native.World
 {
     [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
-    internal partial class NativeStructureTower : NativeOwnedStructure, IStructureTower
+    internal partial class NativeStructureTower : NativeOwnedStructureWithStore, IStructureTower
     {
         #region Imports
 
@@ -22,24 +22,9 @@ namespace ScreepsDotNet.Native.World
 
         #endregion
 
-        private NativeStore? storeCache;
-
-        public IStore Store => CachePerTick(ref storeCache) ??= new NativeStore(ProxyObject.GetPropertyAsJSObject(Names.Store));
-
-        public NativeStructureTower(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
-            : base(nativeRoot, proxyObject, id)
+        public NativeStructureTower(INativeRoot nativeRoot, JSObject proxyObject)
+            : base(nativeRoot, proxyObject)
         { }
-
-        protected override void ClearNativeCache()
-        {
-            base.ClearNativeCache();
-            storeCache?.Dispose();
-            storeCache = null;
-        }
-
-
-        public override string ToString()
-            => $"StructureTower[{Id}]";
 
         public TowerActionResult Attack(ICreep target)
             => (TowerActionResult)Native_Attack(ProxyObject, target.ToJS());
@@ -58,5 +43,8 @@ namespace ScreepsDotNet.Native.World
 
         public TowerActionResult Repair(IStructure target)
             => (TowerActionResult)Native_Repair(ProxyObject, target.ToJS());
+
+        public override string ToString()
+            => $"StructureTower[{Id}]";
     }
 }

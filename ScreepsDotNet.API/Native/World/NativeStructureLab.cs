@@ -4,7 +4,7 @@ using ScreepsDotNet.API.World;
 namespace ScreepsDotNet.Native.World
 {
     [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
-    internal partial class NativeStructureLab : NativeOwnedStructure, IStructureLab
+    internal partial class NativeStructureLab : NativeOwnedStructureWithStore, IStructureLab
     {
         #region Imports
 
@@ -28,16 +28,13 @@ namespace ScreepsDotNet.Native.World
 
         private int? cooldownCache;
         private ResourceType? mineralTypeCache;
-        private NativeStore? storeCache;
 
         public int Cooldown => CachePerTick(ref cooldownCache) ??= ProxyObject.GetPropertyAsInt32(Names.Cooldown);
 
         public ResourceType? MineralType => CachePerTick(ref mineralTypeCache) ??= ProxyObject.TryGetPropertyAsName(Names.MineralType)?.ParseResourceType();
 
-        public IStore Store => CachePerTick(ref storeCache) ??= new NativeStore(ProxyObject.GetPropertyAsJSObject(Names.Store));
-
-        public NativeStructureLab(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
-            : base(nativeRoot, proxyObject, id)
+        public NativeStructureLab(INativeRoot nativeRoot, JSObject proxyObject)
+            : base(nativeRoot, proxyObject)
         { }
 
         protected override void ClearNativeCache()
@@ -45,8 +42,6 @@ namespace ScreepsDotNet.Native.World
             base.ClearNativeCache();
             cooldownCache = null;
             mineralTypeCache = null;
-            storeCache?.Dispose();
-            storeCache = null;
         }
 
         public LabBoostResult BoostCreep(ICreep creep, int? bodyPartsCount = null)

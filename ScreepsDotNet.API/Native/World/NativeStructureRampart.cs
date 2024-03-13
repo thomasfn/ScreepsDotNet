@@ -18,12 +18,12 @@ namespace ScreepsDotNet.Native.World
         private bool? isPublicCache;
         private int? ticksToDecayCache;
 
-        public bool IsPublic => CachePerTick(ref isPublicCache) ??= ProxyObject.GetPropertyAsBoolean("isPublic");
+        public bool IsPublic => CachePerTick(ref isPublicCache) ??= ProxyObject.GetPropertyAsBoolean(Names.IsPublic);
 
         public int TicksToDecay => CachePerTick(ref ticksToDecayCache) ??= ProxyObject.GetPropertyAsInt32(Names.TicksToDecay);
 
-        public NativeStructureRampart(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
-            : base(nativeRoot, proxyObject, id)
+        public NativeStructureRampart(INativeRoot nativeRoot, JSObject proxyObject)
+            : base(nativeRoot, proxyObject)
         { }
 
         protected override void ClearNativeCache()
@@ -35,5 +35,8 @@ namespace ScreepsDotNet.Native.World
 
         public RampartSetPublicResult SetPublic(bool isPublic)
             => (RampartSetPublicResult)Native_SetPublic(ProxyObject, isPublic);
+
+        public override string ToString()
+            => $"StructureRampart[{Id}]";
     }
 }

@@ -1,7 +1,8 @@
-﻿using ScreepsDotNet.API.World;
-using ScreepsDotNet.Interop;
-using System;
+﻿using System;
 using System.Runtime.CompilerServices;
+
+using ScreepsDotNet.API.World;
+using ScreepsDotNet.Interop;
 
 namespace ScreepsDotNet.Native.World
 {
@@ -50,11 +51,11 @@ namespace ScreepsDotNet.Native.World
             }
         }
 
-        public NativeObject(INativeRoot nativeRoot, JSObject? proxyObject)
+        public NativeObject(INativeRoot nativeRoot, JSObject proxyObject)
         {
             this.nativeRoot = nativeRoot;
             this.proxyObject = proxyObject;
-            proxyObjectValidAsOf = proxyObject != null ? nativeRoot.TickIndex : -1;
+            proxyObjectValidAsOf = nativeRoot.TickIndex;
         }
 
         public void NotifyBatchRenew(bool failed)
@@ -71,13 +72,32 @@ namespace ScreepsDotNet.Native.World
 
         public void ReplaceProxyObject(JSObject? newProxyObject)
         {
-            if (newProxyObject == proxyObject) { return; }
-            proxyObject?.Dispose();
-            proxyObject = newProxyObject;
             proxyObjectValidAsOf = nativeRoot.TickIndex;
             ClearNativeCache();
-            isDead = proxyObject == null || proxyObject.IsDisposed;
+            if (newProxyObject == proxyObject) { return; }
+            if (proxyObject != null)
+            {
+                if (newProxyObject == null) { OnLoseProxyObject(proxyObject); }
+                proxyObject.UserData = null;
+                proxyObject.Dispose();
+            }
+            
+            proxyObject = newProxyObject;
+            if (proxyObject != null && !proxyObject.IsDisposed)
+            {
+                proxyObject.UserData = this;
+                isDead = false;
+                OnGetNewProxyObject(proxyObject);
+            }
+            else
+            {
+                isDead = true;
+            }
         }
+
+        protected virtual void OnLoseProxyObject(JSObject proxyObject) { }
+
+        protected virtual void OnGetNewProxyObject(JSObject newProxyObject) { }
 
         private void TryRenewOrReacquire()
         {
@@ -85,13 +105,12 @@ namespace ScreepsDotNet.Native.World
             {
                 if (ScreepsDotNet_Native.RenewObject(proxyObject.JSHandle) != 0)
                 {
-                    proxyObject.Dispose();
-                    proxyObject = null;
+                    ReplaceProxyObject(null);
                 }
             }
             else
             {
-                proxyObject = ReacquireProxyObject();
+                ReplaceProxyObject(ReacquireProxyObject());
             }
             proxyObjectValidAsOf = nativeRoot.TickIndex;
             ClearNativeCache();

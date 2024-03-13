@@ -24,8 +24,8 @@ namespace ScreepsDotNet.Native.World
             }
         }
 
-        public NativeStructureInvaderCore(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
-            : base(nativeRoot, proxyObject, id)
+        public NativeStructureInvaderCore(INativeRoot nativeRoot, JSObject proxyObject)
+            : base(nativeRoot, proxyObject)
         { }
 
         protected override void ClearNativeCache()

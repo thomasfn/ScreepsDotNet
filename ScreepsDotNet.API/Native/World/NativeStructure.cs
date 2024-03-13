@@ -7,7 +7,7 @@ using ScreepsDotNet.API.World;
 namespace ScreepsDotNet.Native.World
 {
     [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
-    internal partial class NativeStructure : NativeRoomObject, IStructure, IEquatable<NativeStructure?>
+    internal partial class NativeStructure : NativeRoomObjectWithId, IStructure
     {
         #region Imports
 
@@ -25,8 +25,6 @@ namespace ScreepsDotNet.Native.World
 
         #endregion
 
-        private readonly ObjectId id;
-
         private int? hitsCache;
         private int? hitsMaxCache;
 
@@ -34,16 +32,9 @@ namespace ScreepsDotNet.Native.World
 
         public int HitsMax => CachePerTick(ref hitsMaxCache) ??= ProxyObject.TryGetPropertyAsInt32(Names.HitsMax) ?? 0;
 
-        public ObjectId Id => id;
-
-        public NativeStructure(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
+        public NativeStructure(INativeRoot nativeRoot, JSObject proxyObject)
             : base(nativeRoot, proxyObject)
-        {
-            this.id = id;
-        }
-
-        public override JSObject? ReacquireProxyObject()
-            => nativeRoot.GetProxyObjectById(id);
+        { }
 
         protected override void ClearNativeCache()
         {
@@ -61,17 +52,7 @@ namespace ScreepsDotNet.Native.World
         public StructureNotifyWhenAttackedResult NotifyWhenAttacked(bool enabled)
             => (StructureNotifyWhenAttackedResult)Native_NotifyWhenAttacked(ProxyObject, enabled);
 
-        public override bool Equals(object? obj) => Equals(obj as NativeStructure);
-
-        public bool Equals(NativeStructure? other) => other is not null && id == other.id;
-
-        public override int GetHashCode() => HashCode.Combine(id);
-
-        public static bool operator ==(NativeStructure? left, NativeStructure? right) => EqualityComparer<NativeStructure>.Default.Equals(left, right);
-
-        public static bool operator !=(NativeStructure? left, NativeStructure? right) => !(left == right);
-
         public override string ToString()
-            => $"NativeStructure[{id}]";
+            => $"NativeStructure[{Id}]";
     }
 }

@@ -18,6 +18,7 @@ namespace ScreepsDotNet.SourceGen
         private const string JSImportAttribute = "ScreepsDotNet.Interop.JSImportAttribute";
 
         private static readonly ImmutableArray<BaseMarshaller> allMarshallers;
+        private static readonly ImmutableArray<FastImportGenerator> allFastImportGenerators;
 
         static JSImportGenerator()
         {
@@ -30,6 +31,21 @@ namespace ScreepsDotNet.SourceGen
                 .Concat(unlayerableMarshallers)
                 .Concat(layeredMarshallers)
                 .ToImmutableArray();
+
+            allFastImportGenerators = new FastImportGenerator[]
+            {
+                new("i_i"),
+                new("i_ii"),
+                new("i_iii"),
+                new("i_o"),
+                new("i_oi"),
+                new("i_on"),
+                new("i_oii"),
+                new("i_oo"),
+                new("i_ooi"),
+                new("i_ooii"),
+                new("d_v"),
+            }.ToImmutableArray();
         }
 
         public void Initialize(IncrementalGeneratorInitializationContext context)
@@ -160,6 +176,14 @@ namespace ScreepsDotNet.SourceGen
                 sourceEmitter.WriteLine($"functionSpec.ReturnParamSpec = {ParamSpecToCs(retMarshaller.GenerateReturnParamSpec(methodSymbol.ReturnType))};");
                 sourceEmitter.WriteLine($"{importIndexFieldName} = Interop.Native.BindImport(\"{moduleName}\", \"{importName}\", functionSpec);");
             });
+
+            // See if we can use a fast import
+            var fastImport = allFastImportGenerators.FirstOrDefault(x => x.IsSignatureSupported(methodSymbol.ReturnType, methodSymbol.Parameters));
+            if (fastImport != null)
+            {
+                fastImport.GenerateCallSite(importIndexFieldName, methodSymbol.ReturnType, methodSymbol.Parameters, sourceEmitter);
+                return;
+            }
 
             // Emit invoke code
             if (isUnsafe)

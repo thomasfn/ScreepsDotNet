@@ -1,57 +1,44 @@
-﻿using System;
-using System.Collections.Generic;
-using ScreepsDotNet.Interop;
+﻿using ScreepsDotNet.Interop;
 using ScreepsDotNet.API.World;
 
 namespace ScreepsDotNet.Native.World
 {
     [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
-    internal partial class NativeTombstone : NativeRoomObject, ITombstone, IEquatable<NativeTombstone?>
+    internal partial class NativeTombstone : NativeRoomObjectWithId, ITombstone
     {
-        private readonly ObjectId id;
+        private readonly NativeStore store;
 
         private int? deathTimeCache;
-        private NativeStore? storeCache;
         private int? ticksToDecayCache;
 
         public ICreep? Creep => nativeRoot.GetOrCreateWrapperObject<ICreep>(ProxyObject.GetPropertyAsJSObject(Names.Creep));
 
         public int DeathTime => CacheLifetime(ref deathTimeCache) ??= ProxyObject.GetPropertyAsInt32(Names.DeathTime);
 
-        public ObjectId Id => id;
-
-        public IStore Store => CachePerTick(ref storeCache) ??= new NativeStore(ProxyObject.GetPropertyAsJSObject(Names.Store));
+        public IStore Store => store;
 
         public int TicksToDecay => CachePerTick(ref ticksToDecayCache) ??= ProxyObject.GetPropertyAsInt32(Names.TicksToDecay);
 
-        public NativeTombstone(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
+        public NativeTombstone(INativeRoot nativeRoot, JSObject proxyObject)
             : base(nativeRoot, proxyObject)
         {
-            this.id = id;
+            store = new(nativeRoot, proxyObject);
         }
-
-        public override JSObject? ReacquireProxyObject()
-            => nativeRoot.GetProxyObjectById(id);
 
         protected override void ClearNativeCache()
         {
             base.ClearNativeCache();
-            storeCache?.Dispose();
-            storeCache = null;
+            store.ClearNativeCache();
             ticksToDecayCache = null;
         }
 
+        protected override void OnGetNewProxyObject(JSObject newProxyObject)
+        {
+            base.OnGetNewProxyObject(newProxyObject);
+            store.ProxyObject = newProxyObject;
+        }
+
         public override string ToString()
-            => $"Tombstone[{(Exists ? RoomPosition.ToString() : "DEAD")}]";
-
-        public override bool Equals(object? obj) => Equals(obj as NativeTombstone);
-
-        public bool Equals(NativeTombstone? other) => other is not null && id == other.id;
-
-        public override int GetHashCode() => HashCode.Combine(id);
-
-        public static bool operator ==(NativeTombstone? left, NativeTombstone? right) => EqualityComparer<NativeTombstone>.Default.Equals(left, right);
-
-        public static bool operator !=(NativeTombstone? left, NativeTombstone? right) => !(left == right);
+            => $"Tombstone[{Id}]";
     }
 }

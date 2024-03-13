@@ -122,38 +122,60 @@ namespace ScreepsDotNet.Native.World
     }
 
     [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
-    internal partial class NativeStore : IStore, IDisposable
+    internal partial class NativeStore : IStore
     {
         #region Imports
 
-        [JSImport("Store.getCapacity", "game/prototypes/wrapped")]
-        
-        internal static partial int? Native_GetCapacity(JSObject proxyObject, Name? resourceType);
+        [JSImport("RoomObject.getStoreCapacity", "game/prototypes/wrapped")]
+        internal static partial int? Native_GetStoreCapacity(JSObject proxyObject, Name? resourceType);
 
-        [JSImport("Store.getFreeCapacity", "game/prototypes/wrapped")]
-        
-        internal static partial int? Native_GetFreeCapacity(JSObject proxyObject, Name? resourceType);
+        [JSImport("RoomObject.getStoreFreeCapacity", "game/prototypes/wrapped")]
+        internal static partial int? Native_GetStoreFreeCapacity(JSObject proxyObject, Name? resourceType);
 
-        [JSImport("Store.getUsedCapacity", "game/prototypes/wrapped")]
-        
-        internal static partial int? Native_GetUsedCapacity(JSObject proxyObject, Name? resourceType);
+        [JSImport("RoomObject.getStoreUsedCapacity", "game/prototypes/wrapped")]
+        internal static partial int? Native_GetStoreUsedCapacity(JSObject proxyObject, Name? resourceType);
+
+        [JSImport("RoomObject.getStoreContainedResources", "game/prototypes/wrapped")]
+        internal static partial Name[] Native_GetStoreContainedResources(JSObject proxyObject);
+
+        [JSImport("RoomObject.indexStore", "game/prototypes/wrapped")]
+        internal static partial int? Native_IndexStore(JSObject proxyObject, Name resourceType);
 
         #endregion
 
         private const int ResourceCount = (int)ResourceType.Unknown + 1;
 
-        internal readonly JSObject? ProxyObject;
+        private INativeRoot nativeRoot;
+        private JSObject proxyObject;
+        private int proxyObjectValidAsOf;
 
         private int[]? resourceCache;
         private ImmutableArray<ResourceType>? containedResourceTypesCache;
-        private bool disposedValue;
 
-        public IEnumerable<ResourceType> ContainedResourceTypes
+        public IEnumerable<ResourceType> ContainedResourceTypes => containedResourceTypesCache ??= Native_GetStoreContainedResources(proxyObject).Select(static x => x.ParseResourceType()).ToImmutableArray();
+
+        public event Action? OnRequestNewProxyObject;
+
+        public JSObject ProxyObject
         {
             get
             {
-                ObjectDisposedException.ThrowIf(disposedValue, this);
-                return containedResourceTypesCache ??= (ProxyObject?.GetPropertyNamesAsNames() ?? []).Select(static x => x.ParseResourceType()).ToImmutableArray();
+                int tickIndex = nativeRoot.TickIndex;
+                if (proxyObjectValidAsOf < tickIndex)
+                {
+                    OnRequestNewProxyObject?.Invoke();
+                }
+                if (proxyObjectValidAsOf < tickIndex)
+                {
+                    throw new NativeObjectNoLongerExistsException();
+                }
+                return proxyObject;
+            }
+            set
+            {
+                proxyObject = value;
+                proxyObjectValidAsOf = nativeRoot.TickIndex;
+                ClearNativeCache();
             }
         }
 
@@ -161,19 +183,17 @@ namespace ScreepsDotNet.Native.World
         {
             get
             {
-                ObjectDisposedException.ThrowIf(disposedValue, this);
                 if (resourceCache == null)
                 {
                     resourceCache = new int[ResourceCount];
                     resourceCache.AsSpan().Fill(-1);
                 }
                 ref int amount = ref resourceCache[(int)resourceType];
-                if (amount < 0) { amount = ProxyObject?.TryGetPropertyAsInt32(resourceType.ToJS()) ?? 0; }
+                if (amount < 0) { amount = Native_IndexStore(proxyObject, resourceType.ToJS()) ?? 0; }
                 return amount;
             }
             set
             {
-                ObjectDisposedException.ThrowIf(disposedValue, this);
                 if (resourceCache == null)
                 {
                     resourceCache = new int[ResourceCount];
@@ -183,55 +203,24 @@ namespace ScreepsDotNet.Native.World
             }
         }
 
-        public NativeStore(JSObject? proxyObject)
+        public NativeStore(INativeRoot nativeRoot, JSObject proxyObject)
         {
-            ProxyObject = proxyObject;
+            this.nativeRoot = nativeRoot;
+            this.proxyObject = proxyObject;
+            proxyObjectValidAsOf = nativeRoot.TickIndex;
         }
 
-        public int? GetCapacity(ResourceType? resourceType = null)
+        public void ClearNativeCache()
         {
-            ObjectDisposedException.ThrowIf(disposedValue, this);
-            return ProxyObject != null ? Native_GetCapacity(ProxyObject, resourceType?.ToJS()) : null;
+            resourceCache?.AsSpan().Fill(-1);
+            containedResourceTypesCache = null;
         }
 
-        public int? GetFreeCapacity(ResourceType? resourceType = null)
-        {
-            ObjectDisposedException.ThrowIf(disposedValue, this);
-            return ProxyObject != null ? Native_GetFreeCapacity(ProxyObject, resourceType?.ToJS()) : null;
-        }
+        public int? GetCapacity(ResourceType? resourceType = null) => Native_GetStoreCapacity(proxyObject, resourceType?.ToJS());
 
-        public int? GetUsedCapacity(ResourceType? resourceType = null)
-        {
-            ObjectDisposedException.ThrowIf(disposedValue, this);
-            return ProxyObject != null ? Native_GetUsedCapacity(ProxyObject, resourceType?.ToJS()) : null;
-        }
+        public int? GetFreeCapacity(ResourceType? resourceType = null) => Native_GetStoreFreeCapacity(proxyObject, resourceType?.ToJS());
 
-        #region Disposable
+        public int? GetUsedCapacity(ResourceType? resourceType = null) => Native_GetStoreUsedCapacity(proxyObject, resourceType?.ToJS());
 
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!disposedValue)
-            {
-                if (disposing)
-                {
-                    resourceCache = null;
-                }
-                ProxyObject?.Dispose();
-                disposedValue = true;
-            }
-        }
-
-        ~NativeStore()
-        {
-            Dispose(disposing: false);
-        }
-
-        public void Dispose()
-        {
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
-        }
-
-        #endregion
     }
 }

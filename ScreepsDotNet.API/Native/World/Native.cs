@@ -31,4 +31,7 @@ internal static class ScreepsDotNet_Native
 
     [MethodImpl(MethodImplOptions.InternalCall)]
     internal static unsafe extern IntPtr GetObjectById(ObjectId* objectId);
+
+    [MethodImpl(MethodImplOptions.InternalCall)]
+    internal static unsafe extern int GetObjectId(IntPtr jsHandle, ObjectId* outObjectId);
 }
