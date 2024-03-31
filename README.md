@@ -29,6 +29,11 @@ Install the wasm workload if you haven't done already.
 dotnet workload install wasm-tools
 dotnet workload install wasm-experimental
 ```
+If the build process reports issues with the workload even after running the above commands, you may also need to install the following workload:
+```
+dotnet workload install wasm-tools-net7
+```
+If the above command reports that the workload ID is not recognized, update your installation of dotnet to 8.0. This should allow `wasm-tools-net7` to be recognized.
 
 ### Setup project
 Create a new wasm project.
