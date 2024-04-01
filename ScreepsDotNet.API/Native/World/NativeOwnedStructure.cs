@@ -53,6 +53,16 @@ namespace ScreepsDotNet.Native.World
             this.ownershipCanChange = ownershipCanChange;
         }
 
+        protected override void ClearNativeCache()
+        {
+            base.ClearNativeCache();
+            if (ownershipCanChange)
+            {
+                myCache = null;
+                ownerInfoCache = null;
+            }
+        }
+
         private OwnerInfo? GetOwnerInfo()
         {
             using var ownerObj = ProxyObject.GetPropertyAsJSObject(Names.Owner);
