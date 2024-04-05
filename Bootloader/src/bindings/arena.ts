@@ -67,6 +67,7 @@ export class ArenaBindings extends BaseBindings {
         this.bindingsImport.js_fetch_object_room_position = () => {};
         this.bindingsImport.js_batch_fetch_object_room_positions = () => {};
         this.bindingsImport.js_get_object_by_id = () => {};
+        this.bindingsImport.js_get_object_id = () => {};
         this.imports['object'] = {
             getConstructorOf: (x: object) => Object.getPrototypeOf(x).constructor,
             interpretDateTime: (x: Date) => x.getTime() / 1000,

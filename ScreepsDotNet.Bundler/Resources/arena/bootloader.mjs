@@ -1887,6 +1887,7 @@ var bootloader = (function (exports) {
   };
   var CLR_TRACKING_ID = Symbol('clr-tracking-id');
   function hasId(obj) {
+    // TODO: Are we going to have an issue here with pojo's with ids? e.g. an object from Memory which is just { id: 'xyz' }
     return 'id' in obj;
   }
   var Interop = /*#__PURE__*/function () {
@@ -2763,6 +2764,7 @@ var bootloader = (function (exports) {
         this.bindingsImport.js_fetch_object_room_position = function () {};
         this.bindingsImport.js_batch_fetch_object_room_positions = function () {};
         this.bindingsImport.js_get_object_by_id = function () {};
+        this.bindingsImport.js_get_object_id = function () {};
         this.imports['object'] = {
           getConstructorOf: function getConstructorOf(x) {
             return Object.getPrototypeOf(x).constructor;
