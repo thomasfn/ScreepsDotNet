@@ -177,9 +177,9 @@ namespace ScreepsDotNet.Native.Arena
 
         public override bool Equals(object? obj) => Equals(obj as NativeGameObject);
 
-        public bool Equals(NativeGameObject? other) => other is not null && Id == other.Id;
+        public bool Equals(NativeGameObject? other) => other is not null && proxyObject == other.proxyObject;
 
-        public override int GetHashCode() => HashCode.Combine(Id);
+        public override int GetHashCode() => proxyObject.GetHashCode();
 
         public static bool operator ==(NativeGameObject? left, NativeGameObject? right) => EqualityComparer<NativeGameObject>.Default.Equals(left, right);
 
@@ -274,6 +274,7 @@ namespace ScreepsDotNet.Native.Arena
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureSpawn))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureWall))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeFlag))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeResource))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeSource))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeConstructionSite))]
         static NativeGameObjectUtils()
