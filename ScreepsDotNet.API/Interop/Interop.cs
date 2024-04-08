@@ -353,7 +353,9 @@ namespace ScreepsDotNet.Interop
             {
                 var str = new string((char*)Slot.IntPtrValue);
                 if (freeMem) { Marshal.FreeHGlobal(Slot.IntPtrValue); }
-                return Name.Create(str);
+                var name = Name.Create(str);
+                Name.CopyIfNeeded(name.NameIndex);
+                return name;
             }
             return new Name(Slot.Int32Value);
         }

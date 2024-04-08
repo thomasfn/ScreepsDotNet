@@ -15,11 +15,11 @@ namespace ScreepsDotNet.Native.Arena
         private static readonly ImmutableArray<Name> resourceToName =
         [
             Names.Energy,
-            Name.CreateNew("score"),
-            Name.CreateNew("score_x"),
-            Name.CreateNew("score_y"),
-            Name.CreateNew("score_z"),
-            Name.CreateNew("unknown")
+            Name.Create("score"),
+            Name.Create("score_x"),
+            Name.Create("score_y"),
+            Name.Create("score_z"),
+            Name.Create("unknown")
         ];
 
         private static readonly Dictionary<Name, ResourceType> nameToResource = [];

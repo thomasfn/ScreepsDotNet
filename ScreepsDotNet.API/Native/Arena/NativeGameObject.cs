@@ -200,7 +200,7 @@ namespace ScreepsDotNet.Native.Arena
     [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal static partial class NativeGameObjectUtils
     {
-        private static readonly Name TypeIdKey = Name.CreateNew("__dotnet_typeId");
+        private static readonly Name TypeIdKey = Name.Create("__dotnet_typeId");
 
         private static readonly JSObject prototypesObject;
         private static readonly List<Type> prototypeTypeMappings = [];

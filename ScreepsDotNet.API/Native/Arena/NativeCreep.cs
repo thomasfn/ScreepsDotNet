@@ -15,13 +15,13 @@ namespace ScreepsDotNet.Native.Arena
     {
         private static readonly ImmutableArray<Name> bodyPartTypeToName =
         [
-            Name.CreateNew("move"),
-            Name.CreateNew("work"),
-            Name.CreateNew("carry"),
-            Name.CreateNew("attack"),
-            Name.CreateNew("ranged_attack"),
-            Name.CreateNew("heal"),
-            Name.CreateNew("tough"),
+            Name.Create("move"),
+            Name.Create("work"),
+            Name.Create("carry"),
+            Name.Create("attack"),
+            Name.Create("ranged_attack"),
+            Name.Create("heal"),
+            Name.Create("tough"),
         ];
 
         private static readonly Dictionary<Name, BodyPartType> nameToBodyPartType = [];

@@ -50,10 +50,7 @@ namespace ScreepsDotNet.Interop
         /// <param name="value"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Name Create(string value) => nameLookup.TryGetValue(value, out var nameIndex) ? new(nameIndex) : CreateNew(value);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static Name CreateNew(string value) => new(AllocateName(value));
+        public static Name Create(string value) => nameLookup.TryGetValue(value, out var nameIndex) ? new(nameIndex) : new(AllocateName(value));
 
         #endregion
 
