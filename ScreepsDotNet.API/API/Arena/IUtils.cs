@@ -63,6 +63,11 @@ namespace ScreepsDotNet.API.Arena
         /// <returns></returns>
         public Terrain this[Position position] => data[(position.Y - Min.Y) * (Max.X - Min.X + 1) + position.X - Min.X];
 
+        /// <summary>
+        /// Gets the raw underlying data of the slice.
+        /// </summary>
+        public ReadOnlySpan<Terrain> RawData => data;
+
         public TerrainSlice(ReadOnlySpan<Terrain> data, Position min, Position max)
         {
             this.data = data.ToArray();
