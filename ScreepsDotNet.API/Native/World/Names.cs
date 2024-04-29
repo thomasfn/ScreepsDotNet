@@ -99,5 +99,15 @@ namespace ScreepsDotNet.Native.World
         public static readonly Name Density = Name.Create("density");
         public static readonly Name MineralAmount = Name.Create("mineralAmount");
         public static readonly Name IsPublic = Name.Create("isPublic");
+        public static readonly Name ReusePath = Name.Create("reusePath");
+        public static readonly Name SerializeMemory = Name.Create("serializeMemory");
+        public static readonly Name NoPathFinding = Name.Create("noPathFinding");
+        public static readonly Name VisualizePathStyle = Name.Create("visualizePathStyle");
+        public static readonly Name Class = Name.Create("class");
+        public static readonly Name ClassName = Name.Create("className");
+        public static readonly Name PowerCreeps = Name.Create("powerCreeps");
+        public static readonly Name DeleteTime = Name.Create("deleteTime");
+        public static readonly Name SpawnCooldownTimeCache = Name.Create("spawnCooldownTimeCache");
+        public static readonly Name Powers = Name.Create("powers");
     }
 }

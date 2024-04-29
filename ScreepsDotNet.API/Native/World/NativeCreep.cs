@@ -239,7 +239,8 @@ namespace ScreepsDotNet.Native.World
         public CreepAttackResult Attack(ICreep target)
             => (CreepAttackResult)Native_Attack(ProxyObject, target.ToJS());
 
-        // CreepAttackResult Attack(IPowerCreep target);
+        public CreepAttackResult Attack(IPowerCreep target)
+            => (CreepAttackResult)Native_Attack(ProxyObject, target.ToJS());
 
         public CreepAttackResult Attack(IStructure target)
             => (CreepAttackResult)Native_Attack(ProxyObject, target.ToJS());
@@ -278,6 +279,9 @@ namespace ScreepsDotNet.Native.World
             => (CreepHarvestResult) Native_Harvest(ProxyObject, deposit.ToJS());
 
         public CreepHealResult Heal(ICreep target)
+            => (CreepHealResult)Native_Heal(ProxyObject, target.ToJS());
+
+        public CreepHealResult Heal(IPowerCreep target)
             => (CreepHealResult)Native_Heal(ProxyObject, target.ToJS());
 
         public CreepMoveResult Move(Direction direction)
@@ -323,12 +327,16 @@ namespace ScreepsDotNet.Native.World
         public CreepRangedAttackResult RangedAttack(ICreep target)
             => (CreepRangedAttackResult)Native_RangedAttack(ProxyObject, target.ToJS());
 
-        // CreepRangedAttackResult RangedAttack(IPowerCreep target);
+        public CreepRangedAttackResult RangedAttack(IPowerCreep target)
+            => (CreepRangedAttackResult)Native_RangedAttack(ProxyObject, target.ToJS());
 
         public CreepRangedAttackResult RangedAttack(IStructure target)
             => (CreepRangedAttackResult)Native_RangedAttack(ProxyObject, target.ToJS());
 
         public CreepHealResult RangedHeal(ICreep target)
+            => (CreepHealResult)Native_RangedHeal(ProxyObject, target.ToJS());
+
+        public CreepHealResult RangedHeal(IPowerCreep target)
             => (CreepHealResult)Native_RangedHeal(ProxyObject, target.ToJS());
 
         public CreepRangedMassAttackResult RangedMassAttack()
@@ -352,7 +360,8 @@ namespace ScreepsDotNet.Native.World
         public CreepTransferResult Transfer(ICreep target, ResourceType resourceType, int? amount = null)
             => (CreepTransferResult)Native_Transfer(ProxyObject, target.ToJS(), resourceType.ToJS(), amount);
 
-        // CreepTransferResult Transfer(IPowerCreep target, ResourceType resourceType, int? amount = null);
+        public CreepTransferResult Transfer(IPowerCreep target, ResourceType resourceType, int? amount = null)
+            => (CreepTransferResult)Native_Transfer(ProxyObject, target.ToJS(), resourceType.ToJS(), amount);
 
         public CreepTransferResult Transfer(IStructure target, ResourceType resourceType, int? amount = null)
             => (CreepTransferResult)Native_Transfer(ProxyObject, target.ToJS(), resourceType.ToJS(), amount);

@@ -3093,6 +3093,7 @@ var bootloader = (function (exports) {
           Mineral: Mineral,
           Deposit: Deposit,
           Creep: Creep,
+          PowerCreep: PowerCreep,
           Flag: Flag,
           Resource: Resource,
           ConstructionSite: ConstructionSite,
@@ -3279,6 +3280,9 @@ var bootloader = (function (exports) {
             "import": function _import(data) {
               return Game.map.visual["import"](data);
             }
+          },
+          powerCreep: {
+            create: PowerCreep.create
           }
         };
         var wrappedPrototypes = this.buildWrappedPrototypes(gameConstructors);

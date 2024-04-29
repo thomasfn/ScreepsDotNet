@@ -131,6 +131,7 @@ export class WorldBindings extends BaseBindings {
             Mineral,
             Deposit,
             Creep,
+            PowerCreep,
             Flag,
             Resource,
             ConstructionSite,
@@ -219,6 +220,9 @@ export class WorldBindings extends BaseBindings {
                 getSize: () => Game.map.visual.getSize(),
                 export: () => Game.map.visual.export(),
                 import: (data: string) => Game.map.visual.import(data),
+            },
+            powerCreep: {
+                create: PowerCreep.create,
             },
         };
         const wrappedPrototypes = this.buildWrappedPrototypes(gameConstructors);

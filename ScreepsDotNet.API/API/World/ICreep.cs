@@ -796,7 +796,7 @@ namespace ScreepsDotNet.API.World
         /// </summary>
         /// <param name="target"></param>
         /// <returns></returns>
-        // CreepAttackResult Attack(IPowerCreep target);
+        CreepAttackResult Attack(IPowerCreep target);
 
         /// <summary>
         /// Attack a structure in a short-ranged attack.
@@ -918,6 +918,16 @@ namespace ScreepsDotNet.API.World
         CreepHealResult Heal(ICreep target);
 
         /// <summary>
+        /// Heal a power creep.
+        /// It will restore the target creep’s damaged body parts function and increase the hits counter.
+        /// Requires the HEAL body part.
+        /// The target has to be at adjacent square to the creep.
+        /// </summary>
+        /// <param name="target"></param>
+        /// <returns></returns>
+        CreepHealResult Heal(IPowerCreep target);
+
+        /// <summary>
         /// Move the creep one square in the specified direction.
         /// Requires the MOVE body part, or another creep nearby pulling the creep.
         /// </summary>
@@ -1003,7 +1013,7 @@ namespace ScreepsDotNet.API.World
         /// The target has to be within 3 squares range of the creep.
         /// </summary>
         /// <param name="target"></param>
-        // CreepRangedAttackResult RangedAttack(IPowerCreep target);
+        CreepRangedAttackResult RangedAttack(IPowerCreep target);
 
         /// <summary>
         /// A ranged attack against another creep or structure.
@@ -1023,6 +1033,16 @@ namespace ScreepsDotNet.API.World
         /// <param name="target"></param>
         /// <returns></returns>
         CreepHealResult RangedHeal(ICreep target);
+
+        /// <summary>
+        /// Heal a power creep at a distance.
+        /// It will restore the target creep’s damaged body parts function and increase the hits counter.
+        /// Requires the HEAL body part.
+        /// The target has to be within 3 squares range of the creep.
+        /// </summary>
+        /// <param name="target"></param>
+        /// <returns></returns>
+        CreepHealResult RangedHeal(IPowerCreep target);
 
         /// <summary>
         /// A ranged attack against all hostile creeps or structures within 3 squares range.
@@ -1096,7 +1116,7 @@ namespace ScreepsDotNet.API.World
         /// <param name="resourceType"></param>
         /// <param name="amount"></param>
         /// <returns></returns>
-        // CreepTransferResult Transfer(IPowerCreep target, ResourceType resourceType, int? amount = null);
+        CreepTransferResult Transfer(IPowerCreep target, ResourceType resourceType, int? amount = null);
 
         /// <summary>
         /// Transfer resource from the creep to another object. The target has to be at adjacent square to the creep.

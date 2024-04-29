@@ -3088,6 +3088,7 @@
           Mineral: Mineral,
           Deposit: Deposit,
           Creep: Creep,
+          PowerCreep: PowerCreep,
           Flag: Flag,
           Resource: Resource,
           ConstructionSite: ConstructionSite,
@@ -3274,6 +3275,9 @@
             "import": function _import(data) {
               return Game.map.visual["import"](data);
             }
+          },
+          powerCreep: {
+            create: PowerCreep.create
           }
         };
         var wrappedPrototypes = this.buildWrappedPrototypes(gameConstructors);

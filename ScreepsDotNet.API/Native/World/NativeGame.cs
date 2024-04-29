@@ -68,6 +68,9 @@ namespace ScreepsDotNet.Native.World
         [JSImport("game.notify", "game")]
         internal static partial void Native_Notify(string message, int groupInterval);
 
+        [JSImport("powerCreep.create", "game")]
+        internal static partial int Native_CreatePowerCreep(string name, Name className);
+
         #endregion
 
         internal JSObject ProxyObject;
@@ -84,6 +87,7 @@ namespace ScreepsDotNet.Native.World
 
         private readonly NativeObjectLazyLookup<NativeCreep, ICreep> creepLazyLookup;
         private readonly NativeObjectLazyLookup<NativeFlag, IFlag> flagLazyLookup;
+        private readonly NativeObjectLazyLookup<NativePowerCreep, IPowerCreep> powerCreepLazyLookup;
         private readonly NativeObjectLazyLookup<NativeRoom, IRoom> roomLazyLookup;
         private readonly NativeObjectLazyLookup<NativeStructureSpawn, IStructureSpawn> spawnLazyLookup;
         private readonly NativeObjectLazyLookup<NativeStructure, IStructure> structureLazyLookup;
@@ -100,6 +104,8 @@ namespace ScreepsDotNet.Native.World
         public JSObject CreepsObj { get; private set; }
 
         public JSObject FlagsObj { get; private set; }
+
+        public JSObject PowerCreepsObj { get; private set; }
 
         public JSObject RoomsObj { get; private set; }
 
@@ -131,6 +137,8 @@ namespace ScreepsDotNet.Native.World
 
         public IReadOnlyDictionary<string, IFlag> Flags => flagLazyLookup;
 
+        public IReadOnlyDictionary<string, IPowerCreep> PowerCreeps => powerCreepLazyLookup;
+
         public IReadOnlyDictionary<string, IRoom> Rooms => roomLazyLookup;
 
         public IReadOnlyDictionary<string, IStructureSpawn> Spawns => spawnLazyLookup;
@@ -146,6 +154,7 @@ namespace ScreepsDotNet.Native.World
             ProxyObject = Native_GetGameObject();
             CreepsObj = ProxyObject.GetPropertyAsJSObject(Names.Creeps)!;
             FlagsObj = ProxyObject.GetPropertyAsJSObject(Names.Flags)!;
+            PowerCreepsObj = ProxyObject.GetPropertyAsJSObject(Names.PowerCreeps)!;
             RoomsObj = ProxyObject.GetPropertyAsJSObject(Names.Rooms)!;
             SpawnsObj = ProxyObject.GetPropertyAsJSObject(Names.Spawns)!;
             StructuresObj = ProxyObject.GetPropertyAsJSObject(Names.Structures)!;
@@ -159,6 +168,7 @@ namespace ScreepsDotNet.Native.World
             var nativeRoot = this as INativeRoot;
             creepLazyLookup = new NativeObjectLazyLookup<NativeCreep, ICreep>(() => CreepsObj, x => x.Name, (name, proxyObject) => nativeRoot.GetOrCreateWrapperObject<NativeCreep>(proxyObject));
             flagLazyLookup = new NativeObjectLazyLookup<NativeFlag, IFlag>(() => FlagsObj, x => x.Name, (name, proxyObject) => nativeRoot.GetOrCreateWrapperObject<NativeFlag>(proxyObject));
+            powerCreepLazyLookup = new NativeObjectLazyLookup<NativePowerCreep, IPowerCreep>(() => PowerCreepsObj, x => x.Name, (name, proxyObject) => nativeRoot.GetExistingWrapperObject<NativePowerCreep>(proxyObject));
             roomLazyLookup = new NativeObjectLazyLookup<NativeRoom, IRoom>(() => RoomsObj, x => x.Name, (name, proxyObject) => nativeRoot.GetRoomByCoord(new(name)));
             spawnLazyLookup = new NativeObjectLazyLookup<NativeStructureSpawn, IStructureSpawn>(() => SpawnsObj, x => x.Name, (name, proxyObject) => nativeRoot.GetOrCreateWrapperObject<NativeStructureSpawn>(proxyObject));
             structureLazyLookup = new NativeObjectLazyLookup<NativeStructure, IStructure>(() => StructuresObj, x => x.Id, (name, proxyObject) => nativeRoot.GetOrCreateWrapperObject<NativeStructure>(proxyObject));
@@ -173,6 +183,8 @@ namespace ScreepsDotNet.Native.World
             CreepsObj = ProxyObject.GetPropertyAsJSObject(Names.Creeps)!;
             FlagsObj.Dispose();
             FlagsObj = ProxyObject.GetPropertyAsJSObject(Names.Flags)!;
+            PowerCreepsObj.Dispose();
+            PowerCreepsObj = ProxyObject.GetPropertyAsJSObject(Names.PowerCreeps)!;
             RoomsObj.Dispose();
             RoomsObj = ProxyObject.GetPropertyAsJSObject(Names.Rooms)!;
             SpawnsObj.Dispose();
@@ -258,10 +270,13 @@ namespace ScreepsDotNet.Native.World
             }
             for (int i = 0; i < cnt; ++i)
             {
-                batchRenewList[i].NotifyBatchRenew(batchRenewJSHandleList[i] == -1);
+                batchRenewList[i].NotifyBatchRenew(failed: batchRenewJSHandleList[i] == -1);
             }
             batchRenewList.Clear();
         }
+
+        public PowerCreepCreateResult CreatePowerCreep(string name, PowerCreepClass @class)
+            => (PowerCreepCreateResult)Native_CreatePowerCreep(name, @class.ToJS());
 
         JSObject? INativeRoot.GetProxyObjectById(ObjectId id)
         {

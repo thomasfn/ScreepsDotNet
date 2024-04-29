@@ -40,6 +40,26 @@ namespace ScreepsDotNet.API.World
         }
     }
 
+    public enum PowerCreepCreateResult
+    {
+        /// <summary>
+        /// The operation has been scheduled successfully.
+        /// </summary>
+        Ok = 0,
+        /// <summary>
+        /// A power creep with the specified name already exists.
+        /// </summary>
+        NameExists = -3,
+        /// <summary>
+        /// You don't have free Power Levels in your account.
+        /// </summary>
+        NotEnoughResources = -6,
+        /// <summary>
+        /// The provided power creep name is exceeds the limit, or the power creep class is invalid.
+        /// </summary>
+        InvalidArgs = -10,
+    }
+
     public interface IGame
     {
         /// <summary>
@@ -102,6 +122,11 @@ namespace ScreepsDotNet.API.World
         /// A hash containing all your flags with flag names as hash keys.
         /// </summary>
         IReadOnlyDictionary<string, IFlag> Flags { get; }
+
+        /// <summary>
+        /// A hash containing all your power creeps with their names as hash keys. Even power creeps not spawned in the world can be accessed here.
+        /// </summary>
+        IReadOnlyDictionary<string, IPowerCreep> PowerCreeps { get; }
 
         /// <summary>
         /// A hash containing all the rooms available to you with room names as hash keys. A room is visible if you have a creep or an owned structure in it.
@@ -191,5 +216,14 @@ namespace ScreepsDotNet.API.World
         /// <param name="roomObjects"></param>
         /// <param name="outRoomPositions"></param>
         // void BatchFetchRoomPositions(IEnumerable<IRoomObject> roomObjects, Span<RoomPosition> outRoomPositions);
+
+        /// <summary>
+        /// A static method to create new Power Creep instance in your account.
+        /// It will be added in an unspawned state, use spawn method to spawn it in the world.
+        /// You need one free Power Level in your account to perform this action.
+        /// </summary>
+        /// <param name="name">The name of the new power creep. The name length limit is 100 characters.</param>
+        /// <param name="class">The class of the new power creep.</param>
+        PowerCreepCreateResult CreatePowerCreep(string name, PowerCreepClass @class);
     }
 }

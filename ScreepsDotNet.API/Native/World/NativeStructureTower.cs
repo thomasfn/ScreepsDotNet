@@ -29,8 +29,8 @@ namespace ScreepsDotNet.Native.World
         public TowerActionResult Attack(ICreep target)
             => (TowerActionResult)Native_Attack(ProxyObject, target.ToJS());
 
-        //public TowerActionResult Attack(IPowerCreep target)
-        //    => (TowerActionResult)Native_Attack(ProxyObject, target.ToJS());
+        public TowerActionResult Attack(IPowerCreep target)
+            => (TowerActionResult)Native_Attack(ProxyObject, target.ToJS());
 
         public TowerActionResult Attack(IStructure target)
             => (TowerActionResult)Native_Attack(ProxyObject, target.ToJS());
@@ -38,8 +38,8 @@ namespace ScreepsDotNet.Native.World
         public TowerActionResult Heal(ICreep target)
             => (TowerActionResult)Native_Heal(ProxyObject, target.ToJS());
 
-        //public TowerActionResult Heal(IPowerCreep target)
-        //    => (TowerActionResult)Native_Heal(ProxyObject, target.ToJS());
+        public TowerActionResult Heal(IPowerCreep target)
+            => (TowerActionResult)Native_Heal(ProxyObject, target.ToJS());
 
         public TowerActionResult Repair(IStructure target)
             => (TowerActionResult)Native_Repair(ProxyObject, target.ToJS());
