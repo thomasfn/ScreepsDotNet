@@ -104,19 +104,15 @@ namespace ScreepsDotNet.Native.World
         #region Imports
 
         [JSImport("StructureSpawn.spawnCreep", "game/prototypes/wrapped")]
-        
-        internal static partial int Native_SpawnCreep(JSObject proxyObject, string[] body, string name, JSObject opts);
+        internal static partial int Native_SpawnCreep(JSObject proxyObject, Name[] body, string name, JSObject opts);
 
         [JSImport("StructureSpawn.spawnCreep", "game/prototypes/wrapped")]
-        
-        internal static partial int Native_SpawnCreep(JSObject proxyObject, string[] body, string name);
+        internal static partial int Native_SpawnCreep(JSObject proxyObject, Name[] body, string name);
 
         [JSImport("StructureSpawn.recycleCreep", "game/prototypes/wrapped")]
-        
         internal static partial int Native_RecycleCreep(JSObject proxyObject, JSObject target);
 
         [JSImport("StructureSpawn.renewCreep", "game/prototypes/wrapped")]
-        
         internal static partial int Native_RenewCreep(JSObject proxyObject, JSObject target);
 
         #endregion
@@ -145,15 +141,8 @@ namespace ScreepsDotNet.Native.World
 
         public SpawnCreepResult SpawnCreep(IEnumerable<BodyPartType> body, string name, SpawnCreepOptions? opts = null)
         {
-            if (opts != null)
-            {
-                using var optsJs = opts.Value.ToJS();
-                return (SpawnCreepResult)Native_SpawnCreep(ProxyObject, body.Select(x => x.ToJS()).ToArray(), name, optsJs);
-            }
-            else
-            {
-                return (SpawnCreepResult)Native_SpawnCreep(ProxyObject, body.Select(x => x.ToJS()).ToArray(), name);
-            }
+            using var optsJs = opts?.ToJS();
+            return (SpawnCreepResult)Native_SpawnCreep(ProxyObject, body.Select(x => x.ToJS()).ToArray(), name, optsJs);
         }
 
         public SpawnCreepResult SpawnCreep(BodyType bodyType, string name, SpawnCreepOptions? opts = null)

@@ -22,7 +22,7 @@ namespace ScreepsDotNet.SourceGen.Marshalling
                 emitter.WriteLine($"if ({clrParamName} != null)");
                 emitter.OpenScope();
                 emitter.WriteLine($"{jsParamName} = new({clrParamName}.Value);");
-                emitter.WriteLine($"Name.CopyIfNeeded({clrParamName}.Value.NameIndex);");
+                emitter.WriteLine($"ScreepsDotNet.Interop.Name.CopyIfNeeded({clrParamName}.Value.NameIndex);");
                 emitter.CloseScope();
                 emitter.WriteLine($"else");
                 emitter.OpenScope();

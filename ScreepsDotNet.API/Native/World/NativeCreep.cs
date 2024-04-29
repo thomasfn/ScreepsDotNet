@@ -1,56 +1,73 @@
 ﻿using System;
 using System.Collections.Generic;
-using ScreepsDotNet.Interop;
+using System.Collections.Immutable;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
+using ScreepsDotNet.Interop;
 using ScreepsDotNet.API;
 using ScreepsDotNet.API.World;
 
 namespace ScreepsDotNet.Native.World
 {
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal static class NativeCreepExtensions
     {
-        public static string ToJS(this BodyPartType bodyPartType)
-            => bodyPartType switch
-            {
-                BodyPartType.Attack => "attack",
-                BodyPartType.Carry => "carry",
-                BodyPartType.Heal => "heal",
-                BodyPartType.Move => "move",
-                BodyPartType.RangedAttack => "ranged_attack",
-                BodyPartType.Tough => "tough",
-                BodyPartType.Work => "work",
-                BodyPartType.Claim => "claim",
-                _ => throw new NotImplementedException($"Unknown body part type '{bodyPartType}'"),
-            };
+        private static readonly ImmutableArray<Name> bodyPartTypeToName =
+        [
+            Name.Create("move"),
+            Name.Create("work"),
+            Name.Create("carry"),
+            Name.Create("attack"),
+            Name.Create("ranged_attack"),
+            Name.Create("tough"),
+            Name.Create("heal"),
+            Name.Create("claim"),
+        ];
 
-        public static string ToJS(this CreepOrderType creepOrderType)
-            => creepOrderType switch
-            {
-                CreepOrderType.Attack => "attack",
-                CreepOrderType.AttackController => "attackController",
-                CreepOrderType.Build => "build",
-                CreepOrderType.ClaimController => "claimController",
-                CreepOrderType.Dismantle => "dismantle",
-                CreepOrderType.Drop => "drop",
-                CreepOrderType.GenerateSafeMode => "generateSafeMode",
-                CreepOrderType.Harvest => "harvest",
-                CreepOrderType.Heal => "heal",
-                CreepOrderType.Move => "move",
-                CreepOrderType.Pickup => "pickup",
-                CreepOrderType.Pull => "pull",
-                CreepOrderType.RangedAttack => "rangedAttack",
-                CreepOrderType.RangedMassAttack => "rangedMassAttack",
-                CreepOrderType.Repair => "repair",
-                CreepOrderType.ReserveController => "ReserveController",
-                CreepOrderType.Say => "say",
-                CreepOrderType.SignController => "signController",
-                CreepOrderType.Suicide => "suicide",
-                CreepOrderType.Transfer => "transfer",
-                CreepOrderType.UpgradeController => "upgradeController",
-                CreepOrderType.Withdraw => "withdraw",
-                _ => throw new NotImplementedException($"Unknown creep order type '{creepOrderType}'"),
-            };
+        private static readonly ImmutableArray<Name> creepOrderTypeToName =
+        [
+            Name.Create("attack"),
+            Name.Create("attackController"),
+            Name.Create("build"),
+            Name.Create("claimController"),
+            Name.Create("dismantle"),
+            Name.Create("drop"),
+            Name.Create("generateSafeMode"),
+            Name.Create("harvest"),
+            Name.Create("heal"),
+            Name.Create("move"),
+            Name.Create("pickup"),
+            Name.Create("pull"),
+            Name.Create("rangedAttack"),
+            Name.Create("rangedMassAttack"),
+            Name.Create("repair"),
+            Name.Create("reserveController"),
+            Name.Create("say"),
+            Name.Create("signController"),
+            Name.Create("suicide"),
+            Name.Create("transfer"),
+            Name.Create("upgradeController"),
+            Name.Create("withdraw"),
+        ];
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Name ToJS(this BodyPartType bodyPartType)
+            => bodyPartTypeToName[(int)bodyPartType];
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Name ToJS(this CreepOrderType creepOrderType)
+            => creepOrderTypeToName[(int)creepOrderType];
+
+        public static JSObject ToJS(this MoveToOptions moveToOptions)
+        {
+            var obj = moveToOptions.FindPathOptions != null ? moveToOptions.FindPathOptions.Value.ToJS() : JSObject.Create();
+            obj.SetProperty(Names.ReusePath, moveToOptions.ReusePath);
+            obj.SetProperty(Names.SerializeMemory, moveToOptions.SerializeMemory);
+            obj.SetProperty(Names.NoPathFinding, moveToOptions.NoPathFinding);
+            if (moveToOptions.VisualizePathStyle != null) { obj.SetProperty(Names.VisualizePathStyle, moveToOptions.VisualizePathStyle.Value.ToJS()); }
+            return obj;
+        }
     }
 
     [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
@@ -68,7 +85,7 @@ namespace ScreepsDotNet.Native.World
         internal static partial int Native_Build(JSObject proxyObject, JSObject targetProxyObject);
 
         [JSImport("Creep.cancelOrder", "game/prototypes/wrapped")]
-        internal static partial int Native_CancelOrder(JSObject proxyObject, string methodName);
+        internal static partial int Native_CancelOrder(JSObject proxyObject, Name methodName);
 
         [JSImport("Creep.claimController", "game/prototypes/wrapped")]
         internal static partial int Native_ClaimController(JSObject proxyObject, JSObject targetProxyObject);
@@ -83,7 +100,7 @@ namespace ScreepsDotNet.Native.World
         internal static partial int Native_GenerateSafeMode(JSObject proxyObject, JSObject targetProxyObject);
 
         [JSImport("Creep.getActiveBodyparts", "game/prototypes/wrapped")]
-        internal static partial int Native_GetActiveBodyparts(JSObject proxyObject, string type);
+        internal static partial int Native_GetActiveBodyparts(JSObject proxyObject, Name type);
 
         [JSImport("Creep.harvest", "game/prototypes/wrapped")]
         internal static partial int Native_Harvest(JSObject proxyObject, JSObject targetProxyObject);
@@ -167,7 +184,7 @@ namespace ScreepsDotNet.Native.World
         private OwnerInfo? ownerInfoCache;
         private int? ticksToLiveCache;
 
-        protected override bool CanMove { get => true; }
+        protected override bool CanMove => true;
 
         public IEnumerable<BodyPart<BodyPartType>> Body => CachePerTick(ref bodyCache) ??= FetchBody();
 
@@ -282,11 +299,17 @@ namespace ScreepsDotNet.Native.World
         public CreepMoveResult MoveByPath(string serialisedPath)
             => (CreepMoveResult)Native_MoveByPath(ProxyObject, serialisedPath);
 
-        public CreepMoveResult MoveTo(Position target, object? opts = null)
-            => (CreepMoveResult)Native_MoveTo(ProxyObject, target.X, target.Y, null);
+        public CreepMoveResult MoveTo(Position target, MoveToOptions? opts = null)
+        {
+            using var optsJs = opts?.ToJS();
+            return (CreepMoveResult)Native_MoveTo(ProxyObject, target.X, target.Y, optsJs);
+        }
 
-        public CreepMoveResult MoveTo(RoomPosition target, object? opts = null)
-            => (CreepMoveResult)Native_MoveTo(ProxyObject, target.ToJS(), null);
+        public CreepMoveResult MoveTo(RoomPosition target, MoveToOptions? opts = null)
+        {
+            using var optsJs = opts?.ToJS();
+            return (CreepMoveResult)Native_MoveTo(ProxyObject, target.ToJS(), optsJs);
+        }
 
         public CreepNotifyWhenAttackedResult NotifyWhenAttacked(bool enabled)
             => (CreepNotifyWhenAttackedResult)Native_NotifyWhenAttacked(ProxyObject, enabled);

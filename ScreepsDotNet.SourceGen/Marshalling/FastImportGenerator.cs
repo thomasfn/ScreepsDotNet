@@ -106,7 +106,7 @@ namespace ScreepsDotNet.SourceGen.Marshalling
             {
                 if (param.Type.ToDisplayString() == "ScreepsDotNet.Interop.Name")
                 {
-                    emitter.WriteLine($"Name.CopyIfNeeded({param.Name}.NameIndex);");
+                    emitter.WriteLine($"ScreepsDotNet.Interop.Name.CopyIfNeeded({param.Name}.NameIndex);");
                 }
             }
             var innerExpr = paramSymbols.Length > 0
