@@ -22,7 +22,7 @@ export declare class DotNet {
     private perfFn?;
     private verboseLogging;
     private get isTickBarrier();
-    constructor(manifest: Readonly<Manifest>);
+    constructor(manifest: Readonly<Manifest>, env: 'world'|'arena');
     setModuleImports(moduleName: string, imports: Record<string, unknown>): void;
     setVerboseLogging(verboseLogging: boolean): void;
     setPerfFn(perfFn: () => number): void;

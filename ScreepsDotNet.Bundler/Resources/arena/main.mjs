@@ -6,7 +6,7 @@ import * as visual from 'game/visual';
 import { DotNet } from './bootloader';
 import * as manifest from './bundle.mjs';
 
-const dotNet = new DotNet(manifest);
+const dotNet = new DotNet(manifest, 'arena');
 dotNet.setPerfFn(utils.getCpuTime);
 dotNet.setVerboseLogging(false);
 dotNet.setModuleImports('game/utils', {

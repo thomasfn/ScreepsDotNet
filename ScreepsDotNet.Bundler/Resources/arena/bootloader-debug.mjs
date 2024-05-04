@@ -3845,10 +3845,14 @@ var bootloader = (function (exports) {
           debug(`wasm module found from previous pass`);
         } else {
           wasmPrevAttemptBytes = bytes;
-          const t0 = Game.cpu.getUsed();
-          wasmPrevAttemptModule = new WebAssembly.Module(bytes);
-          const t1 = Game.cpu.getUsed();
-          debug(`wasm module compiled in ~${t1 - t0}ms`);
+          if ('Game' in globalThis) {
+            const t0 = Game.cpu.getUsed();
+            wasmPrevAttemptModule = new WebAssembly.Module(bytes);
+            const t1 = Game.cpu.getUsed();
+            importedLogging.debug(`wasm module compiled in ~${t1 - t0}ms`);
+          } else {
+            wasmPrevAttemptModule = new WebAssembly.Module(bytes);
+          }
           compiledModule = wasmPrevAttemptModule;
         }
         const compiledInstance = new WebAssembly.Instance(compiledModule, imports);
