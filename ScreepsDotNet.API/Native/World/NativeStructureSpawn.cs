@@ -86,7 +86,7 @@ namespace ScreepsDotNet.Native.World
     {
         public static JSObject ToJS(this SpawnCreepOptions spawnCreepOptions)
         {
-            using var obj = JSObject.Create();
+            var obj = JSObject.Create();
             if (spawnCreepOptions.Memory != null) { obj.SetProperty(Names.Memory, spawnCreepOptions.Memory.ToJS()); }
             if (spawnCreepOptions.EnergyStructures != null) { JSUtils.SetObjectArrayOnObject(obj, Names.EnergyStructures, spawnCreepOptions.EnergyStructures.Select(x => x.ToJS()).ToArray()); }
             if (spawnCreepOptions.DryRun != null) { obj.SetProperty(Names.DryRun, spawnCreepOptions.DryRun.Value); }
@@ -104,7 +104,7 @@ namespace ScreepsDotNet.Native.World
         #region Imports
 
         [JSImport("StructureSpawn.spawnCreep", "game/prototypes/wrapped")]
-        internal static partial int Native_SpawnCreep(JSObject proxyObject, Name[] body, string name, JSObject opts);
+        internal static partial int Native_SpawnCreep(JSObject proxyObject, Name[] body, string name, JSObject? opts);
 
         [JSImport("StructureSpawn.spawnCreep", "game/prototypes/wrapped")]
         internal static partial int Native_SpawnCreep(JSObject proxyObject, Name[] body, string name);
