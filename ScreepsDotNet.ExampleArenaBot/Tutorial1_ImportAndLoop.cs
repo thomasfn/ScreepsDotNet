@@ -2,9 +2,9 @@
 
 using ScreepsDotNet.API.Arena;
 
-namespace ScreepsDotNet.Arena
+namespace ScreepsDotNet.ExampleArenaBot
 {
-    public class Tutorial1_LoopAndImport : ITutorialScript
+    public class Tutorial1_LoopAndImport : IBot
     {
         private readonly IGame game;
 

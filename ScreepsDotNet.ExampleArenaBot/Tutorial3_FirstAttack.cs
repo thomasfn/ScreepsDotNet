@@ -3,9 +3,9 @@ using System.Linq;
 
 using ScreepsDotNet.API.Arena;
 
-namespace ScreepsDotNet.Arena
+namespace ScreepsDotNet.ExampleArenaBot
 {
-    public class Tutorial3_FirstAttack : ITutorialScript
+    public class Tutorial3_FirstAttack : IBot
     {
         private readonly IGame game;
 

@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.4.33205.214
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ScreepsDotNet", "ScreepsDotNet\ScreepsDotNet.csproj", "{4BB8BC42-7F20-4F8A-9A3F-327B75348856}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ScreepsDotNet.ExampleWorldBot", "ScreepsDotNet.ExampleWorldBot\ScreepsDotNet.ExampleWorldBot.csproj", "{4BB8BC42-7F20-4F8A-9A3F-327B75348856}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ScreepsDotNet.API", "ScreepsDotNet.API\ScreepsDotNet.API.csproj", "{4CDC3306-B71D-4433-A562-1CEBB998283D}"
 EndProject
@@ -11,7 +11,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ScreepsDotNet.Bundler", "Sc
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ScreepsDotNet.API.Tests", "ScreepsDotNet.API.Tests\ScreepsDotNet.API.Tests.csproj", "{CECA1347-E97B-496F-8CE6-E897267C8CB6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScreepsDotNet.SourceGen", "ScreepsDotNet.SourceGen\ScreepsDotNet.SourceGen.csproj", "{4471B50E-3A54-4F01-AEA5-30F27E43094A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ScreepsDotNet.SourceGen", "ScreepsDotNet.SourceGen\ScreepsDotNet.SourceGen.csproj", "{4471B50E-3A54-4F01-AEA5-30F27E43094A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScreepsDotNet.ExampleArenaBot", "ScreepsDotNet.ExampleArenaBot\ScreepsDotNet.ExampleArenaBot.csproj", "{4D29F37B-F051-4889-B230-FC10CC370B28}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +41,10 @@ Global
 		{4471B50E-3A54-4F01-AEA5-30F27E43094A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4471B50E-3A54-4F01-AEA5-30F27E43094A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4471B50E-3A54-4F01-AEA5-30F27E43094A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4D29F37B-F051-4889-B230-FC10CC370B28}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4D29F37B-F051-4889-B230-FC10CC370B28}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4D29F37B-F051-4889-B230-FC10CC370B28}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4D29F37B-F051-4889-B230-FC10CC370B28}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

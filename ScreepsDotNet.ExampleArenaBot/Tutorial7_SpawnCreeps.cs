@@ -4,9 +4,9 @@ using System.Collections.Generic;
 
 using ScreepsDotNet.API.Arena;
 
-namespace ScreepsDotNet.Arena
+namespace ScreepsDotNet.ExampleArenaBot
 {
-    public class Tutorial7_SpawnCreeps : ITutorialScript
+    public class Tutorial7_SpawnCreeps : IBot
     {
         private readonly IGame game;
 
