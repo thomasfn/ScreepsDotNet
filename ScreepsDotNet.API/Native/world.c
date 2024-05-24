@@ -215,7 +215,7 @@ void* screepsdotnet_invoke_cost_callback(int roomCoordX, int roomCoordY, void* c
     }
 
     MonoObject* exception;
-    void* args[3] = { &roomCoordX, &roomCoordY, costMatrixJsHandle };
+    void* args[3] = { &roomCoordX, &roomCoordY, &costMatrixJsHandle };
     MonoObject* result = mono_runtime_invoke(method_InvokeCostCallback, NULL, args, &exception);
     assert(!exception);
     return *(void**)mono_object_unbox(result);

@@ -3004,6 +3004,8 @@
       BODYPART_TO_ENUM_MAP[bodyPart] = _i2++;
     }
   }
+  var TEMP_ROOM_COORD_A = [0, 0];
+  var TEMP_ROOM_COORD_B = [0, 0];
   var WorldBindings = /*#__PURE__*/function (_BaseBindings) {
     _inherits(WorldBindings, _BaseBindings);
     var _super = _createSuper(WorldBindings);
@@ -3016,6 +3018,9 @@
       _this = _super.call.apply(_super, [this].concat(args));
       _defineProperty(_assertThisInitialized(_this), "_lastCheckIn", 0);
       _defineProperty(_assertThisInitialized(_this), "_memoryCache", void 0);
+      _defineProperty(_assertThisInitialized(_this), "_invoke_room_callback", void 0);
+      _defineProperty(_assertThisInitialized(_this), "_invoke_cost_callback", void 0);
+      _defineProperty(_assertThisInitialized(_this), "_invoke_route_callback", void 0);
       return _this;
     }
     _createClass(WorldBindings, [{
@@ -3027,6 +3032,9 @@
           this.log("failed to call 'screepsdotnet_init_world' (not found in wasm exports)");
           return;
         }
+        this._invoke_room_callback = exports.screepsdotnet_invoke_room_callback;
+        this._invoke_cost_callback = exports.screepsdotnet_invoke_cost_callback;
+        this._invoke_route_callback = exports.screepsdotnet_invoke_route_callback;
         entrypointFn();
         this._memoryCache = Memory;
         this._memoryCache = RawMemory._parsed;
@@ -3126,8 +3134,10 @@
           getPrototypes: function getPrototypes() {
             return gameConstructors;
           },
-          createRoomPosition: function createRoomPosition(x, y, roomName) {
-            return new RoomPosition(x, y, roomName);
+          createRoomPosition: function createRoomPosition(encodedInt) {
+            var roomPosition = Object.create(RoomPosition.prototype);
+            roomPosition.__packedPos = encodedInt;
+            return roomPosition;
           },
           createCostMatrix: function createCostMatrix() {
             return new PathFinder.CostMatrix();
@@ -3175,6 +3185,9 @@
             },
             getRoomStatus: function getRoomStatus(roomName) {
               return Game.map.getRoomStatus(roomName);
+            },
+            getRouteCallbackObject: function getRouteCallbackObject() {
+              return _this2.routeCallback.bind(_this2);
             }
           },
           market: {
@@ -3347,20 +3360,14 @@
             }
           }),
           PathFinder: _objectSpread2(_objectSpread2({}, PathFinder), {}, {
-            compileRoomCallback: function compileRoomCallback(opts, roomCostMap) {
-              opts.roomCallback = function (roomName) {
-                var val = roomCostMap[roomName];
-                if (typeof val === 'boolean') {
-                  return val;
-                }
-                if (val == null) {
-                  return roomCostMap.allowUnspecifiedRooms || false;
-                }
-                return val;
-              };
-            },
             search: function search(origin, goal, opts) {
               return PathFinder.search(origin, goal, opts);
+            },
+            getRoomCallbackObject: function getRoomCallbackObject() {
+              return _this2.roomCallback.bind(_this2);
+            },
+            getCostCallbackObject: function getCostCallbackObject() {
+              return _this2.costCallback.bind(_this2);
             }
           }),
           RoomTerrain: {
@@ -3592,6 +3599,63 @@
           _iterator.f();
         }
         return wrappedPrototype;
+      }
+    }, {
+      key: "parseRoomName",
+      value: function parseRoomName(roomName, outCoord) {
+        var xx = parseInt(roomName.substr(1), 10);
+        var verticalPos = 2;
+        if (xx >= 100) {
+          verticalPos = 4;
+        } else if (xx >= 10) {
+          verticalPos = 3;
+        }
+        var yy = parseInt(roomName.substr(verticalPos + 1), 10);
+        var horizontalDir = roomName.charAt(0);
+        var verticalDir = roomName.charAt(verticalPos);
+        if (horizontalDir === 'W' || horizontalDir === 'w') {
+          xx = -xx - 1;
+        }
+        if (verticalDir === 'N' || verticalDir === 'n') {
+          yy = -yy - 1;
+        }
+        if (outCoord) {
+          outCoord[0] = xx;
+          outCoord[1] = yy;
+        } else {
+          outCoord = [xx, yy];
+        }
+        return outCoord;
+      }
+    }, {
+      key: "roomCallback",
+      value: function roomCallback(roomName) {
+        var roomCoord = this.parseRoomName(roomName, TEMP_ROOM_COORD_A);
+        var result = this._invoke_room_callback(roomCoord[0], roomCoord[1]);
+        if (result < 0) {
+          return false;
+        }
+        if (result === 0) {
+          return undefined;
+        }
+        return this._interop.getClrTrackedObject(result);
+      }
+    }, {
+      key: "costCallback",
+      value: function costCallback(roomName, costMatrix) {
+        var roomCoord = this.parseRoomName(roomName, TEMP_ROOM_COORD_A);
+        var result = this._invoke_cost_callback(roomCoord[0], roomCoord[1], this._interop.getOrAssignClrTrackingId(costMatrix));
+        if (result === 0) {
+          return undefined;
+        }
+        return this._interop.getClrTrackedObject(result);
+      }
+    }, {
+      key: "routeCallback",
+      value: function routeCallback(roomName, fromRoomName) {
+        var roomCoord = this.parseRoomName(roomName, TEMP_ROOM_COORD_A);
+        var fromRoomCoord = this.parseRoomName(fromRoomName, TEMP_ROOM_COORD_B);
+        return this._invoke_route_callback(roomCoord[0], roomCoord[1], fromRoomCoord[0], fromRoomCoord[1]);
       }
     }]);
     return WorldBindings;
