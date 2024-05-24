@@ -1,29 +1,42 @@
-﻿using System.Runtime.InteropServices.JavaScript;
+﻿using ScreepsDotNet.Interop;
 
 using ScreepsDotNet.API.World;
 
 namespace ScreepsDotNet.Native.World
 {
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal partial class NativeStructureRampart : NativeOwnedStructure, IStructureRampart
     {
         #region Imports
 
         [JSImport("StructureRampart.setPublic", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_SetPublic([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Boolean>] bool isPublic);
+        
+        internal static partial int Native_SetPublic(JSObject proxyObject, bool isPublic);
 
         #endregion
 
-        public bool IsPublic => ProxyObject.GetPropertyAsBoolean("isPublic");
+        private bool? isPublicCache;
+        private int? ticksToDecayCache;
 
-        public int TicksToDecay => ProxyObject.GetPropertyAsInt32("ticksToDecay");
+        public bool IsPublic => CachePerTick(ref isPublicCache) ??= ProxyObject.GetPropertyAsBoolean(Names.IsPublic);
 
-        public NativeStructureRampart(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
-            : base(nativeRoot, proxyObject, id)
+        public int TicksToDecay => CachePerTick(ref ticksToDecayCache) ??= ProxyObject.GetPropertyAsInt32(Names.TicksToDecay);
+
+        public NativeStructureRampart(INativeRoot nativeRoot, JSObject proxyObject)
+            : base(nativeRoot, proxyObject)
         { }
+
+        protected override void ClearNativeCache()
+        {
+            base.ClearNativeCache();
+            isPublicCache = null;
+            ticksToDecayCache = null;
+        }
 
         public RampartSetPublicResult SetPublic(bool isPublic)
             => (RampartSetPublicResult)Native_SetPublic(ProxyObject, isPublic);
+
+        public override string ToString()
+            => $"StructureRampart[{Id}]";
     }
 }

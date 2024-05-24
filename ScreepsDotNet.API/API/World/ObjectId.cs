@@ -8,6 +8,7 @@ namespace ScreepsDotNet.API.World
     /// Represents the id of a room object.
     /// Faster than the string counterpart for equality, hashing etc.
     /// </summary>
+    [StructLayout(LayoutKind.Sequential, Pack = 1, Size = 16)]
     public readonly struct ObjectId : IEquatable<ObjectId>
     {
         private readonly int a, b, c, h;

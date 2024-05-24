@@ -1,21 +1,21 @@
-﻿using System.Runtime.InteropServices.JavaScript;
+﻿using ScreepsDotNet.Interop;
 
 using ScreepsDotNet.API.World;
 
 namespace ScreepsDotNet.Native.World
 {
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal partial class NativeStructurePowerBank : NativeOwnedStructure, IStructurePowerBank
     {
         private int? powerCache;
         private int? ticksToDecayCache;
 
-        public int Power => CacheLifetime(ref powerCache) ??= ProxyObject.GetPropertyAsInt32("level");
+        public int Power => CacheLifetime(ref powerCache) ??= ProxyObject.GetPropertyAsInt32(Names.Power);
 
-        public int TicksToDecay => CacheLifetime(ref ticksToDecayCache) ??= ProxyObject.GetPropertyAsInt32("level");
+        public int TicksToDecay => CacheLifetime(ref ticksToDecayCache) ??= ProxyObject.GetPropertyAsInt32(Names.TicksToDecay);
 
-        public NativeStructurePowerBank(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
-            : base(nativeRoot, proxyObject, id)
+        public NativeStructurePowerBank(INativeRoot nativeRoot, JSObject proxyObject)
+            : base(nativeRoot, proxyObject)
         { }
 
         protected override void ClearNativeCache()

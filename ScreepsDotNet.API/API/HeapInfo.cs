@@ -17,7 +17,7 @@ namespace ScreepsDotNet.API
         public readonly int NumberOfDetachedContexts;
         public readonly int ExternallyAllocatedSize;
 
-        public HeapInfo(int totalHeapSize, int totalHeapSizeExecutable, int totalPhysicalSize, int totalAvailableSize, int usedHeapSize, int heapSizeLimit, int mallocedMemory, int peakMallocedMemory, int doesZapGarbage, int numberOfNativeContexts, int numberOfDetachedContexts, int externallyAllocatedSize)
+        public HeapInfo(int totalHeapSize, int totalHeapSizeExecutable, int totalPhysicalSize, int totalAvailableSize, int usedHeapSize, int heapSizeLimit, int mallocedMemory, int peakMallocedMemory, int doesZapGarbage, int externallyAllocatedSize)
         {
             TotalHeapSize = totalHeapSize;
             TotalHeapSizeExecutable = totalHeapSizeExecutable;
@@ -28,8 +28,6 @@ namespace ScreepsDotNet.API
             MallocedMemory = mallocedMemory;
             PeakMallocedMemory = peakMallocedMemory;
             DoesZapGarbage = doesZapGarbage;
-            NumberOfNativeContexts = numberOfNativeContexts;
-            NumberOfDetachedContexts = numberOfDetachedContexts;
             ExternallyAllocatedSize = externallyAllocatedSize;
         }
 
@@ -45,8 +43,6 @@ namespace ScreepsDotNet.API
             sb.AppendLine($"MallocedMemory: {FormatBytes(MallocedMemory)}");
             sb.AppendLine($"PeakMallocedMemory: {FormatBytes(PeakMallocedMemory)}");
             sb.AppendLine($"DoesZapGarbage: {DoesZapGarbage}");
-            sb.AppendLine($"NumberOfNativeContexts: {NumberOfNativeContexts}");
-            sb.AppendLine($"NumberOfDetachedContexts: {NumberOfDetachedContexts}");
             sb.AppendLine($"ExternallyAllocatedSize: {FormatBytes(ExternallyAllocatedSize)}");
             return sb.ToString();
         }

@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace ScreepsDotNet.API.Arena
 {
@@ -124,30 +126,15 @@ namespace ScreepsDotNet.API.Arena
         public static bool operator !=(SearchPathResult left, SearchPathResult right) => !(left == right);
     }
 
-    public readonly struct Goal : IEquatable<Goal>
+    [StructLayout(LayoutKind.Sequential, Pack = 4, Size = 12)]
+    public readonly record struct Goal
+    (
+        Position Position,
+        int Range = 0
+    )
     {
-        public readonly Position Position;
-        public readonly double? Range;
-
-        public Goal(Position position, double? range)
-        {
-            Position = position;
-            Range = range;
-        }
-
-        public override bool Equals(object? obj) => obj is Goal goal && Equals(goal);
-
-        public bool Equals(Goal other)
-            => Position.Equals(other.Position)
-            && Range == other.Range;
-
-        public override int GetHashCode() => HashCode.Combine(Position, Range);
-
-        public static bool operator ==(Goal left, Goal right) => left.Equals(right);
-
-        public static bool operator !=(Goal left, Goal right) => !(left == right);
-
-        public static implicit operator Goal(Position pos) => new(pos, null);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator Goal(Position pos) => new(pos);
     }
 
     public interface IPathFinder
@@ -165,15 +152,15 @@ namespace ScreepsDotNet.API.Arena
         /// <param name="goal"></param>
         /// <param name="options"></param>
         /// <returns></returns>
-        SearchPathResult SearchPath(Position origin, Goal goal, SearchPathOptions? options);
+        SearchPathResult SearchPath(Position origin, Goal goal, SearchPathOptions? options = null);
 
         /// <summary>
-        /// Find an optimal path between origin and goal.
+        /// Find an optimal path between origin and the nearest goal.
         /// </summary>
         /// <param name="origin"></param>
-        /// <param name="goal"></param>
+        /// <param name="goals"></param>
         /// <param name="options"></param>
         /// <returns></returns>
-        SearchPathResult SearchPath(Position origin, IEnumerable<Goal> goal, SearchPathOptions? options);
+        SearchPathResult SearchPath(Position origin, ReadOnlySpan<Goal> goals, SearchPathOptions? options = null);
     }
 }

@@ -1,44 +1,57 @@
-﻿using System.Runtime.InteropServices.JavaScript;
+﻿using System.Runtime.CompilerServices;
+
+using ScreepsDotNet.Interop;
 
 using ScreepsDotNet.API.Arena;
 
 namespace ScreepsDotNet.Native.Arena
 {
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal partial class NativeConstructionSite : NativeGameObject, IConstructionSite
     {
         #region Imports
 
         [JSImport("ConstructionSite.remove", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Remove([JSMarshalAs<JSType.Object>] JSObject proxyObject);
+        internal static partial int Native_Remove(JSObject proxyObject);
 
         #endregion
 
-        public int Progress => ProxyObject.GetPropertyAsInt32("progress");
+        private int? progressCache;
+        private int? progressTotalCache;
+        private IStructure? structureCache;
+        private bool? myCache;
 
-        public int ProgressTotal => ProxyObject.GetPropertyAsInt32("progressTotal");
+        public int Progress => CachePerTick(ref progressCache) ??= proxyObject.GetPropertyAsInt32(Names.Progress);
 
-        public IStructure? Structure
-        {
-            get
-            {
-                var obj = ProxyObject.GetPropertyAsJSObject("structure");
-                if (obj == null) {  return null; }
-                return NativeGameObjectUtils.CreateWrapperForObject(obj) as IStructure;
-            }
-        }
+        public int ProgressTotal => CachePerTick(ref progressTotalCache) ??= proxyObject.GetPropertyAsInt32(Names.ProgressTotal);
 
-        public bool My => ProxyObject.GetPropertyAsBoolean("my");
+        public IStructure? Structure => CacheLifetime(ref structureCache) ??= FetchStructure();
 
-        public NativeConstructionSite(JSObject proxyObject)
-            : base(proxyObject)
+        public bool My => CacheLifetime(ref myCache) ??= proxyObject.GetPropertyAsBoolean(Names.My);
+
+        public NativeConstructionSite(INativeRoot nativeRoot, JSObject proxyObject)
+            : base(nativeRoot, proxyObject, false)
         { }
 
+        protected override void ClearNativeCache()
+        {
+            base.ClearNativeCache();
+            progressCache = null;
+            progressTotalCache = null;
+        }
+
         public void Remove()
-            => Native_Remove(ProxyObject);
+            => Native_Remove(proxyObject);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private IStructure? FetchStructure()
+        {
+            var obj = proxyObject.GetPropertyAsJSObject(Names.Structure);
+            if (obj == null) { return null; }
+            return nativeRoot.GetOrCreateWrapperForObject<NativeStructure>(obj);
+        }
 
         public override string ToString()
-            => $"ConstructionSite({Id}, {Position})";
+            => Exists ? $"ConstructionSite({Id}, {Position})" : $"ConstructionSite(DEAD)";
     }
 }

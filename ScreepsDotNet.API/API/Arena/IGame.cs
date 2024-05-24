@@ -7,5 +7,7 @@
         IPathFinder PathFinder { get; }
 
         IConstants Constants { get; }
+
+        void Tick();
     }
 }

@@ -1,18 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace ScreepsDotNet.API.Arena
 {
     public enum BodyPartType
     {
-        Attack,
-        Carry,
-        Heal,
         Move,
-        RangedAttack,
         Work,
+        Carry,
+        Attack,
+        RangedAttack,
+        Heal,
         Tough
     }
 
@@ -142,7 +140,7 @@ namespace ScreepsDotNet.API.Arena
         /// <summary>
         /// The movement fatigue indicator. If it is greater than zero, the creep cannot move
         /// </summary>
-        double Fatigue { get; }
+        int Fatigue { get; }
 
         /// <summary>
         /// The current amount of hit points of the creep
@@ -188,7 +186,7 @@ namespace ScreepsDotNet.API.Arena
         /// <summary>
         /// Drop a resource on the ground
         /// </summary>
-        /// <param name="amount">amount The amount of resource units to be dropped. If omitted, all the available carried amount is used</param>
+        /// <param name="amount">The amount of resource units to be dropped. If omitted, all the available carried amount is used</param>
         CreepDropResult Drop(ResourceType resource, int? amount = null);
 
         /// <summary>

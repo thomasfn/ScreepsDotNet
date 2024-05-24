@@ -1,34 +1,21 @@
-﻿using System.Runtime.InteropServices.JavaScript;
-
-using ScreepsDotNet.API;
+﻿using ScreepsDotNet.Interop;
 using ScreepsDotNet.API.World;
 
 namespace ScreepsDotNet.Native.World
 {
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
-    internal partial class NativeStructurePowerSpawn : NativeOwnedStructure, IStructurePowerSpawn
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
+    internal partial class NativeStructurePowerSpawn : NativeOwnedStructureWithStore, IStructurePowerSpawn
     {
         #region Imports
 
         [JSImport("StructurePowerSpawn.processPower", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_ProcessPower([JSMarshalAs<JSType.Object>] JSObject proxyObject);
+        internal static partial int Native_ProcessPower(JSObject proxyObject);
 
         #endregion
 
-        private NativeStore? storeCache;
-
-        public IStore Store => CachePerTick(ref storeCache) ??= new NativeStore(ProxyObject.GetPropertyAsJSObject("store"));
-
-        public NativeStructurePowerSpawn(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
-            : base(nativeRoot, proxyObject, id)
+        public NativeStructurePowerSpawn(INativeRoot nativeRoot, JSObject proxyObject)
+            : base(nativeRoot, proxyObject)
         { }
-
-        protected override void ClearNativeCache()
-        {
-            base.ClearNativeCache();
-            storeCache = null;
-        }
 
         public PowerSpawnProcessPowerResult ProcessPower()
             => (PowerSpawnProcessPowerResult)Native_ProcessPower(ProxyObject);

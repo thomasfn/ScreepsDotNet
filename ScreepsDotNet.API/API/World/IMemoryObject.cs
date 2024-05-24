@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 
+using ScreepsDotNet.Interop;
+
 namespace ScreepsDotNet.API.World
 {
     /// <summary>
@@ -22,12 +24,28 @@ namespace ScreepsDotNet.API.World
         bool TryGetInt(string key, out int value);
 
         /// <summary>
+        /// Attempts to retrieve an int property from the object.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        bool TryGetInt(Name key, out int value);
+
+        /// <summary>
         /// Attempts to retrieve a string property from the object.
         /// </summary>
         /// <param name="key"></param>
         /// <param name="value"></param>
         /// <returns></returns>
         bool TryGetString(string key, out string value);
+
+        /// <summary>
+        /// Attempts to retrieve a string property from the object.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        bool TryGetString(Name key, out string value);
 
         /// <summary>
         /// Attempts to retrieve a double property from the object.
@@ -38,12 +56,28 @@ namespace ScreepsDotNet.API.World
         bool TryGetDouble(string key, out double value);
 
         /// <summary>
+        /// Attempts to retrieve a double property from the object.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        bool TryGetDouble(Name key, out double value);
+
+        /// <summary>
         /// Attempts to retrieve a bool property from the object.
         /// </summary>
         /// <param name="key"></param>
         /// <param name="value"></param>
         /// <returns></returns>
         bool TryGetBool(string key, out bool value);
+
+        /// <summary>
+        /// Attempts to retrieve a bool property from the object.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        bool TryGetBool(Name key, out bool value);
 
         /// <summary>
         /// Attempts to retrieve an object property from the object.
@@ -54,11 +88,26 @@ namespace ScreepsDotNet.API.World
         bool TryGetObject(string key, [MaybeNullWhen(false)] out IMemoryObject value);
 
         /// <summary>
+        /// Attempts to retrieve an object property from the object.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        bool TryGetObject(Name key, [MaybeNullWhen(false)] out IMemoryObject value);
+
+        /// <summary>
         /// Sets an int property on the object.
         /// </summary>
         /// <param name="key"></param>
         /// <param name="value"></param>
         void SetValue(string key, int value);
+
+        /// <summary>
+        /// Sets an int property on the object.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        void SetValue(Name key, int value);
 
         /// <summary>
         /// Sets a string property on the object.
@@ -68,11 +117,25 @@ namespace ScreepsDotNet.API.World
         void SetValue(string key, string value);
 
         /// <summary>
+        /// Sets a string property on the object.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        void SetValue(Name key, string value);
+
+        /// <summary>
         /// Sets a double property on the object.
         /// </summary>
         /// <param name="key"></param>
         /// <param name="value"></param>
         void SetValue(string key, double value);
+
+        /// <summary>
+        /// Sets a double property on the object.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        void SetValue(Name key, double value);
 
         /// <summary>
         /// Sets a bool property on the object.
@@ -82,6 +145,13 @@ namespace ScreepsDotNet.API.World
         void SetValue(string key, bool value);
 
         /// <summary>
+        /// Sets a bool property on the object.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        void SetValue(Name key, bool value);
+
+        /// <summary>
         /// Retrieves an object property from the object, creating it if it does not exist.
         /// </summary>
         /// <param name="key"></param>
@@ -89,9 +159,22 @@ namespace ScreepsDotNet.API.World
         IMemoryObject GetOrCreateObject(string key);
 
         /// <summary>
+        /// Retrieves an object property from the object, creating it if it does not exist.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <returns></returns>
+        IMemoryObject GetOrCreateObject(Name key);
+
+        /// <summary>
         /// Removes a property from the object.
         /// </summary>
         /// <param name="key"></param>
         void ClearValue(string key);
+
+        /// <summary>
+        /// Removes a property from the object.
+        /// </summary>
+        /// <param name="key"></param>
+        void ClearValue(Name key);
     }
 }

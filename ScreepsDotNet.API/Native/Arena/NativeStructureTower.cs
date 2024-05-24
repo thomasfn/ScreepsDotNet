@@ -1,43 +1,50 @@
-﻿using System.Runtime.InteropServices.JavaScript;
-using ScreepsDotNet.API;
+﻿using ScreepsDotNet.Interop;
 using ScreepsDotNet.API.Arena;
 
 namespace ScreepsDotNet.Native.Arena
 {
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal partial class NativeStructureTower : NativeOwnedStructure, IStructureTower
     {
         #region Imports
 
         [JSImport("StructureTower.attack", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Attack([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject);
+        internal static partial int Native_Attack(JSObject proxyObject, JSObject targetProxyObject);
 
         [JSImport("StructureTower.heal", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Heal([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject);
-
+        internal static partial int Native_Heal(JSObject proxyObject, JSObject targetProxyObject);
 
         #endregion
 
-        public IStore Store => new NativeStore(ProxyObject.GetPropertyAsJSObject("store"));
+        private NativeStore? storeCache;
+        private int? cooldownCache;
 
-        public int Cooldown => ProxyObject.GetPropertyAsInt32("cooldown");
+        public IStore Store => CachePerTick(ref storeCache) ??= new NativeStore(proxyObject.GetPropertyAsJSObject(Names.Store));
 
-        public NativeStructureTower(JSObject proxyObject)
-            : base(proxyObject)
+        public int Cooldown => CachePerTick(ref cooldownCache) ??= proxyObject.GetPropertyAsInt32(Names.Cooldown);
+
+        public NativeStructureTower(INativeRoot nativeRoot, JSObject proxyObject)
+            : base(nativeRoot, proxyObject)
         { }
 
+        protected override void ClearNativeCache()
+        {
+            base.ClearNativeCache();
+            storeCache?.Dispose();
+            storeCache = null;
+            cooldownCache = null;
+        }
+
         public TowerActionResult Attack(ICreep target)
-            => (TowerActionResult)Native_Attack(ProxyObject, target.ToJS());
+            => (TowerActionResult)Native_Attack(proxyObject, target.ToJS());
 
         public TowerActionResult Attack(IStructure target)
-            => (TowerActionResult)Native_Attack(ProxyObject, target.ToJS());
+            => (TowerActionResult)Native_Attack(proxyObject, target.ToJS());
 
         public TowerActionResult Heal(ICreep target)
-            => (TowerActionResult)Native_Heal(ProxyObject, target.ToJS());
+            => (TowerActionResult)Native_Heal(proxyObject, target.ToJS());
 
         public override string ToString()
-            => $"StructureTower({Id}, {Position})";
+            => Exists ? $"StructureTower({Id}, {Position})" : "StructureTower(DEAD)";
     }
 }

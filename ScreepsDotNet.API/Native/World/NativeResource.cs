@@ -1,33 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.InteropServices.JavaScript;
-using ScreepsDotNet.API;
+﻿using ScreepsDotNet.Interop;
 using ScreepsDotNet.API.World;
 
 namespace ScreepsDotNet.Native.World
 {
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
-    internal partial class NativeResource : NativeRoomObject, IResource, IEquatable<NativeResource?>
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
+    internal partial class NativeResource : NativeRoomObjectWithId, IResource
     {
-        private readonly ObjectId id;
-
         private int? amountCache;
         private ResourceType? resourceTypeCache;
 
-        public int Amount => CachePerTick(ref amountCache) ??= ProxyObject.GetPropertyAsInt32("amount");
+        public int Amount => CachePerTick(ref amountCache) ??= ProxyObject.GetPropertyAsInt32(Names.Amount);
 
-        public ObjectId Id => id;
+        public ResourceType ResourceType => CacheLifetime(ref resourceTypeCache) ??= ProxyObject.GetPropertyAsName(Names.ResourceType)!.ParseResourceType();
 
-        public ResourceType ResourceType => CacheLifetime(ref resourceTypeCache) ??= ProxyObject.GetPropertyAsString("resourceType")!.ParseResourceType();
-
-        public NativeResource(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
+        public NativeResource(INativeRoot nativeRoot, JSObject proxyObject)
             : base(nativeRoot, proxyObject)
-        {
-            this.id = id;
-        }
-
-        public override JSObject? ReacquireProxyObject()
-            => nativeRoot.GetProxyObjectById(id);
+        { }
 
         protected override void ClearNativeCache()
         {
@@ -36,16 +24,6 @@ namespace ScreepsDotNet.Native.World
         }
 
         public override string ToString()
-            => $"Resource[{(Exists ? RoomPosition.ToString() : "DEAD")}]";
-
-        public override bool Equals(object? obj) => Equals(obj as NativeResource);
-
-        public bool Equals(NativeResource? other) => other is not null && id == other.id;
-
-        public override int GetHashCode() => HashCode.Combine(id);
-
-        public static bool operator ==(NativeResource? left, NativeResource? right) => EqualityComparer<NativeResource>.Default.Equals(left, right);
-
-        public static bool operator !=(NativeResource? left, NativeResource? right) => !(left == right);
+            => $"Resource[{Id}]";
     }
 }

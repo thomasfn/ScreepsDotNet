@@ -1,31 +1,31 @@
-﻿using System.Runtime.InteropServices.JavaScript;
+﻿using ScreepsDotNet.Interop;
 
 using ScreepsDotNet.API.World;
 
 namespace ScreepsDotNet.Native.World
 {
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal partial class NativeStructureInvaderCore : NativeOwnedStructure, IStructureInvaderCore
     {
         private int? levelCache;
         private int? ticksToDeployCache;
 
-        public int Level => CacheLifetime(ref levelCache) ??= ProxyObject.GetPropertyAsInt32("level");
+        public int Level => CacheLifetime(ref levelCache) ??= ProxyObject.GetPropertyAsInt32(Names.Level);
 
-        public int? TicksToDeploy => CachePerTick(ref ticksToDeployCache) ??= ProxyObject.GetTypeOfProperty("ticksToDeploy") == "number" ? ProxyObject.GetPropertyAsInt32("ticksToDeploy") : null;
+        public int? TicksToDeploy => CachePerTick(ref ticksToDeployCache) ??= ProxyObject.TryGetPropertyAsInt32(Names.TicksToDeploy);
 
         public ISpawning? Spawning
         {
             get
             {
-                var spawningObj = ProxyObject.GetPropertyAsJSObject("spawning");
+                using var spawningObj = ProxyObject.GetPropertyAsJSObject(Names.Spawning);
                 if (spawningObj == null) { return null; }
                 return new NativeSpawning(nativeRoot, spawningObj);
             }
         }
 
-        public NativeStructureInvaderCore(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
-            : base(nativeRoot, proxyObject, id)
+        public NativeStructureInvaderCore(INativeRoot nativeRoot, JSObject proxyObject)
+            : base(nativeRoot, proxyObject)
         { }
 
         protected override void ClearNativeCache()

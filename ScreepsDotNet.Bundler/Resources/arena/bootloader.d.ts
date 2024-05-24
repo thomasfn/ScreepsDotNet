@@ -1,40 +1,38 @@
-import './polyfill-fromentries';
-import './polyfill-textencoder';
-import type { MonoConfig } from './dotnet';
-export interface ManifestEntry {
-    path: string;
-    compressed: boolean;
-    b64: string;
-}
-export interface Manifest {
-    manifest: ManifestEntry[];
-    config: MonoConfig;
-}
-export declare class DotNet {
-    private readonly manifest;
-    private readonly monoConfig;
-    private readonly fileMap;
-    private tickIndex;
-    private runtimeApi;
-    private readonly imports;
-    private exports;
-    private _tickBarrier?;
-    private perfFn?;
-    private verboseLogging;
-    private get isTickBarrier();
-    constructor(manifest: Readonly<Manifest>, env: 'world'|'arena');
-    setModuleImports(moduleName: string, imports: Record<string, unknown>): void;
-    setVerboseLogging(verboseLogging: boolean): void;
-    setPerfFn(perfFn: () => number): void;
-    getExports(): Record<string, any> | undefined;
-    init(): void;
-    loop(loopFn?: () => void): void;
-    private profile;
-    private profileAccum;
-    private decodeManifest;
-    private createRuntime;
-    private downloadResource;
-    private setupRuntime;
-    private runPendingAsyncActions;
-    private tickBarrier;
+import 'fastestsmallesttextencoderdecoder';
+import { ImportTable } from './interop.js';
+import { ScreepsDotNetExports } from './common.js';
+export declare function decompressWasm(compressedBytes: Uint8Array, originalSize: number): Uint8Array;
+export declare function decodeWasm(encodedWasm: string, originalSize: number, encoding: 'b64' | 'b32768'): Uint8Array;
+export declare class Bootloader {
+    private readonly _pendingLogs;
+    private readonly _deferLogsToTick;
+    private readonly _profileFn;
+    private readonly _stdin;
+    private readonly _stdout;
+    private readonly _stderr;
+    private readonly _wasi;
+    private readonly _interop;
+    private readonly _bindings?;
+    private _wasmModule?;
+    private _wasmInstance?;
+    private _memoryManager?;
+    private _memorySize;
+    private _compiled;
+    private _started;
+    private _inTick;
+    private _profilingEnabled;
+    get compiled(): boolean;
+    get started(): boolean;
+    get profilingEnabled(): boolean;
+    set profilingEnabled(value: boolean);
+    get exports(): WebAssembly.Exports & ScreepsDotNetExports;
+    constructor(env: 'world' | 'arena' | 'test', profileFn: () => number);
+    setImports(moduleName: string, importTable: ImportTable): void;
+    log(text: string): void;
+    private dispatchLog;
+    compile(wasmBytes: Uint8Array): void;
+    start(customInitExportNames?: ReadonlyArray<string>): void;
+    loop(): void;
+    private getWasmImports;
+    private dispatchPendingLogs;
 }

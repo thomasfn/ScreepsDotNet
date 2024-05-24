@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<RuntimeIdentifier>wasi-wasm</RuntimeIdentifier>
+		<OutputType>Exe</OutputType>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<Nullable>enable</Nullable>
+		<PublishTrimmed>true</PublishTrimmed>
+		<TrimMode>full</TrimMode>
+		<TrimmerRemoveSymbols>true</TrimmerRemoveSymbols>
+		<InvariantGlobalization>true</InvariantGlobalization>
+		<WasmSingleFileBundle>true</WasmSingleFileBundle>
+		<EventSourceSupport>false</EventSourceSupport>
+		<UseSystemResourceKeys>true</UseSystemResourceKeys>
+		<InvariantTimezone>true</InvariantTimezone>
+		<WasiSdkVersion>15</WasiSdkVersion>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<ScreepsCompressWasm>false</ScreepsCompressWasm>
+		<ScreepsEncoding>b64</ScreepsEncoding>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\ScreepsDotNet.API\ScreepsDotNet.API.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\ScreepsDotNet.SourceGen\ScreepsDotNet.SourceGen.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+	</ItemGroup>
+
+	<Import Project="..\ScreepsDotNet.API\build\ScreepsDotNet.API.props" />
+
+	<ItemGroup>
+		<PackageReference Include="ScreepsDotNet.Bundler" Version="2.0.0" PrivateAssets="All" />
+	</ItemGroup>
+
+</Project>

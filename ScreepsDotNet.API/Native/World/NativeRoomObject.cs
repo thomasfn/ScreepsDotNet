@@ -3,28 +3,39 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Runtime.InteropServices.JavaScript;
 
+using ScreepsDotNet.Interop;
+
+using ScreepsDotNet.API;
 using ScreepsDotNet.API.World;
 
 namespace ScreepsDotNet.Native.World
 {
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [StructLayout(LayoutKind.Sequential, Pack = 1, Size = 8)]
+    internal struct RoomObjectMetadata
+    {
+        public int TypeId;
+        public IntPtr JSHandle;
+    }
+
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal abstract partial class NativeRoomObject : NativeObject, IRoomObject
     {
         #region Imports
 
-        [JSImport("RoomObject.getEncodedRoomPosition", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_GetEncodedRoomPosition([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Number>] IntPtr outPtr);
+        [JSImport("getProperty", "__object")]
+        internal static partial JSObject[] Native_GetEffects(JSObject proxyObject, Name key);
 
         #endregion
 
+        private UserDataStorage userDataStorage;
+
         protected RoomPosition? positionCache;
+        protected Effect[]? effectsCache;
 
         protected virtual bool CanMove { get => false; }
 
-        public IEnumerable<Effect> Effects => throw new NotImplementedException();
+        public IEnumerable<Effect> Effects => CachePerTick(ref effectsCache) ??= FetchEffects();
 
         public RoomPosition RoomPosition
         {
@@ -45,21 +56,15 @@ namespace ScreepsDotNet.Native.World
         {
             get
             {
-                var roomObj = ProxyObject.GetPropertyAsJSObject("room");
+                var roomObj = ProxyObject.GetPropertyAsJSObject(Names.Room);
                 if (roomObj == null) { return null; }
                 return nativeRoot.GetRoomByProxyObject(roomObj);
             }
         }
 
-        public NativeRoomObject(INativeRoot nativeRoot, JSObject? proxyObject)
+        public NativeRoomObject(INativeRoot nativeRoot, JSObject proxyObject)
             : base(nativeRoot, proxyObject)
         { }
-
-        public override void UpdateFromDataPacket(RoomObjectDataPacket dataPacket)
-        {
-            base.UpdateFromDataPacket(dataPacket);
-            positionCache = dataPacket.RoomPos;
-        }
 
         protected override void ClearNativeCache()
         {
@@ -70,19 +75,105 @@ namespace ScreepsDotNet.Native.World
             }
         }
 
+        #region User Data
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SetUserData<T>(T? userData) where T : class => userDataStorage.SetUserData<T>(userData);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryGetUserData<T>([MaybeNullWhen(false)] out T userData) where T : class => userDataStorage.TryGetUserData<T>(out userData);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public T? GetUserData<T>() where T : class => userDataStorage.GetUserData<T>();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool HasUserData<T>() where T : class => userDataStorage.HasUserData<T>();
+
+        #endregion
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private RoomPosition FetchRoomPosition()
         {
-            Span<byte> buffer = stackalloc byte[32];
+            RoomPosition roomPosition = default;
             unsafe
             {
-                fixed (byte* p = buffer)
+                ScreepsDotNet_Native.FetchObjectRoomPosition(ProxyObject.JSHandle, &roomPosition);
+            }
+            return roomPosition;
+        }
+
+        private Effect[] FetchEffects()
+        {
+            var effectsArr = Native_GetEffects(ProxyObject, Names.Effects);
+            var result = new Effect[effectsArr.Length];
+            try
+            {
+                for (int i = 0; i < effectsArr.Length; ++i)
                 {
-                    Native_GetEncodedRoomPosition(ProxyObject, (IntPtr)p);
-                    ScreepsDotNet_Native.DecodeRoomPosition(p, p + 16);
+                    var obj = effectsArr[i];
+                    result[i] = new(
+                        effectType: (EffectType)obj.GetPropertyAsInt32(Names.Effect),
+                        level: obj.TryGetPropertyAsInt32(Names.Level),
+                        ticksRemaining: obj.GetPropertyAsInt32(Names.TicksRemaining)
+                    );
+                }
+                return result;
+            }
+            finally
+            {
+                effectsArr.DisposeAll();
+            }
+        }
+    }
+
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
+    internal abstract partial class NativeRoomObjectWithId : NativeRoomObject, IWithId, IEquatable<NativeRoomObjectWithId?>
+    {
+        private ObjectId? idCache;
+
+        public ObjectId Id => CacheLifetime(ref idCache) ??= FetchId(ProxyObject);
+
+        protected NativeRoomObjectWithId(INativeRoot nativeRoot, JSObject proxyObject)
+            : base(nativeRoot, proxyObject)
+        {
+        }
+
+        public override JSObject? ReacquireProxyObject()
+        {
+            if (idCache == null) { throw new InvalidOperationException($"Failed to reacquire proxy object (id was never cached)"); }
+            return nativeRoot.GetProxyObjectById(idCache.Value);
+        }
+
+        protected override void OnLoseProxyObject(JSObject proxyObject)
+        {
+            base.OnLoseProxyObject(proxyObject);
+            // Here we are losing the proxy object, e.g. we lost visibility of the object
+            // If we haven't already cached the id, do so now so that we can recover the object via getObjectById if we regain visibility of it later
+            if (idCache == null) { idCache = FetchId(proxyObject); }
+        }
+
+        private static ObjectId FetchId(JSObject from)
+        {
+            ObjectId objectId = default;
+            unsafe
+            {
+                if (ScreepsDotNet_Native.GetObjectId(from.JSHandle, &objectId) == 0)
+                {
+                    throw new InvalidOperationException($"Failed to fetch object id for {from} (native call returned null)");
                 }
             }
-            return MemoryMarshal.Cast<byte, RoomPosition>(buffer[16..])[0];
+            return objectId;
         }
+
+        public override bool Equals(object? obj) => Equals(obj as NativeRoomObjectWithId);
+
+        public bool Equals(NativeRoomObjectWithId? other) => other is not null && Id.Equals(other.Id);
+
+        public override int GetHashCode() => Id.GetHashCode();
+
+        public static bool operator ==(NativeRoomObjectWithId? left, NativeRoomObjectWithId? right) => EqualityComparer<NativeRoomObjectWithId>.Default.Equals(left, right);
+
+        public static bool operator !=(NativeRoomObjectWithId? left, NativeRoomObjectWithId? right) => !(left == right);
     }
 
     internal enum FindConstant
@@ -117,7 +208,7 @@ namespace ScreepsDotNet.Native.World
         Ruins = 123,
     }
 
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal static class NativeRoomObjectPrototypes<T> where T : IRoomObject
     {
         public static int TypeId;
@@ -135,71 +226,7 @@ namespace ScreepsDotNet.Native.World
         }
     }
 
-    internal static partial class NativeCopyBuffer
-    {
-        #region Imports
-
-        [JSImport("getMaxSize", "copybuffer")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_GetMaxSize();
-
-        [JSImport("read", "copybuffer")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Read([JSMarshalAs<JSType.MemoryView>] Span<byte> data);
-
-        [JSImport("write", "copybuffer")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Write([JSMarshalAs<JSType.MemoryView>] Span<byte> data);
-
-        #endregion
-
-        private static readonly byte[] copyBuffer;
-
-        static NativeCopyBuffer()
-        {
-            copyBuffer = new byte[Native_GetMaxSize()];
-        }
-
-        public static ReadOnlySpan<byte> ReadFromJS()
-        {
-            int len = Native_Read(copyBuffer);
-            return copyBuffer.AsSpan()[..len];
-        }
-
-        public static void WriteToJS(ReadOnlySpan<byte> data)
-        {
-            data.CopyTo(copyBuffer);
-            Native_Write(copyBuffer);
-        }
-    }
-
-    [StructLayout(LayoutKind.Sequential, Pack = 0, Size = 48)]
-    internal readonly struct RoomObjectDataPacket
-    {
-        public const int SizeInBytes = 48;
-
-        static RoomObjectDataPacket()
-        {
-            if (Marshal.SizeOf<RoomObjectDataPacket>() != SizeInBytes)
-            {
-                throw new Exception($"Expected size of RoomObjectDataPacket to be {SizeInBytes}b, got {Marshal.SizeOf<RoomObjectDataPacket>()}b");
-            }
-        }
-
-        public readonly ObjectId ObjectId;
-        public readonly int TypeId;
-        public readonly int Flags;
-        public readonly int Hits;
-        public readonly int HitsMax;
-        public readonly RoomPosition RoomPos;
-
-        public bool My => (Flags & 1) == 1;
-
-        public override string ToString()
-            => $"({ObjectId}, {TypeId}, {Flags}, {Hits}, {HitsMax}, {RoomPos})";
-    }
-
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal static partial class NativeRoomObjectUtils
     {
         private const string TypeIdKey = "__dotnet_typeId";
@@ -213,16 +240,13 @@ namespace ScreepsDotNet.Native.World
         #region Imports
 
         [JSImport("getPrototypes", "game")]
-        [return: JSMarshalAsAttribute<JSType.Object>]
         internal static partial JSObject GetPrototypesObject();
 
         [JSImport("createRoomPosition", "game")]
-        [return: JSMarshalAsAttribute<JSType.Object>]
-        internal static partial JSObject CreateRoomPosition([JSMarshalAs<JSType.Number>] int x, [JSMarshalAs<JSType.Number>] int y, [JSMarshalAs<JSType.String>] string roomName);
+        internal static partial JSObject CreateRoomPosition(int encodedInt);
 
         [JSImport("interpretDateTime", "object")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial double InterpretDateTime([JSMarshalAs<JSType.Object>] JSObject obj);
+        internal static partial double InterpretDateTime(JSObject obj);
 
         #endregion
 
@@ -269,58 +293,37 @@ namespace ScreepsDotNet.Native.World
 
         internal static Type? GetWrapperTypeForConstructor(JSObject constructor)
         {
-            int typeId = constructor.GetPropertyAsInt32(TypeIdKey) - 1;
-            if (typeId < 0)
+            int? typeId = constructor.TryGetPropertyAsInt32(TypeIdKey) - 1;
+            if (typeId == null || typeId < 0)
             {
                 Console.WriteLine($"Failed to retrieve wrapper type for {constructor} - typeId not found");
                 return null;
             }
-            return prototypeTypeMappings[typeId];
+            return prototypeTypeMappings[typeId.Value];
         }
 
         internal static Type? GetWrapperTypeForObject(JSObject jsObject)
             => GetWrapperTypeForConstructor(JSUtils.GetConstructorOf(jsObject));
 
-        internal static NativeRoomObject? CreateWrapperForRoomObject(INativeRoot nativeRoot, JSObject? proxyObject, Type expectedType)
+        internal static NativeRoomObject? CreateWrapperForRoomObject(INativeRoot nativeRoot, JSObject proxyObject, Type expectedType)
         {
-            if (proxyObject == null) { return null; }
             var wrapperType = GetWrapperTypeForObject(proxyObject);
             if (wrapperType == null) { return null; }
             if (!wrapperType.IsAssignableTo(expectedType)) { return null; }
-            if (wrapperType.IsAssignableTo(typeof(IWithId)))
-            {
-                var id = proxyObject.GetPropertyAsString("id");
-                if (string.IsNullOrEmpty(id)) { return null; }
-                return (Activator.CreateInstance(wrapperType, new object[] { nativeRoot, proxyObject, new ObjectId(id) }) as NativeRoomObject)!;
-            }
-            else
-            {
-                return (Activator.CreateInstance(wrapperType, new object[] { nativeRoot, proxyObject }) as NativeRoomObject)!;
-            }
+            var wrapperObject = (Activator.CreateInstance(wrapperType, new object[] { nativeRoot, proxyObject }) as NativeRoomObject)!;
+            // Console.WriteLine($"Created {wrapperObject} for {proxyObject}");
+            return wrapperObject;
         }
 
-        internal static NativeRoomObject? CreateWrapperForRoomObject(INativeRoot nativeRoot, JSObject? proxyObject, Type expectedType, ObjectId id)
+        internal static NativeRoomObject? CreateWrapperForRoomObject(INativeRoot nativeRoot, JSObject proxyObject, in RoomObjectMetadata metadata, Type expectedType)
         {
-            if (proxyObject == null) { return null; }
-            var wrapperType = GetWrapperTypeForObject(proxyObject);
-            if (wrapperType == null) { return null; }
-            if (!wrapperType.IsAssignableTo(expectedType)) { return null; }
-            return (Activator.CreateInstance(wrapperType, new object[] { nativeRoot, proxyObject, id }) as NativeRoomObject)!;
-        }
-
-        internal static T? CreateWrapperForRoomObject<T>(INativeRoot nativeRoot, in RoomObjectDataPacket dataPacket) where T : class, IRoomObject
-            => CreateWrapperForRoomObject(nativeRoot, dataPacket, typeof(T)) as T;
-
-        internal static NativeRoomObject? CreateWrapperForRoomObject(INativeRoot nativeRoot, in RoomObjectDataPacket dataPacket, Type expectedType)
-        {
-            if (!dataPacket.ObjectId.IsValid) { return null; }
-            int typeId = dataPacket.TypeId - 1;
+            int typeId = metadata.TypeId - 1;
             if (typeId < 0) { return null; }
             Type wrapperType = prototypeTypeMappings[typeId];
             if (!wrapperType.IsAssignableTo(expectedType)) { return null; }
-            if (Activator.CreateInstance(wrapperType, new object?[] { nativeRoot, null, dataPacket.ObjectId }) is not NativeRoomObject obj) { return null; }
-            obj.UpdateFromDataPacket(dataPacket);
-            return obj;
+            var wrapperObject = Activator.CreateInstance(wrapperType, [nativeRoot, proxyObject]) as NativeRoomObject;
+            // Console.WriteLine($"Created {wrapperObject} for {proxyObject} (TypeId={metadata.TypeId}, JSHandle={metadata.JSHandle})");
+            return wrapperObject;
         }
 
         internal static string GetPrototypeName(Type type)
@@ -360,6 +363,7 @@ namespace ScreepsDotNet.Native.World
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeDeposit))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeNuke))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeCreep))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativePowerCreep))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeFlag))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeResource))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeConstructionSite))]
@@ -399,7 +403,8 @@ namespace ScreepsDotNet.Native.World
                 RegisterPrototypeTypeMapping<IMineral, NativeMineral>("Mineral", FindConstant.Minerals, null, null, "mineral", "mineral");
                 RegisterPrototypeTypeMapping<IDeposit, NativeDeposit>("Deposit", FindConstant.Deposits, null, null, "deposit", "deposit");
                 RegisterPrototypeTypeMapping<INuke, NativeNuke>("Nuke", FindConstant.Nukes, null, null, "nuke");
-                RegisterPrototypeTypeMapping<ICreep, NativeCreep>("Creep", FindConstant.Creeps, FindConstant.MyCreeps, FindConstant.HostileCreeps, "creep", "creep");
+                RegisterPrototypeTypeMapping<ICreep, NativeCreep>("Creep", FindConstant.Creeps, FindConstant.MyCreeps, FindConstant.HostileCreeps, "powerCreep", "powerCreep");
+                RegisterPrototypeTypeMapping<IPowerCreep, NativePowerCreep>("PowerCreep", FindConstant.PowerCreeps, FindConstant.MyPowerCreeps, FindConstant.HostilePowerCreeps, "creep", "creep");
                 RegisterPrototypeTypeMapping<IFlag, NativeFlag>("Flag", FindConstant.Flags, null, null, "flag");
                 RegisterPrototypeTypeMapping<IResource, NativeResource>("Resource", FindConstant.DroppedResources, null, null, "resource");
                 RegisterPrototypeTypeMapping<IConstructionSite, NativeConstructionSite>("ConstructionSite", FindConstant.ConstructionSites, FindConstant.MyConstructionSites, FindConstant.HostileConstructionSites, "constructionSite");
@@ -413,7 +418,7 @@ namespace ScreepsDotNet.Native.World
         }
     }
 
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal static class NativeRoomObjectExtensions
     {
         public static JSObject ToJS(this IRoomObject roomObject)

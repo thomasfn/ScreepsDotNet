@@ -1,11 +1,11 @@
 ﻿using System;
-using System.Runtime.InteropServices.JavaScript;
+using ScreepsDotNet.Interop;
 
 using ScreepsDotNet.API.World;
 
 namespace ScreepsDotNet.Native.World
 {
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal partial class NativeOwnedStructure : NativeStructure, IOwnedStructure
     {
         private readonly bool ownershipCanChange;
@@ -19,11 +19,11 @@ namespace ScreepsDotNet.Native.World
             {
                 if (ownershipCanChange)
                 {
-                    return CachePerTick(ref myCache) ??= ProxyObject.GetPropertyAsBoolean("my");
+                    return CachePerTick(ref myCache) ??= (ProxyObject.TryGetPropertyAsBoolean(Names.My) ?? false);
                 }
                 else
                 {
-                    return CacheLifetime(ref myCache) ??= ProxyObject.GetPropertyAsBoolean("my");
+                    return CacheLifetime(ref myCache) ??= (ProxyObject.TryGetPropertyAsBoolean(Names.My) ?? false);
                 }
             }
         }
@@ -43,27 +43,58 @@ namespace ScreepsDotNet.Native.World
             }
         }
 
-        public NativeOwnedStructure(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
-            : this(nativeRoot, proxyObject, id, false)
+        public NativeOwnedStructure(INativeRoot nativeRoot, JSObject proxyObject)
+            : this(nativeRoot, proxyObject, false)
         { }
 
-        public NativeOwnedStructure(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id, bool ownershipCanChange)
-            : base(nativeRoot, proxyObject, id)
+        public NativeOwnedStructure(INativeRoot nativeRoot, JSObject proxyObject, bool ownershipCanChange)
+            : base(nativeRoot, proxyObject)
         {
             this.ownershipCanChange = ownershipCanChange;
         }
 
-        public override void UpdateFromDataPacket(RoomObjectDataPacket dataPacket)
+        protected override void ClearNativeCache()
         {
-            base.UpdateFromDataPacket(dataPacket);
-            myCache = dataPacket.My;
+            base.ClearNativeCache();
+            if (ownershipCanChange)
+            {
+                myCache = null;
+                ownerInfoCache = null;
+            }
         }
 
         private OwnerInfo? GetOwnerInfo()
         {
-            using var ownerObj = ProxyObject.GetPropertyAsJSObject("owner");
+            using var ownerObj = ProxyObject.GetPropertyAsJSObject(Names.Owner);
             if (ownerObj == null) { return null; }
-            return new(ownerObj.GetPropertyAsString("username")!);
+            return new(ownerObj.GetPropertyAsString(Names.Username)!);
         }
+    }
+
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
+    internal partial class NativeOwnedStructureWithStore : NativeOwnedStructure, IWithStore
+    {
+        private readonly NativeStore store;
+
+        public IStore Store => store;
+
+        public NativeOwnedStructureWithStore(INativeRoot nativeRoot, JSObject proxyObject)
+            : base(nativeRoot, proxyObject)
+        {
+            store = new NativeStore(nativeRoot, proxyObject);
+        }
+
+        protected override void ClearNativeCache()
+        {
+            base.ClearNativeCache();
+            store.ClearNativeCache();
+        }
+
+        protected override void OnGetNewProxyObject(JSObject newProxyObject)
+        {
+            base.OnGetNewProxyObject(newProxyObject);
+            store.ProxyObject = newProxyObject;
+        }
+
     }
 }

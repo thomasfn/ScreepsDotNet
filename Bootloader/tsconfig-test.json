@@ -1,0 +1,31 @@
+{
+    "compilerOptions": {
+        "noImplicitAny": true,
+        "noEmitOnError": true,
+        "removeComments": false,
+        "module": "ES2022",
+        "sourceMap": false,
+        "target": "ES2022",
+        "moduleResolution": "Bundler",
+        "strict": true,
+        "lib": [
+            "esnext",
+            "DOM"
+        ],
+        "types": [
+            "@types/node"
+        ],
+        "rootDirs": [
+            "."
+        ],
+        "allowSyntheticDefaultImports": true,
+        "declaration": false,
+        "outDir": "./dist-test"
+    },
+    "include": [
+        "src-test/**/*.ts"
+    ],
+    "exclude": [
+        "src-test/**/*.d.ts"
+    ]
+}

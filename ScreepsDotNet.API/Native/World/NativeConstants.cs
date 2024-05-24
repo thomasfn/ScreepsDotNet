@@ -1,20 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices.JavaScript;
+using ScreepsDotNet.Interop;
 using System.Linq;
 
 using ScreepsDotNet.API.World;
-using ScreepsDotNet.API;
 
 namespace ScreepsDotNet.Native.World
 {
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal partial class NativeConstants : IConstants
     {
         #region Imports
 
         [JSImport("getConstantsObj", "game")]
-        [return: JSMarshalAsAttribute<JSType.Object>]
+        
         internal static partial JSObject Native_GetConstants();
 
         #endregion
@@ -164,16 +163,16 @@ namespace ScreepsDotNet.Native.World
         {
             var result = new Dictionary<(ResourceType, ResourceType), ResourceType>();
             using var reactionsObj = constantsObj.GetPropertyAsJSObject("REACTIONS")!;
-            var topLevelKeys = JSUtils.GetKeysOf(reactionsObj);
+            var topLevelKeys = reactionsObj.GetPropertyNamesAsNames();
             foreach (var res1Raw in topLevelKeys)
             {
                 var res1 = res1Raw.ParseResourceType();
                 using var subObj = reactionsObj.GetPropertyAsJSObject(res1Raw)!;
-                var subKeys = JSUtils.GetKeysOf(subObj);
+                var subKeys = subObj.GetPropertyNamesAsNames();
                 foreach (var res2Raw in subKeys)
                 {
                     var res2 = res2Raw.ParseResourceType();
-                    var productRaw = subObj.GetPropertyAsString(res2Raw)!;
+                    var productRaw = subObj.GetPropertyAsName(res2Raw)!;
                     var product = productRaw.ParseResourceType();
                     result.Add((res1, res2), product);
                 }
@@ -185,9 +184,10 @@ namespace ScreepsDotNet.Native.World
         {
             var result = new List<double>();
             int i = 0;
-            while (obj.HasProperty(i.ToString()) || i < firstIndex)
+            double? value;
+            while ((value = obj.TryGetPropertyAsDouble(i.ToString())) != null || i < firstIndex)
             {
-                result.Add(obj.GetPropertyAsDouble(i.ToString()));
+                result.Add(value ?? 0.0);
                 ++i;
             }
             return result.ToArray();
@@ -197,9 +197,10 @@ namespace ScreepsDotNet.Native.World
         {
             var result = new List<int>();
             int i = 0;
-            while (obj.HasProperty(i.ToString()) || i < firstIndex)
+            int? value;
+            while ((value = obj.TryGetPropertyAsInt32(i.ToString())) != null || i < firstIndex)
             {
-                result.Add(obj.GetPropertyAsInt32(i.ToString()));
+                result.Add(value ?? 0);
                 ++i;
             }
             return result.ToArray();
@@ -208,7 +209,7 @@ namespace ScreepsDotNet.Native.World
         private IReadOnlyDictionary<TKey, TValue> InterpretMap<TKey, TValue>(JSObject obj, Func<JSObject, string, TKey?> keySelector, Func<JSObject, string, TValue> valueSelector) where TKey : notnull
         {
             var dict = new Dictionary<TKey, TValue>();
-            var keys = JSUtils.GetKeysOf(obj);
+            var keys = obj.GetPropertyNames();
             foreach (var key in keys)
             {
                 var selectedKey = keySelector(obj, key);

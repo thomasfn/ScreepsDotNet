@@ -2,22 +2,14 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.InteropServices.JavaScript;
+using ScreepsDotNet.Interop;
 using System.Linq;
 
 namespace ScreepsDotNet.Native.World
 {
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
-    internal partial class NativeObjectLazyLookup<TConcrete, TInterface> : IReadOnlyDictionary<string, TInterface> where TInterface : class where TConcrete : class, INativeObject, TInterface
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
+    internal partial class NativeObjectLazyLookup<TConcrete, TInterface> : IReadOnlyDictionary<string, TInterface> where TInterface : class where TConcrete : NativeObject, TInterface
     {
-        #region Imports
-
-        [JSImport("getKeysOf", "object")]
-        [return: JSMarshalAsAttribute<JSType.Array<JSType.String>>]
-        internal static partial string[] Native_GetKeysOf([JSMarshalAs<JSType.Object>] JSObject obj);
-
-        #endregion
-
         private readonly Func<JSObject> proxyObjectReacquireFn;
         private readonly Func<TConcrete, string> getObjectKeyFn;
         private readonly Func<string, JSObject, TConcrete?> constructObjectFn;
@@ -27,7 +19,7 @@ namespace ScreepsDotNet.Native.World
         private HashSet<string>? keysCache;
         private readonly Dictionary<string, TConcrete> mapCache = new();
 
-        private HashSet<string> KeySet => keysCache ??= new HashSet<string>(Native_GetKeysOf(proxyObject));
+        private HashSet<string> KeySet => keysCache ??= new HashSet<string>(proxyObject.GetPropertyNames());
 
         public TInterface this[string key] => TryGetValue(key, out var value) ? value : throw new KeyNotFoundException();
 
@@ -58,6 +50,7 @@ namespace ScreepsDotNet.Native.World
 
         public void InvalidateProxyObject()
         {
+            proxyObject.Dispose();
             proxyObject = proxyObjectReacquireFn();
             keysCache = null;
             // TODO: Instead of clearing the whole cache, go through and remove any where Exists == false

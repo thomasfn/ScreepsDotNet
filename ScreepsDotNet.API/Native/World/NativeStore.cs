@@ -1,77 +1,189 @@
 ﻿using System;
 using System.Collections.Immutable;
 using System.Collections.Generic;
-using System.Runtime.InteropServices.JavaScript;
+using System.Runtime.CompilerServices;
+using System.Linq;
 
-using ScreepsDotNet.API;
+using ScreepsDotNet.Interop;
+
+using ScreepsDotNet.API.World;
 
 namespace ScreepsDotNet.Native.World
 {
     internal static class ResourceTypeExtensions
     {
-        private static readonly ImmutableArray<string> resourceStrings = new string[]
-        {
-            "energy", "power",
-            "H", "O", "U", "L", "K", "Z", "X", "G",
-            "silicon", "metal", "biomass", "mist",
-            "OH", "ZK", "UL", "UH", "UO", "KH", "KO", "LH", "LO", "ZH", "ZO", "GH", "GO",
-            "UH2O", "UHO2", "KH2O", "KHO2", "LH2O", "LHO2", "ZH2O", "ZHO2", "GH2O", "GHO2",
-            "XUH2O", "XUHO2", "XKH2O", "XKHO2", "XLH2O", "XLHO2", "XZH2O", "XZHO2", "XGH2O", "XGHO2",
-            "ops",
-            "utrium_bar", "lemergium_bar", "zynthium_bar", "keanium_bar", "ghodium_melt", "oxidant", "reductant", "purifier", "battery",
-            "composite", "crystal", "liquid",
-            "wire", "switch", "transistor", "microchip", "circuit", "device",
-            "cell", "phlegm", "tissue", "muscle", "organoid", "organism",
-            "alloy", "tube", "fixtures", "frame", "hydraulics", "machine",
-            "condensate", "concentrate", "extract", "spirit", "emanation", "essence",
-            ""
-        }.ToImmutableArray();
+        private static readonly ImmutableArray<Name> resourceToName =
+        [
+            Names.Energy,
+            Names.Power,
+            Name.Create("H"),
+            Name.Create("O"),
+            Name.Create("U"),
+            Name.Create("L"),
+            Name.Create("K"),
+            Name.Create("Z"),
+            Name.Create("X"),
+            Name.Create("G"),
+            Name.Create("silicon"),
+            Name.Create("metal"),
+            Name.Create("biomass"),
+            Name.Create("mist"),
+            Name.Create("OH"),
+            Name.Create("ZK"),
+            Name.Create("UL"),
+            Name.Create("UH"),
+            Name.Create("UO"),
+            Name.Create("KH"),
+            Name.Create("KO"),
+            Name.Create("LH"),
+            Name.Create("LO"),
+            Name.Create("ZH"),
+            Name.Create("ZO"),
+            Name.Create("GH"),
+            Name.Create("GO"),
+            Name.Create("UH2O"),
+            Name.Create("UHO2"),
+            Name.Create("KH2O"),
+            Name.Create("KHO2"),
+            Name.Create("LH2O"),
+            Name.Create("LHO2"),
+            Name.Create("ZH2O"),
+            Name.Create("ZHO2"),
+            Name.Create("GH2O"),
+            Name.Create("GHO2"),
+            Name.Create("XUH2O"),
+            Name.Create("XUHO2"),
+            Name.Create("XKH2O"),
+            Name.Create("XKHO2"),
+            Name.Create("XLH2O"),
+            Name.Create("XLHO2"),
+            Name.Create("XZH2O"),
+            Name.Create("XZHO2"),
+            Name.Create("XGH2O"),
+            Name.Create("XGHO2"),
+            Name.Create("ops"),
+            Name.Create("utrium_bar"),
+            Name.Create("lemergium_bar"),
+            Name.Create("zynthium_bar"),
+            Name.Create("keanium_bar"),
+            Name.Create("ghodium_melt"),
+            Name.Create("oxidant"),
+            Name.Create("reductant"),
+            Name.Create("purifier"),
+            Name.Create("battery"),
+            Name.Create("composite"),
+            Name.Create("crystal"),
+            Name.Create("liquid"),
+            Name.Create("wire"),
+            Name.Create("switch"),
+            Name.Create("transistor"),
+            Name.Create("microchip"),
+            Name.Create("circuit"),
+            Name.Create("device"),
+            Name.Create("cell"),
+            Name.Create("phlegm"),
+            Name.Create("tissue"),
+            Name.Create("muscle"),
+            Name.Create("organoid"),
+            Name.Create("organism"),
+            Name.Create("alloy"),
+            Name.Create("tube"),
+            Name.Create("fixtures"),
+            Name.Create("frame"),
+            Name.Create("hydraulics"),
+            Name.Create("machine"),
+            Name.Create("condensate"),
+            Name.Create("concentrate"),
+            Name.Create("extract"),
+            Name.Create("spirit"),
+            Name.Create("emanation"),
+            Name.Create("essence"),
+            Name.Create("season"),
+            Name.Create("unknown")
+        ];
 
-        private static readonly Dictionary<string, ResourceType> stringResources = new();
+        private static readonly Dictionary<Name, ResourceType> nameToResource = [];
 
         static ResourceTypeExtensions()
         {
-            for (int i = 0; i < resourceStrings.Length; ++i)
+            for (int i = 0; i < resourceToName.Length; ++i)
             {
-                stringResources.Add(resourceStrings[i], (ResourceType)i);
+                nameToResource.Add(resourceToName[i], (ResourceType)i);
             }
         }
 
-        public static string ToJS(this ResourceType resourceType)
-            => resourceStrings[(int)resourceType];
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Name ToJS(this ResourceType resourceType)
+            => resourceToName[(int)resourceType];
 
-        public static ResourceType ParseResourceType(this string str)
-            => stringResources.TryGetValue(str, out var resourceType) ? resourceType : ResourceType.Unknown;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ResourceType ParseResourceType(this Name str)
+        {
+            if (!nameToResource.TryGetValue(str, out var resourceType))
+            {
+                Console.WriteLine($"Failed to parse resource type '{str}'");
+                return ResourceType.Unknown;
+            }
+            return resourceType;
+        }
     }
 
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal partial class NativeStore : IStore
     {
         #region Imports
 
-        [JSImport("Store.getCapacity", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int? Native_GetCapacity([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.String>] string? resourceType);
+        [JSImport("RoomObject.getStoreCapacity", "game/prototypes/wrapped")]
+        internal static partial int? Native_GetStoreCapacity(JSObject proxyObject, Name? resourceType);
 
-        [JSImport("Store.getFreeCapacity", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int? Native_GetFreeCapacity([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.String>] string? resourceType);
+        [JSImport("RoomObject.getStoreFreeCapacity", "game/prototypes/wrapped")]
+        internal static partial int? Native_GetStoreFreeCapacity(JSObject proxyObject, Name? resourceType);
 
-        [JSImport("Store.getUsedCapacity", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int? Native_GetUsedCapacity([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.String>] string? resourceType);
+        [JSImport("RoomObject.getStoreUsedCapacity", "game/prototypes/wrapped")]
+        internal static partial int? Native_GetStoreUsedCapacity(JSObject proxyObject, Name? resourceType);
+
+        [JSImport("RoomObject.getStoreContainedResources", "game/prototypes/wrapped")]
+        internal static partial Name[] Native_GetStoreContainedResources(JSObject proxyObject);
+
+        [JSImport("RoomObject.indexStore", "game/prototypes/wrapped")]
+        internal static partial int? Native_IndexStore(JSObject proxyObject, Name resourceType);
 
         #endregion
 
         private const int ResourceCount = (int)ResourceType.Unknown + 1;
 
-        internal readonly JSObject? ProxyObject;
+        private INativeRoot nativeRoot;
+        private JSObject proxyObject;
+        private int proxyObjectValidAsOf;
 
         private int[]? resourceCache;
+        private ImmutableArray<ResourceType>? containedResourceTypesCache;
 
-        public NativeStore(JSObject? proxyObject)
+        public IEnumerable<ResourceType> ContainedResourceTypes => containedResourceTypesCache ??= Native_GetStoreContainedResources(proxyObject).Select(static x => x.ParseResourceType()).ToImmutableArray();
+
+        public event Action? OnRequestNewProxyObject;
+
+        public JSObject ProxyObject
         {
-            ProxyObject = proxyObject;
+            get
+            {
+                int tickIndex = nativeRoot.TickIndex;
+                if (proxyObjectValidAsOf < tickIndex)
+                {
+                    OnRequestNewProxyObject?.Invoke();
+                }
+                if (proxyObjectValidAsOf < tickIndex)
+                {
+                    throw new NativeObjectNoLongerExistsException();
+                }
+                return proxyObject;
+            }
+            set
+            {
+                proxyObject = value;
+                proxyObjectValidAsOf = nativeRoot.TickIndex;
+                ClearNativeCache();
+            }
         }
 
         public int this[ResourceType resourceType]
@@ -84,7 +196,7 @@ namespace ScreepsDotNet.Native.World
                     resourceCache.AsSpan().Fill(-1);
                 }
                 ref int amount = ref resourceCache[(int)resourceType];
-                if (amount < 0) { amount = ProxyObject?.GetPropertyAsInt32(resourceType.ToJS()) ?? 0; }
+                if (amount < 0) { amount = Native_IndexStore(proxyObject, resourceType.ToJS()) ?? 0; }
                 return amount;
             }
             set
@@ -98,13 +210,24 @@ namespace ScreepsDotNet.Native.World
             }
         }
 
-        public int? GetCapacity(ResourceType? resourceType = null)
-            => ProxyObject != null ? Native_GetCapacity(ProxyObject, resourceType?.ToJS()) : null;
+        public NativeStore(INativeRoot nativeRoot, JSObject proxyObject)
+        {
+            this.nativeRoot = nativeRoot;
+            this.proxyObject = proxyObject;
+            proxyObjectValidAsOf = nativeRoot.TickIndex;
+        }
 
-        public int? GetFreeCapacity(ResourceType? resourceType = null)
-            => ProxyObject != null ? Native_GetFreeCapacity(ProxyObject, resourceType?.ToJS()) : null;
+        public void ClearNativeCache()
+        {
+            resourceCache?.AsSpan().Fill(-1);
+            containedResourceTypesCache = null;
+        }
 
-        public int? GetUsedCapacity(ResourceType? resourceType = null)
-            => ProxyObject != null ? Native_GetUsedCapacity(ProxyObject, resourceType?.ToJS()) : null;
+        public int? GetCapacity(ResourceType? resourceType = null) => Native_GetStoreCapacity(proxyObject, resourceType?.ToJS());
+
+        public int? GetFreeCapacity(ResourceType? resourceType = null) => Native_GetStoreFreeCapacity(proxyObject, resourceType?.ToJS());
+
+        public int? GetUsedCapacity(ResourceType? resourceType = null) => Native_GetStoreUsedCapacity(proxyObject, resourceType?.ToJS());
+
     }
 }

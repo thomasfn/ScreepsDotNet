@@ -1,19 +1,27 @@
-﻿using System.Runtime.InteropServices.JavaScript;
+﻿using ScreepsDotNet.Interop;
 
 using ScreepsDotNet.API.World;
 
 namespace ScreepsDotNet.Native.World
 {
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal partial class NativeStructureRoad : NativeStructure, IStructureRoad
     {
-        public int TicksToDecay => ProxyObject.GetPropertyAsInt32("ticksToDecay");
+        private int? ticksToDecayCache;
 
-        public NativeStructureRoad(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
-            : base(nativeRoot, proxyObject, id)
+        public int TicksToDecay => CachePerTick(ref ticksToDecayCache) ??= ProxyObject.GetPropertyAsInt32(Names.TicksToDecay);
+
+        public NativeStructureRoad(INativeRoot nativeRoot, JSObject proxyObject)
+            : base(nativeRoot, proxyObject)
         { }
 
+        protected override void ClearNativeCache()
+        {
+            base.ClearNativeCache();
+            ticksToDecayCache = null;
+        }
+
         public override string ToString()
-            => $"StructureRoad[{(Exists ? RoomPosition.ToString() : "DEAD")}]";
+            => $"StructureRoad[{Id}]";
     }
 }

@@ -3,43 +3,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-using ScreepsDotNet.API.Arena;
-
 namespace ScreepsDotNet.API
 {
     /// <summary>
     /// Describes the state of a single body part belonging to a creep.
     /// </summary>
     /// <typeparam name="TBodyPartType"></typeparam>
-    public readonly struct BodyPart<TBodyPartType> : IEquatable<BodyPart<TBodyPartType>> where TBodyPartType : unmanaged, Enum
-    {
-        public readonly TBodyPartType Type;
-        public readonly int Hits;
-        public readonly string? Boost;
-
-        public BodyPart(TBodyPartType type, int hits, string? boost = null)
-        {
-            Type = type;
-            Hits = hits;
-            Boost = boost;
-        }
-
-        public override bool Equals(object? obj) => obj is BodyPart<TBodyPartType> part && Equals(part);
-
-        public bool Equals(BodyPart<TBodyPartType> other)
-            => EqualityComparer<TBodyPartType>.Default.Equals(Type, other.Type)
-            && Hits == other.Hits
-            && Boost == other.Boost;
-
-        public override int GetHashCode() => HashCode.Combine(Type, Hits, Boost);
-
-        public static bool operator ==(BodyPart<TBodyPartType> left, BodyPart<TBodyPartType> right) => left.Equals(right);
-
-        public static bool operator !=(BodyPart<TBodyPartType> left, BodyPart<TBodyPartType> right) => !(left == right);
-
-        public override string ToString()
-            => $"{Type}[{Hits}]{(!string.IsNullOrEmpty(Boost) ? $" {Boost}" : "")}";
-    }
+    public readonly record struct BodyPart<TBodyPartType>
+    (
+        TBodyPartType Type,
+        int Hits,
+        World.ResourceType? Boost
+    ) where TBodyPartType : unmanaged, Enum;
 
     /// <summary>
     /// Describes the body structure of a creep.
@@ -50,6 +25,7 @@ namespace ScreepsDotNet.API
 
         private readonly (TBodyPartType bodyPartType, int quantity)[]? bodyPartTypes;
         private readonly int? hash;
+        private readonly int totalPartCount;
 
         public ReadOnlySpan<(TBodyPartType bodyPartType, int quantity)> BodyPartTypes => bodyPartTypes ?? ReadOnlySpan<(TBodyPartType bodyPartType, int quantity)>.Empty;
 
@@ -71,6 +47,8 @@ namespace ScreepsDotNet.API
             }
         }
 
+        public int TotalBodyPartCount => totalPartCount;
+
         public int this[TBodyPartType bodyPartType]
         {
             get
@@ -89,6 +67,10 @@ namespace ScreepsDotNet.API
         {
             bodyPartTypes = bodyPartTypeTuples.ToArray();
             hash = CalculateHash();
+            for (int i = 0; i < bodyPartTypes.Length; ++i)
+            {
+                totalPartCount += bodyPartTypes[i].quantity;
+            }
         }
 
         public BodyType(IEnumerable<TBodyPartType> bodyPartTypes)
@@ -106,6 +88,7 @@ namespace ScreepsDotNet.API
                 {
                     ++bodyPartTuples[bodyPartTuplesLength - 1].quantity;
                 }
+                ++totalPartCount;
             }
             this.bodyPartTypes = bodyPartTuples[..bodyPartTuplesLength].ToArray();
             hash = CalculateHash();

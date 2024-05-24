@@ -1,19 +1,21 @@
-﻿using System.Runtime.InteropServices.JavaScript;
+﻿using ScreepsDotNet.Interop;
 
 using ScreepsDotNet.API.Arena;
 
 namespace ScreepsDotNet.Native.Arena
 {
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal partial class NativeOwnedStructure : NativeStructure, IOwnedStructure
     {
-        public bool? My => ProxyObject.GetTypeOfProperty("my") == "boolean" ? ProxyObject.GetPropertyAsBoolean("my") : null;
+        private bool? myCache;
 
-        public NativeOwnedStructure(JSObject proxyObject)
-            : base(proxyObject)
+        public bool? My => CacheLifetime(ref myCache) ??= proxyObject.TryGetPropertyAsBoolean(Names.My);
+
+        public NativeOwnedStructure(INativeRoot nativeRoot, JSObject proxyObject)
+            : base(nativeRoot, proxyObject)
         { }
 
         public override string ToString()
-            => $"OwnedStructure({Id}, {Position})";
+            => Exists ? $"OwnedStructure({Id}, {Position})" : "OwnedStructure(DEAD)";
     }
 }

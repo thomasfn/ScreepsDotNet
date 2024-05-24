@@ -1,17 +1,17 @@
-﻿using System.Runtime.InteropServices.JavaScript;
+﻿using ScreepsDotNet.Interop;
 
 using ScreepsDotNet.API.Arena;
 
 namespace ScreepsDotNet.Native.Arena
 {
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal partial class NativeFlag : NativeGameObject, IFlag
     {
-        public NativeFlag(JSObject proxyObject)
-            : base(proxyObject)
+        public NativeFlag(INativeRoot nativeRoot, JSObject proxyObject)
+            : base(nativeRoot, proxyObject, false)
         { }
 
         public override string ToString()
-            => $"Flag({Id}, {Position})";
+            => Exists ? $"Flag({Id}, {Position})" : $"Flag(DEAD)";
     }
 }

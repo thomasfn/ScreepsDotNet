@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace ScreepsDotNet.API.Arena
 {
@@ -35,13 +34,6 @@ namespace ScreepsDotNet.API.Arena
         public static bool operator !=(CreateConstructionSiteResult left, CreateConstructionSiteResult right) => !(left == right);
     }
 
-    public enum Terrain
-    {
-        Wall = 1,
-        Swamp = 2,
-        Plain = 0
-    }
-
     /// <summary>
     /// Represents a rectangular view of the room's terrain.
     /// </summary>
@@ -70,6 +62,11 @@ namespace ScreepsDotNet.API.Arena
         /// <param name="position">Position in world-space (e.g. not relative to the Min)</param>
         /// <returns></returns>
         public Terrain this[Position position] => data[(position.Y - Min.Y) * (Max.X - Min.X + 1) + position.X - Min.X];
+
+        /// <summary>
+        /// Gets the raw underlying data of the slice.
+        /// </summary>
+        public ReadOnlySpan<Terrain> RawData => data;
 
         public TerrainSlice(ReadOnlySpan<Terrain> data, Position min, Position max)
         {
@@ -175,7 +172,7 @@ namespace ScreepsDotNet.API.Arena
         /// Get CPU wall time elapsed in the current tick in nanoseconds
         /// </summary>
         /// <returns></returns>
-        long GetCpuTime();
+        double GetCpuTime();
 
         /// <summary>
         /// Get linear direction by differences of x and y.

@@ -1,201 +1,178 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices.JavaScript;
+using System.Collections.Immutable;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
+using ScreepsDotNet.Interop;
 using ScreepsDotNet.API;
 using ScreepsDotNet.API.World;
 
 namespace ScreepsDotNet.Native.World
 {
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal static class NativeCreepExtensions
     {
-        public static string ToJS(this BodyPartType bodyPartType)
-            => bodyPartType switch
-            {
-                BodyPartType.Attack => "attack",
-                BodyPartType.Carry => "carry",
-                BodyPartType.Heal => "heal",
-                BodyPartType.Move => "move",
-                BodyPartType.RangedAttack => "ranged_attack",
-                BodyPartType.Tough => "tough",
-                BodyPartType.Work => "work",
-                BodyPartType.Claim => "claim",
-                _ => throw new NotImplementedException($"Unknown body part type '{bodyPartType}'"),
-            };
+        private static readonly ImmutableArray<Name> bodyPartTypeToName =
+        [
+            Name.Create("move"),
+            Name.Create("work"),
+            Name.Create("carry"),
+            Name.Create("attack"),
+            Name.Create("ranged_attack"),
+            Name.Create("tough"),
+            Name.Create("heal"),
+            Name.Create("claim"),
+        ];
 
-        public static string ToJS(this CreepOrderType creepOrderType)
-            => creepOrderType switch
-            {
-                CreepOrderType.Attack => "attack",
-                CreepOrderType.AttackController => "attackController",
-                CreepOrderType.Build => "build",
-                CreepOrderType.ClaimController => "claimController",
-                CreepOrderType.Dismantle => "dismantle",
-                CreepOrderType.Drop => "drop",
-                CreepOrderType.GenerateSafeMode => "generateSafeMode",
-                CreepOrderType.Harvest => "harvest",
-                CreepOrderType.Heal => "heal",
-                CreepOrderType.Move => "move",
-                CreepOrderType.Pickup => "pickup",
-                CreepOrderType.Pull => "pull",
-                CreepOrderType.RangedAttack => "rangedAttack",
-                CreepOrderType.RangedMassAttack => "rangedMassAttack",
-                CreepOrderType.Repair => "repair",
-                CreepOrderType.ReserveController => "ReserveController",
-                CreepOrderType.Say => "say",
-                CreepOrderType.SignController => "signController",
-                CreepOrderType.Suicide => "suicide",
-                CreepOrderType.Transfer => "transfer",
-                CreepOrderType.UpgradeController => "upgradeController",
-                CreepOrderType.Withdraw => "withdraw",
-                _ => throw new NotImplementedException($"Unknown creep order type '{creepOrderType}'"),
-            };
+        private static readonly ImmutableArray<Name> creepOrderTypeToName =
+        [
+            Name.Create("attack"),
+            Name.Create("attackController"),
+            Name.Create("build"),
+            Name.Create("claimController"),
+            Name.Create("dismantle"),
+            Name.Create("drop"),
+            Name.Create("generateSafeMode"),
+            Name.Create("harvest"),
+            Name.Create("heal"),
+            Name.Create("move"),
+            Name.Create("pickup"),
+            Name.Create("pull"),
+            Name.Create("rangedAttack"),
+            Name.Create("rangedMassAttack"),
+            Name.Create("repair"),
+            Name.Create("reserveController"),
+            Name.Create("say"),
+            Name.Create("signController"),
+            Name.Create("suicide"),
+            Name.Create("transfer"),
+            Name.Create("upgradeController"),
+            Name.Create("withdraw"),
+        ];
 
-        public static BodyPartType ParseBodyPartType(this string str)
-            => str switch
-            {
-                "attack" => BodyPartType.Attack,
-                "carry" => BodyPartType.Carry,
-                "heal" => BodyPartType.Heal,
-                "move" => BodyPartType.Move,
-                "ranged_attack" => BodyPartType.RangedAttack,
-                "tough" => BodyPartType.Tough,
-                "work" => BodyPartType.Work,
-                "claim" => BodyPartType.Claim,
-                _ => throw new NotImplementedException($"Unknown body part type '{str}'"),
-            };
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Name ToJS(this BodyPartType bodyPartType)
+            => bodyPartTypeToName[(int)bodyPartType];
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Name ToJS(this CreepOrderType creepOrderType)
+            => creepOrderTypeToName[(int)creepOrderType];
+
+        public static JSObject ToJS(this MoveToOptions moveToOptions)
+        {
+            var obj = moveToOptions.FindPathOptions != null ? moveToOptions.FindPathOptions.Value.ToJS() : JSObject.Create();
+            obj.SetProperty(Names.ReusePath, moveToOptions.ReusePath);
+            obj.SetProperty(Names.SerializeMemory, moveToOptions.SerializeMemory);
+            obj.SetProperty(Names.NoPathFinding, moveToOptions.NoPathFinding);
+            if (moveToOptions.VisualizePathStyle != null) { obj.SetProperty(Names.VisualizePathStyle, moveToOptions.VisualizePathStyle.Value.ToJS()); }
+            return obj;
+        }
     }
 
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
-    internal partial class NativeCreep : NativeRoomObject, ICreep, IEquatable<NativeCreep?>
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
+    internal partial class NativeCreep : NativeRoomObjectWithId, ICreep
     {
         #region Imports
 
         [JSImport("Creep.attack", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Attack([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject);
+        internal static partial int Native_Attack(JSObject proxyObject, JSObject targetProxyObject);
 
         [JSImport("Creep.attackController", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_AttackController([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject);
+        internal static partial int Native_AttackController(JSObject proxyObject, JSObject targetProxyObject);
 
         [JSImport("Creep.build", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Build([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject);
+        internal static partial int Native_Build(JSObject proxyObject, JSObject targetProxyObject);
 
         [JSImport("Creep.cancelOrder", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_CancelOrder([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.String>] string methodName);
+        internal static partial int Native_CancelOrder(JSObject proxyObject, Name methodName);
 
         [JSImport("Creep.claimController", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_ClaimController([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject);
+        internal static partial int Native_ClaimController(JSObject proxyObject, JSObject targetProxyObject);
 
         [JSImport("Creep.dismantle", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Dismantle([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject);
+        internal static partial int Native_Dismantle(JSObject proxyObject, JSObject targetProxyObject);
 
         [JSImport("Creep.drop", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Drop([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.String>] string resourceType, [JSMarshalAs<JSType.Number>] int? amount);
+        internal static partial int Native_Drop(JSObject proxyObject, Name resourceType, int? amount);
 
         [JSImport("Creep.generateSafeMode", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_GenerateSafeMode([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject);
+        internal static partial int Native_GenerateSafeMode(JSObject proxyObject, JSObject targetProxyObject);
 
         [JSImport("Creep.getActiveBodyparts", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_GetActiveBodyparts([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.String>] string type);
+        internal static partial int Native_GetActiveBodyparts(JSObject proxyObject, Name type);
 
         [JSImport("Creep.harvest", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Harvest([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject);
+        internal static partial int Native_Harvest(JSObject proxyObject, JSObject targetProxyObject);
 
         [JSImport("Creep.heal", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Heal([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject);
+        internal static partial int Native_Heal(JSObject proxyObject, JSObject targetProxyObject);
 
         [JSImport("Creep.move", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Move([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Number>] int direction);
+        internal static partial int Native_Move(JSObject proxyObject, int direction);
 
         [JSImport("Creep.moveByPath", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_MoveByPath([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Array<JSType.Object>>] JSObject[] path);
+        internal static partial int Native_MoveByPath(JSObject proxyObject, JSObject[] path);
 
         [JSImport("Creep.moveByPath", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_MoveByPath([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.String>] string serialisedPath);
+        internal static partial int Native_MoveByPath(JSObject proxyObject, string serialisedPath);
 
         [JSImport("Creep.moveTo", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_MoveTo([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Number>] int x, [JSMarshalAs<JSType.Number>] int y, [JSMarshalAs<JSType.Object>] JSObject? opts);
+        internal static partial int Native_MoveTo(JSObject proxyObject, int x, int y, JSObject? opts);
 
         [JSImport("Creep.moveTo", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_MoveTo([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject target, [JSMarshalAs<JSType.Object>] JSObject? opts);
+        internal static partial int Native_MoveTo(JSObject proxyObject, JSObject target, JSObject? opts);
 
         [JSImport("Creep.notifyWhenAttacked", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_NotifyWhenAttacked([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Boolean>] bool enabled);
+        internal static partial int Native_NotifyWhenAttacked(JSObject proxyObject, bool enabled);
 
         [JSImport("Creep.pickup", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Pickup([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject);
+        internal static partial int Native_Pickup(JSObject proxyObject, JSObject targetProxyObject);
 
         [JSImport("Creep.pull", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Pull([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject);
+        internal static partial int Native_Pull(JSObject proxyObject, JSObject targetProxyObject);
 
         [JSImport("Creep.rangedAttack", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_RangedAttack([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject);
+        internal static partial int Native_RangedAttack(JSObject proxyObject, JSObject targetProxyObject);
 
         [JSImport("Creep.rangedHeal", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_RangedHeal([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject);
+        internal static partial int Native_RangedHeal(JSObject proxyObject, JSObject targetProxyObject);
 
         [JSImport("Creep.rangedMassAttack", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_RangedMassAttack([JSMarshalAs<JSType.Object>] JSObject proxyObject);
+        internal static partial int Native_RangedMassAttack(JSObject proxyObject);
 
         [JSImport("Creep.repair", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Repair([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject);
+        internal static partial int Native_Repair(JSObject proxyObject, JSObject targetProxyObject);
 
         [JSImport("Creep.reserveController", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_ReserveController([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject);
+        internal static partial int Native_ReserveController(JSObject proxyObject, JSObject targetProxyObject);
 
         [JSImport("Creep.say", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Say([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.String>] string message, [JSMarshalAs<JSType.Boolean>] bool? sayPublic);
+        internal static partial int Native_Say(JSObject proxyObject, string message, bool? sayPublic);
 
         [JSImport("Creep.signController", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_SignController([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject, [JSMarshalAs<JSType.String>] string text);
+        internal static partial int Native_SignController(JSObject proxyObject, JSObject targetProxyObject, string text);
 
         [JSImport("Creep.suicide", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Suicide([JSMarshalAs<JSType.Object>] JSObject proxyObject);
+        internal static partial int Native_Suicide(JSObject proxyObject);
 
         [JSImport("Creep.transfer", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Transfer([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject, [JSMarshalAs<JSType.String>] string resourceType, [JSMarshalAs<JSType.Number>] int? amount);
+        internal static partial int Native_Transfer(JSObject proxyObject, JSObject targetProxyObject, Name resourceType, int? amount);
 
         [JSImport("Creep.upgradeController", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_UpgradeController([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject);
+        internal static partial int Native_UpgradeController(JSObject proxyObject, JSObject targetProxyObject);
 
         [JSImport("Creep.withdraw", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Withdraw([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject targetProxyObject, [JSMarshalAs<JSType.String>] string resourceType, [JSMarshalAs<JSType.Number>] int? amount);
+        internal static partial int Native_Withdraw(JSObject proxyObject, JSObject targetProxyObject, Name resourceType, int? amount);
+
+        [JSImport("Creep.getEncodedBody", "game/prototypes/wrapped")]
+        internal static partial int Native_GetEncodedBody(JSObject proxyObject, IntPtr outEncodedBodyParts);
 
         #endregion
 
-        private readonly ObjectId id;
+        private readonly NativeStore store;
 
+        private BodyPart<BodyPartType>[]? bodyMemoryCache;
         private BodyPart<BodyPartType>[]? bodyCache;
         private BodyType<BodyPartType>? bodyTypeCache;
         private int? fatigueCache;
@@ -205,75 +182,65 @@ namespace ScreepsDotNet.Native.World
         private bool? myCache;
         private string? nameCache;
         private OwnerInfo? ownerInfoCache;
-        private NativeStore? storeCache;
         private int? ticksToLiveCache;
 
-        protected override bool CanMove { get => true; }
+        protected override bool CanMove => true;
 
-        public IEnumerable<BodyPart<BodyPartType>> Body
-            => bodyCache ??= JSUtils.GetObjectArrayOnObject(ProxyObject, "body")!
-                .Select(x => new BodyPart<BodyPartType>(x.GetPropertyAsString("type")!.ParseBodyPartType(), x.GetPropertyAsInt32("hits"), x.GetPropertyAsString("boost")))
-                .ToArray();
+        public IEnumerable<BodyPart<BodyPartType>> Body => CachePerTick(ref bodyCache) ??= FetchBody();
 
-        public BodyType<BodyPartType> BodyType => CachePerTick(ref bodyTypeCache) ??= new(Body.Select(x => x.Type));
+        public BodyType<BodyPartType> BodyType => CacheLifetime(ref bodyTypeCache) ??= new(Body.Select(x => x.Type));
 
-        public int Fatigue => CachePerTick(ref fatigueCache) ??= ProxyObject.GetPropertyAsInt32("fatigue");
+        public int Fatigue => CachePerTick(ref fatigueCache) ??= ProxyObject.GetPropertyAsInt32(Names.Fatigue);
 
-        public int Hits => CachePerTick(ref hitsCache) ??= ProxyObject.GetPropertyAsInt32("hits");
+        public int Hits => CachePerTick(ref hitsCache) ??= ProxyObject.GetPropertyAsInt32(Names.Hits);
 
-        public int HitsMax => CachePerTick(ref hitsMaxCache) ??= ProxyObject.GetPropertyAsInt32("hitsMax");
+        public int HitsMax => CachePerTick(ref hitsMaxCache) ??= ProxyObject.GetPropertyAsInt32(Names.HitsMax);
 
-        public ObjectId Id => id;
+        public IMemoryObject Memory => CachePerTick(ref memoryCache) ??= new NativeMemoryObject(ProxyObject.GetPropertyAsJSObject(Names.Memory)!);
 
-        public IMemoryObject Memory => CachePerTick(ref memoryCache) ??= new NativeMemoryObject(ProxyObject.GetPropertyAsJSObject("memory")!);
+        public bool My => CacheLifetime(ref myCache) ??= ProxyObject.GetPropertyAsBoolean(Names.My);
 
-        public bool My => CacheLifetime(ref myCache) ??= ProxyObject.GetPropertyAsBoolean("my");
+        public string Name => CacheLifetime(ref nameCache) ??= ProxyObject.GetPropertyAsString(Names.Name)!;
 
-        public string Name => CacheLifetime(ref nameCache) ??= ProxyObject.GetPropertyAsString("name")!;
+        public OwnerInfo Owner => CacheLifetime(ref ownerInfoCache) ??= new(ProxyObject.GetPropertyAsJSObject(Names.Owner)!.GetPropertyAsString(Names.Username)!);
 
-        public OwnerInfo Owner => CacheLifetime(ref ownerInfoCache) ??= new(ProxyObject.GetPropertyAsJSObject("owner")!.GetPropertyAsString("username")!);
+        public string? Saying => ProxyObject.GetPropertyAsString(Names.Saying)!;
 
-        public string? Saying => ProxyObject.GetPropertyAsString("saying")!;
+        public bool Spawning => ProxyObject.GetPropertyAsBoolean(Names.Spawning);
 
-        public bool Spawning => ProxyObject.GetPropertyAsBoolean("spawning");
+        public IStore Store => store;
 
-        public IStore Store => CachePerTick(ref storeCache) ??= new NativeStore(ProxyObject.GetPropertyAsJSObject("store"));
+        public int TicksToLive => CachePerTick(ref ticksToLiveCache) ??= FetchTTL();
 
-        public int TicksToLive => CachePerTick(ref ticksToLiveCache) ??= ProxyObject.GetPropertyAsInt32("ticksToLive");
-
-        public NativeCreep(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
+        public NativeCreep(INativeRoot nativeRoot, JSObject proxyObject)
             : base(nativeRoot, proxyObject)
         {
-            this.id = id;
+            store = new NativeStore(nativeRoot, proxyObject);
         }
-
-        public override void UpdateFromDataPacket(RoomObjectDataPacket dataPacket)
-        {
-            base.UpdateFromDataPacket(dataPacket);
-            myCache = dataPacket.My;
-            hitsCache = dataPacket.Hits;
-            hitsMaxCache = dataPacket.HitsMax;
-        }
-
-        public override JSObject? ReacquireProxyObject()
-            => nativeRoot.GetProxyObjectById(id);
 
         protected override void ClearNativeCache()
         {
             base.ClearNativeCache();
+            store.ClearNativeCache();
             bodyCache = null;
             fatigueCache = null;
             hitsCache = null;
             hitsMaxCache = null;
             memoryCache = null;
-            storeCache = null;
             ticksToLiveCache = null;
+        }
+
+        protected override void OnGetNewProxyObject(JSObject newProxyObject)
+        {
+            base.OnGetNewProxyObject(newProxyObject);
+            store.ProxyObject = newProxyObject;
         }
 
         public CreepAttackResult Attack(ICreep target)
             => (CreepAttackResult)Native_Attack(ProxyObject, target.ToJS());
 
-        // CreepAttackResult Attack(IPowerCreep target);
+        public CreepAttackResult Attack(IPowerCreep target)
+            => (CreepAttackResult)Native_Attack(ProxyObject, target.ToJS());
 
         public CreepAttackResult Attack(IStructure target)
             => (CreepAttackResult)Native_Attack(ProxyObject, target.ToJS());
@@ -288,7 +255,7 @@ namespace ScreepsDotNet.Native.World
             => Native_CancelOrder(ProxyObject, orderType.ToJS());
 
         public CreepClaimControllerResult ClaimController(IStructureController controller)
-            => (CreepClaimControllerResult)Native_AttackController(ProxyObject, controller.ToJS());
+            => (CreepClaimControllerResult)Native_ClaimController(ProxyObject, controller.ToJS());
 
         public CreepDismantleResult Dismantle(IStructure target)
             => (CreepDismantleResult)Native_Dismantle(ProxyObject, target.ToJS());
@@ -314,6 +281,9 @@ namespace ScreepsDotNet.Native.World
         public CreepHealResult Heal(ICreep target)
             => (CreepHealResult)Native_Heal(ProxyObject, target.ToJS());
 
+        public CreepHealResult Heal(IPowerCreep target)
+            => (CreepHealResult)Native_Heal(ProxyObject, target.ToJS());
+
         public CreepMoveResult Move(Direction direction)
             => (CreepMoveResult)Native_Move(ProxyObject, (int)direction);
 
@@ -333,11 +303,17 @@ namespace ScreepsDotNet.Native.World
         public CreepMoveResult MoveByPath(string serialisedPath)
             => (CreepMoveResult)Native_MoveByPath(ProxyObject, serialisedPath);
 
-        public CreepMoveResult MoveTo(Position target, object? opts = null)
-            => (CreepMoveResult)Native_MoveTo(ProxyObject, target.X, target.Y, null);
+        public CreepMoveResult MoveTo(Position target, MoveToOptions? opts = null)
+        {
+            using var optsJs = opts?.ToJS();
+            return (CreepMoveResult)Native_MoveTo(ProxyObject, target.X, target.Y, optsJs);
+        }
 
-        public CreepMoveResult MoveTo(RoomPosition target, object? opts = null)
-            => (CreepMoveResult)Native_MoveTo(ProxyObject, target.ToJS(), null);
+        public CreepMoveResult MoveTo(RoomPosition target, MoveToOptions? opts = null)
+        {
+            using var optsJs = opts?.ToJS();
+            return (CreepMoveResult)Native_MoveTo(ProxyObject, target.ToJS(), optsJs);
+        }
 
         public CreepNotifyWhenAttackedResult NotifyWhenAttacked(bool enabled)
             => (CreepNotifyWhenAttackedResult)Native_NotifyWhenAttacked(ProxyObject, enabled);
@@ -351,12 +327,16 @@ namespace ScreepsDotNet.Native.World
         public CreepRangedAttackResult RangedAttack(ICreep target)
             => (CreepRangedAttackResult)Native_RangedAttack(ProxyObject, target.ToJS());
 
-        // CreepRangedAttackResult RangedAttack(IPowerCreep target);
+        public CreepRangedAttackResult RangedAttack(IPowerCreep target)
+            => (CreepRangedAttackResult)Native_RangedAttack(ProxyObject, target.ToJS());
 
         public CreepRangedAttackResult RangedAttack(IStructure target)
             => (CreepRangedAttackResult)Native_RangedAttack(ProxyObject, target.ToJS());
 
         public CreepHealResult RangedHeal(ICreep target)
+            => (CreepHealResult)Native_RangedHeal(ProxyObject, target.ToJS());
+
+        public CreepHealResult RangedHeal(IPowerCreep target)
             => (CreepHealResult)Native_RangedHeal(ProxyObject, target.ToJS());
 
         public CreepRangedMassAttackResult RangedMassAttack()
@@ -380,7 +360,8 @@ namespace ScreepsDotNet.Native.World
         public CreepTransferResult Transfer(ICreep target, ResourceType resourceType, int? amount = null)
             => (CreepTransferResult)Native_Transfer(ProxyObject, target.ToJS(), resourceType.ToJS(), amount);
 
-        // CreepTransferResult Transfer(IPowerCreep target, ResourceType resourceType, int? amount = null);
+        public CreepTransferResult Transfer(IPowerCreep target, ResourceType resourceType, int? amount = null)
+            => (CreepTransferResult)Native_Transfer(ProxyObject, target.ToJS(), resourceType.ToJS(), amount);
 
         public CreepTransferResult Transfer(IStructure target, ResourceType resourceType, int? amount = null)
             => (CreepTransferResult)Native_Transfer(ProxyObject, target.ToJS(), resourceType.ToJS(), amount);
@@ -397,17 +378,47 @@ namespace ScreepsDotNet.Native.World
         public CreepWithdrawResult Withdraw(IRuin target, ResourceType resourceType, int? amount = null)
             => (CreepWithdrawResult)Native_Withdraw(ProxyObject, target.ToJS(), resourceType.ToJS(), amount);
 
+        private BodyPart<BodyPartType>[] FetchBody()
+        {
+            Span<int> encodedBodyParts = stackalloc int[50];
+            int num;
+            unsafe
+            {
+                fixed (int* encodedBodyPartsPtr = encodedBodyParts)
+                {
+                    num = Native_GetEncodedBody(ProxyObject, (IntPtr)encodedBodyPartsPtr);
+                }
+            }
+            if (bodyMemoryCache == null || bodyMemoryCache.Length != num)
+            {
+                bodyMemoryCache = new BodyPart<BodyPartType>[num];
+            }
+            for (int i = 0; i < num; ++i)
+            {
+                // Each body part encoded to a 32 bit int as 4 bytes
+                // unused: b3
+                // type: 0-8 (4 bits 0-15) b2
+                // hits: 0-100 (7 bits 0-127) b1
+                // boost: null or 0-85 (7 bits 0-127, 127 means null) b0
+                int encodedBodyPart = encodedBodyParts[i];
+                int type = encodedBodyPart >> 16;
+                int hits = (encodedBodyPart >> 8) & 127;
+                int boost = encodedBodyPart & 127;
+                bodyMemoryCache[i] = new((BodyPartType)type, hits, boost == 127 ? null : (ResourceType)boost);
+            }
+            return bodyMemoryCache;
+        }
+
+        private int FetchTTL()
+        {
+            var ttlMaybe = ProxyObject.TryGetPropertyAsInt32(Names.TicksToLive);
+            if (ttlMaybe != null) { return ttlMaybe.Value; }
+            // This can return null on the first tick of an invader's existence, so compensate for that and hard code in 1500 for now
+            if (Owner.Username == "Invader") { return 1500; }
+            throw new JSException($"Creep.ticksToLive returned null");
+        }
+
         public override string ToString()
-            => $"Creep[{(Exists ? $"'{Name}'" : id.ToString())}]({(Exists ? $"{RoomPosition}" : "DEAD")})";
-
-        public override bool Equals(object? obj) => Equals(obj as NativeCreep);
-
-        public bool Equals(NativeCreep? other) => other is not null && id == other.id;
-
-        public override int GetHashCode() => HashCode.Combine(id);
-
-        public static bool operator ==(NativeCreep? left, NativeCreep? right) => EqualityComparer<NativeCreep>.Default.Equals(left, right);
-
-        public static bool operator !=(NativeCreep? left, NativeCreep? right) => !(left == right);
+            => $"Creep[{(Exists ? $"'{Name}'" : Id.ToString())}]({(Exists ? $"{RoomPosition}" : "DEAD")})";
     }
 }

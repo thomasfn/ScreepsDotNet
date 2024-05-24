@@ -63,16 +63,6 @@ namespace ScreepsDotNet.Bundler {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
-        internal static byte[] arena_bootloader_debug_mjs {
-            get {
-                object obj = ResourceManager.GetObject("arena_bootloader_debug_mjs", resourceCulture);
-                return ((byte[])(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Byte[].
-        /// </summary>
         internal static byte[] arena_bootloader_dts {
             get {
                 object obj = ResourceManager.GetObject("arena_bootloader_dts", resourceCulture);
@@ -83,9 +73,9 @@ namespace ScreepsDotNet.Bundler {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
-        internal static byte[] arena_bootloader_release_mjs {
+        internal static byte[] arena_bootloader_mjs {
             get {
-                object obj = ResourceManager.GetObject("arena_bootloader_release_mjs", resourceCulture);
+                object obj = ResourceManager.GetObject("arena_bootloader_mjs", resourceCulture);
                 return ((byte[])(obj));
             }
         }
@@ -103,19 +93,9 @@ namespace ScreepsDotNet.Bundler {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
-        internal static byte[] world_bootloader_debug_js {
+        internal static byte[] world_bootloader_js {
             get {
-                object obj = ResourceManager.GetObject("world_bootloader_debug_js", resourceCulture);
-                return ((byte[])(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Byte[].
-        /// </summary>
-        internal static byte[] world_bootloader_release_js {
-            get {
-                object obj = ResourceManager.GetObject("world_bootloader_release_js", resourceCulture);
+                object obj = ResourceManager.GetObject("world_bootloader_js", resourceCulture);
                 return ((byte[])(obj));
             }
         }

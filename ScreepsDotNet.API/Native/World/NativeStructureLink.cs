@@ -1,36 +1,32 @@
 ﻿using System;
-using System.Runtime.InteropServices.JavaScript;
-
-using ScreepsDotNet.API;
+using ScreepsDotNet.Interop;
 using ScreepsDotNet.API.World;
 
 namespace ScreepsDotNet.Native.World
 {
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
-    internal partial class NativeStructureLink : NativeOwnedStructure, IStructureLink
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
+    internal partial class NativeStructureLink : NativeOwnedStructureWithStore, IStructureLink
     {
         #region Imports
 
         [JSImport("StructureLink.transferEnergy", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_TransferEnergy([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject target, [JSMarshalAs<JSType.Number>] int? amount);
+        
+        internal static partial int Native_TransferEnergy(JSObject proxyObject, JSObject target, int? amount);
 
         #endregion
 
-        private NativeStore? storeCache;
+        private int? cooldownCache;
 
-        public IStore Store => CachePerTick(ref storeCache) ??= new NativeStore(ProxyObject.GetPropertyAsJSObject("store"));
+        public int Cooldown => CachePerTick(ref cooldownCache) ??= ProxyObject.GetPropertyAsInt32(Names.Cooldown);
 
-        public int Cooldown => ProxyObject.GetPropertyAsInt32("cooldown");
-
-        public NativeStructureLink(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
-            : base(nativeRoot, proxyObject, id)
+        public NativeStructureLink(INativeRoot nativeRoot, JSObject proxyObject)
+            : base(nativeRoot, proxyObject)
         { }
 
         protected override void ClearNativeCache()
         {
             base.ClearNativeCache();
-            storeCache = null;
+            cooldownCache = null;
         }
 
         public LinkTransferEnergyResult TransferEnergy(IStructureLink target, int? amount = null)

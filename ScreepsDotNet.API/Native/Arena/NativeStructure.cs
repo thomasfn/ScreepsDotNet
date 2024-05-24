@@ -1,21 +1,30 @@
-﻿using System.Runtime.InteropServices.JavaScript;
+﻿using ScreepsDotNet.Interop;
 
 using ScreepsDotNet.API.Arena;
 
 namespace ScreepsDotNet.Native.Arena
 {
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal partial class NativeStructure : NativeGameObject, IStructure
     {
-        public int Hits => ProxyObject.GetPropertyAsInt32("hits");
+        private int? hitsCache;
+        private int? hitsMaxCache;
 
-        public int HitsMax => ProxyObject.GetPropertyAsInt32("hitsMax");
+        public int? Hits => CachePerTick(ref hitsCache) ??= proxyObject.TryGetPropertyAsInt32(Names.Hits);
 
-        public NativeStructure(JSObject proxyObject)
-            : base(proxyObject)
+        public int? HitsMax => CacheLifetime(ref hitsMaxCache) ??= proxyObject.TryGetPropertyAsInt32(Names.HitsMax);
+
+        public NativeStructure(INativeRoot nativeRoot, JSObject proxyObject)
+            : base(nativeRoot, proxyObject, false)
         { }
 
+        protected override void ClearNativeCache()
+        {
+            base.ClearNativeCache();
+            hitsCache = null;
+        }
+
         public override string ToString()
-            => $"Structure({Id}, {Position})";
+            => Exists ? $"Structure({Id}, {Position})" : "Structure(DEAD)";
     }
 }

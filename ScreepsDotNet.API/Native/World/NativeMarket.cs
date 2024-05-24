@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices.JavaScript;
-
-using ScreepsDotNet.API;
+using ScreepsDotNet.Interop;
 using ScreepsDotNet.API.World;
+using System.Collections.Immutable;
 
 namespace ScreepsDotNet.Native.World
 {
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal static class NativeMarketExtensions
     {
         public static TransactionDetails ToTransactionDetails(this JSObject obj)
@@ -17,7 +16,7 @@ namespace ScreepsDotNet.Native.World
                     time: obj.GetPropertyAsInt32("time"),
                     senderUsername: obj.GetPropertyAsJSObject("sender")!.GetPropertyAsString("username")!,
                     recipientUsername: obj.GetPropertyAsJSObject("recipient")!.GetPropertyAsString("username")!,
-                    resourceType: obj.GetPropertyAsString("resourceType")!.ParseResourceType(),
+                    resourceType: obj.GetPropertyAsName("resourceType")!.ParseResourceType(),
                     amount: obj.GetPropertyAsInt32("amount"),
                     from: new(obj.GetPropertyAsString("from")!),
                     to: new(obj.GetPropertyAsString("to")!),
@@ -54,7 +53,7 @@ namespace ScreepsDotNet.Native.World
                     created: obj.GetPropertyAsInt32("created"),
                     createdTimestamp: obj.HasProperty("createdTimestamp") ? DateTime.UnixEpoch + TimeSpan.FromMilliseconds(obj.GetPropertyAsDouble("createdTimestamp")) : null,
                     type: obj.GetPropertyAsString("type")!.ParseOrderType(),
-                    resourceType: obj.GetPropertyAsString("resourceType")!.ParseResourceType(),
+                    resourceType: obj.GetPropertyAsName("resourceType")!.ParseResourceType(),
                     room: RoomCoord.ParseNullSafe(obj.GetPropertyAsString("roomName")),
                     amount: obj.GetPropertyAsInt32("amount"),
                     remainingAmount: obj.GetPropertyAsInt32("remainingAmount"),
@@ -70,7 +69,7 @@ namespace ScreepsDotNet.Native.World
 
         public static PriceHistory ToPriceHistory(this JSObject obj)
             => new(
-                    resourceType: obj.GetPropertyAsString("resourceType")!.ParseResourceType(),
+                    resourceType: obj.GetPropertyAsName("resourceType")!.ParseResourceType(),
                     date: DateOnly.Parse(obj.GetPropertyAsString("date")!),
                     transactions: obj.GetPropertyAsInt32("transactions"),
                     volume: obj.GetPropertyAsInt32("volume"),
@@ -79,46 +78,37 @@ namespace ScreepsDotNet.Native.World
                 );
     }
 
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal partial class NativeMarket : IMarket
     {
         #region Imports
 
         [JSImport("market.calcTransactionCost", "game")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_CalcTransactionCost([JSMarshalAs<JSType.Number>] int amount, [JSMarshalAs<JSType.String>] string roomName1, [JSMarshalAs<JSType.String>] string roomName2);
+        internal static partial int Native_CalcTransactionCost(int amount, string roomName1, string roomName2);
 
         [JSImport("market.cancelOrder", "game")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_CancelOrder([JSMarshalAs<JSType.String>] string orderId);
+        internal static partial int Native_CancelOrder(string orderId);
 
         [JSImport("market.changeOrderPrice", "game")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_ChangeOrderPrice([JSMarshalAs<JSType.String>] string orderId, [JSMarshalAs<JSType.Number>] double newPrice);
+        internal static partial int Native_ChangeOrderPrice(string orderId, double newPrice);
 
         [JSImport("market.createOrder", "game")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_CreateOrder([JSMarshalAs<JSType.Object>] JSObject @params);
+        internal static partial int Native_CreateOrder(JSObject orderParams);
 
         [JSImport("market.deal", "game")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_Deal([JSMarshalAs<JSType.String>] string orderId, [JSMarshalAs<JSType.Number>] int amount, [JSMarshalAs<JSType.String>] string? yourRoomName);
+        internal static partial int Native_Deal(string orderId, int amount, string? yourRoomName);
 
         [JSImport("market.extendOrder", "game")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_ExtendOrder([JSMarshalAs<JSType.String>] string orderId, [JSMarshalAs<JSType.Number>] int addAmount);
+        internal static partial int Native_ExtendOrder(string orderId, int addAmount);
 
         [JSImport("market.getAllOrders", "game")]
-        [return: JSMarshalAsAttribute<JSType.Array<JSType.Object>>]
-        internal static partial JSObject[] Native_GetAllOrders([JSMarshalAs<JSType.Object>] JSObject? filter);
+        internal static partial JSObject[] Native_GetAllOrders(JSObject? filter);
 
         [JSImport("market.getHistory", "game")]
-        [return: JSMarshalAsAttribute<JSType.Array<JSType.Object>>]
-        internal static partial JSObject[] Native_GetHistory([JSMarshalAs<JSType.String>] string? resourceType);
+        internal static partial JSObject[]? Native_GetHistory(Name? resourceType);
 
         [JSImport("market.getOrderById", "game")]
-        [return: JSMarshalAsAttribute<JSType.Object>]
-        internal static partial JSObject? Native_GetOrderById([JSMarshalAs<JSType.String>] string id);
+        internal static partial JSObject? Native_GetOrderById(string id);
 
         #endregion
 
@@ -176,7 +166,7 @@ namespace ScreepsDotNet.Native.World
 
         public MarketCreateOrderResult CreateOrder(OrderType type, ResourceType resourceType, double price, int totalAmount, RoomCoord? roomName)
         {
-            using var paramsObj = JSUtils.CreateObject(null);
+            using var paramsObj = JSObject.Create();
             paramsObj.SetProperty("type", type.ToJS());
             paramsObj.SetProperty("resourceType", resourceType.ToJS());
             paramsObj.SetProperty("price", price);
@@ -193,14 +183,14 @@ namespace ScreepsDotNet.Native.World
 
         public IEnumerable<OrderDetails> GetAllOrders(OrderType? filterOrderType = null, ResourceType? filterResourceType = null)
         {
-            using var filterObj = JSUtils.CreateObject(null);
+            using var filterObj = JSObject.Create();
             if (filterOrderType != null) { filterObj.SetProperty("type", filterOrderType.Value.ToJS()); }
             if (filterResourceType != null) { filterObj.SetProperty("resourceType", filterResourceType.Value.ToJS()); }
             return Native_GetAllOrders(filterObj).Select(x => x.ToOrderDetails());
         }
 
         public IEnumerable<PriceHistory> GetHistory(ResourceType? resourceType = null)
-            => Native_GetHistory(resourceType?.ToJS()).Select(x => x.ToPriceHistory());
+            => (Native_GetHistory(resourceType?.ToJS()) ?? Enumerable.Empty<JSObject>()).Select(x => x.ToPriceHistory());
 
         public OrderDetails? GetOrderById(string id)
         {
@@ -211,7 +201,7 @@ namespace ScreepsDotNet.Native.World
         private Dictionary<string, MyOrderDetails> GetOrders()
         {
             using var ordersObj = ProxyObject.GetPropertyAsJSObject("orders");
-            var keys = JSUtils.GetKeysOf(ordersObj!);
+            var keys = ordersObj?.GetPropertyNames() ?? ImmutableArray<string>.Empty;
             var result = new Dictionary<string, MyOrderDetails>();
             foreach (var key in keys)
             {

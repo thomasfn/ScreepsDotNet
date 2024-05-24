@@ -1,6 +1,4 @@
-﻿using System.ComponentModel;
-
-namespace ScreepsDotNet.API.Arena
+﻿namespace ScreepsDotNet.API.Arena
 {
     /// <summary>
     /// Decreases movement cost to 1. Using roads allows creating creeps with less MOVE body parts

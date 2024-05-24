@@ -1,11 +1,13 @@
-﻿using ScreepsDotNet.API.World;
-using System;
-using System.Runtime.InteropServices.JavaScript;
+﻿using System;
+using System.Runtime.CompilerServices;
+
+using ScreepsDotNet.API.World;
+using ScreepsDotNet.Interop;
 
 namespace ScreepsDotNet.Native.World
 {
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
-    internal abstract class NativeObject : INativeObject
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
+    internal abstract class NativeObject
     {
         protected readonly INativeRoot nativeRoot;
 
@@ -15,6 +17,7 @@ namespace ScreepsDotNet.Native.World
 
         public JSObject ProxyObject
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
                 TouchProxyObject();
@@ -23,79 +26,117 @@ namespace ScreepsDotNet.Native.World
             }
         }
 
+        public IntPtr? ProxyObjectJSHandle
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => proxyObject?.JSHandle;
+        }
+
+        public bool Stale
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => proxyObjectValidAsOf < nativeRoot.TickIndex;
+        }
+
         public bool Exists
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-                if (proxyObjectValidAsOf < nativeRoot.TickIndex)
+                if (Stale)
                 {
-                    proxyObject = ReacquireProxyObject();
-                    proxyObjectValidAsOf = nativeRoot.TickIndex;
-                    if (proxyObject == null)
-                    {
-                        isDead = true;
-                        return false;
-                    }
-                    else
-                    {
-                        isDead = false;
-                        ClearNativeCache();
-                        return true;
-                    }
+                    TryRenewOrReacquire();
                 }
                 return !isDead;
             }
         }
 
-        public NativeObject(INativeRoot nativeRoot, JSObject? proxyObject)
+        public NativeObject(INativeRoot nativeRoot, JSObject proxyObject)
         {
             this.nativeRoot = nativeRoot;
             this.proxyObject = proxyObject;
-            proxyObjectValidAsOf = proxyObject != null ? nativeRoot.TickIndex : -1;
+            proxyObjectValidAsOf = nativeRoot.TickIndex;
         }
 
-        public virtual void UpdateFromDataPacket(RoomObjectDataPacket dataPacket)
+        public void NotifyBatchRenew(bool failed)
         {
-            if (nativeRoot.TickIndex > proxyObjectValidAsOf)
+            proxyObjectValidAsOf = nativeRoot.TickIndex;
+            ClearNativeCache();
+            if (failed)
             {
-                proxyObjectValidAsOf = nativeRoot.TickIndex;
                 proxyObject?.Dispose();
                 proxyObject = null;
-                ClearNativeCache();
+                isDead = true;
             }
-            isDead = false;
         }
 
-        protected void TouchProxyObject(bool objectNeededNow = true)
+        public void ReplaceProxyObject(JSObject? newProxyObject)
         {
-            if (proxyObjectValidAsOf < nativeRoot.TickIndex || (proxyObject == null && objectNeededNow))
+            proxyObjectValidAsOf = nativeRoot.TickIndex;
+            ClearNativeCache();
+            if (newProxyObject == proxyObject) { return; }
+            if (proxyObject != null)
             {
-                proxyObject?.Dispose();
-                proxyObject = ReacquireProxyObject();
-                ClearNativeCache();
-                if (proxyObject == null)
+                if (newProxyObject == null) { OnLoseProxyObject(proxyObject); }
+                proxyObject.UserData = null;
+                proxyObject.Dispose();
+            }
+            
+            proxyObject = newProxyObject;
+            if (proxyObject != null && !proxyObject.IsDisposed)
+            {
+                proxyObject.UserData = this;
+                isDead = false;
+                OnGetNewProxyObject(proxyObject);
+            }
+            else
+            {
+                isDead = true;
+            }
+        }
+
+        protected virtual void OnLoseProxyObject(JSObject proxyObject) { }
+
+        protected virtual void OnGetNewProxyObject(JSObject newProxyObject) { }
+
+        private void TryRenewOrReacquire()
+        {
+            if (proxyObject != null && !proxyObject.IsDisposed)
+            {
+                if (ScreepsDotNet_Native.RenewObject(proxyObject.JSHandle) != 0)
                 {
-                    isDead = true;
-                    throw new NativeObjectNoLongerExistsException();
-                }
-                else
-                {
-                    isDead = false;
-                    proxyObjectValidAsOf = nativeRoot.TickIndex;
+                    ReplaceProxyObject(null);
                 }
             }
-            else if (isDead)
+            else
+            {
+                ReplaceProxyObject(ReacquireProxyObject());
+            }
+            proxyObjectValidAsOf = nativeRoot.TickIndex;
+            ClearNativeCache();
+            isDead = proxyObject == null || proxyObject.IsDisposed;
+        }
+
+        protected void TouchProxyObject()
+        {
+            if (Stale)
+            {
+                TryRenewOrReacquire();
+            }
+            if (isDead)
             {
                 throw new NativeObjectNoLongerExistsException();
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected ref T CachePerTick<T>(ref T cachedObj)
         {
-            TouchProxyObject(false);
+            TouchProxyObject();
             return ref cachedObj;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected ref T CacheLifetime<T>(ref T cachedObj)
         {
             return ref cachedObj;

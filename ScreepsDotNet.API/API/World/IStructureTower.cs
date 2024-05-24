@@ -43,7 +43,7 @@
         /// </summary>
         /// <param name="target"></param>
         /// <returns></returns>
-        // TowerActionResult Attack(IPowerCreep target);
+        TowerActionResult Attack(IPowerCreep target);
 
         /// <summary>
         /// Remotely attack any structure in the room.
@@ -64,7 +64,7 @@
         /// </summary>
         /// <param name="target"></param>
         /// <returns></returns>
-        // TowerActionResult Heal(IPowerCreep target);
+        TowerActionResult Heal(IPowerCreep target);
 
         /// <summary>
         /// Remotely repair any structure in the room.

@@ -1,18 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices.JavaScript;
+using ScreepsDotNet.Interop;
 
 using ScreepsDotNet.API.Arena;
 
 namespace ScreepsDotNet.Native.Arena
 {
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal partial class NativeConstants : IConstants
     {
         #region Imports
 
         [JSImport("get", "game/constants")]
-        [return: JSMarshalAsAttribute<JSType.Object>]
         internal static partial JSObject Native_GetConstants();
 
         #endregion
@@ -36,14 +35,14 @@ namespace ScreepsDotNet.Native.Arena
         private int? bodyPartHitsCache;
         private readonly int?[] bodyPartCostCache = new int?[Enum.GetValues<BodyPartType>().Length];
         
-        private readonly IDictionary<Type, int> structureCostCache = new Dictionary<Type, int>();
-        private readonly ISet<Type> isObstacleSet = new HashSet<Type>
-        {
+        private readonly Dictionary<Type, int> structureCostCache = [];
+        private readonly HashSet<Type> isObstacleSet =
+        [
             typeof(ICreep),
             typeof(IStructureTower),
             typeof(IStructureWall),
             typeof(IStructureSpawn),
-        };
+        ];
 
         public int BodyPartHits => bodyPartHitsCache ??= constantsObj.GetPropertyAsInt32("BODYPART_HITS");
 
@@ -149,7 +148,7 @@ namespace ScreepsDotNet.Native.Arena
                 result.Add(obj.GetPropertyAsDouble(i.ToString()));
                 ++i;
             }
-            return result.ToArray();
+            return [.. result];
         }
 
         public int GetBodyPartCost(BodyPartType bodyPartType)

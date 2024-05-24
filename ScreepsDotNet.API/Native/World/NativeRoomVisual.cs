@@ -1,50 +1,47 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices.JavaScript;
+using ScreepsDotNet.Interop;
 
 using ScreepsDotNet.API;
 using ScreepsDotNet.API.World;
 
 namespace ScreepsDotNet.Native.World
 {
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal partial class NativeRoomVisual : IRoomVisual
     {
         #region Imports
 
         [JSImport("createRoomVisual", "game")]
-        [return: JSMarshalAs<JSType.Object>]
-        internal static partial JSObject Native_Ctor([JSMarshalAs<JSType.String>] string? roomName);
+        internal static partial JSObject Native_Ctor(string? roomName);
 
         [JSImport("RoomVisual.line", "game/prototypes/wrapped")]
-        internal static partial void Native_Line([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject pos1, [JSMarshalAs<JSType.Object>] JSObject pos2, [JSMarshalAs<JSType.Object>] JSObject? style);
+        internal static partial void Native_Line(JSObject proxyObject, JSObject pos1, JSObject pos2, JSObject? style);
 
         [JSImport("RoomVisual.circle", "game/prototypes/wrapped")]
-        internal static partial void Native_Circle([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject position, [JSMarshalAs<JSType.Object>] JSObject? style);
+        internal static partial void Native_Circle(JSObject proxyObject, JSObject position, JSObject? style);
 
         [JSImport("RoomVisual.rect", "game/prototypes/wrapped")]
-        internal static partial void Native_Rect([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject position, [JSMarshalAs<JSType.Number>] double w, [JSMarshalAs<JSType.Number>] double h, [JSMarshalAs<JSType.Object>] JSObject? style);
+        internal static partial void Native_Rect(JSObject proxyObject, JSObject position, double w, double h, JSObject? style);
 
         [JSImport("RoomVisual.poly", "game/prototypes/wrapped")]
-        internal static partial void Native_Poly([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Array<JSType.Object>>] JSObject[] positions, [JSMarshalAs<JSType.Object>] JSObject? style);
+        internal static partial void Native_Poly(JSObject proxyObject, JSObject[] positions, JSObject? style);
 
         [JSImport("RoomVisual.text", "game/prototypes/wrapped")]
-        internal static partial void Native_Text([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.String>] string text, [JSMarshalAs<JSType.Object>] JSObject position, [JSMarshalAs<JSType.Object>] JSObject? style);
+        internal static partial void Native_Text(JSObject proxyObject, string text, JSObject position, JSObject? style);
 
         [JSImport("RoomVisual.clear", "game/prototypes/wrapped")]
-        internal static partial void Native_Clear([JSMarshalAs<JSType.Object>] JSObject proxyObject);
+        internal static partial void Native_Clear(JSObject proxyObject);
 
         [JSImport("RoomVisual.getSize", "game/prototypes/wrapped")]
-        [return: JSMarshalAs<JSType.Number>]
-        internal static partial int Native_GetSize([JSMarshalAs<JSType.Object>] JSObject proxyObject);
+        internal static partial int Native_GetSize(JSObject proxyObject);
 
         [JSImport("RoomVisual.export", "game/prototypes/wrapped")]
-        [return: JSMarshalAs<JSType.String>]
-        internal static partial string Native_Export([JSMarshalAs<JSType.Object>] JSObject proxyObject);
+        internal static partial string? Native_Export(JSObject proxyObject);
 
         [JSImport("RoomVisual.import", "game/prototypes/wrapped")]
-        internal static partial void Native_Import([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.String>] string value);
+        internal static partial void Native_Import(JSObject proxyObject, string value);
 
         #endregion
 
@@ -118,7 +115,7 @@ namespace ScreepsDotNet.Native.World
         public int GetSize()
             => Native_GetSize(ProxyObject);
 
-        public string Export()
+        public string? Export()
             => Native_Export(ProxyObject);
 
         public void Import(string str)

@@ -1,45 +1,40 @@
-﻿using System.Runtime.InteropServices.JavaScript;
-
-using ScreepsDotNet.API;
+﻿using ScreepsDotNet.Interop;
 using ScreepsDotNet.API.World;
 
 namespace ScreepsDotNet.Native.World
 {
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
-    internal partial class NativeStructureLab : NativeOwnedStructure, IStructureLab
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
+    internal partial class NativeStructureLab : NativeOwnedStructureWithStore, IStructureLab
     {
         #region Imports
 
         [JSImport("StructureLab.boostCreep", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_BoostCreep([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject creep, [JSMarshalAs<JSType.Number>] int? bodyPartsCount);
+        
+        internal static partial int Native_BoostCreep(JSObject proxyObject, JSObject creep, int? bodyPartsCount);
 
         [JSImport("StructureLab.reverseReaction", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_ReverseReaction([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject lab1, [JSMarshalAs<JSType.Object>] JSObject lab2);
+        
+        internal static partial int Native_ReverseReaction(JSObject proxyObject, JSObject lab1, JSObject lab2);
 
         [JSImport("StructureLab.runReaction", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_RunReaction([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject lab1, [JSMarshalAs<JSType.Object>] JSObject lab2);
+        
+        internal static partial int Native_RunReaction(JSObject proxyObject, JSObject lab1, JSObject lab2);
 
         [JSImport("StructureLab.unboostCreep", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_UnboostCreep([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject creep);
+        
+        internal static partial int Native_UnboostCreep(JSObject proxyObject, JSObject creep);
 
         #endregion
 
         private int? cooldownCache;
         private ResourceType? mineralTypeCache;
-        private NativeStore? storeCache;
 
-        public int Cooldown => CachePerTick(ref cooldownCache) ??= ProxyObject.GetPropertyAsInt32("cooldown");
+        public int Cooldown => CachePerTick(ref cooldownCache) ??= ProxyObject.GetPropertyAsInt32(Names.Cooldown);
 
-        public ResourceType MineralType => CachePerTick(ref mineralTypeCache) ??= ProxyObject.GetPropertyAsString("mineralType")!.ParseResourceType();
+        public ResourceType? MineralType => CachePerTick(ref mineralTypeCache) ??= ProxyObject.TryGetPropertyAsName(Names.MineralType)?.ParseResourceType();
 
-        public IStore Store => CachePerTick(ref storeCache) ??= new NativeStore(ProxyObject.GetPropertyAsJSObject("store"));
-
-        public NativeStructureLab(INativeRoot nativeRoot, JSObject? proxyObject, ObjectId id)
-            : base(nativeRoot, proxyObject, id)
+        public NativeStructureLab(INativeRoot nativeRoot, JSObject proxyObject)
+            : base(nativeRoot, proxyObject)
         { }
 
         protected override void ClearNativeCache()
@@ -47,7 +42,6 @@ namespace ScreepsDotNet.Native.World
             base.ClearNativeCache();
             cooldownCache = null;
             mineralTypeCache = null;
-            storeCache = null;
         }
 
         public LabBoostResult BoostCreep(ICreep creep, int? bodyPartsCount = null)

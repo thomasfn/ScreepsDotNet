@@ -1,11 +1,11 @@
 ﻿using System;
-using System.Runtime.InteropServices.JavaScript;
+using ScreepsDotNet.Interop;
 
 using ScreepsDotNet.API;
 
 namespace ScreepsDotNet.Native
 {
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal static class VisualExtensions
     {
         public static string ToJS(this LineStyle lineStyle)
@@ -27,7 +27,7 @@ namespace ScreepsDotNet.Native
 
         public static JSObject ToJS(this CircleVisualStyle circleVisualStyle)
         {
-            var obj = JSUtils.CreateObject(null);
+            var obj = JSObject.Create();
             obj.SetProperty("radius", circleVisualStyle.Radius);
             obj.SetProperty("fill", circleVisualStyle.Fill.ToString());
             obj.SetProperty("opacity", circleVisualStyle.Opacity);
@@ -39,7 +39,7 @@ namespace ScreepsDotNet.Native
 
         public static JSObject ToJS(this LineVisualStyle lineVisualStyle)
         {
-            var obj = JSUtils.CreateObject(null);
+            var obj = JSObject.Create();
             obj.SetProperty("width", lineVisualStyle.Width);
             obj.SetProperty("color", lineVisualStyle.Color.ToString());
             obj.SetProperty("opacity", lineVisualStyle.Opacity);
@@ -49,7 +49,7 @@ namespace ScreepsDotNet.Native
 
         public static JSObject ToJS(this PolyVisualStyle polyVisualStyle)
         {
-            var obj = JSUtils.CreateObject(null);
+            var obj = JSObject.Create();
             obj.SetProperty("fill", polyVisualStyle.Fill.ToString());
             obj.SetProperty("opacity", polyVisualStyle.Opacity);
             obj.SetProperty("stroke", polyVisualStyle.Stroke.ToString());
@@ -60,7 +60,7 @@ namespace ScreepsDotNet.Native
 
         public static JSObject ToJS(this RectVisualStyle rectVisualStyle)
         {
-            var obj = JSUtils.CreateObject(null);
+            var obj = JSObject.Create();
             obj.SetProperty("fill", rectVisualStyle.Fill.ToString());
             obj.SetProperty("opacity", rectVisualStyle.Opacity);
             obj.SetProperty("stroke", rectVisualStyle.Stroke.ToString());
@@ -71,7 +71,7 @@ namespace ScreepsDotNet.Native
 
         public static JSObject ToJS(this TextVisualStyle textVisualStyle)
         {
-            var obj = JSUtils.CreateObject(null);
+            var obj = JSObject.Create();
             obj.SetProperty("align", textVisualStyle.Align.ToJS());
             if (textVisualStyle.BackgroundColor.HasValue) { obj.SetProperty("backgroundColor", textVisualStyle.BackgroundColor.Value.ToString()); }
             obj.SetProperty("backgroundPadding", textVisualStyle.BackgroundPadding);

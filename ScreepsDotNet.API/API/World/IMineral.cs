@@ -23,6 +23,6 @@
         /// <summary>
         /// The remaining time after which the deposit will be refilled.
         /// </summary>
-        int TicksToRegeneration { get; }
+        int? TicksToRegeneration { get; }
     }
 }

@@ -1,6 +1,4 @@
-﻿using ScreepsDotNet.API.Arena;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace ScreepsDotNet.API.World
 {
@@ -686,6 +684,40 @@ namespace ScreepsDotNet.API.World
         Withdraw
     }
 
+    /// <param name="ReusePath">
+    /// This option enables reusing the path found along multiple game ticks.
+    /// It allows to save CPU time, but can result in a slightly slower creep reaction behavior.
+    /// The path is stored into the creep's memory to the _move property.
+    /// The reusePath value defines the amount of ticks which the path should be reused for.
+    /// The default value is 5.
+    /// Increase the amount to save more CPU, decrease to make the movement more consistent.
+    /// Set to 0 if you want to disable path reusing.
+    /// </param>
+    /// <param name="SerializeMemory">
+    /// If reusePath is enabled and this option is set to true, the path will be stored in memory in the short serialized form using Room.serializePath.
+    /// The default value is true.
+    /// </param>
+    /// <param name="NoPathFinding">
+    /// If this option is set to true, moveTo method will return ERR_NOT_FOUND if there is no memorized path to reuse.
+    /// This can significantly save CPU time in some cases.
+    /// The default value is false.
+    /// </param>
+    /// <param name="VisualizePathStyle">
+    /// Draw a line along the creep’s path using RoomVisual.poly.
+    /// You can provide either an empty object or custom style parameters.
+    /// </param>
+    /// <param name="FindPathOptions">
+    /// Any options supported by Room.findPath method.
+    /// </param>
+    public readonly record struct MoveToOptions
+    (
+        int ReusePath = 5,
+        bool SerializeMemory = true,
+        bool NoPathFinding = false,
+        PolyVisualStyle? VisualizePathStyle = null,
+        FindPathOptions? FindPathOptions = null
+    );
+
     /// <summary>
     /// Creeps are your units. Creeps can move, harvest energy, construct structures, attack another creeps, and perform other actions. Each creep consists of up to 50 body parts.
     /// </summary>
@@ -764,7 +796,7 @@ namespace ScreepsDotNet.API.World
         /// </summary>
         /// <param name="target"></param>
         /// <returns></returns>
-        // CreepAttackResult Attack(IPowerCreep target);
+        CreepAttackResult Attack(IPowerCreep target);
 
         /// <summary>
         /// Attack a structure in a short-ranged attack.
@@ -886,6 +918,16 @@ namespace ScreepsDotNet.API.World
         CreepHealResult Heal(ICreep target);
 
         /// <summary>
+        /// Heal a power creep.
+        /// It will restore the target creep’s damaged body parts function and increase the hits counter.
+        /// Requires the HEAL body part.
+        /// The target has to be at adjacent square to the creep.
+        /// </summary>
+        /// <param name="target"></param>
+        /// <returns></returns>
+        CreepHealResult Heal(IPowerCreep target);
+
+        /// <summary>
         /// Move the creep one square in the specified direction.
         /// Requires the MOVE body part, or another creep nearby pulling the creep.
         /// </summary>
@@ -915,7 +957,7 @@ namespace ScreepsDotNet.API.World
         /// <param name="target"></param>
         /// <param name="opts"></param>
         /// <returns></returns>
-        CreepMoveResult MoveTo(Position target, object? opts = null);
+        CreepMoveResult MoveTo(Position target, MoveToOptions? opts = null);
 
         /// <summary>
         /// Find the optimal path to the target within the same room and move to it.
@@ -925,7 +967,7 @@ namespace ScreepsDotNet.API.World
         /// <param name="target"></param>
         /// <param name="opts"></param>
         /// <returns></returns>
-        CreepMoveResult MoveTo(RoomPosition target, object? opts = null);
+        CreepMoveResult MoveTo(RoomPosition target, MoveToOptions? opts = null);
 
         /// <summary>
         /// Toggle auto notification when the creep is under attack. The notification will be sent to your account email. Turned on by default.
@@ -971,7 +1013,7 @@ namespace ScreepsDotNet.API.World
         /// The target has to be within 3 squares range of the creep.
         /// </summary>
         /// <param name="target"></param>
-        // CreepRangedAttackResult RangedAttack(IPowerCreep target);
+        CreepRangedAttackResult RangedAttack(IPowerCreep target);
 
         /// <summary>
         /// A ranged attack against another creep or structure.
@@ -991,6 +1033,16 @@ namespace ScreepsDotNet.API.World
         /// <param name="target"></param>
         /// <returns></returns>
         CreepHealResult RangedHeal(ICreep target);
+
+        /// <summary>
+        /// Heal a power creep at a distance.
+        /// It will restore the target creep’s damaged body parts function and increase the hits counter.
+        /// Requires the HEAL body part.
+        /// The target has to be within 3 squares range of the creep.
+        /// </summary>
+        /// <param name="target"></param>
+        /// <returns></returns>
+        CreepHealResult RangedHeal(IPowerCreep target);
 
         /// <summary>
         /// A ranged attack against all hostile creeps or structures within 3 squares range.
@@ -1064,7 +1116,7 @@ namespace ScreepsDotNet.API.World
         /// <param name="resourceType"></param>
         /// <param name="amount"></param>
         /// <returns></returns>
-        // CreepTransferResult Transfer(IPowerCreep target, ResourceType resourceType, int? amount = null);
+        CreepTransferResult Transfer(IPowerCreep target, ResourceType resourceType, int? amount = null);
 
         /// <summary>
         /// Transfer resource from the creep to another object. The target has to be at adjacent square to the creep.

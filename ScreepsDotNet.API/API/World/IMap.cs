@@ -16,9 +16,9 @@ namespace ScreepsDotNet.API.World
         public static (int dx, int dy) ToLinear(this ExitDirection exitDirection)
             => exitDirection switch
             {
-                ExitDirection.Top => (0, 1),
+                ExitDirection.Top => (0, -1),
                 ExitDirection.Right => (1, 0),
-                ExitDirection.Bottom => (0, -1),
+                ExitDirection.Bottom => (0, 1),
                 ExitDirection.Left => (-1, 0),
                 _ => throw new ArgumentException("Unknown exit direction", nameof(exitDirection)),
             };
@@ -26,12 +26,12 @@ namespace ScreepsDotNet.API.World
 
     public readonly struct RoomExits
     {
-        private readonly string? top;
-        private readonly string? right;
-        private readonly string? bottom;
-        private readonly string? left;
+        private readonly RoomCoord? top;
+        private readonly RoomCoord? right;
+        private readonly RoomCoord? bottom;
+        private readonly RoomCoord? left;
 
-        public string? this[Direction direction] => direction switch
+        public RoomCoord? this[Direction direction] => direction switch
         {
             Direction.Top => top,
             Direction.Right => right,
@@ -40,7 +40,7 @@ namespace ScreepsDotNet.API.World
             _ => null,
         };
 
-        public string? this[ExitDirection direction] => direction switch
+        public RoomCoord? this[ExitDirection direction] => direction switch
         {
             ExitDirection.Top => top,
             ExitDirection.Right => right,
@@ -49,7 +49,7 @@ namespace ScreepsDotNet.API.World
             _ => null,
         };
 
-        public RoomExits(string? top, string? right, string? bottom, string? left)
+        public RoomExits(RoomCoord? top, RoomCoord? right, RoomCoord? bottom, RoomCoord? left)
         {
             this.top = top;
             this.right = right;
@@ -97,9 +97,9 @@ namespace ScreepsDotNet.API.World
         /// You can use this to do things like prioritize your own rooms, or avoid some rooms.
         /// You can return a floating point cost or Infinity to block the room.
         /// </summary>
-        public readonly Func<string, string, double>? RouteCallback;
+        public readonly Func<RoomCoord, RoomCoord, double>? RouteCallback;
 
-        public MapFindRouteOptions(Func<string, string, double>? routeCallback = null)
+        public MapFindRouteOptions(Func<RoomCoord, RoomCoord, double>? routeCallback = null)
         {
             RouteCallback = routeCallback;
         }
@@ -108,12 +108,12 @@ namespace ScreepsDotNet.API.World
     public readonly struct MapFindRouteStep
     {
         public readonly ExitDirection Exit;
-        public readonly string RoomName;
+        public readonly RoomCoord RoomCoord;
 
-        public MapFindRouteStep(ExitDirection exit, string roomName)
+        public MapFindRouteStep(ExitDirection exit, RoomCoord roomCoord)
         {
             Exit = exit;
-            RoomName = roomName;
+            RoomCoord = roomCoord;
         }
     }
 
@@ -165,18 +165,19 @@ namespace ScreepsDotNet.API.World
         /// <summary>
         /// List all exits available from the room with the given name.
         /// </summary>
-        /// <param name="roomName"></param>
+        /// <param name="roomCoord"></param>
         /// <returns></returns>
-        RoomExits DescribeExits(string roomName);
+        RoomExits DescribeExits(RoomCoord roomCoord);
 
         /// <summary>
         /// Find the exit direction from the given room en route to another room.
         /// </summary>
-        /// <param name="fromRoomName"></param>
-        /// <param name="toRoomName"></param>
+        /// <param name="fromRoomCoord"></param>
+        /// <param name="toRoomCoord"></param>
         /// <param name="exitDirection"></param>
+        /// <param name="opts"></param>
         /// <returns></returns>
-        MapFindExitResult FindExit(string fromRoomName, string toRoomName, out ExitDirection exitDirection, MapFindRouteOptions? opts = null);
+        MapFindExitResult FindExit(RoomCoord fromRoomCoord, RoomCoord toRoomCoord, out ExitDirection exitDirection, MapFindRouteOptions? opts = null);
 
         /// <summary>
         /// Find the exit direction from the given room en route to another room.
@@ -191,12 +192,12 @@ namespace ScreepsDotNet.API.World
         /// <summary>
         /// Find route from the given room to another room.
         /// </summary>
-        /// <param name="fromRoomName"></param>
-        /// <param name="toRoomName"></param>
+        /// <param name="fromRoomCoord"></param>
+        /// <param name="toRoomCoord"></param>
         /// <param name="steps"></param>
         /// <param name="opts"></param>
         /// <returns></returns>
-        MapFindRouteResult FindRoute(string fromRoomName, string toRoomName, out IEnumerable<MapFindRouteStep> steps, MapFindRouteOptions? opts = null);
+        MapFindRouteResult FindRoute(RoomCoord fromRoomCoord, RoomCoord toRoomCoord, out IEnumerable<MapFindRouteStep> steps, MapFindRouteOptions? opts = null);
 
         /// <summary>
         /// Find route from the given room to another room.
@@ -212,19 +213,19 @@ namespace ScreepsDotNet.API.World
         /// Get the linear distance (in rooms) between two rooms.
         /// You can use this function to estimate the energy cost of sending resources through terminals, or using observers and nukes.
         /// </summary>
-        /// <param name="roomName1"></param>
-        /// <param name="roomName2"></param>
+        /// <param name="roomCoord1"></param>
+        /// <param name="roomCoord2"></param>
         /// <param name="continuous"></param>
         /// <returns></returns>
-        int GetRoomLinearDistance(string roomName1, string roomName2, bool continuous = false);
+        int GetRoomLinearDistance(RoomCoord roomCoord1, RoomCoord roomCoord2, bool continuous = false);
 
         /// <summary>
         /// Get a Room.Terrain object which provides fast access to static terrain data.
         /// This method works for any room in the world even if you have no access to it.
         /// </summary>
-        /// <param name="roomName"></param>
+        /// <param name="roomCoord"></param>
         /// <returns></returns>
-        IRoomTerrain GetRoomTerrain(string roomName);
+        IRoomTerrain GetRoomTerrain(RoomCoord roomCoord);
 
         /// <summary>
         /// Returns the world size as a number of rooms between world corners.
@@ -236,8 +237,8 @@ namespace ScreepsDotNet.API.World
         /// <summary>
         /// Gets availablity status of the room with the specified name.
         /// </summary>
-        /// <param name="roomName"></param>
+        /// <param name="roomCoord"></param>
         /// <returns></returns>
-        RoomStatus GetRoomStatus(string roomName);
+        RoomStatus GetRoomStatus(RoomCoord roomCoord);
     }
 }

@@ -1,83 +1,75 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices.JavaScript;
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using System.Linq;
+
+using ScreepsDotNet.Interop;
 
 using ScreepsDotNet.API;
 using ScreepsDotNet.API.World;
 
 namespace ScreepsDotNet.Native.World
 {
-    [System.Runtime.Versioning.SupportedOSPlatform("browser")]
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal partial class NativeRoom : NativeObject, IRoom, IEquatable<NativeRoom?>
     {
         #region Imports
 
         [JSImport("Room.createConstructionSite", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_CreateConstructionSite([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Number>] int x, [JSMarshalAs<JSType.Number>] int y, [JSMarshalAs<JSType.String>] string structureType, [JSMarshalAs<JSType.String>] string? name);
+        internal static partial int Native_CreateConstructionSite(JSObject proxyObject, int x, int y, string structureType, string? name);
 
         [JSImport("Room.createFlag", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Object>]
-        internal static partial JSObject Native_CreateFlag([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Number>] int x, [JSMarshalAs<JSType.Number>] int y, [JSMarshalAs<JSType.String>] string? name, [JSMarshalAs<JSType.Number>] int? color, [JSMarshalAs<JSType.Number>] int? secondaryColor);
+        internal static partial JSObject Native_CreateFlag(JSObject proxyObject, int x, int y, string? name, int? color, int? secondaryColor);
 
         [JSImport("Room.find", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Array<JSType.Object>>]
-        internal static partial JSObject[] Native_Find([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Number>] int type);
+        internal static partial JSObject[] Native_Find(JSObject proxyObject, int type);
 
         [JSImport("Room.findFast", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_FindFast([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Number>] int type);
+        internal static partial int Native_FindFast(JSObject proxyObject, int type, IntPtr outRoomObjectMetadataPtr, int maxObjectCount);
 
         [JSImport("Room.findExitTo", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_FindExitTo([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.String>] string room);
+        internal static partial int Native_FindExitTo(JSObject proxyObject, string room);
 
         [JSImport("Room.findPath", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Array<JSType.Object>>]
-        internal static partial JSObject[] Native_FindPath([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Object>] JSObject fromPos, [JSMarshalAs<JSType.Object>] JSObject toPos, [JSMarshalAs<JSType.Object>] JSObject? opts);
+        internal static partial JSObject[] Native_FindPath(JSObject proxyObject, JSObject fromPos, JSObject toPos, JSObject? opts);
 
         [JSImport("Room.findExitTo", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.String>]
-        internal static partial string Native_GetEventLogRaw([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Boolean>] bool raw);
+        internal static partial string Native_GetEventLogRaw(JSObject proxyObject, bool raw);
 
         [JSImport("Room.getTerrain", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Object>]
-        internal static partial JSObject Native_GetTerrain([JSMarshalAs<JSType.Object>] JSObject proxyObject);
+        internal static partial JSObject Native_GetTerrain(JSObject proxyObject);
 
         [JSImport("Room.lookAt", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Array<JSType.Object>>]
-        internal static partial JSObject[] Native_LookAt([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Number>] int x, [JSMarshalAs<JSType.Number>] int y);
+        internal static partial JSObject[] Native_LookAt(JSObject proxyObject, int x, int y);
 
         [JSImport("Room.lookAtFast", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_LookAtFast([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Number>] int x, [JSMarshalAs<JSType.Number>] int y);
+        internal static partial int Native_LookAtFast(JSObject proxyObject, int x, int y, IntPtr outRoomObjectMetadataPtr, int maxObjectCount);
 
         [JSImport("Room.lookAtArea", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Array<JSType.Object>>]
-        internal static partial JSObject[] Native_LookAtArea([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Number>] int top, [JSMarshalAs<JSType.Number>] int left, [JSMarshalAs<JSType.Number>] int bottom, [JSMarshalAs<JSType.Number>] int right, [JSMarshalAs<JSType.Boolean>] bool asArray);
+        internal static partial JSObject[] Native_LookAtArea(JSObject proxyObject, int top, int left, int bottom, int right, bool asArray);
 
         [JSImport("Room.lookAtAreaFast", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_LookAtAreaFast([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.Number>] int top, [JSMarshalAs<JSType.Number>] int left, [JSMarshalAs<JSType.Number>] int bottom, [JSMarshalAs<JSType.Number>] int right);
+        internal static partial int Native_LookAtAreaFast(JSObject proxyObject, int top, int left, int bottom, int right, IntPtr outRoomObjectMetadataPtr, int maxObjectCount);
 
         [JSImport("Room.lookForAt", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Array<JSType.Object>>]
-        internal static partial JSObject[] Native_LookForAt([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.String>] string type, [JSMarshalAs<JSType.Number>] int x, [JSMarshalAs<JSType.Number>] int y);
+        internal static partial JSObject[] Native_LookForAt(JSObject proxyObject, string type, int x, int y);
 
         [JSImport("Room.lookForAtFast", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_LookForAtFast([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.String>] string type, [JSMarshalAs<JSType.Number>] int x, [JSMarshalAs<JSType.Number>] int y);
+        internal static partial int Native_LookForAtFast(JSObject proxyObject, string type, int x, int y, IntPtr outRoomObjectMetadataPtr, int maxObjectCount);
 
         [JSImport("Room.lookForAtArea", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Array<JSType.Object>>]
-        internal static partial JSObject[] Native_LookForAtArea([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.String>] string type, [JSMarshalAs<JSType.Number>] int top, [JSMarshalAs<JSType.Number>] int left, [JSMarshalAs<JSType.Number>] int bottom, [JSMarshalAs<JSType.Number>] int right, [JSMarshalAs<JSType.Boolean>] bool asArray);
+        internal static partial JSObject[] Native_LookForAtArea(JSObject proxyObject, string type, int top, int left, int bottom, int right, bool asArray);
 
         [JSImport("Room.lookForAtAreaFast", "game/prototypes/wrapped")]
-        [return: JSMarshalAsAttribute<JSType.Number>]
-        internal static partial int Native_LookForAtAreaFast([JSMarshalAs<JSType.Object>] JSObject proxyObject, [JSMarshalAs<JSType.String>] string type, [JSMarshalAs<JSType.Number>] int top, [JSMarshalAs<JSType.Number>] int left, [JSMarshalAs<JSType.Number>] int bottom, [JSMarshalAs<JSType.Number>] int right);
+        internal static partial int Native_LookForAtAreaFast(JSObject proxyObject, string type, int top, int left, int bottom, int right, IntPtr outRoomObjectMetadataPtr, int maxObjectCount);
 
         #endregion
+
+        private const int objectCountBufferSize = 4096; // Assumption: room.Find, room.LookFor etc won't return more than this many objects at once
+        private static readonly RoomObjectMetadata[] roomObjectMetadataBuffer = new RoomObjectMetadata[objectCountBufferSize];
+
+        private UserDataStorage userDataStorage;
 
         private IStructureController? controllerCache;
         private int? energyAvailableCache;
@@ -93,29 +85,29 @@ namespace ScreepsDotNet.Native.World
 
         public RoomCoord Coord { get; }
 
-        public IStructureController? Controller => CachePerTick(ref controllerCache) ??= nativeRoot.GetOrCreateWrapperObject<IStructureController>(ProxyObject.GetPropertyAsJSObject("controller"));
+        public IStructureController? Controller => CachePerTick(ref controllerCache) ??= nativeRoot.GetOrCreateWrapperObject<IStructureController>(ProxyObject.GetPropertyAsJSObject(Names.Controller));
 
-        public int EnergyAvailable => CachePerTick(ref energyAvailableCache) ??= ProxyObject.GetPropertyAsInt32("energyAvailable");
+        public int EnergyAvailable => CachePerTick(ref energyAvailableCache) ??= ProxyObject.GetPropertyAsInt32(Names.EnergyAvailable);
 
-        public int EnergyCapacityAvailable => CachePerTick(ref energyCapacityAvailableCache) ??= ProxyObject.GetPropertyAsInt32("energyCapacityAvailable");
+        public int EnergyCapacityAvailable => CachePerTick(ref energyCapacityAvailableCache) ??= ProxyObject.GetPropertyAsInt32(Names.EnergyCapacityAvailable);
 
-        public IMemoryObject Memory => CachePerTick(ref memoryCache) ??= new NativeMemoryObject(ProxyObject.GetPropertyAsJSObject("memory")!);
+        public IMemoryObject Memory => CachePerTick(ref memoryCache) ??= new NativeMemoryObject(ProxyObject.GetPropertyAsJSObject(Names.Memory)!);
 
-        public IStructureStorage? Storage => CachePerTick(ref storageCache) ??= nativeRoot.GetOrCreateWrapperObject<IStructureStorage>(ProxyObject.GetPropertyAsJSObject("storage"));
+        public IStructureStorage? Storage => CachePerTick(ref storageCache) ??= nativeRoot.GetOrCreateWrapperObject<IStructureStorage>(ProxyObject.GetPropertyAsJSObject(Names.Storage));
 
-        public IStructureTerminal? Terminal => CachePerTick(ref terminalCache) ??= nativeRoot.GetOrCreateWrapperObject<IStructureTerminal>(ProxyObject.GetPropertyAsJSObject("terminal"));
+        public IStructureTerminal? Terminal => CachePerTick(ref terminalCache) ??= nativeRoot.GetOrCreateWrapperObject<IStructureTerminal>(ProxyObject.GetPropertyAsJSObject(Names.Terminal));
 
-        public IRoomVisual Visual => CachePerTick(ref visualCache) ??= new NativeRoomVisual(ProxyObject.GetPropertyAsJSObject("visual")!);
+        public IRoomVisual Visual => CachePerTick(ref visualCache) ??= new NativeRoomVisual(ProxyObject.GetPropertyAsJSObject(Names.Visual)!);
 
         public NativeRoom(INativeRoot nativeRoot, JSObject proxyObject, string? knownName)
             : base(nativeRoot, proxyObject)
         {
-            Name = knownName ?? proxyObject.GetPropertyAsString("name")!;
+            Name = knownName ?? proxyObject.GetPropertyAsString(Names.Name)!;
             Coord = new(Name);
         }
 
         public NativeRoom(INativeRoot nativeRoot, JSObject proxyObject)
-            : this(nativeRoot, proxyObject, proxyObject.GetPropertyAsString("name"))
+            : this(nativeRoot, proxyObject, proxyObject.GetPropertyAsString(Names.Name))
         { }
 
         public override JSObject? ReacquireProxyObject()
@@ -132,6 +124,22 @@ namespace ScreepsDotNet.Native.World
             terminalCache = null;
             visualCache = null;
         }
+
+        #region User Data
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SetUserData<T>(T? userData) where T : class => userDataStorage.SetUserData<T>(userData);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryGetUserData<T>([MaybeNullWhen(false)] out T userData) where T : class => userDataStorage.TryGetUserData<T>(out userData);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public T? GetUserData<T>() where T : class => userDataStorage.GetUserData<T>();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool HasUserData<T>() where T : class => userDataStorage.HasUserData<T>();
+
+        #endregion
 
         public RoomCreateConstructionSiteResult CreateConstructionSite<T>(Position position, string? name = null) where T : class, IStructure
         {
@@ -150,8 +158,8 @@ namespace ScreepsDotNet.Native.World
         public RoomCreateFlagResult CreateFlag(Position position, out string newFlagName, string? name = null, FlagColor? color = null, FlagColor? secondaryColor = null)
         {
             using var resultJs = Native_CreateFlag(ProxyObject, position.X, position.Y, name, (int?)color, (int?)secondaryColor);
-            newFlagName = resultJs.GetPropertyAsString("name") ?? string.Empty;
-            return (RoomCreateFlagResult)resultJs.GetPropertyAsInt32("code");
+            newFlagName = resultJs.GetPropertyAsString(Names.Name) ?? string.Empty;
+            return (RoomCreateFlagResult)resultJs.GetPropertyAsInt32(Names.Code);
         }
 
         public IEnumerable<T> Find<T>(bool? my = null) where T : class, IRoomObject
@@ -160,8 +168,19 @@ namespace ScreepsDotNet.Native.World
             if (findConstant == null) { return Enumerable.Empty<T>(); }
             if (typeof(T).IsAssignableTo(typeof(IWithId)))
             {
-                int cnt = Native_FindFast(ProxyObject, (int)findConstant);
-                return nativeRoot.GetWrapperObjectsFromCopyBuffer<T>(cnt);
+                int cnt;
+                unsafe
+                {
+                    fixed (RoomObjectMetadata* roomObjectMetadataBufferPtr = roomObjectMetadataBuffer)
+                    {
+                        cnt = Native_FindFast(ProxyObject, (int)findConstant, (IntPtr)roomObjectMetadataBufferPtr, objectCountBufferSize);
+                    }
+                }
+                if (cnt >= objectCountBufferSize)
+                {
+                    Console.WriteLine($"WARNING: IRoom.Find object buffer potential overflow (got {cnt} from native call, objectCountBufferSize={objectCountBufferSize}) - may need to increase buffer size");
+                }
+                return nativeRoot.GetWrapperObjectsFromBuffer<T>(roomObjectMetadataBuffer.AsSpan()[..cnt]);
             }
             return Native_Find(ProxyObject, (int)findConstant)
                 .Select(nativeRoot.GetOrCreateWrapperObject<T>)
@@ -194,7 +213,7 @@ namespace ScreepsDotNet.Native.World
         public RoomFindExitResult FindExitTo(string roomName)
             => (RoomFindExitResult)Native_FindExitTo(ProxyObject, roomName);
 
-        public IEnumerable<PathStep> FindPath(Position fromPos, Position toPos, FindPathOptions? opts = null)
+        public IEnumerable<PathStep> FindPath(RoomPosition fromPos, RoomPosition toPos, FindPathOptions? opts = null)
         {
             using var fromPosJs = fromPos.ToJS();
             using var toPosJs = toPos.ToJS();
@@ -225,29 +244,73 @@ namespace ScreepsDotNet.Native.World
             => roomTerrainCache ??= new NativeRoomTerrain(Native_GetTerrain(ProxyObject));
 
         public IEnumerable<IRoomObject> LookAt(Position position)
-            => nativeRoot.GetWrapperObjectsFromCopyBuffer<IRoomObject>(Native_LookAtFast(ProxyObject, position.X, position.Y));
+        {
+            int cnt;
+            unsafe
+            {
+                fixed (RoomObjectMetadata* roomObjectMetadataBufferPtr = roomObjectMetadataBuffer)
+                {
+                    cnt = Native_LookAtFast(ProxyObject, position.X, position.Y, (IntPtr)roomObjectMetadataBufferPtr, objectCountBufferSize);
+                }
+            }
+            if (cnt >= objectCountBufferSize)
+            {
+                Console.WriteLine($"WARNING: IRoom.LookAt object buffer potential overflow (got {cnt} from native call, objectCountBufferSize={objectCountBufferSize}) - may need to increase buffer size");
+            }
+            return nativeRoot.GetWrapperObjectsFromBuffer<IRoomObject>(roomObjectMetadataBuffer.AsSpan()[..cnt]);
+        }
 
         public IEnumerable<IRoomObject> LookAtArea(Position min, Position max)
-            => nativeRoot.GetWrapperObjectsFromCopyBuffer<IRoomObject>(Native_LookAtAreaFast(ProxyObject, min.Y, min.X, max.Y, max.X));
+        {
+            int cnt;
+            unsafe
+            {
+                fixed (RoomObjectMetadata* roomObjectMetadataBufferPtr = roomObjectMetadataBuffer)
+                {
+                    cnt = Native_LookAtAreaFast(ProxyObject, min.Y, min.X, max.Y, max.X, (IntPtr)roomObjectMetadataBufferPtr, objectCountBufferSize);
+                }
+            }
+            if (cnt >= objectCountBufferSize)
+            {
+                Console.WriteLine($"WARNING: IRoom.LookAt object buffer potential overflow (got {cnt} from native call, objectCountBufferSize={objectCountBufferSize}) - may need to increase buffer size");
+            }
+            return nativeRoot.GetWrapperObjectsFromBuffer<IRoomObject>(roomObjectMetadataBuffer.AsSpan()[..cnt]);
+        }
 
         public IEnumerable<T> LookForAt<T>(Position position) where T : class, IRoomObject
         {
             var lookConstant = NativeRoomObjectPrototypes<T>.LookConstant;
             if (lookConstant == null) { return Enumerable.Empty<T>(); }
-            return nativeRoot.GetWrapperObjectsFromCopyBuffer<T>(Native_LookForAtFast(ProxyObject, lookConstant, position.X, position.Y));
+            int cnt;
+            unsafe
+            {
+                fixed (RoomObjectMetadata* roomObjectMetadataBufferPtr = roomObjectMetadataBuffer)
+                {
+                    cnt = Native_LookForAtFast(ProxyObject, lookConstant, position.X, position.Y, (IntPtr)roomObjectMetadataBufferPtr, objectCountBufferSize);
+                }
+            }
+            return nativeRoot.GetWrapperObjectsFromBuffer<T>(roomObjectMetadataBuffer.AsSpan()[..cnt]);
         }
 
         public IEnumerable<T> LookForAtArea<T>(Position min, Position max) where T : class, IRoomObject
         {
             var lookConstant = NativeRoomObjectPrototypes<T>.LookConstant;
             if (lookConstant == null) { return Enumerable.Empty<T>(); }
-            return nativeRoot.GetWrapperObjectsFromCopyBuffer<T>(Native_LookForAtAreaFast(ProxyObject, lookConstant, min.Y, min.X, max.Y, max.X));
+            int cnt;
+            unsafe
+            {
+                fixed (RoomObjectMetadata* roomObjectMetadataBufferPtr = roomObjectMetadataBuffer)
+                {
+                    cnt = Native_LookForAtAreaFast(ProxyObject, lookConstant, min.Y, min.X, max.Y, max.X, (IntPtr)roomObjectMetadataBufferPtr, objectCountBufferSize);
+                }
+            }
+            return nativeRoot.GetWrapperObjectsFromBuffer<T>(roomObjectMetadataBuffer.AsSpan()[..cnt]);
         }
 
         private JSObject? InterpretLookElement(JSObject lookElement)
         {
-            var typeStr = lookElement.GetPropertyAsString("type")!;
-            if (lookElement.GetTypeOfProperty(typeStr) != "object") { return null; }
+            var typeStr = lookElement.GetPropertyAsString(Names.Type)!;
+            if (lookElement.GetTypeOfProperty(typeStr) != JSPropertyType.Object) { return null; }
             return lookElement.GetPropertyAsJSObject(typeStr);
         }
 
