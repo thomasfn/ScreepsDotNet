@@ -18,7 +18,7 @@
 		<PackageLicenseFile>LICENSE</PackageLicenseFile>
 		<PackageTags>screeps world arena bundler msbuild</PackageTags>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
-		<Copyright>Copyright (c) thomasfn 2023</Copyright>
+		<Copyright>Copyright (c) thomasfn 2024</Copyright>
 	</PropertyGroup>
 
 	<PropertyGroup>
