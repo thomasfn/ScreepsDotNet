@@ -19,7 +19,7 @@ Screeps DotNet allows you to write bots for Screeps in any language that targets
 - [Screeps Arena](https://store.steampowered.com/app/1137320/Screeps_Arena/) - :heavy_check_mark: full support
 - [Screeps World](https://store.steampowered.com/app/464350/Screeps_World/) - :heavy_check_mark: full support
 
-A managed API is provided that handles the interop with the Screeps javascript API, meaning you only need to write code against a set of generic interfaces. For some examples, please see the [example Arena project](ScreepsDotNet/Arena) which contains example solutions for all 10 tutorials of Screeps Arena, or the [example World project](ScreepsDotNet/World) which contains a barebones Screeps World bot.
+A managed API is provided that handles the interop with the Screeps javascript API, meaning you only need to write code against a set of generic interfaces. For some examples, please see the [example Arena project](ScreepsDotNet.ExampleArenaBot/) which contains example solutions for all 10 tutorials of Screeps Arena, or the [example World project](ScreepsDotNet.ExampleWorldBot/) which contains a barebones Screeps World bot.
 
 ## Quickstart
 
@@ -376,7 +376,9 @@ Screeps DotNet is made up of the following pieces:
 - [Managed API Tests](ScreepsDotNet.API.Tests/) - xunit tests for [Managed API](ScreepsDotNet.API/)
 - [Bundler](ScreepsDotNet.Bundler/) - msbuild extension that bundles the compiled wasm and assemblies during build, ready to be consumed by Screeps
 - [Bootloader](Bootloader/) - typescript project containing the glue code and api bindings that loads the wasm into the Screeps environment
-- [Example Project](ScreepsDotNet/) - working example project containing tutorial solutions for Screeps Arena
+- [Example Arena Bot](ScreepsDotNet.ExampleArenaBot/) - working example project containing tutorial solutions for Screeps Arena
+- [Example World Bot](ScreepsDotNet.ExampleWorldBot/) - working example project containing basic bot for Screeps World
+- [SourceGen](ScreepsDotNet.SourceGen/) - source generator for js interop layer
 
 ## Limitations, Issues and Implications
 
