@@ -220,7 +220,7 @@ namespace ScreepsDotNet.API.World
         /// <param name="toPos"></param>
         /// <param name="opts"></param>
         /// <returns></returns>
-        IEnumerable<PathStep> FindPath(Position fromPos, Position toPos, FindPathOptions? opts = null);
+        IEnumerable<PathStep> FindPath(RoomPosition fromPos, RoomPosition toPos, FindPathOptions? opts = null);
 
         /// <summary>
         /// Returns an array of events happened on the previous tick in this room in JSON format.

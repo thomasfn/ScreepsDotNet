@@ -15,7 +15,6 @@ namespace ScreepsDotNet.Native.World
         #endregion
 
         private int? cooldownCache;
-        private NativeStore? storeCache;
 
         public int Cooldown => CachePerTick(ref cooldownCache) ??= ProxyObject.GetPropertyAsInt32(Names.Cooldown);
 

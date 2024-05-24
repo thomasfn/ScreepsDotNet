@@ -243,7 +243,7 @@ namespace ScreepsDotNet.Native.World
         internal static partial JSObject GetPrototypesObject();
 
         [JSImport("createRoomPosition", "game")]
-        internal static partial JSObject CreateRoomPosition(int x, int y, string roomName);
+        internal static partial JSObject CreateRoomPosition(int encodedInt);
 
         [JSImport("interpretDateTime", "object")]
         internal static partial double InterpretDateTime(JSObject obj);

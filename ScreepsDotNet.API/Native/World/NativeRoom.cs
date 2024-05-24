@@ -213,7 +213,7 @@ namespace ScreepsDotNet.Native.World
         public RoomFindExitResult FindExitTo(string roomName)
             => (RoomFindExitResult)Native_FindExitTo(ProxyObject, roomName);
 
-        public IEnumerable<PathStep> FindPath(Position fromPos, Position toPos, FindPathOptions? opts = null)
+        public IEnumerable<PathStep> FindPath(RoomPosition fromPos, RoomPosition toPos, FindPathOptions? opts = null)
         {
             using var fromPosJs = fromPos.ToJS();
             using var toPosJs = toPos.ToJS();

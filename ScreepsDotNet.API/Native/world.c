@@ -1,6 +1,11 @@
 ﻿#include <assert.h>
+#include <driver.h>
 
 #include <mono/metadata/loader.h>
+#include <mono/metadata/object.h>
+#include <mono/metadata/exception.h>
+
+const char* dotnet_wasi_getentrypointassemblyname();
 
 const int kMaxWorldSize = 256;
 const int kMaxWorldSize2 = kMaxWorldSize >> 1;
@@ -178,4 +183,56 @@ void screepsdotnet_init_world()
     mono_add_internal_call("ScreepsDotNet_Native::BatchFetchObjectRoomPositions", BatchFetchObjectRoomPositions);
     mono_add_internal_call("ScreepsDotNet_Native::GetObjectById", GetObjectById);
     mono_add_internal_call("ScreepsDotNet_Native::GetObjectId", GetObjectId);
+}
+
+MonoMethod* method_InvokeRoomCallback;
+MonoMethod* method_InvokeCostCallback;
+MonoMethod* method_InvokeRouteCallback;
+
+__attribute__((export_name("screepsdotnet_invoke_room_callback")))
+void* screepsdotnet_invoke_room_callback(int roomCoordX, int roomCoordY)
+{
+    if (!method_InvokeRoomCallback)
+    {
+        method_InvokeRoomCallback = lookup_dotnet_method("ScreepsDotNet.API.dll", "ScreepsDotNet", "NativeCallbacks", "InvokeRoomCallback", -1);
+        assert(method_InvokeRoomCallback);
+    }
+
+    MonoObject* exception;
+    void* args[2] = { &roomCoordX, &roomCoordY };
+    MonoObject* result = mono_runtime_invoke(method_InvokeRoomCallback, NULL, args, &exception);
+    assert(!exception);
+    return *(void**)mono_object_unbox(result);
+}
+
+__attribute__((export_name("screepsdotnet_invoke_cost_callback")))
+void* screepsdotnet_invoke_cost_callback(int roomCoordX, int roomCoordY, void* costMatrixJsHandle)
+{
+    if (!method_InvokeCostCallback)
+    {
+        method_InvokeCostCallback = lookup_dotnet_method("ScreepsDotNet.API.dll", "ScreepsDotNet", "NativeCallbacks", "InvokeCostCallback", -1);
+        assert(method_InvokeCostCallback);
+    }
+
+    MonoObject* exception;
+    void* args[3] = { &roomCoordX, &roomCoordY, costMatrixJsHandle };
+    MonoObject* result = mono_runtime_invoke(method_InvokeCostCallback, NULL, args, &exception);
+    assert(!exception);
+    return *(void**)mono_object_unbox(result);
+}
+
+__attribute__((export_name("screepsdotnet_invoke_route_callback")))
+double screepsdotnet_invoke_route_callback(int roomCoordX, int roomCoordY, int fromRoomCoordX, int fromRoomCoordY)
+{
+    if (!method_InvokeRouteCallback)
+    {
+        method_InvokeRouteCallback = lookup_dotnet_method("ScreepsDotNet.API.dll", "ScreepsDotNet", "NativeCallbacks", "InvokeRouteCallback", -1);
+        assert(method_InvokeRouteCallback);
+    }
+
+    MonoObject* exception;
+    void* args[4] = { &roomCoordX, &roomCoordY, &fromRoomCoordX, &fromRoomCoordY };
+    MonoObject* result = mono_runtime_invoke(method_InvokeRouteCallback, NULL, args, &exception);
+    assert(!exception);
+    return *(double*)mono_object_unbox(result);
 }

@@ -3,15 +3,23 @@ using System.Collections.Generic;
 using System.Linq;
 using ScreepsDotNet.Interop;
 
+using System.Diagnostics.CodeAnalysis;
+
 using ScreepsDotNet.API.World;
 
 namespace ScreepsDotNet.Native.World
 {
     [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
-    internal static partial class NativeMapExtensions
+    public static partial class NativeMapExtensions
     {
-        [JSImport("set", "object")]
-        internal static partial void SetRouteCallbackOnObject(JSObject obj, string key, Func<string, string, double> func);
+        #region Imports
+
+        [JSImport("map.getRouteCallbackObject", "game")]
+        internal static partial JSObject Native_GetRouteCallbackObject();
+
+        #endregion
+
+        private static JSObject? routeCallbackObject;
 
         private static readonly Dictionary<Name, RoomStatusType> nameToRoomStatusTypeMap = new()
         {
@@ -21,15 +29,20 @@ namespace ScreepsDotNet.Native.World
             { Names.Respawn, RoomStatusType.Respawn }
         };
 
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicMethods, typeof(NativeMapExtensions))]
         public static JSObject ToJS(this MapFindRouteOptions mapFindRouteOptions)
         {
             var obj = JSObject.Create();
-            if (mapFindRouteOptions.RouteCallback != null) { SetRouteCallbackOnObject(obj, "routeCallback", mapFindRouteOptions.RouteCallback); }
+            if (mapFindRouteOptions.RouteCallback != null)
+            {
+                NativeCallbacks.currentRouteCallbackFunc = mapFindRouteOptions.RouteCallback;
+                obj.SetProperty(Names.RouteCallback, routeCallbackObject ??= Native_GetRouteCallbackObject());
+            }
             return obj;
         }
 
         public static MapFindRouteStep ToMapFindRouteStep(this JSObject obj)
-            => new((ExitDirection)obj.GetPropertyAsInt32("exit"), obj.GetPropertyAsString("room")!);
+            => new((ExitDirection)obj.GetPropertyAsInt32(Names.Exit), new(obj.GetPropertyAsString(Names.Room)!));
 
         public static RoomStatusType ParseRoomStatusType(this Name name) => nameToRoomStatusTypeMap[name];
     }
@@ -66,17 +79,17 @@ namespace ScreepsDotNet.Native.World
 
         public IMapVisual Visual => visualCache ??= new NativeMapVisual();
 
-        public RoomExits DescribeExits(string roomName)
+        public RoomExits DescribeExits(RoomCoord roomCoord)
         {
-            using var obj = Native_DescribeExits(roomName);
+            using var obj = Native_DescribeExits(roomCoord.ToString());
             if (obj == null) { return new(); }
-            return new(obj.GetPropertyAsString("1"), obj.GetPropertyAsString("3"), obj.GetPropertyAsString("5"), obj.GetPropertyAsString("7"));
+            return new(new(obj.GetPropertyAsString("1")), new(obj.GetPropertyAsString("3")), new(obj.GetPropertyAsString("5")), new(obj.GetPropertyAsString("7")));
         }
 
-        public MapFindExitResult FindExit(string fromRoomName, string toRoomName, out ExitDirection exitDirection, MapFindRouteOptions? opts = null)
+        public MapFindExitResult FindExit(RoomCoord fromRoomCoord, RoomCoord toRoomCoord, out ExitDirection exitDirection, MapFindRouteOptions? opts = null)
         {
             using var optsJs = opts?.ToJS();
-            var value = Native_FindExit(fromRoomName, toRoomName, optsJs);
+            var value = Native_FindExit(fromRoomCoord.ToString(), toRoomCoord.ToString(), optsJs);
             if (value < 0)
             {
                 exitDirection = default;
@@ -87,12 +100,12 @@ namespace ScreepsDotNet.Native.World
         }
 
         public MapFindExitResult FindExit(IRoom fromRoom, IRoom toRoom, out ExitDirection exitDirection, MapFindRouteOptions? opts = null)
-            => FindExit(fromRoom.Name, toRoom.Name, out exitDirection, opts);
+            => FindExit(fromRoom.Coord, toRoom.Coord, out exitDirection, opts);
 
-        public MapFindRouteResult FindRoute(string fromRoomName, string toRoomName, out IEnumerable<MapFindRouteStep> steps, MapFindRouteOptions? opts = null)
+        public MapFindRouteResult FindRoute(RoomCoord fromRoomCoord, RoomCoord toRoomCoord, out IEnumerable<MapFindRouteStep> steps, MapFindRouteOptions? opts = null)
         {
             using var optsJs = opts?.ToJS();
-            var arr = Native_FindRoute(fromRoomName, toRoomName, optsJs);
+            var arr = Native_FindRoute(fromRoomCoord.ToString(), toRoomCoord.ToString(), optsJs);
             if (arr == null)
             {
                 steps = Enumerable.Empty<MapFindRouteStep>();
@@ -103,20 +116,20 @@ namespace ScreepsDotNet.Native.World
         }
 
         public MapFindRouteResult FindRoute(IRoom fromRoom, IRoom toRoom, out IEnumerable<MapFindRouteStep> steps, MapFindRouteOptions? opts = null)
-            => FindRoute(fromRoom.Name, toRoom.Name, out steps, opts);
+            => FindRoute(fromRoom.Coord, toRoom.Coord, out steps, opts);
 
-        public int GetRoomLinearDistance(string roomName1, string roomName2, bool continuous = false)
-            => Native_GetRoomLinearDistance(roomName1, roomName2, continuous);
+        public int GetRoomLinearDistance(RoomCoord roomCoord1, RoomCoord roomCoord2, bool continuous = false)
+            => Native_GetRoomLinearDistance(roomCoord1.ToString(), roomCoord2.ToString(), continuous);
 
-        public IRoomTerrain GetRoomTerrain(string roomName)
-            => new NativeRoomTerrain(Native_GetRoomTerrain(roomName));
+        public IRoomTerrain GetRoomTerrain(RoomCoord roomCoord)
+            => new NativeRoomTerrain(Native_GetRoomTerrain(roomCoord.ToString()));
 
         public int GetWorldSize()
             => Native_GetWorldSize();
 
-        public RoomStatus GetRoomStatus(string roomName)
+        public RoomStatus GetRoomStatus(RoomCoord roomCoord)
         {
-            var obj = Native_GetRoomStatus(roomName);
+            var obj = Native_GetRoomStatus(roomCoord.ToString());
             var timestamp = obj.TryGetPropertyAsDouble(Names.Timestamp) ?? 0.0;
             var status = obj.GetPropertyAsName(Names.Status);
             return new(status!.ParseRoomStatusType(), timestamp > 0.0 ? DateTime.UnixEpoch + TimeSpan.FromMilliseconds(timestamp) : null);

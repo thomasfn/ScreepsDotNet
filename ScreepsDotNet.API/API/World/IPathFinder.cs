@@ -79,7 +79,7 @@ namespace ScreepsDotNet.API.World
         /// If you return a new matrix from this callback, it will be used instead of the built-in cached one.
         /// This option is only used when the new PathFinder is enabled.
         /// </summary>
-        public readonly Func<string, ICostMatrix, ICostMatrix?>? CostCallback;
+        public readonly Func<RoomCoord, ICostMatrix, ICostMatrix?>? CostCallback;
 
         /// <summary>
         /// An array of the room's objects or RoomPosition objects which should be treated as walkable tiles during the search.
@@ -127,7 +127,7 @@ namespace ScreepsDotNet.API.World
             bool? ignoreCreeps = null,
             bool? ignoreDestructibleStructures = null,
             bool? ignoreRoads = null,
-            Func<string, ICostMatrix, ICostMatrix?>? costCallback = null,
+            Func<RoomCoord, ICostMatrix, ICostMatrix?>? costCallback = null,
             IEnumerable<Position>? ignore = null,
             IEnumerable<Position>? avoid = null,
             int? maxOps = null,
@@ -156,10 +156,13 @@ namespace ScreepsDotNet.API.World
     public readonly struct SearchPathOptions
     {
         /// <summary>
-        /// Overrides which cost matrix is used from which room.
-        /// Analogous to roomCallback from the js api.
+        /// Request from the pathfinder to generate a CostMatrix for a certain room.
+        /// The callback accepts one argument, roomName.
+        /// This callback will only be called once per room per search.
+        /// If you are running multiple pathfinding operations in a single room and in a single tick you may consider caching your CostMatrix to speed up your code.
+        /// If you return RoomCostSpecification.DoNotPathThroughRoom from the callback the requested room will not be searched, and it won't count against maxRooms
         /// </summary>
-        public readonly IReadOnlyDictionary<string, RoomCostSpecification>? RoomCostMap;
+        public readonly Func<RoomCoord, RoomCostSpecification>? RoomCallback;
 
         /// <summary>
         /// If true, any rooms not mentioned in the RoomCostMap are considered off-limits.
@@ -202,7 +205,7 @@ namespace ScreepsDotNet.API.World
         public readonly double? HeuristicWeight;
 
         public SearchPathOptions(
-            IReadOnlyDictionary<string, RoomCostSpecification>? roomCostMap = null,
+            Func<RoomCoord, RoomCostSpecification>? roomCallback = null,
             bool? allowUnspecifiedRooms = null,
             int? plainCost = null,
             int? swampCost = null,
@@ -213,7 +216,7 @@ namespace ScreepsDotNet.API.World
             double? heuristicWeight = null
         )
         {
-            RoomCostMap = roomCostMap;
+            RoomCallback = roomCallback;
             AllowUnspecifiedRooms = allowUnspecifiedRooms;
             PlainCost = plainCost;
             SwampCost = swampCost;

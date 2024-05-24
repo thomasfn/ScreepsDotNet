@@ -109,5 +109,32 @@ namespace ScreepsDotNet.Native.World
         public static readonly Name DeleteTime = Name.Create("deleteTime");
         public static readonly Name SpawnCooldownTimeCache = Name.Create("spawnCooldownTimeCache");
         public static readonly Name Powers = Name.Create("powers");
+        public static readonly Name RoomCallback = Name.Create("roomCallback");
+        public static readonly Name PlainCost = Name.Create("plainCost");
+        public static readonly Name SwampCost = Name.Create("swampCost");
+        public static readonly Name Flee = Name.Create("flee");
+        public static readonly Name MaxOps = Name.Create("maxOps");
+        public static readonly Name MaxCost = Name.Create("maxCost");
+        public static readonly Name MaxRooms = Name.Create("maxRooms");
+        public static readonly Name HeuristicWeight = Name.Create("heuristicWeight");
+        public static readonly Name CostCallback = Name.Create("costCallback");
+        public static readonly Name IgnoreCreeps = Name.Create("ignoreCreeps");
+        public static readonly Name IgnoreRoads = Name.Create("ignoreRoads");
+        public static readonly Name IgnoreDestructibleStructures = Name.Create("ignoreDestructibleStructures");
+        public static readonly Name Ignore = Name.Create("ignore");
+        public static readonly Name Avoid = Name.Create("avoid");
+        public static readonly Name Range = Name.Create("range");
+        public static readonly Name X = Name.Create("x");
+        public static readonly Name Y = Name.Create("y");
+        public static readonly Name Dx = Name.Create("dx");
+        public static readonly Name Dy = Name.Create("dy");
+        public static readonly Name Direction = Name.Create("direction");
+        public static readonly Name Path = Name.Create("path");
+        public static readonly Name Ops = Name.Create("ops");
+        public static readonly Name Incomplete = Name.Create("incomplete");
+        public static readonly Name Cost = Name.Create("cost");
+        public static readonly Name Pos = Name.Create("pos");
+        public static readonly Name RouteCallback = Name.Create("routeCallback");
+        public static readonly Name Exit = Name.Create("exit");
     }
 }

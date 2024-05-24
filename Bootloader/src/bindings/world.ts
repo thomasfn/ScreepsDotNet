@@ -59,10 +59,18 @@ const BODYPART_TO_ENUM_MAP: Record<BodyPartConstant, number> = {} as Record<Body
     }
 }
 
+const TEMP_ROOM_COORD_A: [number, number] = [0, 0];
+
+const TEMP_ROOM_COORD_B: [number, number] = [0, 0];
+
 export class WorldBindings extends BaseBindings {
     private _lastCheckIn: number = 0;
 
     private _memoryCache?: Memory;
+
+    private _invoke_room_callback: ScreepsDotNetExports['screepsdotnet_invoke_room_callback'] | undefined;
+    private _invoke_cost_callback: ScreepsDotNetExports['screepsdotnet_invoke_cost_callback'] | undefined;
+    private _invoke_route_callback: ScreepsDotNetExports['screepsdotnet_invoke_route_callback'] | undefined;
 
     public init(exports: ScreepsDotNetExports, memoryManager: WasmMemoryManager): void {
         super.init(exports, memoryManager);
@@ -71,6 +79,9 @@ export class WorldBindings extends BaseBindings {
           this.log(`failed to call 'screepsdotnet_init_world' (not found in wasm exports)`);
           return;
         }
+        this._invoke_room_callback = exports.screepsdotnet_invoke_room_callback;
+        this._invoke_cost_callback = exports.screepsdotnet_invoke_cost_callback;
+        this._invoke_route_callback = exports.screepsdotnet_invoke_route_callback;
         entrypointFn();
         this._memoryCache = Memory;
         this._memoryCache = (RawMemory as unknown as { _parsed: Memory })._parsed;
@@ -153,7 +164,11 @@ export class WorldBindings extends BaseBindings {
             getConstantsObj: () => global,
             getRawMemoryObj: () => RawMemory,
             getPrototypes: () => gameConstructors,
-            createRoomPosition: (x, y, roomName) => new RoomPosition(x, y, roomName),
+            createRoomPosition: (encodedInt: number) => {
+                const roomPosition = Object.create(RoomPosition.prototype);
+                roomPosition.__packedPos = encodedInt;
+                return roomPosition;
+            },
             createCostMatrix: () => new PathFinder.CostMatrix(),
             createRoomVisual: (roomName) => new RoomVisual(roomName),
             game: {
@@ -173,6 +188,7 @@ export class WorldBindings extends BaseBindings {
                 getRoomTerrain: (roomName: string) => Game.map.getRoomTerrain(roomName),
                 getWorldSize: () => Game.map.getWorldSize(),
                 getRoomStatus: (roomName: string) => Game.map.getRoomStatus(roomName),
+                getRouteCallbackObject: () => this.routeCallback.bind(this),
             },
             market: {
                 calcTransactionCost: (amount: number, roomName1: string, roomName2: string) => Game.market.calcTransactionCost(amount, roomName1, roomName2),
@@ -276,14 +292,6 @@ export class WorldBindings extends BaseBindings {
             },
             PathFinder: {
                 ...(PathFinder as unknown as Importable),
-                compileRoomCallback: (opts: PathFinderOpts, roomCostMap: { allowUnspecifiedRooms: boolean, [roomName: string]: boolean | CostMatrix }) => {
-                    opts.roomCallback = (roomName: string) => {
-                        const val = roomCostMap[roomName];
-                        if (typeof val === 'boolean') { return val; }
-                        if (val == null) { return roomCostMap.allowUnspecifiedRooms || false; }
-                        return val;
-                    };
-                },
                 search: (origin: RoomPosition,
                     goal:
                         | RoomPosition
@@ -291,6 +299,8 @@ export class WorldBindings extends BaseBindings {
                         | Array<RoomPosition | { pos: RoomPosition; range: number }>,
                     opts?: PathFinderOpts
                 ) => PathFinder.search(origin, goal, opts),
+                getRoomCallbackObject: () => this.roomCallback.bind(this),
+                getCostCallbackObject: () => this.costCallback.bind(this),
             },
             RoomTerrain: {
                 get: (thisObj: RoomTerrain, x: number, y: number) => thisObj.get(x, y),
@@ -457,5 +467,52 @@ export class WorldBindings extends BaseBindings {
             wrappedPrototype[key] = (thisObj: object, ...args: unknown[]) => value.call(thisObj, ...args);
         }
         return wrappedPrototype;
+    }
+
+    private parseRoomName(roomName: string, outCoord?: [number, number]): [number, number] {
+        let xx = parseInt(roomName.substr(1), 10);
+        let verticalPos = 2;
+        if (xx >= 100) {
+            verticalPos = 4;
+        } else if (xx >= 10) {
+            verticalPos = 3;
+        }
+        let yy = parseInt(roomName.substr(verticalPos + 1), 10);
+        let horizontalDir = roomName.charAt(0);
+        let verticalDir = roomName.charAt(verticalPos);
+        if (horizontalDir === 'W' || horizontalDir === 'w') {
+            xx = -xx - 1;
+        }
+        if (verticalDir === 'N' || verticalDir === 'n') {
+            yy = -yy - 1;
+        }
+        if (outCoord) {
+            outCoord[0] = xx;
+            outCoord[1] = yy;
+        } else {
+            outCoord = [xx, yy];
+        }
+        return outCoord;
+    }
+
+    private roomCallback(roomName: string): CostMatrix | false | undefined {
+        const roomCoord = this.parseRoomName(roomName, TEMP_ROOM_COORD_A);
+        const result = this._invoke_room_callback!(roomCoord[0], roomCoord[1]);
+        if (result < 0) { return false; }
+        if (result === 0) { return undefined; }
+        return this._interop.getClrTrackedObject(result) as CostMatrix;
+    }
+
+    private costCallback(roomName: string, costMatrix: CostMatrix): CostMatrix | undefined {
+        const roomCoord = this.parseRoomName(roomName, TEMP_ROOM_COORD_A);
+        const result = this._invoke_cost_callback!(roomCoord[0], roomCoord[1], this._interop.getOrAssignClrTrackingId(costMatrix));
+        if (result === 0) { return undefined; }
+        return this._interop.getClrTrackedObject(result) as CostMatrix;
+    }
+
+    private routeCallback(roomName: string, fromRoomName: string): number {
+        const roomCoord = this.parseRoomName(roomName, TEMP_ROOM_COORD_A);
+        const fromRoomCoord = this.parseRoomName(fromRoomName, TEMP_ROOM_COORD_B);
+        return this._invoke_route_callback!(roomCoord[0], roomCoord[1], fromRoomCoord[0], fromRoomCoord[1]);
     }
 }
