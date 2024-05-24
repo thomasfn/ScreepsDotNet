@@ -165,11 +165,6 @@ namespace ScreepsDotNet.API.World
         public readonly Func<RoomCoord, RoomCostSpecification>? RoomCallback;
 
         /// <summary>
-        /// If true, any rooms not mentioned in the RoomCostMap are considered off-limits.
-        /// </summary>
-        public readonly bool? AllowUnspecifiedRooms;
-
-        /// <summary>
         /// Cost for walking on plain positions. The default is 1.
         /// </summary>
         public readonly int? PlainCost;
@@ -206,7 +201,6 @@ namespace ScreepsDotNet.API.World
 
         public SearchPathOptions(
             Func<RoomCoord, RoomCostSpecification>? roomCallback = null,
-            bool? allowUnspecifiedRooms = null,
             int? plainCost = null,
             int? swampCost = null,
             bool? flee = null,
@@ -217,7 +211,6 @@ namespace ScreepsDotNet.API.World
         )
         {
             RoomCallback = roomCallback;
-            AllowUnspecifiedRooms = allowUnspecifiedRooms;
             PlainCost = plainCost;
             SwampCost = swampCost;
             Flee = flee;

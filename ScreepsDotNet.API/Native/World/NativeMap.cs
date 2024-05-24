@@ -83,7 +83,16 @@ namespace ScreepsDotNet.Native.World
         {
             using var obj = Native_DescribeExits(roomCoord.ToString());
             if (obj == null) { return new(); }
-            return new(new(obj.GetPropertyAsString("1")), new(obj.GetPropertyAsString("3")), new(obj.GetPropertyAsString("5")), new(obj.GetPropertyAsString("7")));
+            var topName = obj.GetPropertyAsString("1");
+            var rightName = obj.GetPropertyAsString("3");
+            var bottomName = obj.GetPropertyAsString("5");
+            var leftName = obj.GetPropertyAsString("7");
+            return new(
+                top: string.IsNullOrEmpty(topName) ? null : new(topName),
+                right: string.IsNullOrEmpty(rightName) ? null : new(rightName),
+                bottom: string.IsNullOrEmpty(bottomName) ? null : new(bottomName),
+                left: string.IsNullOrEmpty(leftName) ? null : new(leftName)
+            );
         }
 
         public MapFindExitResult FindExit(RoomCoord fromRoomCoord, RoomCoord toRoomCoord, out ExitDirection exitDirection, MapFindRouteOptions? opts = null)
