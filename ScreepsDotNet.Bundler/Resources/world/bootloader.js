@@ -2654,7 +2654,8 @@
       u32: new Uint32Array(memory.buffer),
       i32: new Int32Array(memory.buffer),
       f32: new Float32Array(memory.buffer),
-      f64: new Float64Array(memory.buffer)
+      f64: new Float64Array(memory.buffer),
+      dataView: new DataView(memory.buffer)
     };
   }
   var WasmMemoryManager = /*#__PURE__*/function () {
@@ -3955,19 +3956,40 @@
     }, {
       key: "getWasmImports",
       value: function getWasmImports() {
-        var _this2 = this,
-          _this$_bindings3;
+        var _this$_bindings3;
         return {
           wasi_snapshot_preview1: _objectSpread2(_objectSpread2({}, this._wasi.wasiImport), {}, {
-            clock_res_get: function clock_res_get(id, res_ptr) {
-              var buffer = new DataView(_this2._wasi.inst.exports.memory.buffer);
-              buffer.setBigUint64(res_ptr, BigInt(0), true);
-              return 0;
-            }
+            // Override the wasi shim's implementation of clock_res_get and clock_time_get with our own
+            clock_res_get: this.clock_res_get.bind(this),
+            clock_time_get: this.clock_time_get.bind(this)
           }),
           js: _objectSpread2({}, this._interop.interopImport),
           bindings: _objectSpread2({}, (_this$_bindings3 = this._bindings) === null || _this$_bindings3 === void 0 ? void 0 : _this$_bindings3.bindingsImport)
         };
+      }
+    }, {
+      key: "clock_res_get",
+      value: function clock_res_get(id, res_ptr) {
+        // We only support the realtime clock
+        // The monotonic clock's implementation in the wasi shim uses performance.now which isn't available in screeps
+        if (id === 0 /* WASI_CLOCKID.REALTIME */) {
+          var dataView = this._memoryManager.view.dataView;
+          dataView.setBigUint64(res_ptr, BigInt(1), true);
+          return 0;
+        }
+        return 28 /* WASI_ERRNO.INVAL */;
+      }
+    }, {
+      key: "clock_time_get",
+      value: function clock_time_get(id, precision, time_ptr) {
+        // We only support the realtime clock
+        // The monotonic clock's implementation in the wasi shim uses performance.now which isn't available in screeps
+        if (id === 0 /* WASI_CLOCKID.REALTIME */) {
+          var dataView = this._memoryManager.view.dataView;
+          dataView.setBigUint64(time_ptr, BigInt(new Date().getTime()) * 1000000n, true);
+          return 0;
+        }
+        return 28 /* WASI_ERRNO.INVAL */;
       }
     }, {
       key: "dispatchPendingLogs",

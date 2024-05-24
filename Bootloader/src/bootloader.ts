@@ -78,6 +78,18 @@ export function decodeWasm(encodedWasm: string, originalSize: number, encoding: 
     return bytes;
 }
 
+const enum WASI_CLOCKID {
+    REALTIME = 0,
+    MONOTONIC = 1,
+}
+
+const enum WASI_ERRNO {
+    SUCCESS = 0,
+    BADF = 8,
+    INVAL = 28,
+    PERM = 63,
+}
+
 export class Bootloader {
     private readonly _pendingLogs: string[] = [];
     private readonly _deferLogsToTick: boolean;
@@ -255,11 +267,9 @@ export class Bootloader {
         return {
             wasi_snapshot_preview1: {
                 ...this._wasi.wasiImport,
-                clock_res_get: (id: number, res_ptr: number) => {
-                    const buffer = new DataView(this._wasi.inst.exports.memory.buffer);
-                    buffer.setBigUint64(res_ptr, BigInt(0), true);
-                    return 0;
-                },
+                // Override the wasi shim's implementation of clock_res_get and clock_time_get with our own
+                clock_res_get: this.clock_res_get.bind(this),
+                clock_time_get: this.clock_time_get.bind(this),
             },
             js: {
                 ...this._interop.interopImport,
@@ -268,6 +278,28 @@ export class Bootloader {
                 ...this._bindings?.bindingsImport,
             }
         };
+    }
+
+    private clock_res_get(id: number, res_ptr: number): number {
+        // We only support the realtime clock
+        // The monotonic clock's implementation in the wasi shim uses performance.now which isn't available in screeps
+        if (id === WASI_CLOCKID.REALTIME) {
+            const dataView = this._memoryManager!.view.dataView;
+            dataView.setBigUint64(res_ptr, BigInt(1), true);
+            return 0;
+        }
+        return WASI_ERRNO.INVAL;
+    }
+
+    private clock_time_get(id: number, precision: number, time_ptr: number): number {
+        // We only support the realtime clock
+        // The monotonic clock's implementation in the wasi shim uses performance.now which isn't available in screeps
+        if (id === WASI_CLOCKID.REALTIME) {
+            const dataView = this._memoryManager!.view.dataView;
+            dataView.setBigUint64(time_ptr, BigInt(new Date().getTime()) * 1000000n, true);
+            return 0;
+        }
+        return WASI_ERRNO.INVAL;
     }
 
     private dispatchPendingLogs(): void {

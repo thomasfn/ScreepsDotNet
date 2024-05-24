@@ -7,6 +7,7 @@ export interface WasmMemoryView {
     readonly i32: Int32Array;
     readonly f32: Float32Array;
     readonly f64: Float64Array;
+    readonly dataView: DataView;
 }
 
 function createWasmMemoryView(memory: WebAssembly.Memory): WasmMemoryView {
@@ -19,6 +20,7 @@ function createWasmMemoryView(memory: WebAssembly.Memory): WasmMemoryView {
         i32: new Int32Array(memory.buffer),
         f32: new Float32Array(memory.buffer),
         f64: new Float64Array(memory.buffer),
+        dataView: new DataView(memory.buffer),
     };
 }
 
