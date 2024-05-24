@@ -394,6 +394,19 @@ Screeps DotNet is made up of the following pieces:
 ### Bundle Size
 - The Screeps script size limit is 5mb for both Screeps Arena and Screeps World. This limit is for all of your scripts total, not individual files.
 - The bootloader js takes up around ~140kb and the main js contributes too, so you should aim for a rough bundle size limit of 4.5mb.
+- For Screeps World, the bundle is packed into a single binary wasm file that can be deployed directly to Screeps. For Screeps Arena, binary wasm files are not supported and so the bundle is encoded to base64 and packed into a js file as a string instead. If necessary, you can override this behaviour using the `ScreepsEncoding` property in the csproj:
+  ```XML
+  <PropertyGroup>
+    <ScreepsEncoding>b64</ScreepsEncoding>
+  </PropertyGroup>
+  ```
+  Possible encodings are `bin`, `b64` and `b32768`.
+- Compression can be enabled to reduce the size of the bundle at the cost of more CPU during startup. This can be enabled using the `ScreepsCompressWasm` property in the csproj:
+  ```XML
+  <PropertyGroup>
+    <ScreepsCompressWasm>true</ScreepsEncoding>
+  </PropertyGroup>
+  ```
 
 ### CPU time
 - Screeps Arena gives you 1000ms of cpu during the first tick and 50ms for every subsequent tick. Screeps World gives you 500ms hard limit every tick and a bucket system to limit average cpu usage based on GCL. If the script takes too long, it will be forcefully terminated, which could have disastrous consequences for the .Net runtime, especially if it happens during GC.
