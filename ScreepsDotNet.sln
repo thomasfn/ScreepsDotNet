@@ -13,7 +13,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ScreepsDotNet.API.Tests", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ScreepsDotNet.SourceGen", "ScreepsDotNet.SourceGen\ScreepsDotNet.SourceGen.csproj", "{4471B50E-3A54-4F01-AEA5-30F27E43094A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScreepsDotNet.ExampleArenaBot", "ScreepsDotNet.ExampleArenaBot\ScreepsDotNet.ExampleArenaBot.csproj", "{4D29F37B-F051-4889-B230-FC10CC370B28}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ScreepsDotNet.ExampleArenaBot", "ScreepsDotNet.ExampleArenaBot\ScreepsDotNet.ExampleArenaBot.csproj", "{4D29F37B-F051-4889-B230-FC10CC370B28}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

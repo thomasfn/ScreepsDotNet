@@ -51,7 +51,6 @@ namespace ScreepsDotNet.Bundler
             }
 
             // Load wasm and compress if requested
-            var wasmFullPath = Path.Combine(AppBundleDir, WasmFileName);
             byte[] wasmData;
             int originalWasmSize;
             if (CompressWasm)
@@ -60,7 +59,7 @@ namespace ScreepsDotNet.Bundler
                 int originalSize;
                 using (var deflateStream = new DeflateStream(memoryStream, CompressionMode.Compress, true))
                 {
-                    using var fileStream = File.OpenRead(wasmFullPath);
+                    using var fileStream = File.OpenRead(WasmFileName);
                     originalWasmSize = (int)fileStream.Length;
                     fileStream.CopyTo(deflateStream);
                     originalSize = (int)fileStream.Position;
@@ -70,7 +69,7 @@ namespace ScreepsDotNet.Bundler
             }
             else
             {
-                wasmData = File.ReadAllBytes(wasmFullPath);
+                wasmData = File.ReadAllBytes(WasmFileName);
                 originalWasmSize = wasmData.Length;
                 mainJsReplacements.Add("WASM_COMPRESSED", "false");
             }

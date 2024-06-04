@@ -10,6 +10,7 @@ import { WasmMemoryManager } from './memory.js';
 import { BaseBindings } from './bindings/base.js';
 import { ArenaBindings } from './bindings/arena.js';
 import { WorldBindings } from './bindings/world.js';
+import { TestBindings } from './bindings/test.js';
 
 const utf8Decoder = new TextDecoder();
 
@@ -147,7 +148,10 @@ export class Bootloader {
                 this._bindings = new WorldBindings(this.log.bind(this), this._interop);
                 break;
             case 'arena':
-                 this._bindings = new ArenaBindings(this.log.bind(this), this._interop);
+                this._bindings = new ArenaBindings(this.log.bind(this), this._interop);
+                break;
+            case 'test':
+                this._bindings = new TestBindings(this.log.bind(this), this._interop);
                 break;
         }
         if (this._bindings) {
@@ -193,7 +197,7 @@ export class Bootloader {
             const t0 = this._profileFn();
             this._wasmInstance = new WebAssembly.Instance(this._wasmModule, this.getWasmImports()) as ScreepsDotNetWasmInstance;
             const t1 = this._profileFn();
-            this.log(`Instantiated wasm module in ${t1 - t0} ms`);
+            this.log(`Instantiated wasm module in ${t1 - t0} ms (exports: ${JSON.stringify(Object.keys(this._wasmInstance.exports))})`);
         }
 
         // Wire things up
@@ -210,7 +214,7 @@ export class Bootloader {
         // Start WASI
         try {
             const t0 = this._profileFn();
-            this._wasi.start(this._wasmInstance);
+            this._wasi.initialize(this._wasmInstance);
             const t1 = this._profileFn();
             this.log(`Started WASI in ${t1 - t0} ms`);
         } catch (err) {

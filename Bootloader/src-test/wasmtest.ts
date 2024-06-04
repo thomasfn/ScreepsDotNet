@@ -1,7 +1,7 @@
 import { promises as fs } from 'fs';
 import { Bootloader } from '../src/bootloader.js';
 
-const wasmFilename = '/ScreepsDotNet/ScreepsDotNet.wasm';
+const wasmFilename = '/ScreepsDotNet/ScreepsDotNet.ExampleWorldBot.wasm';
 
 async function main() {
     console.log(`Loading '${wasmFilename}'...`);
@@ -11,7 +11,7 @@ async function main() {
     try {
         const bootloader = new Bootloader('test', () => performance.now());
         bootloader.compile(wasmData);
-        bootloader.start(['tomsscreepsbot_init_native']);
+        bootloader.start([]);
         bootloader.loop();
     } catch (err) {
         console.log(err);

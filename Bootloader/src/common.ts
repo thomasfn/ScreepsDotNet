@@ -1,6 +1,7 @@
 export interface ScreepsDotNetExports extends WebAssembly.Exports {
     memory: WebAssembly.Memory;
     _start(): unknown;
+    _initialize(): unknown;
     malloc(sz: number): number;
     free(ptr: number): void;
     screepsdotnet_init(): void;

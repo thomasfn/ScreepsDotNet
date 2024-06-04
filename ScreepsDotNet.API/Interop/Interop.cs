@@ -6,49 +6,49 @@ using System.Runtime.InteropServices;
 
 internal static class ScreepsDotNet_Interop
 {
-    [MethodImpl(MethodImplOptions.InternalCall)]
+    [WasmImportLinkage, DllImport("js", EntryPoint = "js_bind_import")]
     public static unsafe extern int BindImport(char* moduleNamePtr, char* importNamePtr, ScreepsDotNet.Interop.FunctionSpec* importSpecPtr);
 
-    [MethodImpl(MethodImplOptions.InternalCall)]
+    [WasmImportLinkage, DllImport("js", EntryPoint = "js_invoke_import")]
     public static unsafe extern int InvokeImport(int importIndex, ScreepsDotNet.Interop.InteropValue* paramsBufferPtr);
 
-    [MethodImpl(MethodImplOptions.InternalCall)]
+    [WasmImportLinkage, DllImport("js", EntryPoint = "js_release_object_reference")]
     public static unsafe extern int ReleaseObjectReference(IntPtr jsHandle);
 
-    [MethodImpl(MethodImplOptions.InternalCall)]
+    [WasmImportLinkage, DllImport("js", EntryPoint = "js_set_name")]
     public static unsafe extern void SetName(int nameIndex, char* namePtr);
 
-    [MethodImpl(MethodImplOptions.InternalCall)]
+    [WasmImportLinkage, DllImport("js", EntryPoint = "js_invoke_i_i")]
     public static extern int InvokeImport_i_i(int importIndex, int paramA);
 
-    [MethodImpl(MethodImplOptions.InternalCall)]
+    [WasmImportLinkage, DllImport("js", EntryPoint = "js_invoke_i_ii")]
     public static extern int InvokeImport_i_ii(int importIndex, int paramA, int paramB);
 
-    [MethodImpl(MethodImplOptions.InternalCall)]
+    [WasmImportLinkage, DllImport("js", EntryPoint = "js_invoke_i_iii")]
     public static extern int InvokeImport_i_iii(int importIndex, int paramA, int paramB, int paramC);
 
-    [MethodImpl(MethodImplOptions.InternalCall)]
+    [WasmImportLinkage, DllImport("js", EntryPoint = "js_invoke_i_o")]
     public static extern int InvokeImport_i_o(int importIndex, int paramA);
 
-    [MethodImpl(MethodImplOptions.InternalCall)]
+    [WasmImportLinkage, DllImport("js", EntryPoint = "js_invoke_i_oi")]
     public static extern int InvokeImport_i_oi(int importIndex, int paramA, int paramB);
 
-    [MethodImpl(MethodImplOptions.InternalCall)]
+    [WasmImportLinkage, DllImport("js", EntryPoint = "js_invoke_i_on")]
     public static extern int InvokeImport_i_on(int importIndex, int paramA, int paramB);
 
-    [MethodImpl(MethodImplOptions.InternalCall)]
+    [WasmImportLinkage, DllImport("js", EntryPoint = "js_invoke_i_oii")]
     public static extern int InvokeImport_i_oii(int importIndex, int paramA, int paramB, int paramC);
 
-    [MethodImpl(MethodImplOptions.InternalCall)]
+    [WasmImportLinkage, DllImport("js", EntryPoint = "js_invoke_i_oo")]
     public static extern int InvokeImport_i_oo(int importIndex, int paramA, int paramB);
 
-    [MethodImpl(MethodImplOptions.InternalCall)]
+    [WasmImportLinkage, DllImport("js", EntryPoint = "js_invoke_i_ooi")]
     public static extern int InvokeImport_i_ooi(int importIndex, int paramA, int paramB, int paramC);
 
-    [MethodImpl(MethodImplOptions.InternalCall)]
+    [WasmImportLinkage, DllImport("js", EntryPoint = "js_invoke_i_ooii")]
     public static extern int InvokeImport_i_ooii(int importIndex, int paramA, int paramB, int paramC, int paramD);
 
-    [MethodImpl(MethodImplOptions.InternalCall)]
+    [WasmImportLinkage, DllImport("js", EntryPoint = "js_invoke_d_v")]
     public static extern double InvokeImport_d_v(int importIndex);
 }
 

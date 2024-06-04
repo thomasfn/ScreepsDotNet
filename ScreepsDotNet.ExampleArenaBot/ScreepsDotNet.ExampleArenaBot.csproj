@@ -2,8 +2,7 @@
 	<PropertyGroup>
 		<TargetFramework>net8.0</TargetFramework>
 		<RuntimeIdentifier>wasi-wasm</RuntimeIdentifier>
-		<OutputType>Exe</OutputType>
-		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<OutputType>library</OutputType>
 		<Nullable>enable</Nullable>
 		<PublishTrimmed>true</PublishTrimmed>
 		<TrimMode>full</TrimMode>
@@ -13,8 +12,18 @@
 		<EventSourceSupport>false</EventSourceSupport>
 		<UseSystemResourceKeys>true</UseSystemResourceKeys>
 		<InvariantTimezone>true</InvariantTimezone>
-		<WasiSdkVersion>15</WasiSdkVersion>
+		<EnableUnsafeUTF7Encoding>false</EnableUnsafeUTF7Encoding>
+		<HttpActivityPropagationSupport>false</HttpActivityPropagationSupport>
+		<DebuggerSupport>false</DebuggerSupport>
+		<IlcDisableReflection>true</IlcDisableReflection>
+		<SelfContained>true</SelfContained>
+		<MSBuildEnableWorkloadResolver>false</MSBuildEnableWorkloadResolver>
 	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.DotNet.ILCompiler.LLVM" Version="9.0.0-*" />
+		<PackageReference Include="runtime.win-x64.Microsoft.DotNet.ILCompiler.LLVM" Version="9.0.0-*" />
+	</ItemGroup>
 
 	<PropertyGroup>
 		<ScreepsCompressWasm>false</ScreepsCompressWasm>

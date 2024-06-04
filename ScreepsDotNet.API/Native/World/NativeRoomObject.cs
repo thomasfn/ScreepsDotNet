@@ -154,15 +154,15 @@ namespace ScreepsDotNet.Native.World
 
         private static ObjectId FetchId(JSObject from)
         {
-            ObjectId objectId = default;
+            ScreepsDotNet_Native.RawObjectId rawObjectId = default;
             unsafe
             {
-                if (ScreepsDotNet_Native.GetObjectId(from.JSHandle, &objectId) == 0)
+                if (ScreepsDotNet_Native.GetObjectId(from.JSHandle, &rawObjectId) == 0)
                 {
                     throw new InvalidOperationException($"Failed to fetch object id for {from} (native call returned null)");
                 }
             }
-            return objectId;
+            return new(rawObjectId.AsSpan);
         }
 
         public override bool Equals(object? obj) => Equals(obj as NativeRoomObjectWithId);
@@ -219,10 +219,9 @@ namespace ScreepsDotNet.Native.World
         public static string? LookConstant;
         public static string? StructureConstant;
 
-        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeRoomObjectUtils))]
         static NativeRoomObjectPrototypes()
         {
-            RuntimeHelpers.RunClassConstructor(typeof(NativeRoomObjectUtils).TypeHandle);
+            NativeRoomObjectUtils.RegisterTypeMappingsIfNeeded();
         }
     }
 
@@ -231,7 +230,7 @@ namespace ScreepsDotNet.Native.World
     {
         private const string TypeIdKey = "__dotnet_typeId";
 
-        private static readonly JSObject prototypesObject;
+        private static JSObject? prototypesObject;
         private static readonly List<Type> prototypeTypeMappings = new();
         private static readonly Dictionary<Type, string> prototypeNameMappings = new();
         private static readonly Dictionary<string, Type> structureConstantInterfaceMap = new();
@@ -254,7 +253,7 @@ namespace ScreepsDotNet.Native.World
             where TInterface : IRoomObject
             where TConcrete : NativeRoomObject
         {
-            var constructor = prototypesObject.GetPropertyAsJSObject(prototypeName);
+            var constructor = prototypesObject!.GetPropertyAsJSObject(prototypeName);
             if (constructor == null)
             {
                 Console.WriteLine($"Failed to retrieve constructor for '{prototypeName}'");
@@ -310,9 +309,15 @@ namespace ScreepsDotNet.Native.World
             var wrapperType = GetWrapperTypeForObject(proxyObject);
             if (wrapperType == null) { return null; }
             if (!wrapperType.IsAssignableTo(expectedType)) { return null; }
-            var wrapperObject = (Activator.CreateInstance(wrapperType, new object[] { nativeRoot, proxyObject }) as NativeRoomObject)!;
-            // Console.WriteLine($"Created {wrapperObject} for {proxyObject}");
-            return wrapperObject;
+            return NativeRoomObjectFactory.Create(wrapperType, nativeRoot, proxyObject) as NativeRoomObject;
+        }
+
+        internal static T? CreateWrapperForRoomObject<T>(INativeRoot nativeRoot, JSObject proxyObject) where T : class, IRoomObject
+        {
+            var wrapperType = GetWrapperTypeForObject(proxyObject);
+            if (wrapperType == null) { return null; }
+            if (!wrapperType.IsAssignableTo(typeof(T))) { return null; }
+            return NativeRoomObjectFactory.Create<T>(nativeRoot, proxyObject);
         }
 
         internal static NativeRoomObject? CreateWrapperForRoomObject(INativeRoot nativeRoot, JSObject proxyObject, in RoomObjectMetadata metadata, Type expectedType)
@@ -321,9 +326,16 @@ namespace ScreepsDotNet.Native.World
             if (typeId < 0) { return null; }
             Type wrapperType = prototypeTypeMappings[typeId];
             if (!wrapperType.IsAssignableTo(expectedType)) { return null; }
-            var wrapperObject = Activator.CreateInstance(wrapperType, [nativeRoot, proxyObject]) as NativeRoomObject;
-            // Console.WriteLine($"Created {wrapperObject} for {proxyObject} (TypeId={metadata.TypeId}, JSHandle={metadata.JSHandle})");
-            return wrapperObject;
+            return NativeRoomObjectFactory.Create(wrapperType, nativeRoot, proxyObject) as NativeRoomObject;
+        }
+
+        internal static T? CreateWrapperForRoomObject<T>(INativeRoot nativeRoot, JSObject proxyObject, in RoomObjectMetadata metadata) where T : class, IRoomObject
+        {
+            int typeId = metadata.TypeId - 1;
+            if (typeId < 0) { return null; }
+            Type wrapperType = prototypeTypeMappings[typeId];
+            if (!wrapperType.IsAssignableTo(typeof(T))) { return null; }
+            return NativeRoomObjectFactory.Create<T>(nativeRoot, proxyObject);
         }
 
         internal static string GetPrototypeName(Type type)
@@ -335,41 +347,13 @@ namespace ScreepsDotNet.Native.World
         internal static string? GetStructureConstantForInterfaceType(Type interfaceType)
             => interfaceStructureConstantMap.TryGetValue(interfaceType, out var result) ? result : null;
 
-        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureSpawn))]
-        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureContainer))]
-        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureController))]
-        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureExtension))]
-        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureStorage))]
-        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureRampart))]
-        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureTower))]
-        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureLink))]
-        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureTerminal))]
-        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureExtractor))]
-        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureFactory))]
-        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureInvaderCore))]
-        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureKeeperLair))]
-        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureLab))]
-        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureNuker))]
-        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureObserver))]
-        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructurePowerBank))]
-        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructurePowerSpawn))]
-        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructurePortal))]
-        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeOwnedStructure))]
-        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureRoad))]
-        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructureWall))]
-        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeStructure))]
-        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeSource))]
-        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeMineral))]
-        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeDeposit))]
-        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeNuke))]
-        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeCreep))]
-        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativePowerCreep))]
-        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeFlag))]
-        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeResource))]
-        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeConstructionSite))]
-        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeTombstone))]
-        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeRuin))]
-        static NativeRoomObjectUtils()
+        internal static void RegisterTypeMappingsIfNeeded()
+        {
+            if (prototypeTypeMappings.Count > 0) { return; }
+            RegisterTypeMappings();
+        }
+
+        internal static void RegisterTypeMappings()
         {
             prototypesObject = GetPrototypesObject();
             try
@@ -415,6 +399,73 @@ namespace ScreepsDotNet.Native.World
             {
                 Console.WriteLine(ex);
             }
+        }
+    }
+
+    [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
+    internal static class NativeRoomObjectFactory
+    {
+        private static Dictionary<Type, Func<INativeRoot, JSObject, IRoomObject>> factoryFuncMap = [];
+
+        internal static class FactoryFuncDb<T> where T : IRoomObject
+        {
+            public static Func<INativeRoot, JSObject, T>? FactoryFunc { get; set; }
+        }
+
+        private static void RegisterFactoryFunc<T>(Func<INativeRoot, JSObject, T> factoryFunc) where T : class, IRoomObject
+        {
+            FactoryFuncDb<T>.FactoryFunc = factoryFunc;
+            factoryFuncMap.Add(typeof(T), factoryFunc);
+        }
+
+        static NativeRoomObjectFactory()
+        {
+            RegisterFactoryFunc(static (nativeRoot, proxyObject) => new NativeStructureSpawn(nativeRoot, proxyObject));
+            RegisterFactoryFunc(static (nativeRoot, proxyObject) => new NativeStructureContainer(nativeRoot, proxyObject));
+            RegisterFactoryFunc(static (nativeRoot, proxyObject) => new NativeStructureController(nativeRoot, proxyObject));
+            RegisterFactoryFunc(static (nativeRoot, proxyObject) => new NativeStructureExtension(nativeRoot, proxyObject));
+            RegisterFactoryFunc(static (nativeRoot, proxyObject) => new NativeStructureStorage(nativeRoot, proxyObject));
+            RegisterFactoryFunc(static (nativeRoot, proxyObject) => new NativeStructureRampart(nativeRoot, proxyObject));
+            RegisterFactoryFunc(static (nativeRoot, proxyObject) => new NativeStructureTower(nativeRoot, proxyObject));
+            RegisterFactoryFunc(static (nativeRoot, proxyObject) => new NativeStructureLink(nativeRoot, proxyObject));
+            RegisterFactoryFunc(static (nativeRoot, proxyObject) => new NativeStructureTerminal(nativeRoot, proxyObject));
+            RegisterFactoryFunc(static (nativeRoot, proxyObject) => new NativeStructureExtractor(nativeRoot, proxyObject));
+            RegisterFactoryFunc(static (nativeRoot, proxyObject) => new NativeStructureFactory(nativeRoot, proxyObject));
+            RegisterFactoryFunc(static (nativeRoot, proxyObject) => new NativeStructureInvaderCore(nativeRoot, proxyObject));
+            RegisterFactoryFunc(static (nativeRoot, proxyObject) => new NativeStructureKeeperLair(nativeRoot, proxyObject));
+            RegisterFactoryFunc(static (nativeRoot, proxyObject) => new NativeStructureLab(nativeRoot, proxyObject));
+            RegisterFactoryFunc(static (nativeRoot, proxyObject) => new NativeStructureNuker(nativeRoot, proxyObject));
+            RegisterFactoryFunc(static (nativeRoot, proxyObject) => new NativeStructureObserver(nativeRoot, proxyObject));
+            RegisterFactoryFunc(static (nativeRoot, proxyObject) => new NativeStructurePowerBank(nativeRoot, proxyObject));
+            RegisterFactoryFunc(static (nativeRoot, proxyObject) => new NativeStructurePowerSpawn(nativeRoot, proxyObject));
+            RegisterFactoryFunc(static (nativeRoot, proxyObject) => new NativeStructurePortal(nativeRoot, proxyObject));
+            RegisterFactoryFunc(static (nativeRoot, proxyObject) => new NativeOwnedStructure(nativeRoot, proxyObject));
+            RegisterFactoryFunc(static (nativeRoot, proxyObject) => new NativeStructureRoad(nativeRoot, proxyObject));
+            RegisterFactoryFunc(static (nativeRoot, proxyObject) => new NativeStructureWall(nativeRoot, proxyObject));
+            RegisterFactoryFunc(static (nativeRoot, proxyObject) => new NativeStructure(nativeRoot, proxyObject));
+            RegisterFactoryFunc(static (nativeRoot, proxyObject) => new NativeSource(nativeRoot, proxyObject));
+            RegisterFactoryFunc(static (nativeRoot, proxyObject) => new NativeMineral(nativeRoot, proxyObject));
+            RegisterFactoryFunc(static (nativeRoot, proxyObject) => new NativeDeposit(nativeRoot, proxyObject));
+            RegisterFactoryFunc(static (nativeRoot, proxyObject) => new NativeNuke(nativeRoot, proxyObject));
+            RegisterFactoryFunc(static (nativeRoot, proxyObject) => new NativeCreep(nativeRoot, proxyObject));
+            RegisterFactoryFunc(static (nativeRoot, proxyObject) => new NativePowerCreep(nativeRoot, proxyObject));
+            RegisterFactoryFunc(static (nativeRoot, proxyObject) => new NativeFlag(nativeRoot, proxyObject));
+            RegisterFactoryFunc(static (nativeRoot, proxyObject) => new NativeResource(nativeRoot, proxyObject));
+            RegisterFactoryFunc(static (nativeRoot, proxyObject) => new NativeConstructionSite(nativeRoot, proxyObject));
+            RegisterFactoryFunc(static (nativeRoot, proxyObject) => new NativeTombstone(nativeRoot, proxyObject));
+            RegisterFactoryFunc(static (nativeRoot, proxyObject) => new NativeRuin(nativeRoot, proxyObject));
+        }
+
+        public static T Create<T>(INativeRoot nativeRoot, JSObject proxyObject) where T : IRoomObject
+        {
+            var createFunc = FactoryFuncDb<T>.FactoryFunc ?? throw new InvalidOperationException($"Factory function for '{typeof(T)}' not found");
+            return createFunc(nativeRoot, proxyObject);
+        }
+
+        public static IRoomObject Create(Type roomObjectType, INativeRoot nativeRoot, JSObject proxyObject)
+        {
+            if (!factoryFuncMap.TryGetValue(roomObjectType, out var createFunc)) { throw new InvalidOperationException($"Factory function for '{roomObjectType}' not found"); }
+            return createFunc(nativeRoot, proxyObject);
         }
     }
 

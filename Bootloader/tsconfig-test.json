@@ -6,8 +6,9 @@
         "module": "ES2022",
         "sourceMap": false,
         "target": "ES2022",
-        "moduleResolution": "Bundler",
+        "moduleResolution": "node16",
         "strict": true,
+        "skipLibCheck": true,
         "lib": [
             "esnext",
             "DOM"

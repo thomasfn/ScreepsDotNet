@@ -20,6 +20,7 @@ namespace ScreepsDotNet
         }
 
         [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
+        [System.Runtime.InteropServices.UnmanagedCallersOnly(EntryPoint = "screepsdotnet_init")]
         public static void Init()
         {
             try
@@ -34,6 +35,7 @@ namespace ScreepsDotNet
         }
 
         [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
+        [System.Runtime.InteropServices.UnmanagedCallersOnly(EntryPoint = "screepsdotnet_loop")]
         public static void Loop()
         {
             try

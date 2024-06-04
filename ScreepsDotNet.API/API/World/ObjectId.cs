@@ -15,12 +15,12 @@ namespace ScreepsDotNet.API.World
 
         public bool IsValid => a != 0 || b != 0 || c != 0;
 
-        internal ObjectId(int a, int b, int c)
+        internal ObjectId(int a, int b, int c, int h)
         {
             this.a = a;
             this.b = b;
             this.c = c;
-            h = ((17 * 31 + a) * 31 + b) * 31 + c;
+            this.h = h;
         }
 
         public ObjectId(ReadOnlySpan<char> idStr)
@@ -52,6 +52,14 @@ namespace ScreepsDotNet.API.World
         private static int Decode4HexDigits(int digits)
             => (DecodeHexDigit(digits & 255) << 12) | (DecodeHexDigit((digits >> 8) & 255) << 8) | (DecodeHexDigit((digits >> 16) & 255) << 4) | DecodeHexDigit(digits >> 24);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static int EncodeHexDigit(int nibble)
+            => nibble >= 10 ? 97 + (nibble - 10) : 48 + nibble;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static int Encode4HexDigits(int value)
+            => (EncodeHexDigit(value & 0xf) << 24) | (EncodeHexDigit((value >> 4) & 0xf) << 16) | (EncodeHexDigit((value >> 8) & 0xf) << 8) | EncodeHexDigit((value >> 12) & 0xf);
+
         public ObjectId(ReadOnlySpan<byte> idBytes)
         {
             int len;
@@ -71,6 +79,19 @@ namespace ScreepsDotNet.API.World
             c = (Decode4HexDigits(idInts[4]) << 16) | Decode4HexDigits(idInts[5]);
             h = ((17 * 31 + a) * 31 + b) * 31 + c;
             h = (h & ~31) | len;
+        }
+
+        public void ToBytes(Span<byte> idBytes)
+        {
+            Span<int> encodedId = MemoryMarshal.Cast<byte, int>(idBytes);
+            encodedId[0] = Encode4HexDigits(a >> 16);
+            encodedId[1] = Encode4HexDigits(a & 0xffff);
+            encodedId[2] = Encode4HexDigits(b >> 16);
+            encodedId[3] = Encode4HexDigits(b & 0xffff);
+            encodedId[4] = Encode4HexDigits(c >> 16);
+            encodedId[5] = Encode4HexDigits(c & 0xffff);
+            int len = h & 31;
+            if (len < 24) { idBytes[len] = 0; }
         }
 
         public override bool Equals(object? obj) => obj is ObjectId id && Equals(id);

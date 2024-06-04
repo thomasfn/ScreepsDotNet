@@ -5,6 +5,7 @@
 		<EmsdkLocalPath>emsdk</EmsdkLocalPath>
 		<WasmLocalPath>$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)', 'wasm'))</WasmLocalPath>
 		<ProvisionEmscriptenDir>$([MSBuild]::NormalizeDirectory('$(WasmLocalPath)', '$(EmsdkLocalPath)'))</ProvisionEmscriptenDir>
+		<EMSDK_PATH Condition="'$(EMSDK_PATH)' == ''">$(EMSDK)</EMSDK_PATH>
 		<ShouldProvisionEmscripten Condition="'$(EMSDK_PATH)' == '' and !Exists('$(ProvisionEmscriptenDir)')">true</ShouldProvisionEmscripten>
 		<EMSDK_PATH Condition="'$(EMSDK_PATH)' == ''">$(ProvisionEmscriptenDir.Replace('\', '/'))</EMSDK_PATH>
 	    <!-- semicolon is a msbuild property separator. It is also the path separator on windows.
@@ -60,14 +61,14 @@
       <EmscriptenEnvVars Include="EM_WORKAROUND_PYTHON_BUG_34780=1" />
     </ItemGroup>
 
-	<Target Name="_OptimiseWasm" DependsOnTargets="ProvisionEmscripten">
+	<Target Name="_OptimiseWasm" AfterTargets="LinkNativeLlvm" DependsOnTargets="ProvisionEmscripten">
 		
 		<PropertyGroup>
-			<InputWasmFile>$([System.IO.Path]::GetFileNameWithoutExtension($(WasmMainAssemblyFileName))).wasm</InputWasmFile>
-			<OutputWasmFile>$([System.IO.Path]::GetFileNameWithoutExtension($(WasmMainAssemblyFileName)))-o.wasm</OutputWasmFile>
+			<InputWasmFile>$(NativeOutputPath)\$(TargetName).wasm</InputWasmFile>
+			<OutputWasmFile>$(PublishDir)\$(TargetName)-o.wasm</OutputWasmFile>
 		</PropertyGroup>
 
-		<Message Text="Optimising wasm output..." Importance="High"/>
+		<Message Text="Optimising wasm output... $(WasmMainAssemblyFileName)" Importance="High"/>
 		<Exec
 			Command="wasm-opt$(_ExeExt) &quot;$(InputWasmFile)&quot; @(WasmOptConfigurationFlags, ' ') -o &quot;$(OutputWasmFile)&quot;"
 			WorkingDirectory="$(WasmAppDir)"
@@ -75,9 +76,9 @@
 		/>
 	</Target>
 	
-	<Target Name="_BuildScreepsBundle" AfterTargets="_WasiGenerateAppBundle" DependsOnTargets="_OptimiseWasm">
+	<Target Name="_BuildScreepsBundle" AfterTargets="_OptimiseWasm">
 		<Message Text="Bundling for Screeps..." Importance="High"/>
-		<BundlerBuildTask AppBundleDir="$(WasmAppDir)" WasmFileName="$(OutputWasmFile)" Configuration="$(Configuration)" CompressWasm="$(ScreepsCompressWasm)" Encoding="$(ScreepsEncoding)" CustomInitExportNames="@(ScreepsCustomInitExportNames, ',')">
+		<BundlerBuildTask AppBundleDir="$(PublishDir)" WasmFileName="$(OutputWasmFile)" Configuration="$(Configuration)" CompressWasm="$(ScreepsCompressWasm)" Encoding="$(ScreepsEncoding)" CustomInitExportNames="@(ScreepsCustomInitExportNames, ',')">
 			<Output TaskParameter="BundleFilePaths" PropertyName="ScreepsBundleFilePaths" />
 		</BundlerBuildTask>
 	</Target>

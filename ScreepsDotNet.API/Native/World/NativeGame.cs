@@ -281,9 +281,11 @@ namespace ScreepsDotNet.Native.World
         JSObject? INativeRoot.GetProxyObjectById(ObjectId id)
         {
             IntPtr jsHandle;
+            ScreepsDotNet_Native.RawObjectId rawId = new();
+            id.ToBytes(rawId.AsSpan);
             unsafe
             {
-                jsHandle = ScreepsDotNet_Native.GetObjectById(&id);
+                jsHandle = ScreepsDotNet_Native.GetObjectById(&rawId);
             }
             if (jsHandle == -1) { return null; }
             return Interop.Native.GetJSObject(jsHandle);
@@ -325,7 +327,7 @@ namespace ScreepsDotNet.Native.World
         {
             if (proxyObject == null) { return null; }
             if (proxyObject.UserData is T existingWrapperObject) { return existingWrapperObject; }
-            var wrapperObject = NativeRoomObjectUtils.CreateWrapperForRoomObject(this, proxyObject, typeof(T));
+            var wrapperObject = NativeRoomObjectUtils.CreateWrapperForRoomObject<T>(this, proxyObject);
             if (wrapperObject is not T newWrapperObject)
             {
                 Console.WriteLine($"Failed to create wrapper object for {proxyObject} (wrong type - expecting {typeof(T)}, got {wrapperObject?.GetType()})");
