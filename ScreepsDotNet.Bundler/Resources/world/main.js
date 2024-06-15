@@ -39,7 +39,7 @@ function startup() {
         bootloader.profilingEnabled = false; // Set this to true to get some startup and per-tick profiling output in console
     }
     if (!bootloader.compiled) {
-        bootloader.compile(rawWasm);
+        bootloader.compile(decompressedRawWasm);
         return false;
     }
     if (!bootloader.started) {
