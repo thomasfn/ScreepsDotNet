@@ -226,10 +226,16 @@ namespace ScreepsDotNet.Native.World
         }
 
         public T? GetObjectById<T>(string id) where T : class, IRoomObject
-            => (this as INativeRoot).GetProxyObjectById(new(id)) as T;
+        {
+            var proxyObject = (this as INativeRoot).GetProxyObjectById(new(id));
+            return (this as INativeRoot).GetOrCreateWrapperObject<T>(proxyObject);
+        }
 
         public T? GetObjectById<T>(ObjectId id) where T : class, IRoomObject
-            => (this as INativeRoot).GetProxyObjectById(id) as T;
+        {
+            var proxyObject = (this as INativeRoot).GetProxyObjectById(id);
+            return (this as INativeRoot).GetOrCreateWrapperObject<T>(proxyObject);
+        }
 
         public void Notify(string message, int groupInterval = 0)
             => Native_Notify(message, groupInterval);
