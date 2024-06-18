@@ -17,7 +17,7 @@ namespace ScreepsDotNet.Native.World
         #region Imports
 
         [JSImport("Room.createConstructionSite", "game/prototypes/wrapped")]
-        internal static partial int Native_CreateConstructionSite(JSObject proxyObject, int x, int y, string structureType, string? name);
+        internal static partial int Native_CreateConstructionSite(JSObject proxyObject, int x, int y, Name structureType, string? name);
 
         [JSImport("Room.createFlag", "game/prototypes/wrapped")]
         internal static partial JSObject Native_CreateFlag(JSObject proxyObject, int x, int y, string? name, int? color, int? secondaryColor);
@@ -53,16 +53,16 @@ namespace ScreepsDotNet.Native.World
         internal static partial int Native_LookAtAreaFast(JSObject proxyObject, int top, int left, int bottom, int right, IntPtr outRoomObjectMetadataPtr, int maxObjectCount);
 
         [JSImport("Room.lookForAt", "game/prototypes/wrapped")]
-        internal static partial JSObject[] Native_LookForAt(JSObject proxyObject, string type, int x, int y);
+        internal static partial JSObject[] Native_LookForAt(JSObject proxyObject, Name type, int x, int y);
 
         [JSImport("Room.lookForAtFast", "game/prototypes/wrapped")]
-        internal static partial int Native_LookForAtFast(JSObject proxyObject, string type, int x, int y, IntPtr outRoomObjectMetadataPtr, int maxObjectCount);
+        internal static partial int Native_LookForAtFast(JSObject proxyObject, Name type, int x, int y, IntPtr outRoomObjectMetadataPtr, int maxObjectCount);
 
         [JSImport("Room.lookForAtArea", "game/prototypes/wrapped")]
-        internal static partial JSObject[] Native_LookForAtArea(JSObject proxyObject, string type, int top, int left, int bottom, int right, bool asArray);
+        internal static partial JSObject[] Native_LookForAtArea(JSObject proxyObject, Name type, int top, int left, int bottom, int right, bool asArray);
 
         [JSImport("Room.lookForAtAreaFast", "game/prototypes/wrapped")]
-        internal static partial int Native_LookForAtAreaFast(JSObject proxyObject, string type, int top, int left, int bottom, int right, IntPtr outRoomObjectMetadataPtr, int maxObjectCount);
+        internal static partial int Native_LookForAtAreaFast(JSObject proxyObject, Name type, int top, int left, int bottom, int right, IntPtr outRoomObjectMetadataPtr, int maxObjectCount);
 
         #endregion
 
@@ -143,16 +143,18 @@ namespace ScreepsDotNet.Native.World
 
         public RoomCreateConstructionSiteResult CreateConstructionSite<T>(Position position, string? name = null) where T : class, IStructure
         {
-            var structureConstant = NativeRoomObjectPrototypes<T>.StructureConstant;
-            if (structureConstant == null) { throw new ArgumentException("Must be a valid structure type", nameof(T)); }
-            return (RoomCreateConstructionSiteResult)Native_CreateConstructionSite(ProxyObject, position.X, position.Y, structureConstant, name);
+            var structureConstant = NativeRoomObjectTypes.TypeOf<T>().StructureConstant;
+            return structureConstant == null
+                ? throw new ArgumentException("Must be a valid structure type", nameof(T))
+                : (RoomCreateConstructionSiteResult)Native_CreateConstructionSite(ProxyObject, position.X, position.Y, structureConstant.Value, name);
         }
 
         public RoomCreateConstructionSiteResult CreateConstructionSite(Position position, Type structureType, string? name = null)
         {
-            var structureConstant = NativeRoomObjectUtils.GetStructureConstantForInterfaceType(structureType);
-            if (structureConstant == null) { throw new ArgumentException("Must be a valid structure type", nameof(structureType)); }
-            return (RoomCreateConstructionSiteResult)Native_CreateConstructionSite(ProxyObject, position.X, position.Y, structureConstant, name);
+            var structureConstant = NativeRoomObjectTypes.GetTypeForInterfaceType(structureType)?.StructureConstant;
+            return structureConstant == null
+                ? throw new ArgumentException("Must be a valid structure type", nameof(structureType))
+                : (RoomCreateConstructionSiteResult)Native_CreateConstructionSite(ProxyObject, position.X, position.Y, structureConstant.Value, name);
         }
 
         public RoomCreateFlagResult CreateFlag(Position position, out string newFlagName, string? name = null, FlagColor? color = null, FlagColor? secondaryColor = null)
@@ -164,8 +166,9 @@ namespace ScreepsDotNet.Native.World
 
         public IEnumerable<T> Find<T>(bool? my = null) where T : class, IRoomObject
         {
-            var findConstant = (my == true ? NativeRoomObjectPrototypes<T>.MyFindConstant : my == false ? NativeRoomObjectPrototypes<T>.HostileFindConstant : null) ?? NativeRoomObjectPrototypes<T>.FindConstant;
-            if (findConstant == null) { return Enumerable.Empty<T>(); }
+            var type = NativeRoomObjectTypes.TypeOf<T>();
+            var findConstant = (my == true ? type.MyFindConstant : my == false ? type.HostileFindConstant : null) ?? type.FindConstant;
+            if (findConstant == null) { return []; }
             if (typeof(T).IsAssignableTo(typeof(IWithId)))
             {
                 int cnt;
@@ -279,14 +282,14 @@ namespace ScreepsDotNet.Native.World
 
         public IEnumerable<T> LookForAt<T>(Position position) where T : class, IRoomObject
         {
-            var lookConstant = NativeRoomObjectPrototypes<T>.LookConstant;
-            if (lookConstant == null) { return Enumerable.Empty<T>(); }
+            var lookConstant = NativeRoomObjectTypes.TypeOf<T>().LookConstant;
+            if (lookConstant == null) { return []; }
             int cnt;
             unsafe
             {
                 fixed (RoomObjectMetadata* roomObjectMetadataBufferPtr = roomObjectMetadataBuffer)
                 {
-                    cnt = Native_LookForAtFast(ProxyObject, lookConstant, position.X, position.Y, (IntPtr)roomObjectMetadataBufferPtr, objectCountBufferSize);
+                    cnt = Native_LookForAtFast(ProxyObject, lookConstant.Value, position.X, position.Y, (IntPtr)roomObjectMetadataBufferPtr, objectCountBufferSize);
                 }
             }
             return nativeRoot.GetWrapperObjectsFromBuffer<T>(roomObjectMetadataBuffer.AsSpan()[..cnt]);
@@ -294,14 +297,14 @@ namespace ScreepsDotNet.Native.World
 
         public IEnumerable<T> LookForAtArea<T>(Position min, Position max) where T : class, IRoomObject
         {
-            var lookConstant = NativeRoomObjectPrototypes<T>.LookConstant;
-            if (lookConstant == null) { return Enumerable.Empty<T>(); }
+            var lookConstant = NativeRoomObjectTypes.TypeOf<T>().LookConstant;
+            if (lookConstant == null) { return []; }
             int cnt;
             unsafe
             {
                 fixed (RoomObjectMetadata* roomObjectMetadataBufferPtr = roomObjectMetadataBuffer)
                 {
-                    cnt = Native_LookForAtAreaFast(ProxyObject, lookConstant, min.Y, min.X, max.Y, max.X, (IntPtr)roomObjectMetadataBufferPtr, objectCountBufferSize);
+                    cnt = Native_LookForAtAreaFast(ProxyObject, lookConstant.Value, min.Y, min.X, max.Y, max.X, (IntPtr)roomObjectMetadataBufferPtr, objectCountBufferSize);
                 }
             }
             return nativeRoot.GetWrapperObjectsFromBuffer<T>(roomObjectMetadataBuffer.AsSpan()[..cnt]);

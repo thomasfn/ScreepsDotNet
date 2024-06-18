@@ -30,7 +30,7 @@ namespace ScreepsDotNet.Native.World
 
         public int ProgressTotal => CachePerTick(ref progressTotalCache) ??= ProxyObject.GetPropertyAsInt32(Names.ProgressTotal);
 
-        public Type StructureType => CacheLifetime(ref structureTypeCache) ??= (NativeRoomObjectUtils.GetInterfaceTypeForStructureConstant(ProxyObject.GetPropertyAsString(Names.StructureType)!) ?? typeof(IStructure));
+        public Type StructureType => CacheLifetime(ref structureTypeCache) ??= (NativeRoomObjectTypes.GetTypeForStructureConstant(ProxyObject.GetPropertyAsString(Names.StructureType)!) ?? NativeRoomObjectTypes.TypeOf<IStructure>()).InterfaceType;
 
         public NativeConstructionSite(INativeRoot nativeRoot, JSObject proxyObject)
             : base(nativeRoot, proxyObject)

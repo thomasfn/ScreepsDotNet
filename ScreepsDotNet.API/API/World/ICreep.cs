@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Collections.Immutable;
 
 namespace ScreepsDotNet.API.World
 {
@@ -12,6 +13,15 @@ namespace ScreepsDotNet.API.World
         Tough,
         Heal,
         Claim
+    }
+
+    public static class BodyPartTypes
+    {
+        public static readonly ImmutableArray<BodyPartType> All = [BodyPartType.Move, BodyPartType.Work, BodyPartType.Carry, BodyPartType.Attack, BodyPartType.RangedAttack, BodyPartType.Tough, BodyPartType.Heal, BodyPartType.Claim];
+
+        public static readonly ImmutableArray<string> Names = [nameof(BodyPartType.Move), nameof(BodyPartType.Work), nameof(BodyPartType.Carry), nameof(BodyPartType.Attack), nameof(BodyPartType.RangedAttack), nameof(BodyPartType.Tough), nameof(BodyPartType.Heal), nameof(BodyPartType.Claim)];
+
+        public const int Count = 8;
     }
 
     public enum CreepAttackResult

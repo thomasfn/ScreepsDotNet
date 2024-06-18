@@ -52,6 +52,15 @@ namespace ScreepsDotNet.Interop
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Name Create(string value) => nameLookup.TryGetValue(value, out var nameIndex) ? new(nameIndex) : new(AllocateName(value));
 
+        /// <summary>
+        /// Creates a new name.
+        /// While it is safe to create a name for the same string multiple times, you should cache names where possible.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Name? CreateNullSafe(string? value) => string.IsNullOrEmpty(value) ? null : Create(value);
+
         #endregion
 
         internal readonly int NameIndex;

@@ -6,8 +6,15 @@ using ScreepsDotNet.API.World;
 namespace ScreepsDotNet.Native.World
 {
     [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
-    internal static class PositionExtensions
+    internal static partial class PositionExtensions
     {
+        #region Imports
+
+        [JSImport("createRoomPosition", "game")]
+        internal static partial JSObject CreateRoomPosition(int encodedInt);
+
+        #endregion
+
         public static RoomPosition ToRoomPosition(this JSObject obj)
             => new(obj.ToPosition(), obj.GetPropertyAsString(Names.RoomName)!);
 
@@ -15,6 +22,6 @@ namespace ScreepsDotNet.Native.World
             => obj != null ? new RoomPosition?(obj.ToRoomPosition()) : null;
 
         public static JSObject ToJS(this RoomPosition pos)
-            => NativeRoomObjectUtils.CreateRoomPosition(pos.ToEncodedInt());
+            => CreateRoomPosition(pos.ToEncodedInt());
     }
 }

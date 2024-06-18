@@ -172,6 +172,7 @@ namespace ScreepsDotNet.Native.World
             roomLazyLookup = new NativeObjectLazyLookup<NativeRoom, IRoom>(() => RoomsObj, x => x.Name, (name, proxyObject) => nativeRoot.GetRoomByCoord(new(name)));
             spawnLazyLookup = new NativeObjectLazyLookup<NativeStructureSpawn, IStructureSpawn>(() => SpawnsObj, x => x.Name, (name, proxyObject) => nativeRoot.GetOrCreateWrapperObject<NativeStructureSpawn>(proxyObject));
             structureLazyLookup = new NativeObjectLazyLookup<NativeStructure, IStructure>(() => StructuresObj, x => x.Id, (name, proxyObject) => nativeRoot.GetOrCreateWrapperObject<NativeStructure>(proxyObject));
+            NativeRoomObjectTypes.RegisterTypesIfNeeded();
         }
 
         public void Tick()
@@ -327,7 +328,7 @@ namespace ScreepsDotNet.Native.World
         {
             if (proxyObject == null) { return null; }
             if (proxyObject.UserData is T existingWrapperObject) { return existingWrapperObject; }
-            var wrapperObject = NativeRoomObjectUtils.CreateWrapperForRoomObject<T>(this, proxyObject);
+            var wrapperObject = NativeRoomObjectTypes.CreateWrapperForRoomObject<T>(this, proxyObject);
             if (wrapperObject is not T newWrapperObject)
             {
                 Console.WriteLine($"Failed to create wrapper object for {proxyObject} (wrong type - expecting {typeof(T)}, got {wrapperObject?.GetType()})");
@@ -341,7 +342,7 @@ namespace ScreepsDotNet.Native.World
         {
             var proxyObject = Interop.Native.GetJSObject(metadata.JSHandle);
             if (proxyObject.UserData != null) { return proxyObject.UserData as T; }
-            var wrapperObject = NativeRoomObjectUtils.CreateWrapperForRoomObject(this, proxyObject, metadata, typeof(T));
+            var wrapperObject = NativeRoomObjectTypes.CreateWrapperForRoomObject(this, proxyObject, metadata, NativeRoomObjectTypes.TypeOf<T>());
             if (wrapperObject is not T newWrapperObject)
             {
                 Console.WriteLine($"Failed to create wrapper object for {proxyObject} (wrong type - expecting {typeof(T)}, got {wrapperObject?.GetType()})");

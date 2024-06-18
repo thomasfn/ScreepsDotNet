@@ -13,7 +13,6 @@ namespace ScreepsDotNet.Native.World
         #region Imports
 
         [JSImport("getConstantsObj", "game")]
-        
         internal static partial JSObject Native_GetConstants();
 
         #endregion
@@ -22,15 +21,15 @@ namespace ScreepsDotNet.Native.World
         private readonly JSObject bodypartCostObj;
         private readonly JSObject structureCostObj;
 
-        private readonly Dictionary<string, int> intCache = new();
-        private readonly Dictionary<string, double> doubleCache = new();
+        private readonly Dictionary<string, int> intCache = [];
+        private readonly Dictionary<string, double> doubleCache = [];
 
-        private readonly int?[] bodyPartCostCache = new int?[Enum.GetValues<BodyPartType>().Length];
+        private readonly int?[] bodyPartCostCache = new int?[BodyPartTypes.Count];
         private int[]? rampartHitsMaxCache;
 
-        private readonly Dictionary<Type, int> structureCostCache = new();
-        private readonly Dictionary<ResourceType, int?> reactionTimeCache = new();
-        private readonly HashSet<string> obstacleObjectTypes = new();
+        private readonly Dictionary<Type, int> structureCostCache = [];
+        private readonly Dictionary<ResourceType, int?> reactionTimeCache = [];
+        private readonly HashSet<Name> obstacleObjectTypes = [];
 
         private ControllerConstants? controllerConstantsCache;
         private CreepConstants? creepConstantsCache;
@@ -41,7 +40,7 @@ namespace ScreepsDotNet.Native.World
                 levels: InterpretArrayLikeLookupTableInt(constantsObj.GetPropertyAsJSObject("CONTROLLER_LEVELS")!, 1),
                 structureCounts: InterpretMap(
                     constantsObj.GetPropertyAsJSObject("CONTROLLER_STRUCTURES")!,
-                    (obj, key) => NativeRoomObjectUtils.GetInterfaceTypeForStructureConstant(key),
+                    (obj, key) => NativeRoomObjectTypes.GetTypeForStructureConstant(key)?.InterfaceType,
                     (obj, key) => InterpretArrayLikeLookupTableInt(obj.GetPropertyAsJSObject(key)!, 1)
                 ),
                 downgrade: InterpretArrayLikeLookupTableInt(constantsObj.GetPropertyAsJSObject("CONTROLLER_DOWNGRADE")!, 1),
@@ -96,9 +95,9 @@ namespace ScreepsDotNet.Native.World
         {
             if (!structureType.IsAssignableTo(typeof(IStructure))) { throw new ArgumentException($"Must be valid structure type", nameof(structureType)); }
             if (structureCostCache.TryGetValue(structureType, out var result)) { return result; }
-            var structureConstant = NativeRoomObjectUtils.GetStructureConstantForInterfaceType(structureType);
-            if (string.IsNullOrEmpty(structureConstant)) { throw new ArgumentException($"Could not resolve structure constant for type", nameof(structureType)); }
-            result = structureCostObj.GetPropertyAsInt32(structureConstant);
+            var structureConstant = NativeRoomObjectTypes.GetTypeForInterfaceType(structureType)?.StructureConstant;
+            if (structureConstant == null) { throw new ArgumentException($"Could not resolve structure constant for type", nameof(structureType)); }
+            result = structureCostObj.GetPropertyAsInt32(structureConstant.Value);
             structureCostCache.Add(structureType, result);
             return result;
         }
@@ -135,17 +134,17 @@ namespace ScreepsDotNet.Native.World
         public bool IsObjectObstacle<T>() where T : IRoomObject
         {
             CheckCacheObstacleObjectTypes();
-            var structureConstant = NativeRoomObjectPrototypes<T>.StructureConstant;
-            if (string.IsNullOrEmpty(structureConstant)) { return false; }
-            return obstacleObjectTypes.Contains(structureConstant);
+            var structureConstant = NativeRoomObjectTypes.TypeOf<T>().StructureConstant;
+            if (structureConstant == null) { return false; }
+            return obstacleObjectTypes.Contains(structureConstant.Value);
         }
 
         public bool IsObjectObstacle(Type objectType)
         {
             CheckCacheObstacleObjectTypes();
-            var structureConstant = NativeRoomObjectUtils.GetStructureConstantForInterfaceType(objectType);
-            if (string.IsNullOrEmpty(structureConstant)) { return false; }
-            return obstacleObjectTypes.Contains(structureConstant);
+            var structureConstant = NativeRoomObjectTypes.GetTypeForInterfaceType(objectType)?.StructureConstant;
+            if (structureConstant == null) { return false; }
+            return obstacleObjectTypes.Contains(structureConstant.Value);
         }
 
         private void CheckCacheObstacleObjectTypes()
@@ -155,7 +154,7 @@ namespace ScreepsDotNet.Native.World
             if (arrObj == null) { return; }
             foreach (var str in arrObj)
             {
-                obstacleObjectTypes.Add(str);
+                obstacleObjectTypes.Add(Name.Create(str));
             }
         }
 
