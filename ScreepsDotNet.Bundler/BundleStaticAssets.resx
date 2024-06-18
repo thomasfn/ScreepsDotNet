@@ -127,6 +127,9 @@
   <data name="arena_main_mjs" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\arena\main.mjs;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
+  <data name="BulkMemorySplice" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\BulkMemorySplice.wasm;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
   <data name="world_bootloader_js" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\world\bootloader.js;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>

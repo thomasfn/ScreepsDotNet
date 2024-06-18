@@ -10,6 +10,7 @@
 	</PropertyGroup>
 	
 	<UsingTask TaskName="ScreepsDotNet.Bundler.BundlerBuildTask" AssemblyFile="$(ScreepsDotNetBundlerAssemblyPath)ScreepsDotNet.Bundler.dll" />
+	<UsingTask TaskName="ScreepsDotNet.Bundler.LowerBulkMemoryTask" AssemblyFile="$(ScreepsDotNetBundlerAssemblyPath)ScreepsDotNet.Bundler.dll" />
 
 	<PropertyGroup>
 		<ScreepsCompressWasm>false</ScreepsCompressWasm>
@@ -19,6 +20,9 @@
 	<ItemGroup>
 		<WasmOptConfigurationFlags Include="-mvp" />
 		<WasmOptConfigurationFlags Include="--legalize-js-interface" />
+		<WasmOptConfigurationFlags Include="--disable-bulk-memory" />
+		<WasmOptConfigurationFlags Include="--disable-sign-ext" />
+		<WasmOptConfigurationFlags Include="--signext-lowering" />
 		<WasmOptConfigurationFlags Include="-Oz" />
 	</ItemGroup>
 </Project>

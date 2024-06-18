@@ -42,10 +42,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="ScreepsDotNet.Bundler" Version="2.1.0" PrivateAssets="All" />
-	</ItemGroup>
 
-	<ItemGroup>
-		<CustomLinkerArg Include="-Wl,--export=__stack_low" />
 	</ItemGroup>
 
 </Project>

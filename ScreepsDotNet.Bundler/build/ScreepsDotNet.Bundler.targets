@@ -61,10 +61,15 @@
       <EmscriptenEnvVars Include="EM_WORKAROUND_PYTHON_BUG_34780=1" />
     </ItemGroup>
 
-	<Target Name="_OptimiseWasm" AfterTargets="LinkNativeLlvm" DependsOnTargets="ProvisionEmscripten">
+	<Target Name="_LowerWasmBulkMemory" AfterTargets="LinkNativeLlvm">
+		<Message Text="Lowering wasm bulk memory instructions..." Importance="High"/>
+		<LowerBulkMemoryTask InWasmFileName="$(NativeOutputPath)\$(TargetName).wasm" OutWasmFileName="$(NativeOutputPath)\$(TargetName)-lbm.wasm" />
+	</Target>
+
+	<Target Name="_OptimiseWasm" AfterTargets="_LowerWasmBulkMemory" DependsOnTargets="ProvisionEmscripten">
 		
 		<PropertyGroup>
-			<InputWasmFile>$(NativeOutputPath)\$(TargetName).wasm</InputWasmFile>
+			<InputWasmFile>$(NativeOutputPath)\$(TargetName)-lbm.wasm</InputWasmFile>
 			<OutputWasmFile>$(PublishDir)\$(TargetName)-o.wasm</OutputWasmFile>
 		</PropertyGroup>
 
