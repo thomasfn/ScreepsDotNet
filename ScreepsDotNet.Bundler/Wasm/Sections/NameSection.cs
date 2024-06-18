@@ -115,7 +115,13 @@ namespace ScreepsDotNet.Bundler.Wasm.Sections
     {
         public List<NameSubsection> Subsections { get; } = new List<NameSubsection>();
 
+        public NameSection()
+        {
+            ID = SectionID.Custom;
+        }
+
         public NameSection(BinaryReader rdr, uint size)
+            : this()
         {
             long expectedEndOffset = rdr.BaseStream.Position + size;
             while (rdr.BaseStream.Position < expectedEndOffset)

@@ -90,14 +90,16 @@ namespace ScreepsDotNet.Bundler.Wasm
                     {
                         var name = rdr.ReadVarString();
                         uint dataLength = (uint)(endOffset - rdr.BaseStream.Position);
-                        if (name == "name")
+                        switch (name)
                         {
-                            section = new NameSection(rdr, dataLength);
-                        }
-                        else
-                        {
-                            var data = rdr.ReadBytes((int)dataLength);
-                            section = new CustomSection(name, data);
+                            case "name": section = new NameSection(rdr, dataLength); break;
+                            case "target_features": section = new TargetFeaturesSection(rdr, dataLength); break;
+                            default:
+                                {
+                                    var data = rdr.ReadBytes((int)dataLength);
+                                    section = new CustomSection(name, data);
+                                    break;
+                                }
                         }
                     }
                     break;

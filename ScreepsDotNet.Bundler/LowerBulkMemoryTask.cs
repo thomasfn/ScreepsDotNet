@@ -34,6 +34,7 @@ namespace ScreepsDotNet.Bundler
                 spliceWasmBinary = new WasmBinary(spliceWasmStream);
             }
             SpliceWasmFunctions(inWasmBinary, spliceWasmBinary);
+            DisableBulkMemoryFeature(inWasmBinary);
             inWasmBinary.Write(OutWasmFileName);
             //byte[] outWasm;
             //using (var outStrm = new MemoryStream())
@@ -159,6 +160,20 @@ namespace ScreepsDotNet.Bundler
             }
         }
 
+        private void DisableBulkMemoryFeature(WasmBinary inWasmBinary)
+        {
+            var targetFeaturesSection = inWasmBinary.Sections.OfType<TargetFeaturesSection>().SingleOrDefault();
+            if (targetFeaturesSection == null) { return; }
+            var bulkMemoryIdx = targetFeaturesSection.TargetFeatureEntries.FindIndex(x => x.Key == "bulk-memory");
+            if (bulkMemoryIdx == -1)
+            {
+                targetFeaturesSection.TargetFeatureEntries.Add(new KeyValuePair<string, char>("bulk-memory", '-'));
+            }
+            else
+            {
+                targetFeaturesSection.TargetFeatureEntries[bulkMemoryIdx] = new KeyValuePair<string, char>("bulk-memory", '-');
+            }
+        }
 
     }
 }
