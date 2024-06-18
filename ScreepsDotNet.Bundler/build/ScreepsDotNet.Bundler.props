@@ -15,7 +15,12 @@
 	<PropertyGroup>
 		<ScreepsCompressWasm>false</ScreepsCompressWasm>
 		<ScreepsEncoding>b64</ScreepsEncoding>
+		<WasmEnableNonTrappingFloatToIntConversions>false</WasmEnableNonTrappingFloatToIntConversions>
 	</PropertyGroup>
+
+	<ItemGroup>
+		<LinkerArg Include="-Wl,--export=malloc" />
+	</ItemGroup>
 
 	<ItemGroup>
 		<WasmOptConfigurationFlags Include="-mvp" />
