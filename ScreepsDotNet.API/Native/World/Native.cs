@@ -21,7 +21,7 @@ internal static class ScreepsDotNet_Native
     internal static unsafe extern int BatchRenewObjects(IntPtr* jsHandleList, int count);
 
     [WasmImportLinkage, DllImport("bindings", EntryPoint = "js_fetch_object_room_position")]
-    internal static unsafe extern void FetchObjectRoomPosition(IntPtr jsHandle, RoomPosition* outRoomPos);
+    internal static unsafe extern int FetchObjectRoomPosition(IntPtr jsHandle);
 
     [WasmImportLinkage, DllImport("bindings", EntryPoint = "js_batch_fetch_object_room_positions")]
     internal static unsafe extern void BatchFetchObjectRoomPositions(IntPtr* jsHandleList, int count, RoomPosition* outRoomPosList);

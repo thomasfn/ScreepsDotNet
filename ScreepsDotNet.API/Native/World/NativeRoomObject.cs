@@ -93,14 +93,7 @@ namespace ScreepsDotNet.Native.World
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private RoomPosition FetchRoomPosition()
-        {
-            RoomPosition roomPosition = default;
-            unsafe
-            {
-                ScreepsDotNet_Native.FetchObjectRoomPosition(ProxyObject.JSHandle, &roomPosition);
-            }
-            return roomPosition;
-        }
+            => RoomPosition.FromEncodedInt(ScreepsDotNet_Native.FetchObjectRoomPosition(ProxyObject.JSHandle));
 
         private Effect[] FetchEffects()
         {
