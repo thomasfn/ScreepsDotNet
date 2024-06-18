@@ -130,7 +130,7 @@ namespace ScreepsDotNet.API
             var sb = new StringBuilder();
             sb.Append("BodyType(");
             bool isFirst = true;
-            foreach (var tuple in bodyPartTypes)
+            foreach (var (bodyPartType, quantity) in bodyPartTypes)
             {
                 if (isFirst)
                 {
@@ -140,10 +140,16 @@ namespace ScreepsDotNet.API
                 {
                     sb.Append(", ");
                 }
-                sb.Append(tuple.quantity);
+                sb.Append(quantity);
                 sb.Append("x ");
-                sb.Append(tuple.bodyPartType);
-
+                if (typeof(TBodyPartType) == typeof(World.BodyPartType))
+                {
+                    sb.Append(World.BodyPartTypes.Names[Convert.ToInt32(bodyPartType)]);
+                }
+                else
+                {
+                    sb.Append(bodyPartType.ToString());
+                }
             }
             sb.Append(')');
             return sb.ToString();

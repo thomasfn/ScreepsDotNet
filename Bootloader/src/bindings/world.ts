@@ -74,15 +74,9 @@ export class WorldBindings extends BaseBindings {
 
     public init(exports: ScreepsDotNetExports, memoryManager: WasmMemoryManager): void {
         super.init(exports, memoryManager);
-        const entrypointFn = exports.screepsdotnet_init_world;
-        if (!entrypointFn) {
-          this.log(`failed to call 'screepsdotnet_init_world' (not found in wasm exports)`);
-          return;
-        }
         this._invoke_room_callback = exports.screepsdotnet_invoke_room_callback;
         this._invoke_cost_callback = exports.screepsdotnet_invoke_cost_callback;
         this._invoke_route_callback = exports.screepsdotnet_invoke_route_callback;
-        entrypointFn();
         this._memoryCache = Memory;
         this._memoryCache = (RawMemory as unknown as { _parsed: Memory })._parsed;
         this._lastCheckIn = Game.time;

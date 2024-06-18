@@ -3028,15 +3028,9 @@
       key: "init",
       value: function init(exports, memoryManager) {
         _get(_getPrototypeOf(WorldBindings.prototype), "init", this).call(this, exports, memoryManager);
-        var entrypointFn = exports.screepsdotnet_init_world;
-        if (!entrypointFn) {
-          this.log("failed to call 'screepsdotnet_init_world' (not found in wasm exports)");
-          return;
-        }
         this._invoke_room_callback = exports.screepsdotnet_invoke_room_callback;
         this._invoke_cost_callback = exports.screepsdotnet_invoke_cost_callback;
         this._invoke_route_callback = exports.screepsdotnet_invoke_route_callback;
-        entrypointFn();
         this._memoryCache = Memory;
         this._memoryCache = RawMemory._parsed;
         this._lastCheckIn = Game.time;
@@ -3662,6 +3656,80 @@
     return WorldBindings;
   }(BaseBindings);
 
+  var TestBindings = /*#__PURE__*/function (_BaseBindings) {
+    _inherits(TestBindings, _BaseBindings);
+    var _super = _createSuper(TestBindings);
+    function TestBindings() {
+      _classCallCheck(this, TestBindings);
+      return _super.apply(this, arguments);
+    }
+    _createClass(TestBindings, [{
+      key: "init",
+      value: function init(exports, memoryManager) {
+        _get(_getPrototypeOf(TestBindings.prototype), "init", this).call(this, exports, memoryManager);
+      }
+    }, {
+      key: "loop",
+      value: function loop() {
+        _get(_getPrototypeOf(TestBindings.prototype), "loop", this).call(this);
+      }
+    }, {
+      key: "setupImports",
+      value: function setupImports() {
+        _get(_getPrototypeOf(TestBindings.prototype), "setupImports", this).call(this);
+        this.bindingsImport.js_renew_object = this.js_renew_object.bind(this);
+        this.bindingsImport.js_batch_renew_objects = this.js_batch_renew_objects.bind(this);
+        this.bindingsImport.js_fetch_object_room_position = this.js_fetch_object_room_position.bind(this);
+        this.bindingsImport.js_batch_fetch_object_room_positions = this.js_batch_fetch_object_room_positions.bind(this);
+        this.bindingsImport.js_get_object_by_id = this.js_get_object_by_id.bind(this);
+        this.bindingsImport.js_get_object_id = this.js_get_object_id.bind(this);
+      }
+    }, {
+      key: "js_renew_object",
+      value: function js_renew_object(jsHandle) {
+        return 1;
+      }
+    }, {
+      key: "js_batch_renew_objects",
+      value: function js_batch_renew_objects(jsHandleListPtr, count) {
+        var i32 = this._memoryManager.view.i32;
+        var baseIdx = jsHandleListPtr >> 2;
+        for (var i = 0; i < count; ++i) {
+          if (this.js_renew_object(i32[baseIdx + i]) === 0) ; else {
+            i32[baseIdx + i] = -1;
+          }
+        }
+        return 0;
+      }
+    }, {
+      key: "js_fetch_object_room_position",
+      value: function js_fetch_object_room_position(jsHandle) {
+        return 0;
+      }
+    }, {
+      key: "js_batch_fetch_object_room_positions",
+      value: function js_batch_fetch_object_room_positions(jsHandleListPtr, count, outRoomPosListPtr) {
+        var i32 = this._memoryManager.view.i32;
+        var baseJsHandleIdx = jsHandleListPtr >> 2;
+        var baseOutRoomPostListIdx = outRoomPosListPtr >> 2;
+        for (var i = 0; i < count; ++i) {
+          i32[baseOutRoomPostListIdx + i] = this.js_fetch_object_room_position(i32[baseJsHandleIdx + i]);
+        }
+      }
+    }, {
+      key: "js_get_object_by_id",
+      value: function js_get_object_by_id(objectIdPtr) {
+        return -1;
+      }
+    }, {
+      key: "js_get_object_id",
+      value: function js_get_object_id(jsHandle, outRawObjectIdPtr) {
+        return 0;
+      }
+    }]);
+    return TestBindings;
+  }(BaseBindings);
+
   var utf8Decoder = new TextDecoder();
   var Stdio = /*#__PURE__*/function (_Fd) {
     _inherits(Stdio, _Fd);
@@ -3802,6 +3870,9 @@
         case 'arena':
           this._bindings = new ArenaBindings(this.log.bind(this), this._interop);
           break;
+        case 'test':
+          this._bindings = new TestBindings(this.log.bind(this), this._interop);
+          break;
       }
       if (this._bindings) {
         for (var moduleName in this._bindings.imports) {
@@ -3873,7 +3944,7 @@
           var _t = this._profileFn();
           this._wasmInstance = new WebAssembly.Instance(this._wasmModule, this.getWasmImports());
           var _t2 = this._profileFn();
-          this.log("Instantiated wasm module in ".concat(_t2 - _t, " ms"));
+          this.log("Instantiated wasm module in ".concat(_t2 - _t, " ms (exports: ").concat(JSON.stringify(Object.keys(this._wasmInstance.exports)), ")"));
         }
         // Wire things up
         this._memoryManager = new WasmMemoryManager(this._wasmInstance.exports.memory);
@@ -3892,7 +3963,7 @@
         // Start WASI
         try {
           var t0 = this._profileFn();
-          this._wasi.start(this._wasmInstance);
+          this._wasi.initialize(this._wasmInstance);
           var t1 = this._profileFn();
           this.log("Started WASI in ".concat(t1 - t0, " ms"));
         } catch (err) {
