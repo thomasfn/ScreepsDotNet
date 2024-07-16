@@ -76,6 +76,7 @@ dotnet add (MyProjectName) package ScreepsDotNet.Bundler
 Replace your `Program.cs` with the following code:
 ```CS
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 using ScreepsDotNet.API.Arena;
 
@@ -136,6 +137,7 @@ Do not change the namespace of the entrypoint as the native calls used to look i
 Replace your `Program.cs` with the following code:
 ```CS
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 using ScreepsDotNet.API.World;
 
