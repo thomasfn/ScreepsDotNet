@@ -54,7 +54,6 @@ Edit the csproj to contain the following property groups:
     <EventSourceSupport>false</EventSourceSupport>
     <UseSystemResourceKeys>true</UseSystemResourceKeys>
     <InvariantTimezone>true</InvariantTimezone>
-    <WasiSdkVersion>15</WasiSdkVersion>
 </PropertyGroup>
 
 <PropertyGroup>

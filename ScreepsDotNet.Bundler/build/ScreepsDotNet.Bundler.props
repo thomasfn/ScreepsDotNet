@@ -14,6 +14,8 @@
 	<PropertyGroup>
 		<ScreepsCompressWasm>false</ScreepsCompressWasm>
 		<ScreepsEncoding>b64</ScreepsEncoding>
+		<WasiSdkVersion>15</WasiSdkVersion>
+		<WasiSdkMinorVersion>0</WasiSdkMinorVersion>
 	</PropertyGroup>
 
 	<ItemGroup>

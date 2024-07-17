@@ -12,8 +12,8 @@
 		<Title>ScreepsDotNet Bundler</Title>
 		<Authors>thomasfn</Authors>
 		<Description>An MSBuild task that bundles wasm apps for the Screeps Arena and Screeps World environments</Description>
-		<Version>2.0.1</Version>
-		<PackageVersion>2.0.1</PackageVersion>
+		<Version>2.0.2</Version>
+		<PackageVersion>2.0.2</PackageVersion>
 		<PackageProjectUrl>https://github.com/thomasfn/ScreepsDotNet</PackageProjectUrl>
 		<PackageLicenseFile>LICENSE</PackageLicenseFile>
 		<PackageTags>screeps world arena bundler msbuild</PackageTags>
@@ -46,6 +46,7 @@
 		<Content Include="build\EmSdkRepo.Defaults.props" PackagePath="build\" />
 		<Content Include="build\ScreepsDotNet.Bundler.props" PackagePath="build\" />
 		<Content Include="build\ScreepsDotNet.Bundler.targets" PackagePath="build\" />
+		<Content Include="build\WasiSdk.Defaults.props" PackagePath="build\" />
 	</ItemGroup>
 
 	<ItemGroup>

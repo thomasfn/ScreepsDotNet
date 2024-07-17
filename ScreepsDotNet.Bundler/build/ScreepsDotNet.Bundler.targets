@@ -3,11 +3,15 @@
 	<!-- Directory to provision and use emscripten if EMSDK_PATH env variable is not set -->
 	<PropertyGroup>
 		<EmsdkLocalPath>emsdk</EmsdkLocalPath>
+		<WasiSdkLocalPath>wasi-sdk-$(WasiSdkVersion).$(WasiSdkMinorVersion)</WasiSdkLocalPath>
 		<WasmLocalPath>$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)', 'wasm'))</WasmLocalPath>
 		<ProvisionEmscriptenDir>$([MSBuild]::NormalizeDirectory('$(WasmLocalPath)', '$(EmsdkLocalPath)'))</ProvisionEmscriptenDir>
+		<ProvisionWasiSdkDir>$([MSBuild]::NormalizeDirectory('$(WasmLocalPath)', '$(WasiSdkLocalPath)'))</ProvisionWasiSdkDir>
 		<ShouldProvisionEmscripten Condition="'$(EMSDK_PATH)' == '' and !Exists('$(ProvisionEmscriptenDir)')">true</ShouldProvisionEmscripten>
+		<ShouldProvisionWasiSdk Condition="'$(WASI_SDK_PATH)' == '' and !Exists('$(ProvisionWasiSdkDir)')">true</ShouldProvisionWasiSdk>
 		<EMSDK_PATH Condition="'$(EMSDK_PATH)' == ''">$(ProvisionEmscriptenDir.Replace('\', '/'))</EMSDK_PATH>
-	    <!-- semicolon is a msbuild property separator. It is also the path separator on windows.
+		<WASI_SDK_PATH Condition="'$(WASI_SDK_PATH)' == ''">$(ProvisionWasiSdkDir.Replace('\', '/'))</WASI_SDK_PATH>
+		<!-- semicolon is a msbuild property separator. It is also the path separator on windows.
          So, we need to escape it here, so the paths don't get split up when converting
          to string[] for passing to Exec task -->
 		<_PathSeparator Condition="'$(OS)' == 'Windows_NT'">%3B</_PathSeparator>
@@ -19,7 +23,7 @@
 		<PropertyGroup>
 			<EmsdkExt Condition="'$(HostOS)' != 'windows'"></EmsdkExt>
 			<EmsdkExt Condition="'$(HostOS)' == 'windows'">.ps1</EmsdkExt>
-			
+
 			<EMSDK_PATH>$([MSBuild]::NormalizeDirectory('$(WasmLocalPath)', '$(EmsdkLocalPath)'))</EMSDK_PATH>
 			<EmscriptenVersion>3.1.34</EmscriptenVersion>
 
@@ -29,6 +33,8 @@
 			<ActivateCmd Condition="'$(HostOS)' == 'windows'">powershell -NonInteractive -command &quot;&amp; $(ActivateCmd); Exit $LastExitCode &quot;</ActivateCmd>
 			<PythonCmd Condition="'$(HostOS)' == 'windows'and '$(TargetsBrowser)' == 'true'">setlocal EnableDelayedExpansion &amp;&amp; call &quot;$([MSBuild]::NormalizePath('$(EMSDK_PATH)', 'emsdk_env.bat'))&quot; &amp;&amp; !EMSDK_PYTHON!</PythonCmd>
 		</PropertyGroup>
+
+		<Message Text="Provisioning Emscripten..." Importance="High"/>
 
 		<RemoveDir Directories="$(EMSDK_PATH)" />
 		<MakeDir Directories="$(WasmLocalPath)" />
@@ -44,24 +50,56 @@
 			  IgnoreStandardErrorWarningFormat="true" />
 	</Target>
 
-	<Import Project="$(MSBuildThisFileDirectory)EmSdkRepo.Defaults.props" />
-	
-	<ItemGroup>
-      <EmscriptenEnvVars Include="PATH=$(EmscriptenUpstreamBinPath)$(_PathSeparator)$([MSBuild]::Escape($(PATH)))" />
+	<!-- Sets up wasi-sdk if you don't have the WASI_SDK_PATH env variable set -->
+	<Target Name="ProvisionWasiSdk" Condition="'$(ShouldProvisionWasiSdk)' == 'true'" BeforeTargets="_SetupWasiSdk">
+		<PropertyGroup>
+			<_hostOS>linux</_hostOS>
+			<_hostOS Condition="$([MSBuild]::IsOSPlatform('OSX'))">osx</_hostOS>
+			<_hostOS Condition="$([MSBuild]::IsOSPlatform('WINDOWS'))">windows</_hostOS>
 
-      <!--
+			<WasiSdkOsName></WasiSdkOsName>
+
+			<WasiSdkOsName Condition="'$(_hostOS)' == 'windows'">mingw</WasiSdkOsName>
+			<WasiSdkOsName Condition="'$(_hostOS)' == 'osx'">macos</WasiSdkOsName>
+			<WasiSdkOsName Condition="'$(_hostOS)' == 'linux'">linux</WasiSdkOsName>
+
+			<WasiSdkArchiveName>wasi-sdk-$(WasiSdkVersion).$(WasiSdkMinorVersion)-$(WasiSdkOsName).tar.gz</WasiSdkArchiveName>
+			<WasiSdkUrl>https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-$(WasiSdkVersion)/$(WasiSdkArchiveName)</WasiSdkUrl>
+
+			<WasiSdkArchivePath>$([MSBuild]::NormalizePath('$(WasmLocalPath)', '$(WasiSdkArchiveName)'))</WasiSdkArchivePath>
+
+			<WASI_SDK_PATH>$(ProvisionWasiSdkDir)</WASI_SDK_PATH>
+		</PropertyGroup>
+
+		<Message Text="Provisioning Wasi SDK $(WasiSdkVersion).$(WasiSdkMinorVersion)..." Importance="High"/>
+
+		<RemoveDir Directories="$(WASI_SDK_PATH)" />
+		<MakeDir Directories="$(WasmLocalPath)" />
+
+		<DownloadFile SourceUrl="$(WasiSdkUrl)" DestinationFolder="$(WasmLocalPath)" DestinationFileName="$(WasiSdkArchiveName)" Condition="!Exists('$(WasiSdkArchivePath)')" />
+
+		<Exec Command="tar -xf &quot;$(WasiSdkArchivePath)&quot; -C &quot;$(WasmLocalPath.TrimEnd('\'))&quot;" />
+	</Target>
+
+	<Import Project="$(MSBuildThisFileDirectory)EmSdkRepo.Defaults.props" />
+	<Import Project="$(MSBuildThisFileDirectory)WasiSdk.Defaults.props" />
+
+	<ItemGroup>
+		<EmscriptenEnvVars Include="PATH=$(EmscriptenUpstreamBinPath)$(_PathSeparator)$([MSBuild]::Escape($(PATH)))" />
+
+		<!--
         Python defaults to the system charset, and thus expects the files it's reading to
         match that. But that might not always be true. Eg. system charset=gbk, failing to read
         utf-8 files
 
         See https://github.com/dotnet/runtime/issues/53367 for the motivating issue
       -->
-      <EmscriptenEnvVars Include="PYTHONUTF8=1" />
-      <EmscriptenEnvVars Include="EM_WORKAROUND_PYTHON_BUG_34780=1" />
-    </ItemGroup>
+		<EmscriptenEnvVars Include="PYTHONUTF8=1" />
+		<EmscriptenEnvVars Include="EM_WORKAROUND_PYTHON_BUG_34780=1" />
+	</ItemGroup>
 
 	<Target Name="_OptimiseWasm" DependsOnTargets="ProvisionEmscripten">
-		
+
 		<PropertyGroup>
 			<InputWasmFile>$([System.IO.Path]::GetFileNameWithoutExtension($(WasmMainAssemblyFileName))).wasm</InputWasmFile>
 			<OutputWasmFile>$([System.IO.Path]::GetFileNameWithoutExtension($(WasmMainAssemblyFileName)))-o.wasm</OutputWasmFile>
@@ -74,7 +112,7 @@
 			EnvironmentVariables="@(EmscriptenEnvVars)"
 		/>
 	</Target>
-	
+
 	<Target Name="_BuildScreepsBundle" AfterTargets="_WasiGenerateAppBundle" DependsOnTargets="_OptimiseWasm">
 		<Message Text="Bundling for Screeps..." Importance="High"/>
 		<BundlerBuildTask AppBundleDir="$(WasmAppDir)" WasmFileName="$(OutputWasmFile)" Configuration="$(Configuration)" CompressWasm="$(ScreepsCompressWasm)" Encoding="$(ScreepsEncoding)" CustomInitExportNames="@(ScreepsCustomInitExportNames, ',')">
