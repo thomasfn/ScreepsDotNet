@@ -99,6 +99,8 @@ namespace ScreepsDotNet.Native.World
 
         protected virtual void OnGetNewProxyObject(JSObject newProxyObject) { }
 
+        protected virtual void OnRenewProxyObject() { }
+
         private void TryRenewOrReacquire()
         {
             if (proxyObject != null && !proxyObject.IsDisposed)
@@ -106,6 +108,10 @@ namespace ScreepsDotNet.Native.World
                 if (ScreepsDotNet_Native.RenewObject(proxyObject.JSHandle) != 0)
                 {
                     ReplaceProxyObject(null);
+                }
+                else
+                {
+                    OnRenewProxyObject();
                 }
             }
             else

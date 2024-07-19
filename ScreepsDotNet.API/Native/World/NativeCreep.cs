@@ -216,6 +216,12 @@ namespace ScreepsDotNet.Native.World
             : base(nativeRoot, proxyObject)
         {
             store = new NativeStore(nativeRoot, proxyObject);
+            store.OnRequestNewProxyObject += Store_OnRequestNewProxyObject;
+        }
+
+        private void Store_OnRequestNewProxyObject()
+        {
+            TouchProxyObject();
         }
 
         protected override void ClearNativeCache()
@@ -234,6 +240,12 @@ namespace ScreepsDotNet.Native.World
         {
             base.OnGetNewProxyObject(newProxyObject);
             store.ProxyObject = newProxyObject;
+        }
+
+        protected override void OnRenewProxyObject()
+        {
+            base.OnRenewProxyObject();
+            store.RenewProxyObject();
         }
 
         public CreepAttackResult Attack(ICreep target)
