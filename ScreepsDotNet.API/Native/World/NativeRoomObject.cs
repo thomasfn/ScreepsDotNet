@@ -310,7 +310,7 @@ namespace ScreepsDotNet.Native.World
             var wrapperType = GetWrapperTypeForObject(proxyObject);
             if (wrapperType == null) { return null; }
             if (!wrapperType.IsAssignableTo(expectedType)) { return null; }
-            var wrapperObject = (Activator.CreateInstance(wrapperType, new object[] { nativeRoot, proxyObject }) as NativeRoomObject)!;
+            var wrapperObject = (Activator.CreateInstance(wrapperType, [nativeRoot, proxyObject]) as NativeRoomObject)!;
             // Console.WriteLine($"Created {wrapperObject} for {proxyObject}");
             return wrapperObject;
         }

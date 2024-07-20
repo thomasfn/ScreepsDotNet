@@ -332,6 +332,7 @@ namespace ScreepsDotNet.Native.World
             if (proxyObject == null) { return null; }
             if (proxyObject.UserData is T existingWrapperObject) { return existingWrapperObject; }
             var wrapperObject = NativeRoomObjectUtils.CreateWrapperForRoomObject(this, proxyObject, typeof(T));
+            if (wrapperObject == null) { return null; }
             if (wrapperObject is not T newWrapperObject)
             {
                 Console.WriteLine($"Failed to create wrapper object for {proxyObject} (wrong type - expecting {typeof(T)}, got {wrapperObject?.GetType()})");
@@ -346,6 +347,7 @@ namespace ScreepsDotNet.Native.World
             var proxyObject = Interop.Native.GetJSObject(metadata.JSHandle);
             if (proxyObject.UserData != null) { return proxyObject.UserData as T; }
             var wrapperObject = NativeRoomObjectUtils.CreateWrapperForRoomObject(this, proxyObject, metadata, typeof(T));
+            if (wrapperObject == null) { return null; }
             if (wrapperObject is not T newWrapperObject)
             {
                 Console.WriteLine($"Failed to create wrapper object for {proxyObject} (wrong type - expecting {typeof(T)}, got {wrapperObject?.GetType()})");
