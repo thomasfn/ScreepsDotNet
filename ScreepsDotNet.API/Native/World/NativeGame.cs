@@ -276,7 +276,14 @@ namespace ScreepsDotNet.Native.World
             }
             for (int i = 0; i < cnt; ++i)
             {
-                batchRenewList[i].NotifyBatchRenew(failed: batchRenewJSHandleList[i] == -1);
+                if (batchRenewJSHandleList[i] == -1)
+                {
+                    batchRenewList[i].ReplaceProxyObject(null);
+                }
+                else
+                {
+                    batchRenewList[i].RenewProxyObject();
+                }
             }
             batchRenewList.Clear();
         }
