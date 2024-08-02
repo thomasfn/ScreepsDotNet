@@ -2,6 +2,7 @@
 using System.Linq;
 
 using ScreepsDotNet.API.Arena;
+using ScreepsDotNet.API.Bot;
 
 namespace ScreepsDotNet.ExampleArenaBot
 {

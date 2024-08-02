@@ -3,6 +3,7 @@ using System.Linq;
 using System.Collections.Generic;
 
 using ScreepsDotNet.API.Arena;
+using ScreepsDotNet.API.Bot;
 
 namespace ScreepsDotNet.ExampleArenaBot
 {

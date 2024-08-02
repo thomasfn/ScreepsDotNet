@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 using ScreepsDotNet.API;
+using ScreepsDotNet.API.Bot;
 using ScreepsDotNet.API.World;
 
 namespace ScreepsDotNet.ExampleWorldBot
@@ -45,7 +46,7 @@ namespace ScreepsDotNet.ExampleWorldBot
                 }
                 roomManager.Tick();
             }
-            
+
         }
 
         private void CleanMemory()
