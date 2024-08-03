@@ -1,6 +1,7 @@
 ﻿using System;
 
 using ScreepsDotNet.API.Arena;
+using ScreepsDotNet.API.Bot;
 
 namespace ScreepsDotNet.ExampleArenaBot
 {

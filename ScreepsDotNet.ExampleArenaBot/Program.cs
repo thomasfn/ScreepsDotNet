@@ -3,15 +3,10 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace ScreepsDotNet
 {
-    public interface IBot
-    {
-        void Loop();
-    }
-
     public static partial class Program
     {
         private static API.Arena.IGame? game;
-        private static IBot? bot;
+        private static API.Bot.IBot? bot;
 
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicMethods, typeof(Program))]
         public static void Main()
@@ -19,7 +14,7 @@ namespace ScreepsDotNet
 
         }
 
-        private static IBot CreateBot(API.Arena.IGame game)
+        private static API.Bot.IBot CreateBot(API.Arena.IGame game)
             // Change this to switch the bot to a different tutorial!
             => new ExampleArenaBot.Tutorial10_FinalTest(game);
 
