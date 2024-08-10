@@ -13,7 +13,11 @@ type GamePrototype = {};
 
 type GameConstructor = { readonly prototype: GamePrototype };
 
-type ResourceConstantEx = ResourceConstant | "season";
+// Season 1 objects from https://github.com/screeps/mod-season1
+declare const ScoreCollector: GameConstructor;
+declare const ScoreContainer: GameConstructor;
+
+type ResourceConstantEx = ResourceConstant | "season" | "score";
 
 const RESOURCE_LIST: readonly ResourceConstantEx[] = [
     "energy", "power",
@@ -29,7 +33,7 @@ const RESOURCE_LIST: readonly ResourceConstantEx[] = [
     "cell", "phlegm", "tissue", "muscle", "organoid", "organism",
     "alloy", "tube", "fixtures", "frame", "hydraulics", "machine",
     "condensate", "concentrate", "extract", "spirit", "emanation", "essence",
-    "season",
+    "season", "score",
 ]; // 85 total
 
 const RESOURCE_TO_ENUM_MAP: Record<ResourceConstantEx, number> = {} as Record<ResourceConstantEx, number>;
@@ -152,6 +156,8 @@ export class WorldBindings extends BaseBindings {
             Room,
             RoomVisual,
             Nuke,
+            ScoreCollector: ScoreCollector ?? function() {},
+            ScoreContainer: ScoreContainer ?? function() {},
         }
         this.imports['object'] = {
             getConstructorOf: (x: object) => Object.getPrototypeOf(x).constructor,
