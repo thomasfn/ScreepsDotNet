@@ -37,7 +37,7 @@ namespace ScreepsDotNet.API.World
         /// <param name="key"></param>
         /// <param name="value"></param>
         /// <returns></returns>
-        bool TryGetString(string key, out string value);
+        bool TryGetString(string key, [MaybeNullWhen(false)] out string value);
 
         /// <summary>
         /// Attempts to retrieve a string property from the object.
@@ -45,7 +45,7 @@ namespace ScreepsDotNet.API.World
         /// <param name="key"></param>
         /// <param name="value"></param>
         /// <returns></returns>
-        bool TryGetString(Name key, out string value);
+        bool TryGetString(Name key, [MaybeNullWhen(false)] out string value);
 
         /// <summary>
         /// Attempts to retrieve a double property from the object.

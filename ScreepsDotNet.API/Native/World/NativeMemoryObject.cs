@@ -41,28 +41,26 @@ namespace ScreepsDotNet.Native.World
             return true;
         }
 
-        public bool TryGetString(string key, out string value)
+        public bool TryGetString(string key, [MaybeNullWhen(false)] out string value)
         {
             if (ProxyObject.GetTypeOfProperty(key) != JSPropertyType.String)
             {
-                value = string.Empty;
+                value = null;
                 return false;
             }
-            var str = ProxyObject.GetPropertyAsString(key);
-            value = str ?? string.Empty;
-            return str != null;
+            value = ProxyObject.GetPropertyAsString(key);
+            return value != null;
         }
 
-        public bool TryGetString(Name key, out string value)
+        public bool TryGetString(Name key, [MaybeNullWhen(false)] out string value)
         {
             if (ProxyObject.GetTypeOfProperty(key) != JSPropertyType.String)
             {
-                value = string.Empty;
+                value = null;
                 return false;
             }
-            var str = ProxyObject.GetPropertyAsString(key);
-            value = str ?? string.Empty;
-            return str != null;
+            value = ProxyObject.GetPropertyAsString(key);
+            return value != null;
         }
 
         public bool TryGetDouble(string key, out double value)
