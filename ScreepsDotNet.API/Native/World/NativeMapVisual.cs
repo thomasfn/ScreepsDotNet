@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+
 using ScreepsDotNet.Interop;
 
 using ScreepsDotNet.API;
@@ -11,37 +12,68 @@ namespace ScreepsDotNet.Native.World
     [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal static class MapVisualExtensions
     {
-        public static string ToJS(this MapTextFontStyle mapTextFontStyle)
+        private static class Names
+        {
+            public static readonly Name Normal = Name.Create("normal");
+            public static readonly Name Italic = Name.Create("italic");
+            public static readonly Name Oblique = Name.Create("oblique");
+            public static readonly Name SmallCaps = Name.Create("small-caps");
+            public static readonly Name Color = Name.Create("color");
+            public static readonly Name FontFamily = Name.Create("fontFamily");
+            public static readonly Name FontSize = Name.Create("fontSize");
+            public static readonly Name FontStyle = Name.Create("fontStyle");
+            public static readonly Name FontVariant = Name.Create("fontVariant");
+            public static readonly Name Stroke = Name.Create("stroke");
+            public static readonly Name StrokeWidth = Name.Create("strokeWidth");
+            public static readonly Name BackgroundColor = Name.Create("backgroundColor");
+            public static readonly Name BackgroundPadding = Name.Create("backgroundPadding");
+            public static readonly Name Align = Name.Create("align");
+            public static readonly Name Opacity = Name.Create("opacity");
+        }
+
+        private static readonly Dictionary<MapTextVisualStyle, JSObject> mapTextVisualStyleCache = [];
+
+        public static Name ToJS(this MapTextFontStyle mapTextFontStyle)
             => mapTextFontStyle switch
             {
-                MapTextFontStyle.Normal => "normal",
-                MapTextFontStyle.Italic => "italic",
-                MapTextFontStyle.Oblique => "oblique",
+                MapTextFontStyle.Normal => Names.Normal,
+                MapTextFontStyle.Italic => Names.Italic,
+                MapTextFontStyle.Oblique => Names.Oblique,
                 _ => throw new ArgumentException("Invalid font style", nameof(mapTextFontStyle))
             };
 
-        public static string ToJS(this MapTextFontVariant mapTextFontVariant)
+        public static Name ToJS(this MapTextFontVariant mapTextFontVariant)
            => mapTextFontVariant switch
            {
-               MapTextFontVariant.Normal => "normal",
-               MapTextFontVariant.SmallCaps => "small-caps",
+               MapTextFontVariant.Normal => Names.Normal,
+               MapTextFontVariant.SmallCaps => Names.SmallCaps,
                _ => throw new ArgumentException("Invalid font variant", nameof(mapTextFontVariant))
            };
 
-        public static JSObject ToJS(this MapTextVisualStyle textVisualStyle)
+        public static JSObject ToJSRaw(this MapTextVisualStyle textVisualStyle)
         {
             var obj = JSObject.Create();
-            if (textVisualStyle.Color != null) { obj.SetProperty("color", textVisualStyle.Color.Value.ToString()); }
-            if (!string.IsNullOrEmpty(textVisualStyle.FontFamily)) { obj.SetProperty("fontFamily", textVisualStyle.FontFamily); }
-            if (textVisualStyle.FontSize != null) { obj.SetProperty("fontSize", textVisualStyle.FontSize.Value); }
-            if (textVisualStyle.FontStyle != null) { obj.SetProperty("fontStyle", textVisualStyle.FontStyle.Value.ToJS()); }
-            if (textVisualStyle.FontVariant != null) { obj.SetProperty("fontVariant", textVisualStyle.FontVariant.Value.ToJS()); }
-            if (textVisualStyle.Stroke != null) { obj.SetProperty("stroke", textVisualStyle.Stroke.Value.ToString()); }
-            if (textVisualStyle.StrokeWidth != null) { obj.SetProperty("strokeWidth", textVisualStyle.StrokeWidth.Value); }
-            if (textVisualStyle.BackgroundColor != null) { obj.SetProperty("backgroundColor", textVisualStyle.BackgroundColor.Value.ToString()); }
-            if (textVisualStyle.BackgroundPadding != null) { obj.SetProperty("backgroundPadding", textVisualStyle.BackgroundPadding.Value); }
-            if (textVisualStyle.Align != null) { obj.SetProperty("align", textVisualStyle.Align.Value.ToJS()); }
-            if (textVisualStyle.Opacity != null) { obj.SetProperty("opacity", textVisualStyle.Opacity.Value); }
+            if (textVisualStyle.Color != null) { obj.SetProperty(Names.Color, textVisualStyle.Color.Value.ToString()); }
+            if (!string.IsNullOrEmpty(textVisualStyle.FontFamily)) { obj.SetProperty(Names.FontFamily, textVisualStyle.FontFamily); }
+            if (textVisualStyle.FontSize != null) { obj.SetProperty(Names.FontSize, textVisualStyle.FontSize.Value); }
+            if (textVisualStyle.FontStyle != null) { obj.SetProperty(Names.FontStyle, textVisualStyle.FontStyle.Value.ToJS()); }
+            if (textVisualStyle.FontVariant != null) { obj.SetProperty(Names.FontVariant, textVisualStyle.FontVariant.Value.ToJS()); }
+            if (textVisualStyle.Stroke != null) { obj.SetProperty(Names.Stroke, textVisualStyle.Stroke.Value.ToString()); }
+            if (textVisualStyle.StrokeWidth != null) { obj.SetProperty(Names.StrokeWidth, textVisualStyle.StrokeWidth.Value); }
+            if (textVisualStyle.BackgroundColor != null) { obj.SetProperty(Names.BackgroundColor, textVisualStyle.BackgroundColor.Value.ToString()); }
+            if (textVisualStyle.BackgroundPadding != null) { obj.SetProperty(Names.BackgroundPadding, textVisualStyle.BackgroundPadding.Value); }
+            if (textVisualStyle.Align != null) { obj.SetProperty(Names.Align, textVisualStyle.Align.Value.ToJS()); }
+            if (textVisualStyle.Opacity != null) { obj.SetProperty(Names.Opacity, textVisualStyle.Opacity.Value); }
+            return obj;
+        }
+
+        public static JSObject ToJS(this MapTextVisualStyle textVisualStyle)
+        {
+            if (!mapTextVisualStyleCache.TryGetValue(textVisualStyle, out var obj))
+            {
+                obj = textVisualStyle.ToJSRaw();
+                mapTextVisualStyleCache.Add(textVisualStyle, obj);
+            }
             return obj;
         }
     }
@@ -84,7 +116,7 @@ namespace ScreepsDotNet.Native.World
         {
             using var pos1Js = pos1.ToJS();
             using var pos2Js = pos2.ToJS();
-            using var styleJs = style?.ToJS();
+            var styleJs = style?.ToJS();
             Native_Line(pos1Js, pos2Js, styleJs);
             return this;
         }
@@ -92,7 +124,7 @@ namespace ScreepsDotNet.Native.World
         public IMapVisual Circle(RoomPosition position, CircleVisualStyle? style = null)
         {
             using var positionJs = position.ToJS();
-            using var styleJs = style?.ToJS();
+            var styleJs = style?.ToJS();
             Native_Circle(positionJs, styleJs);
             return this;
         }
@@ -100,14 +132,14 @@ namespace ScreepsDotNet.Native.World
         public IMapVisual Rect(RoomPosition pos, double w, double h, RectVisualStyle? style = null)
         {
             using var posJs = pos.ToJS();
-            using var styleJs = style?.ToJS();
+            var styleJs = style?.ToJS();
             Native_Rect(posJs, w, h, styleJs);
             return this;
         }
 
         public IMapVisual Poly(IEnumerable<RoomPosition> points, PolyVisualStyle? style = null)
         {
-            using var styleJs = style?.ToJS();
+            var styleJs = style?.ToJS();
             var pointsJs = points.Select(x => x.ToJS()).ToArray();
             try
             {
@@ -123,7 +155,7 @@ namespace ScreepsDotNet.Native.World
         public IMapVisual Text(string text, RoomPosition pos, MapTextVisualStyle? style = null)
         {
             using var posJs = pos.ToJS();
-            using var styleJs = style?.ToJS();
+            var styleJs = style?.ToJS();
             Native_Text(text, posJs, styleJs);
             return this;
         }
