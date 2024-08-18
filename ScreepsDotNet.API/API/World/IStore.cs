@@ -144,6 +144,7 @@ namespace ScreepsDotNet.API.World
         Essence,
 
         Season,
+        Score,
 
         Unknown
     }

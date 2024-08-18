@@ -1,4 +1,4 @@
-﻿var bootloader = (function (exports) {
+var bootloader = (function (exports) {
   'use strict';
 
   function _iterableToArrayLimit(arr, i) {
@@ -2987,7 +2987,7 @@
   }(BaseBindings);
 
   var CPU_HALT_WHEN_NO_CHECKIN_FOR = 10;
-  var RESOURCE_LIST = ["energy", "power", "H", "O", "U", "L", "K", "Z", "X", "G", "silicon", "metal", "biomass", "mist", "OH", "ZK", "UL", "UH", "UO", "KH", "KO", "LH", "LO", "ZH", "ZO", "GH", "GO", "UH2O", "UHO2", "KH2O", "KHO2", "LH2O", "LHO2", "ZH2O", "ZHO2", "GH2O", "GHO2", "XUH2O", "XUHO2", "XKH2O", "XKHO2", "XLH2O", "XLHO2", "XZH2O", "XZHO2", "XGH2O", "XGHO2", "ops", "utrium_bar", "lemergium_bar", "zynthium_bar", "keanium_bar", "ghodium_melt", "oxidant", "reductant", "purifier", "battery", "composite", "crystal", "liquid", "wire", "switch", "transistor", "microchip", "circuit", "device", "cell", "phlegm", "tissue", "muscle", "organoid", "organism", "alloy", "tube", "fixtures", "frame", "hydraulics", "machine", "condensate", "concentrate", "extract", "spirit", "emanation", "essence", "season"]; // 85 total
+  var RESOURCE_LIST = ["energy", "power", "H", "O", "U", "L", "K", "Z", "X", "G", "silicon", "metal", "biomass", "mist", "OH", "ZK", "UL", "UH", "UO", "KH", "KO", "LH", "LO", "ZH", "ZO", "GH", "GO", "UH2O", "UHO2", "KH2O", "KHO2", "LH2O", "LHO2", "ZH2O", "ZHO2", "GH2O", "GHO2", "XUH2O", "XUHO2", "XKH2O", "XKHO2", "XLH2O", "XLHO2", "XZH2O", "XZHO2", "XGH2O", "XGHO2", "ops", "utrium_bar", "lemergium_bar", "zynthium_bar", "keanium_bar", "ghodium_melt", "oxidant", "reductant", "purifier", "battery", "composite", "crystal", "liquid", "wire", "switch", "transistor", "microchip", "circuit", "device", "cell", "phlegm", "tissue", "muscle", "organoid", "organism", "alloy", "tube", "fixtures", "frame", "hydraulics", "machine", "condensate", "concentrate", "extract", "spirit", "emanation", "essence", "season", "score"]; // 85 total
   var RESOURCE_TO_ENUM_MAP = {};
   {
     var i = 0;
@@ -3061,7 +3061,9 @@
     }, {
       key: "setupImports",
       value: function setupImports() {
-        var _this2 = this;
+        var _ScoreCollector,
+          _ScoreContainer,
+          _this2 = this;
         _get(_getPrototypeOf(WorldBindings.prototype), "setupImports", this).call(this);
         this.bindingsImport.js_renew_object = this.js_renew_object.bind(this);
         this.bindingsImport.js_batch_renew_objects = this.js_batch_renew_objects.bind(this);
@@ -3106,7 +3108,9 @@
           RoomObject: RoomObject,
           Room: Room,
           RoomVisual: RoomVisual,
-          Nuke: Nuke
+          Nuke: Nuke,
+          ScoreCollector: (_ScoreCollector = ScoreCollector) !== null && _ScoreCollector !== void 0 ? _ScoreCollector : function () {},
+          ScoreContainer: (_ScoreContainer = ScoreContainer) !== null && _ScoreContainer !== void 0 ? _ScoreContainer : function () {}
         };
         this.imports['object'] = {
           getConstructorOf: function getConstructorOf(x) {
