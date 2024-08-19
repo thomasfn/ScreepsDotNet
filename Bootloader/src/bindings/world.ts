@@ -118,6 +118,7 @@ export class WorldBindings extends BaseBindings {
         this.bindingsImport.js_batch_fetch_object_room_positions = this.js_batch_fetch_object_room_positions.bind(this);
         this.bindingsImport.js_get_object_by_id = this.js_get_object_by_id.bind(this);
         this.bindingsImport.js_get_object_id = this.js_get_object_id.bind(this);
+        const _global = global as unknown as { ScoreCollector?: GameConstructor, ScoreContainer?: GameConstructor };
         const gameConstructors: Record<string, GameConstructor> = {
             StructureContainer,
             StructureController,
@@ -156,8 +157,8 @@ export class WorldBindings extends BaseBindings {
             Room,
             RoomVisual,
             Nuke,
-            ScoreCollector: ScoreCollector ?? function() {},
-            ScoreContainer: ScoreContainer ?? function() {},
+            ScoreCollector: _global.ScoreCollector ?? function() {},
+            ScoreContainer: _global.ScoreContainer ?? function() {},
         }
         this.imports['object'] = {
             getConstructorOf: (x: object) => Object.getPrototypeOf(x).constructor,

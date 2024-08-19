@@ -5,6 +5,6 @@
     /// </summary>
     public interface IScoreContainer : IRoomObject, IWithStore
     {
-        
+        int TicksToDecay { get; }
     }
 }

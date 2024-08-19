@@ -3076,6 +3076,7 @@ var bootloader = (function (exports) {
         this.bindingsImport.js_batch_fetch_object_room_positions = this.js_batch_fetch_object_room_positions.bind(this);
         this.bindingsImport.js_get_object_by_id = this.js_get_object_by_id.bind(this);
         this.bindingsImport.js_get_object_id = this.js_get_object_id.bind(this);
+        var _global = global;
         var gameConstructors = {
           StructureContainer: StructureContainer,
           StructureController: StructureController,
@@ -3114,8 +3115,8 @@ var bootloader = (function (exports) {
           Room: Room,
           RoomVisual: RoomVisual,
           Nuke: Nuke,
-          ScoreCollector: (_ScoreCollector = ScoreCollector) !== null && _ScoreCollector !== void 0 ? _ScoreCollector : function () {},
-          ScoreContainer: (_ScoreContainer = ScoreContainer) !== null && _ScoreContainer !== void 0 ? _ScoreContainer : function () {}
+          ScoreCollector: (_ScoreCollector = _global.ScoreCollector) !== null && _ScoreCollector !== void 0 ? _ScoreCollector : function () {},
+          ScoreContainer: (_ScoreContainer = _global.ScoreContainer) !== null && _ScoreContainer !== void 0 ? _ScoreContainer : function () {}
         };
         this.imports['object'] = {
           getConstructorOf: function getConstructorOf(x) {
