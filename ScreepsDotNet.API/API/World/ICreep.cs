@@ -1128,6 +1128,15 @@ namespace ScreepsDotNet.API.World
         CreepTransferResult Transfer(IStructure target, ResourceType resourceType, int? amount = null);
 
         /// <summary>
+        /// Transfer resource from the creep to another object. The target has to be at adjacent square to the creep.
+        /// </summary>
+        /// <param name="target"></param>
+        /// <param name="resourceType"></param>
+        /// <param name="amount"></param>
+        /// <returns></returns>
+        CreepTransferResult Transfer(IScoreCollector target, ResourceType resourceType, int? amount = null);
+
+        /// <summary>
         /// Upgrade your controller to the next level using carried energy.
         /// Upgrading controllers raises your Global Control Level in parallel.
         /// Requires WORK and CARRY body parts.
@@ -1149,8 +1158,6 @@ namespace ScreepsDotNet.API.World
         /// The target has to be at adjacent square to the creep.
         /// Multiple creeps can withdraw from the same object in the same tick.
         /// Your creeps can withdraw resources from hostile structures/tombstones as well, in case if there is no hostile rampart on top of it.
-        /// This method should not be used to transfer resources between creeps.
-        /// To transfer between creeps, use the transfer method on the original creep.
         /// </summary>
         /// <param name="target"></param>
         /// <param name="resourceType"></param>
@@ -1163,8 +1170,6 @@ namespace ScreepsDotNet.API.World
         /// The target has to be at adjacent square to the creep.
         /// Multiple creeps can withdraw from the same object in the same tick.
         /// Your creeps can withdraw resources from hostile structures/tombstones as well, in case if there is no hostile rampart on top of it.
-        /// This method should not be used to transfer resources between creeps.
-        /// To transfer between creeps, use the transfer method on the original creep.
         /// </summary>
         /// <param name="target"></param>
         /// <param name="resourceType"></param>
@@ -1177,13 +1182,22 @@ namespace ScreepsDotNet.API.World
         /// The target has to be at adjacent square to the creep.
         /// Multiple creeps can withdraw from the same object in the same tick.
         /// Your creeps can withdraw resources from hostile structures/tombstones as well, in case if there is no hostile rampart on top of it.
-        /// This method should not be used to transfer resources between creeps.
-        /// To transfer between creeps, use the transfer method on the original creep.
         /// </summary>
         /// <param name="target"></param>
         /// <param name="resourceType"></param>
         /// <param name="amount"></param>
         /// <returns></returns>
         CreepWithdrawResult Withdraw(IRuin target, ResourceType resourceType, int? amount = null);
+
+        /// <summary>
+        /// Withdraw resources from a score container.
+        /// The target has to be at adjacent square to the creep.
+        /// Multiple creeps can withdraw from the same object in the same tick.
+        /// </summary>
+        /// <param name="target"></param>
+        /// <param name="resourceType"></param>
+        /// <param name="amount"></param>
+        /// <returns></returns>
+        CreepWithdrawResult Withdraw(IScoreContainer target, ResourceType resourceType, int? amount = null);
     }
 }

@@ -378,6 +378,9 @@ namespace ScreepsDotNet.Native.World
         public CreepTransferResult Transfer(IStructure target, ResourceType resourceType, int? amount = null)
             => (CreepTransferResult)Native_Transfer(ProxyObject, target.ToJS(), resourceType.ToJS(), amount);
 
+        public CreepTransferResult Transfer(IScoreCollector target, ResourceType resourceType, int? amount = null)
+            => (CreepTransferResult)Native_Transfer(ProxyObject, target.ToJS(), resourceType.ToJS(), amount);
+
         public CreepUpgradeControllerResult UpgradeController(IStructureController target)
             => (CreepUpgradeControllerResult)Native_UpgradeController(ProxyObject, target.ToJS());
 
@@ -388,6 +391,9 @@ namespace ScreepsDotNet.Native.World
             => (CreepWithdrawResult)Native_Withdraw(ProxyObject, target.ToJS(), resourceType.ToJS(), amount);
 
         public CreepWithdrawResult Withdraw(IRuin target, ResourceType resourceType, int? amount = null)
+            => (CreepWithdrawResult)Native_Withdraw(ProxyObject, target.ToJS(), resourceType.ToJS(), amount);
+
+        public CreepWithdrawResult Withdraw(IScoreContainer target, ResourceType resourceType, int? amount = null)
             => (CreepWithdrawResult)Native_Withdraw(ProxyObject, target.ToJS(), resourceType.ToJS(), amount);
 
         private BodyPart<BodyPartType>[] FetchBody()
