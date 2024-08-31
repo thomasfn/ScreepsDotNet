@@ -2646,6 +2646,17 @@ var bootloader = (function (exports) {
         var boundImportSymbol = this._boundImportSymbolList[importIndex];
         return "".concat(importIndex, ": ").concat(stringifyParamSpec(boundImportSymbol.functionSpec.returnSpec), " ").concat(boundImportSymbol.fullName, "(").concat(boundImportSymbol.functionSpec.paramSpecs.map(stringifyParamSpec).join(', '), ")");
       }
+    }, {
+      key: "visitClrTrackedObjects",
+      value: function visitClrTrackedObjects(visitor) {
+        for (var i = 0; i < this._nextClrTrackingId; ++i) {
+          var obj = this._objectTrackingList[i];
+          if (obj == null) {
+            continue;
+          }
+          visitor(obj);
+        }
+      }
     }]);
     return Interop;
   }();
@@ -3066,8 +3077,8 @@ var bootloader = (function (exports) {
     }, {
       key: "setupImports",
       value: function setupImports() {
-        var _ScoreCollector,
-          _ScoreContainer,
+        var _global$ScoreCollecto,
+          _global$ScoreContaine,
           _this2 = this;
         _get(_getPrototypeOf(WorldBindings.prototype), "setupImports", this).call(this);
         this.bindingsImport.js_renew_object = this.js_renew_object.bind(this);
@@ -3115,8 +3126,8 @@ var bootloader = (function (exports) {
           Room: Room,
           RoomVisual: RoomVisual,
           Nuke: Nuke,
-          ScoreCollector: (_ScoreCollector = _global.ScoreCollector) !== null && _ScoreCollector !== void 0 ? _ScoreCollector : function () {},
-          ScoreContainer: (_ScoreContainer = _global.ScoreContainer) !== null && _ScoreContainer !== void 0 ? _ScoreContainer : function () {}
+          ScoreCollector: (_global$ScoreCollecto = _global.ScoreCollector) !== null && _global$ScoreCollecto !== void 0 ? _global$ScoreCollecto : function () {},
+          ScoreContainer: (_global$ScoreContaine = _global.ScoreContainer) !== null && _global$ScoreContaine !== void 0 ? _global$ScoreContaine : function () {}
         };
         this.imports['object'] = {
           getConstructorOf: function getConstructorOf(x) {
@@ -3668,6 +3679,63 @@ var bootloader = (function (exports) {
         var fromRoomCoord = this.parseRoomName(fromRoomName, TEMP_ROOM_COORD_B);
         return this._invoke_route_callback(roomCoord[0], roomCoord[1], fromRoomCoord[0], fromRoomCoord[1]);
       }
+    }, {
+      key: "accountClrTrackedObjects",
+      value: function accountClrTrackedObjects() {
+        var counts = {};
+        var totalCount = 0;
+        this._interop.visitClrTrackedObjects(function (x) {
+          var _counts$name;
+          var name;
+          if (x instanceof Creep) {
+            name = 'Creep';
+          } else if (x instanceof Structure) {
+            name = 'Structure';
+          } else if (x instanceof RoomObject) {
+            name = 'RoomObject';
+          } else if (x instanceof Room) {
+            name = 'Room';
+          } else if (x instanceof RoomPosition) {
+            name = 'RoomPosition';
+          } else if (x instanceof global.Store) {
+            name = 'Store';
+          } else if (x instanceof StructureSpawn.Spawning) {
+            name = 'StructureSpawn.Spawning';
+          } else if (x == global) {
+            name = 'global';
+          } else if (x == Game) {
+            name = 'Game';
+          } else if (x == Game.creeps) {
+            name = 'Game.creeps';
+          } else if (x == Game.structures) {
+            name = 'Game.structures';
+          } else if (x == Game.spawns) {
+            name = 'Game.spawns';
+          } else if (x == Game.rooms) {
+            name = 'Game.rooms';
+          } else if (x == Game.cpu) {
+            name = 'Game.cpu';
+          } else if (x == Game.map) {
+            name = 'Game.map';
+          } else if (Array.isArray(x)) {
+            name = 'Array';
+          } else {
+            if (_typeof(x) === 'object' && x != null) {
+              var keys = Object.keys(x);
+              name = "unknown(".concat(keys.join(','), ")");
+            } else {
+              name = 'unknown';
+            }
+          }
+          counts[name] = ((_counts$name = counts[name]) !== null && _counts$name !== void 0 ? _counts$name : 0) + 1;
+          ++totalCount;
+        });
+        var lines = ["total: ".concat(totalCount)];
+        for (var name in counts) {
+          lines.push("".concat(name, ": ").concat(counts[name]));
+        }
+        this.log(lines.join('<br />'));
+      }
     }]);
     return WorldBindings;
   }(BaseBindings);
@@ -3753,6 +3821,7 @@ var bootloader = (function (exports) {
     }
     return bytes;
   }
+  var EMPTY_ARR = [];
   var Bootloader = /*#__PURE__*/function () {
     function Bootloader(env, profileFn) {
       _classCallCheck(this, Bootloader);
@@ -3790,7 +3859,8 @@ var bootloader = (function (exports) {
           return JSTYPE_TO_ENUM[_typeof(obj[key])];
         },
         getKeys: function getKeys(obj) {
-          return Object.keys(obj);
+          var _ref;
+          return (_ref = obj ? Object.keys(obj) : null) !== null && _ref !== void 0 ? _ref : EMPTY_ARR;
         },
         getProperty: function getProperty(obj, key) {
           return obj[key];

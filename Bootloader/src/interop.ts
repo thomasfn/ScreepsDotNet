@@ -709,4 +709,12 @@ export class Interop {
         const boundImportSymbol = this._boundImportSymbolList[importIndex];
         return `${importIndex}: ${stringifyParamSpec(boundImportSymbol.functionSpec.returnSpec)} ${boundImportSymbol.fullName}(${boundImportSymbol.functionSpec.paramSpecs.map(stringifyParamSpec).join(', ')})`;
     }
+
+    public visitClrTrackedObjects(visitor: (obj: unknown) => void): void {
+        for (let i = 0; i < this._nextClrTrackingId; ++i) {
+            const obj = this._objectTrackingList[i];
+            if (obj == null) { continue; }
+            visitor(obj);
+        }
+    }
 }

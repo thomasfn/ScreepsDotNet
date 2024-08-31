@@ -34,5 +34,7 @@ export declare class Bootloader {
     start(customInitExportNames?: ReadonlyArray<string>): void;
     loop(): void;
     private getWasmImports;
+    private clock_res_get;
+    private clock_time_get;
     private dispatchPendingLogs;
 }

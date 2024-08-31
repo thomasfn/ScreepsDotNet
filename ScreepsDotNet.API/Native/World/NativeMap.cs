@@ -138,7 +138,7 @@ namespace ScreepsDotNet.Native.World
 
         public RoomStatus GetRoomStatus(RoomCoord roomCoord)
         {
-            var obj = Native_GetRoomStatus(roomCoord.ToString());
+            using var obj = Native_GetRoomStatus(roomCoord.ToString());
             var timestamp = obj.TryGetPropertyAsDouble(Names.Timestamp) ?? 0.0;
             var status = obj.GetPropertyAsName(Names.Status);
             return new(status!.ParseRoomStatusType(), timestamp > 0.0 ? DateTime.UnixEpoch + TimeSpan.FromMilliseconds(timestamp) : null);

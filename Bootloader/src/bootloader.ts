@@ -90,6 +90,8 @@ const enum WASI_ERRNO {
     PERM = 63,
 }
 
+const EMPTY_ARR: unknown[] = [];
+
 export class Bootloader {
     private readonly _pendingLogs: string[] = [];
     private readonly _deferLogsToTick: boolean;
@@ -135,7 +137,7 @@ export class Bootloader {
         this.setImports('__object', {
             hasProperty: (obj: Record<string | number | symbol, unknown>, key: string) => key in obj,
             getTypeOfProperty: (obj: Record<string | number | symbol, unknown>, key: string) => JSTYPE_TO_ENUM[typeof obj[key]],
-            getKeys: (obj: Record<string | number | symbol, unknown>) => Object.keys(obj),
+            getKeys: (obj: Record<string | number | symbol, unknown>) => (obj ? Object.keys(obj) : null) ?? EMPTY_ARR,
             getProperty: (obj: Record<string | number | symbol, unknown>, key: string | number | symbol) => obj[key],
             setProperty: (obj: Record<string | number | symbol, unknown>, key: string | number | symbol, value: unknown) => obj[key] = value,
             deleteProperty: (obj: Record<string | number | symbol, unknown>, key: string) => delete obj[key],
