@@ -15,68 +15,31 @@ namespace ScreepsDotNet.API.World
         SmallCaps
     }
 
-    public readonly struct MapTextVisualStyle
-    {
-        /// <summary>
-        /// Font color. Default is white.
-        /// </summary>
-        public readonly Color? Color;
-        /// <summary>
-        /// The font family, default is sans-serif
-        /// </summary>
-        public readonly string? FontFamily;
-        /// <summary>
-        /// The font size in game coordinates, default is 10
-        /// </summary>
-        public readonly double? FontSize;
-        /// <summary>
-        /// The font style ('normal', 'italic' or 'oblique')
-        /// </summary>
-        public readonly MapTextFontStyle? FontStyle;
-        /// <summary>
-        /// The font variant ('normal' or 'small-caps')
-        /// </summary>
-        public readonly MapTextFontVariant? FontVariant;
-        /// <summary>
-        /// Stroke color. Default is undefined (no stroke).
-        /// </summary>
-        public readonly Color? Stroke;
-        /// <summary>
-        /// Stroke width, default is 0.15.
-        /// </summary>
-        public readonly double? StrokeWidth;
-        /// <summary>
-        /// Background color. Default is undefined (no background). When background is enabled, text vertical align is set to middle (default is baseline).
-        /// </summary>
-        public readonly Color? BackgroundColor;
-        /// <summary>
-        /// Background rectangle padding, default is 2.
-        /// </summary>
-        public readonly double? BackgroundPadding;
-        /// <summary>
-        /// Text align, either center, left, or right. Default is center.
-        /// </summary>
-        public readonly TextAlign? Align;
-        /// <summary>
-        /// Opacity value, default is 0.5.
-        /// </summary>
-        public readonly double? Opacity;
-
-        public MapTextVisualStyle(Color? color = null, string? fontFamily = null, double? fontSize = null, MapTextFontStyle? fontStyle = null, MapTextFontVariant? fontVariant = null, Color? stroke = null, double? strokeWidth = null, Color? backgroundColor = null, double? backgroundPadding = null, TextAlign? align = null, double? opacity = null)
-        {
-            Color = color;
-            FontFamily = fontFamily;
-            FontSize = fontSize;
-            FontStyle = fontStyle;
-            FontVariant = fontVariant;
-            Stroke = stroke;
-            StrokeWidth = strokeWidth;
-            BackgroundColor = backgroundColor;
-            BackgroundPadding = backgroundPadding;
-            Align = align;
-            Opacity = opacity;
-        }
-    }
+    /// <param name="Color">Font color, default is white</param>
+    /// <param name="FontFamily">Font family, default is sans-serif</param>
+    /// <param name="FontSize">Font size in game coordinates, default is 10</param>
+    /// <param name="FontStyle">Font style, default is normal</param>
+    /// <param name="FontVariant">Font variant, default is normal</param>
+    /// <param name="Stroke">Stroke color, default is null (no stroke)</param>
+    /// <param name="StrokeWidth">Stroke width, default is 0.15</param>
+    /// <param name="BackgroundColor">Background color, default is null (no background). When background is enabled, text vertical align is set to middle (default is baseline)</param>
+    /// <param name="BackgroundPadding">Background rectangle padding, default is 2</param>
+    /// <param name="Align">Text horizontal align, default is center</param>
+    /// <param name="Opacity">Opacity value, default is 0.5</param>
+    public readonly record struct MapTextVisualStyle
+    (
+        Color? Color = null,
+        string? FontFamily = null,
+        double? FontSize = null,
+        MapTextFontStyle? FontStyle = null,
+        MapTextFontVariant? FontVariant = null,
+        Color? Stroke = null,
+        double? StrokeWidth = null,
+        Color? BackgroundColor = null,
+        double? BackgroundPadding = null,
+        TextAlign? Align = null,
+        double? Opacity = null
+    );
 
     /// <summary>
     /// Room visuals provide a way to show various visual debug info in game rooms.

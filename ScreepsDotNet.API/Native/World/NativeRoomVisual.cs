@@ -62,7 +62,7 @@ namespace ScreepsDotNet.Native.World
         {
             using var pos1Js = pos1.ToJS();
             using var pos2Js = pos2.ToJS();
-            using var styleJs = style?.ToJS();
+            var styleJs = style?.ToJS();
             Native_Line(ProxyObject, pos1Js, pos2Js, styleJs);
             return this;
         }
@@ -70,7 +70,7 @@ namespace ScreepsDotNet.Native.World
         public IRoomVisual Circle(FractionalPosition position, CircleVisualStyle? style = null)
         {
             using var positionJs = position.ToJS();
-            using var styleJs = style?.ToJS();
+            var styleJs = style?.ToJS();
             Native_Circle(ProxyObject, positionJs, styleJs);
             return this;
         }
@@ -78,14 +78,14 @@ namespace ScreepsDotNet.Native.World
         public IRoomVisual Rect(FractionalPosition pos, double w, double h, RectVisualStyle? style = null)
         {
             using var posJs = pos.ToJS();
-            using var styleJs = style?.ToJS();
+            var styleJs = style?.ToJS();
             Native_Rect(ProxyObject, posJs, w, h, styleJs);
             return this;
         }
 
         public IRoomVisual Poly(IEnumerable<FractionalPosition> points, PolyVisualStyle? style = null)
         {
-            using var styleJs = style?.ToJS();
+            var styleJs = style?.ToJS();
             var pointsJs = points.Select(x => x.ToJS()).ToArray();
             try
             {
@@ -101,7 +101,7 @@ namespace ScreepsDotNet.Native.World
         public IRoomVisual Text(string text, FractionalPosition pos, TextVisualStyle? style = null)
         {
             using var posJs = pos.ToJS();
-            using var styleJs = style?.ToJS();
+            var styleJs = style?.ToJS();
             Native_Text(ProxyObject, text, posJs, styleJs);
             return this;
         }
