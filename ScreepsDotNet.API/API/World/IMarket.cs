@@ -247,7 +247,7 @@ namespace ScreepsDotNet.API.World
         /// <summary>
         /// Your current credits balance.
         /// </summary>
-        int Credits { get; }
+        double Credits { get; }
 
         /// <summary>
         /// An array of the last 100 incoming transactions to your terminals.

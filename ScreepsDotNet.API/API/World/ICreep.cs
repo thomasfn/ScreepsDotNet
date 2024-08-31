@@ -673,6 +673,7 @@ namespace ScreepsDotNet.API.World
         Pickup,
         Pull,
         RangedAttack,
+        RangedHeal,
         RangedMassAttack,
         Repair,
         ReserveController,
