@@ -99,6 +99,7 @@ namespace ScreepsDotNet.Native.World
             Name.Create("emanation"),
             Name.Create("essence"),
             Name.Create("season"),
+            Name.Create("score"),
             Name.Create("unknown")
         ];
 

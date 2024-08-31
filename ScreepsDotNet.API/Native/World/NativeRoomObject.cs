@@ -206,6 +206,8 @@ namespace ScreepsDotNet.Native.World
         HostilePowerCreeps = 121,
         Deposits = 122,
         Ruins = 123,
+        ScoreContainers = 10011,
+        ScoreCollectors = 10012,
     }
 
     [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
@@ -369,6 +371,8 @@ namespace ScreepsDotNet.Native.World
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeConstructionSite))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeTombstone))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeRuin))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeScoreCollector))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeScoreContainer))]
         static NativeRoomObjectUtils()
         {
             prototypesObject = GetPrototypesObject();
@@ -410,6 +414,8 @@ namespace ScreepsDotNet.Native.World
                 RegisterPrototypeTypeMapping<IConstructionSite, NativeConstructionSite>("ConstructionSite", FindConstant.ConstructionSites, FindConstant.MyConstructionSites, FindConstant.HostileConstructionSites, "constructionSite");
                 RegisterPrototypeTypeMapping<ITombstone, NativeTombstone>("Tombstone", FindConstant.Tombstones, null, null, "tombstone");
                 RegisterPrototypeTypeMapping<IRuin, NativeRuin>("Ruin", FindConstant.Ruins, null, null, "ruin");
+                RegisterPrototypeTypeMapping<IScoreCollector, NativeScoreCollector>("ScoreCollector", FindConstant.ScoreCollectors, null, null, "scoreCollector");
+                RegisterPrototypeTypeMapping<IScoreContainer, NativeScoreContainer>("ScoreContainer", FindConstant.ScoreContainers, null, null, "scoreContainer");
             }
             catch (Exception ex)
             {

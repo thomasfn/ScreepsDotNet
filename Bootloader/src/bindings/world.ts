@@ -13,7 +13,11 @@ type GamePrototype = {};
 
 type GameConstructor = { readonly prototype: GamePrototype };
 
-type ResourceConstantEx = ResourceConstant | "season";
+// Season 1 objects from https://github.com/screeps/mod-season1
+declare const ScoreCollector: GameConstructor;
+declare const ScoreContainer: GameConstructor;
+
+type ResourceConstantEx = ResourceConstant | "season" | "score";
 
 const RESOURCE_LIST: readonly ResourceConstantEx[] = [
     "energy", "power",
@@ -29,7 +33,7 @@ const RESOURCE_LIST: readonly ResourceConstantEx[] = [
     "cell", "phlegm", "tissue", "muscle", "organoid", "organism",
     "alloy", "tube", "fixtures", "frame", "hydraulics", "machine",
     "condensate", "concentrate", "extract", "spirit", "emanation", "essence",
-    "season",
+    "season", "score",
 ]; // 85 total
 
 const RESOURCE_TO_ENUM_MAP: Record<ResourceConstantEx, number> = {} as Record<ResourceConstantEx, number>;
@@ -114,6 +118,7 @@ export class WorldBindings extends BaseBindings {
         this.bindingsImport.js_batch_fetch_object_room_positions = this.js_batch_fetch_object_room_positions.bind(this);
         this.bindingsImport.js_get_object_by_id = this.js_get_object_by_id.bind(this);
         this.bindingsImport.js_get_object_id = this.js_get_object_id.bind(this);
+        const _global = global as unknown as { ScoreCollector?: GameConstructor, ScoreContainer?: GameConstructor };
         const gameConstructors: Record<string, GameConstructor> = {
             StructureContainer,
             StructureController,
@@ -152,6 +157,8 @@ export class WorldBindings extends BaseBindings {
             Room,
             RoomVisual,
             Nuke,
+            ScoreCollector: _global.ScoreCollector ?? function() {},
+            ScoreContainer: _global.ScoreContainer ?? function() {},
         }
         this.imports['object'] = {
             getConstructorOf: (x: object) => Object.getPrototypeOf(x).constructor,

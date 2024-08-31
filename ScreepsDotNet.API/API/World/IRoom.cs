@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq.Expressions;
 
 namespace ScreepsDotNet.API.World
 {
@@ -168,6 +167,7 @@ namespace ScreepsDotNet.API.World
         /// Create new Flag at the specified location.
         /// </summary>
         /// <param name="position"></param>
+        /// <param name="newFlagName"></param>
         /// <param name="name"></param>
         /// <param name="color"></param>
         /// <param name="secondaryColor"></param>
