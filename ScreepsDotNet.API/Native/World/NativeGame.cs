@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 
 using ScreepsDotNet.Interop;
+
 using ScreepsDotNet.API;
 using ScreepsDotNet.API.World;
 
@@ -83,7 +85,7 @@ namespace ScreepsDotNet.Native.World
         private readonly NativeConstants nativeConstants;
         private readonly NativeRawMemory nativeRawMemory;
 
-        private readonly Dictionary<RoomCoord, WeakReference<NativeRoom>> roomsByCoordCache = [];
+        private readonly Dictionary<RoomCoord, GCHandle> roomsByCoordCache = [];
 
         private readonly NativeObjectLazyLookup<NativeCreep, ICreep> creepLazyLookup;
         private readonly NativeObjectLazyLookup<NativeFlag, IFlag> flagLazyLookup;
@@ -214,7 +216,7 @@ namespace ScreepsDotNet.Native.World
         {
             foreach (var (coord, objRef) in roomsByCoordCache)
             {
-                if (!objRef.TryGetTarget(out var room) || !room.Exists) { roomCoordPendingRemovalList.Add(coord); }
+                if (!objRef.IsAllocated || objRef.Target is not IRoom room || !room.Exists) { roomCoordPendingRemovalList.Add(coord); }
             }
             if (roomCoordPendingRemovalList.Count == 0) { return; }
             Console.WriteLine($"NativeGame: pruning {roomCoordPendingRemovalList.Count} of {roomsByCoordCache.Count} objects from the rooms-by-coord cache");
@@ -309,7 +311,7 @@ namespace ScreepsDotNet.Native.World
             => proxyObject.UserData as T;
 
         NativeRoom? INativeRoot.GetExistingRoomByCoord(RoomCoord coord)
-            => (roomsByCoordCache.TryGetValue(coord, out var objRef) && objRef.TryGetTarget(out var obj) && obj.Exists) ? obj : null;
+            => (roomsByCoordCache.TryGetValue(coord, out var gcHandle) && gcHandle.Target is NativeRoom room && room.Exists) ? room : null;
 
         NativeRoom? INativeRoot.GetRoomByCoord(RoomCoord coord)
         {
@@ -319,7 +321,7 @@ namespace ScreepsDotNet.Native.World
             if (proxyObject == null) { return null; }
             room = new NativeRoom(this, proxyObject);
             proxyObject.UserData = room;
-            roomsByCoordCache[coord] = new WeakReference<NativeRoom>(room);
+            roomsByCoordCache[coord] = GCHandle.Alloc(room, GCHandleType.WeakTrackResurrection);
             return room;
         }
 
@@ -330,7 +332,7 @@ namespace ScreepsDotNet.Native.World
             var room = (this as INativeRoot).GetExistingWrapperObject<NativeRoom>(proxyObject);
             if (room != null) { return room; }
             room = new NativeRoom(this, proxyObject);
-            roomsByCoordCache[coord] = new WeakReference<NativeRoom>(room);
+            roomsByCoordCache[coord] = GCHandle.Alloc(room, GCHandleType.WeakTrackResurrection);
             return room;
         }
 
