@@ -111,6 +111,9 @@ namespace ScreepsDotNet.Native.World
         [JSImport("Creep.move", "game/prototypes/wrapped")]
         internal static partial int Native_Move(JSObject proxyObject, int direction);
 
+        [JSImport("Creep.move", "game/prototypes/wrapped")]
+        internal static partial int Native_Move(JSObject proxyObject, JSObject targetProxyObject);
+
         [JSImport("Creep.moveByPath", "game/prototypes/wrapped")]
         internal static partial int Native_MoveByPath(JSObject proxyObject, JSObject[] path);
 
@@ -298,6 +301,9 @@ namespace ScreepsDotNet.Native.World
 
         public CreepMoveResult Move(Direction direction)
             => (CreepMoveResult)Native_Move(ProxyObject, (int)direction);
+
+        public CreepMoveResult Move(ICreep creep)
+            => (CreepMoveResult)Native_Move(ProxyObject, creep.ToJS());
 
         public CreepMoveResult MoveByPath(IEnumerable<PathStep> path)
         {

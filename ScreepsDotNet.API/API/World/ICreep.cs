@@ -930,11 +930,19 @@ namespace ScreepsDotNet.API.World
 
         /// <summary>
         /// Move the creep one square in the specified direction.
-        /// Requires the MOVE body part, or another creep nearby pulling the creep.
+        /// Requires the MOVE body part.
         /// </summary>
         /// <param name="direction"></param>
         /// <returns></returns>
         CreepMoveResult Move(Direction direction);
+
+        /// <summary>
+        /// Move the creep one square in the specified direction.
+        /// Requires another creep nearby pulling the creep.
+        /// </summary>
+        /// <param name="creep"></param>
+        /// <returns></returns>
+        CreepMoveResult Move(ICreep creep);
 
         /// <summary>
         /// Move the creep using the specified predefined path. Requires the MOVE body part.
