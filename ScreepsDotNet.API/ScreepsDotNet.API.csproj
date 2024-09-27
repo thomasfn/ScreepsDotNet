@@ -34,6 +34,13 @@
 
 	<ItemGroup>
 		<None Remove="build\ScreepsDotNet.API.props" />
+		<None Remove="js\arena\bootloader.d.ts" />
+		<None Remove="js\arena\bootloader.mjs" />
+		<None Remove="js\arena\loop.mjs" />
+		<None Remove="js\arena\startup.mjs" />
+		<None Remove="js\world\bootloader.js" />
+		<None Remove="js\world\loop.js" />
+		<None Remove="js\world\startup.js" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -53,6 +60,15 @@
 
 		<Content Include="Native\world.c" PackagePath="Native\" />
 		<Content Include="Interop\interop.c" PackagePath="Interop\" />
+
+		<Content Include="js\arena\bootloader.d.ts" PackagePath="js\arena\" />
+		<Content Include="js\arena\bootloader.mjs" PackagePath="js\arena\" />
+		<Content Include="js\arena\loop.mjs" PackagePath="js\arena\" />
+		<Content Include="js\arena\startup.mjs" PackagePath="js\arena\" />
+
+		<Content Include="js\world\bootloader.js" PackagePath="js\world\" />
+		<Content Include="js\world\loop.js" PackagePath="js\world\" />
+		<Content Include="js\world\startup.js" PackagePath="js\world\" />
 	</ItemGroup>
 
 </Project>

@@ -118,17 +118,8 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
-  <data name="arena_bootloader_dts" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>Resources\arena\bootloader.d.ts;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="arena_bootloader_mjs" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>Resources\arena\bootloader.mjs;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
   <data name="arena_main_mjs" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\arena\main.mjs;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="world_bootloader_js" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>Resources\world\bootloader.js;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="world_main_js" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\world\main.js;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>

@@ -8,4 +8,15 @@
 		<_WasmRuntimePackSrcFile Include="$(MSBuildThisFileDirectory)..\Native\world.c" />
 		<_WasmRuntimePackSrcFile Include="$(MSBuildThisFileDirectory)..\Interop\interop.c" />
 	</ItemGroup>
+	<ItemGroup>
+		<ScreepsWorldJsFiles Include="$(MSBuildThisFileDirectory)..\js\world\bootloader.js" />
+		<ScreepsWorldStartup Include="$(MSBuildThisFileDirectory)..\js\world\startup.js" />
+		<ScreepsWorldLoop Include="$(MSBuildThisFileDirectory)..\js\world\loop.js" />
+	</ItemGroup>
+	<ItemGroup>
+		<ScreepsArenaJsFiles Include="$(MSBuildThisFileDirectory)..\js\arena\bootloader.d.ts" />
+		<ScreepsArenaJsFiles Include="$(MSBuildThisFileDirectory)..\js\arena\bootloader.mjs" />
+		<ScreepsArenaStartup Include="$(MSBuildThisFileDirectory)..\js\arena\startup.mjs" />
+		<ScreepsArenaLoop Include="$(MSBuildThisFileDirectory)..\js\arena\loop.mjs" />
+	</ItemGroup>
 </Project>

@@ -88,12 +88,12 @@
 		<EmscriptenEnvVars Include="PATH=$(EmscriptenUpstreamBinPath)$(_PathSeparator)$([MSBuild]::Escape($(PATH)))" />
 
 		<!--
-        Python defaults to the system charset, and thus expects the files it's reading to
-        match that. But that might not always be true. Eg. system charset=gbk, failing to read
-        utf-8 files
+			Python defaults to the system charset, and thus expects the files it's reading to
+			match that. But that might not always be true. Eg. system charset=gbk, failing to read
+			utf-8 files
 
-        See https://github.com/dotnet/runtime/issues/53367 for the motivating issue
-      -->
+			See https://github.com/dotnet/runtime/issues/53367 for the motivating issue
+		-->
 		<EmscriptenEnvVars Include="PYTHONUTF8=1" />
 		<EmscriptenEnvVars Include="EM_WORKAROUND_PYTHON_BUG_34780=1" />
 	</ItemGroup>
@@ -115,7 +115,20 @@
 
 	<Target Name="_BuildScreepsBundle" AfterTargets="_WasiGenerateAppBundle" DependsOnTargets="_OptimiseWasm">
 		<Message Text="Bundling for Screeps..." Importance="High"/>
-		<BundlerBuildTask AppBundleDir="$(WasmAppDir)" WasmFileName="$(OutputWasmFile)" Configuration="$(Configuration)" CompressWasm="$(ScreepsCompressWasm)" Encoding="$(ScreepsEncoding)" CustomInitExportNames="@(ScreepsCustomInitExportNames, ',')">
+		<BundlerBuildTask
+			AppBundleDir="$(WasmAppDir)"
+			WasmFileName="$(OutputWasmFile)"
+			Configuration="$(Configuration)"
+			CompressWasm="$(ScreepsCompressWasm)"
+			Encoding="$(ScreepsEncoding)"
+			CustomInitExportNames="@(ScreepsCustomInitExportNames, ',')"
+			WorldJsFiles="@(ScreepsWorldJsFiles, ',')"
+			WorldStartup="@(ScreepsWorldStartup, ',')"
+			WorldLoop="@(ScreepsWorldLoop, ',')"
+			ArenaJsFiles="@(ScreepsArenaJsFiles, ',')"
+			ArenaStartup="@(ScreepsArenaStartup, ',')"
+			ArenaLoop="@(ScreepsArenaLoop, ',')"
+		>
 			<Output TaskParameter="BundleFilePaths" PropertyName="ScreepsBundleFilePaths" />
 		</BundlerBuildTask>
 	</Target>
