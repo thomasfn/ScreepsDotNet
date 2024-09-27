@@ -14,8 +14,8 @@
 		<Title>ScreepsDotNet API</Title>
 		<Authors>thomasfn</Authors>
 		<Description>A set of interfaces and a JS binding for the Screeps Arena and Screeps World APIs</Description>
-		<Version>2.0.3</Version>
-		<PackageVersion>2.0.3</PackageVersion>
+		<Version>2.1.0</Version>
+		<PackageVersion>2.1.0</PackageVersion>
 		<PackageProjectUrl>https://github.com/thomasfn/ScreepsDotNet</PackageProjectUrl>
 		<PackageLicenseFile>LICENSE</PackageLicenseFile>
 		<PackageTags>screeps world arena api</PackageTags>
