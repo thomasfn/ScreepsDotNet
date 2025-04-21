@@ -3,6 +3,7 @@ import * as prototypes from 'game/prototypes';
 import * as constants from 'game/constants';
 import * as pathFinder from 'game/path-finder';
 import * as visual from 'game/visual';
+import { arenaInfo } from 'game';
 var bootloader = (function (exports) {
   'use strict';
 
@@ -2887,6 +2888,9 @@ var bootloader = (function (exports) {
           },
           getPrototypes: function getPrototypes() {
             return prototypes;
+          },
+          getArenaInfo: function getArenaInfo() {
+            return arenaInfo;
           }
         };
         var wrappedPrototypes = this.buildWrappedPrototypes(prototypes);

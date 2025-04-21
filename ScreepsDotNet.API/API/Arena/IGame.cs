@@ -8,6 +8,8 @@
 
         IConstants Constants { get; }
 
+        IArenaInfo ArenaInfo { get; }
+
         void Tick();
     }
 }
