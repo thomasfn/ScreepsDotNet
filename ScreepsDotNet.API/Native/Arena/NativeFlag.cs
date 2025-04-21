@@ -9,7 +9,7 @@ namespace ScreepsDotNet.Native.Arena
     {
         private bool? myCache;
 
-        public bool? My => CacheLifetime(ref myCache) ??= proxyObject.TryGetPropertyAsBoolean(Names.My);
+        public bool? My => CachePerTick(ref myCache) ??= proxyObject.TryGetPropertyAsBoolean(Names.My);
 
         public NativeFlag(INativeRoot nativeRoot, JSObject proxyObject)
             : base(nativeRoot, proxyObject, false)
