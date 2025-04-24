@@ -15,6 +15,12 @@ namespace ScreepsDotNet.Native.Arena
             : base(nativeRoot, proxyObject, false)
         { }
 
+        protected override void ClearNativeCache()
+        {
+            base.ClearNativeCache();
+            myCache = null;
+        }
+
         public override string ToString()
             => Exists ? $"Flag({Id}, {Position})" : $"Flag(DEAD)";
     }
