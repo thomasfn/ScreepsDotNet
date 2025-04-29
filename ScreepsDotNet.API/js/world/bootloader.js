@@ -2882,6 +2882,9 @@ var bootloader = (function (exports) {
           },
           getPrototypes: function getPrototypes() {
             return prototypes;
+          },
+          getArenaInfo: function getArenaInfo() {
+            return arenaInfo;
           }
         };
         var wrappedPrototypes = this.buildWrappedPrototypes(prototypes);

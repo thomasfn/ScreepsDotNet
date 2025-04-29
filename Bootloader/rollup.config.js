@@ -46,6 +46,7 @@ export default {
                     `import * as constants from 'game/constants';`,
                     `import * as pathFinder from 'game/path-finder';`,
                     `import * as visual from 'game/visual';`,
+                    `import { arenaInfo } from 'game';`,
                     `${str}`,
                     `export const Bootloader = bootloader.Bootloader;`,
                     `export const decodeWasm = bootloader.decodeWasm;`,
