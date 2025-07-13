@@ -1,0 +1,10 @@
+(module
+ (type $0 (func (param i32)))
+ (type $1 (func (param i32 i32 i32)))
+ (export "[resource-drop]pollable" (func $src/wasi_io_poll/resource_drop_pollable))
+ (export "poll" (func $src/wasi_io_poll/poll))
+ (func $src/wasi_io_poll/resource_drop_pollable (param $0 i32)
+ )
+ (func $src/wasi_io_poll/poll (param $0 i32) (param $1 i32) (param $2 i32)
+ )
+)

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.IO;
 using ScreepsDotNet.Bundler.Wasm.Sections;
+using ScreepsDotNet.Bundler.Wasm.ComponentSections;
 
 namespace ScreepsDotNet.Bundler.Wasm
 {
@@ -20,7 +21,76 @@ namespace ScreepsDotNet.Bundler.Wasm
 
     public class WasmBinary
     {
+        public WasmModule? Module { get; private set; }
+
+        public WasiComponent? Component { get; private set; }
+
+        public WasmBinary(string filePath)
+            : this(File.OpenRead(filePath))
+        { }
+
+        public WasmBinary(Stream stream)
+        {
+            using var rdr = new BinaryReader(stream, Encoding.UTF8, true);
+            uint magic = rdr.ReadUInt32();
+            if (magic != 0x6d736100) { throw new InvalidWasmException("Invalid magic number"); }
+            int ver = rdr.ReadInt32();
+            if (ver == 0x0001000d)
+            {
+                Component = new WasiComponent(stream);
+            }
+            else if (ver == 0x1)
+            {
+                Module = new WasmModule(stream);
+            }
+            else
+            {
+                throw new InvalidWasmException($"Unknown version");
+            }
+        }
+
+        public WasmBinary(WasmModule module)
+        {
+            Module = module;
+        }
+
+        public WasmBinary(WasiComponent component)
+        {
+            Component = component;
+        }
+
+        public void Write(Stream stream)
+        {
+            using var wtr = new BinaryWriter(stream);
+            wtr.Write(0x6d736100u);
+            if (Module != null)
+            {
+                wtr.Write(1u);
+                wtr.Flush();
+                Module.Write(stream);
+                return;
+            }
+            if (Component != null)
+            {
+                wtr.Write(0x0001000d);
+                wtr.Flush();
+                Component.Write(stream);
+                return;
+            }
+        }
+
+        public void Write(string filePath)
+        {
+            using var stream = File.Open(filePath, FileMode.Create, FileAccess.Write);
+            Write(stream);
+        }
+    }
+
+    public class WasmModule
+    {
         private readonly List<Section> sections;
+
+        public bool WasiComponent { get; private set; }
 
         public TypeSection? TypeSection { get; private set; }
 
@@ -36,23 +106,25 @@ namespace ScreepsDotNet.Bundler.Wasm
 
         public int SectionCount => sections.Count;
 
-        public WasmBinary(string filePath)
-            : this(File.OpenRead(filePath))
-        { }
-
-        public WasmBinary(Stream stream)
+        internal WasmModule(Stream stream)
         {
             using var rdr = new BinaryReader(stream);
-            uint magic = rdr.ReadUInt32();
-            if (magic != 0x6d736100) { throw new InvalidWasmException("Invalid magic number"); }
-            uint ver = rdr.ReadUInt32();
-            if (ver != 0x1) { throw new InvalidWasmException($"Unknown version"); }
             sections = new List<Section>();
             while (stream.Position < stream.Length)
             {
                 sections.Add(ReadSection(rdr));
             }
             long finalPos = stream.Position;
+        }
+
+        internal WasmModule(BinaryReader rdr, uint size)
+        {
+            sections = new List<Section>();
+            long endOffset = rdr.BaseStream.Position + size;
+            while (rdr.BaseStream.Position < endOffset)
+            {
+                sections.Add(ReadSection(rdr));
+            }
         }
 
         private Section ReadSection(BinaryReader rdr)
@@ -114,8 +186,6 @@ namespace ScreepsDotNet.Bundler.Wasm
         public void Write(Stream stream)
         {
             using var wtr = new BinaryWriter(stream);
-            wtr.Write(0x6d736100u);
-            wtr.Write(1u);
             foreach (var section in sections)
             {
                 byte[] sectionData;
@@ -131,11 +201,61 @@ namespace ScreepsDotNet.Bundler.Wasm
                 wtr.Write(sectionData);
             }
         }
+    }
 
-        public void Write(string filePath)
+
+    public class WasiComponent
+    {
+        private readonly List<ComponentSection> sections;
+
+        public IEnumerable<ComponentSection> Sections => sections;
+
+        internal WasiComponent(Stream stream)
         {
-            using var stream = File.Open(filePath, FileMode.Create, FileAccess.Write);
-            Write(stream);
+            using var rdr = new BinaryReader(stream);
+            sections = new List<ComponentSection>();
+            while (stream.Position < stream.Length)
+            {
+                sections.Add(ReadSection(rdr));
+            }
+            long finalPos = stream.Position;
+        }
+
+        private ComponentSection ReadSection(BinaryReader rdr)
+        {
+            long offset = rdr.BaseStream.Position;
+            var id = (ComponentSectionID)rdr.ReadByte();
+            uint size = rdr.ReadVarU32();
+            long endOffset = rdr.BaseStream.Position + size;
+            ComponentSection section;
+            switch (id)
+            {
+                case ComponentSectionID.CoreModule: section = new CoreModuleSection(rdr, size); break;
+                default: section = new UnknownComponentSection(rdr, id, size); break;
+            }
+            section.BinaryOffset = (uint)offset;
+            section.BinaryLength = size;
+            if (rdr.BaseStream.Position != endOffset) { throw new InvalidWasmException($"Unexpected offset after reading {id}"); }
+            return section;
+        }
+
+        public void Write(Stream stream)
+        {
+            using var wtr = new BinaryWriter(stream);
+            foreach (var section in sections)
+            {
+                byte[] sectionData;
+                {
+                    using var sectionStream = new MemoryStream();
+                    using var sectionWtr = new BinaryWriter(sectionStream);
+                    section.Write(sectionWtr, sections);
+                    sectionWtr.Flush();
+                    sectionData = sectionStream.ToArray();
+                }
+                wtr.Write((byte)section.ID);
+                wtr.WriteVarU32((uint)sectionData.Length);
+                wtr.Write(sectionData);
+            }
         }
     }
 }

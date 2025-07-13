@@ -16,7 +16,7 @@ namespace ScreepsDotNet.Bundler.Wasm.Sections
         Start = 8,
         Elem = 9,
         Code = 10,
-        Data = 11
+        Data = 11,
     }
 
     public abstract class Section

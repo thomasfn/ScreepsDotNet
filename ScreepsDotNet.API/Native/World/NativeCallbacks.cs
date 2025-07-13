@@ -1,20 +1,24 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 
 using ScreepsDotNet.API;
 using ScreepsDotNet.API.World;
 
-using ScreepsDotNet.Native.World;
-
-namespace ScreepsDotNet
+namespace ScreepsDotNet.Native.World
 {
     [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal static class NativeCallbacks
     {
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicMethods, typeof(NativeCallbacks))]
         public static Func<RoomCoord, RoomCostSpecification>? currentRoomCallbackFunc;
+
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicMethods, typeof(NativeCallbacks))]
         public static Func<RoomCoord, ICostMatrix, ICostMatrix?>? currentCostCallbackFunc;
+
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicMethods, typeof(NativeCallbacks))]
         public static Func<RoomCoord, RoomCoord, double>? currentRouteCallbackFunc;
 
-        [System.Runtime.InteropServices.UnmanagedCallersOnly(EntryPoint = "screepsdotnet_invoke_room_callback")]
+        [System.Runtime.InteropServices.UnmanagedCallersOnly(EntryPoint = "screeps:screepsdotnet/botapi#invoke-room-callback")]
         public static IntPtr InvokeRoomCallback(int roomCoordX, int roomCoordY)
         {
             if (currentRoomCallbackFunc == null) { return 0; }
@@ -36,7 +40,7 @@ namespace ScreepsDotNet
             }
         }
 
-        [System.Runtime.InteropServices.UnmanagedCallersOnly(EntryPoint = "screepsdotnet_invoke_cost_callback")]
+        [System.Runtime.InteropServices.UnmanagedCallersOnly(EntryPoint = "screeps:screepsdotnet/botapi#invoke-cost-callback")]
         public static IntPtr InvokeCostCallback(int roomCoordX, int roomCoordY, IntPtr costMatrixJsHandle)
         {
             if (currentCostCallbackFunc == null) { return 0; }
@@ -55,7 +59,7 @@ namespace ScreepsDotNet
             return (result as NativeCostMatrix)?.ProxyObject.JSHandle ?? 0;
         }
 
-        [System.Runtime.InteropServices.UnmanagedCallersOnly(EntryPoint = "screepsdotnet_invoke_route_callback")]
+        [System.Runtime.InteropServices.UnmanagedCallersOnly(EntryPoint = "screeps:screepsdotnet/botapi#invoke-route-callback")]
         public static double InvokeRouteCallback(int roomCoordX, int roomCoordY, int fromRoomCoordX, int fromRoomCoordY)
         {
             if (currentRouteCallbackFunc == null) { return 0.0f; }

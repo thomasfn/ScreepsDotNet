@@ -374,1048 +374,6 @@ var bootloader = (function (exports) {
     E || (r.TextDecoder = x, r.TextEncoder = y);
   })("" + void 0 == (typeof global === "undefined" ? "undefined" : _typeof(global)) ? "" + void 0 == (typeof self === "undefined" ? "undefined" : _typeof(self)) ? global : self : global); //AnonyCo
 
-  var CLOCKID_REALTIME = 0;
-  var CLOCKID_MONOTONIC = 1;
-  var ERRNO_SUCCESS = 0;
-  var ERRNO_BADF = 8;
-  var ERRNO_INVAL = 28;
-  var ERRNO_PERM = 63;
-  var Iovec = /*#__PURE__*/function () {
-    function Iovec() {
-      _classCallCheck(this, Iovec);
-    }
-    _createClass(Iovec, null, [{
-      key: "read_bytes",
-      value: function read_bytes(view, ptr) {
-        var iovec = new Iovec();
-        iovec.buf = view.getUint32(ptr, true);
-        iovec.buf_len = view.getUint32(ptr + 4, true);
-        return iovec;
-      }
-    }, {
-      key: "read_bytes_array",
-      value: function read_bytes_array(view, ptr, len) {
-        var iovecs = [];
-        for (var i = 0; i < len; i++) {
-          iovecs.push(Iovec.read_bytes(view, ptr + 8 * i));
-        }
-        return iovecs;
-      }
-    }]);
-    return Iovec;
-  }();
-  var Ciovec = /*#__PURE__*/function () {
-    function Ciovec() {
-      _classCallCheck(this, Ciovec);
-    }
-    _createClass(Ciovec, null, [{
-      key: "read_bytes",
-      value: function read_bytes(view, ptr) {
-        var iovec = new Ciovec();
-        iovec.buf = view.getUint32(ptr, true);
-        iovec.buf_len = view.getUint32(ptr + 4, true);
-        return iovec;
-      }
-    }, {
-      key: "read_bytes_array",
-      value: function read_bytes_array(view, ptr, len) {
-        var iovecs = [];
-        for (var i = 0; i < len; i++) {
-          iovecs.push(Ciovec.read_bytes(view, ptr + 8 * i));
-        }
-        return iovecs;
-      }
-    }]);
-    return Ciovec;
-  }();
-  var WHENCE_SET = 0;
-  var WHENCE_CUR = 1;
-  var WHENCE_END = 2;
-  var FILETYPE_REGULAR_FILE = 4;
-  var FDFLAGS_APPEND = 1 << 0;
-  var Fdstat = /*#__PURE__*/function () {
-    function Fdstat(filetype, flags) {
-      _classCallCheck(this, Fdstat);
-      this.fs_rights_base = 0n;
-      this.fs_rights_inherited = 0n;
-      this.fs_filetype = filetype;
-      this.fs_flags = flags;
-    }
-    _createClass(Fdstat, [{
-      key: "write_bytes",
-      value: function write_bytes(view, ptr) {
-        view.setUint8(ptr, this.fs_filetype);
-        view.setUint16(ptr + 2, this.fs_flags, true);
-        view.setBigUint64(ptr + 8, this.fs_rights_base, true);
-        view.setBigUint64(ptr + 16, this.fs_rights_inherited, true);
-      }
-    }]);
-    return Fdstat;
-  }();
-  var Filestat = /*#__PURE__*/function () {
-    function Filestat(filetype, size) {
-      _classCallCheck(this, Filestat);
-      this.dev = 0n;
-      this.ino = 0n;
-      this.nlink = 0n;
-      this.atim = 0n;
-      this.mtim = 0n;
-      this.ctim = 0n;
-      this.filetype = filetype;
-      this.size = size;
-    }
-    _createClass(Filestat, [{
-      key: "write_bytes",
-      value: function write_bytes(view, ptr) {
-        view.setBigUint64(ptr, this.dev, true);
-        view.setBigUint64(ptr + 8, this.ino, true);
-        view.setUint8(ptr + 16, this.filetype);
-        view.setBigUint64(ptr + 24, this.nlink, true);
-        view.setBigUint64(ptr + 32, this.size, true);
-        view.setBigUint64(ptr + 38, this.atim, true);
-        view.setBigUint64(ptr + 46, this.mtim, true);
-        view.setBigUint64(ptr + 52, this.ctim, true);
-      }
-    }]);
-    return Filestat;
-  }();
-
-  var Debug = /*#__PURE__*/function () {
-    function Debug(isEnabled) {
-      _classCallCheck(this, Debug);
-      this.isEnabled = isEnabled;
-      this.prefix = "wasi:";
-      this.enable(isEnabled);
-    }
-    _createClass(Debug, [{
-      key: "enable",
-      value: function enable(enabled) {
-        this.log = createLogger(enabled === undefined ? true : enabled, this.prefix);
-      }
-    }, {
-      key: "enabled",
-      get: function get() {
-        return this.isEnabled;
-      }
-    }]);
-    return Debug;
-  }();
-  function createLogger(enabled, prefix) {
-    if (enabled) {
-      var a = console.log.bind(console, "%c%s", "color: #265BA0", prefix);
-      return a;
-    } else {
-      return function () {};
-    }
-  }
-  var debug = new Debug(false);
-
-  var WASI = /*#__PURE__*/function () {
-    function WASI(args, env, fds) {
-      var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
-      _classCallCheck(this, WASI);
-      this.args = [];
-      this.env = [];
-      this.fds = [];
-      debug.enable(options.debug);
-      this.args = args;
-      this.env = env;
-      this.fds = fds;
-      var self = this;
-      this.wasiImport = {
-        args_sizes_get: function args_sizes_get(argc, argv_buf_size) {
-          var buffer = new DataView(self.inst.exports.memory.buffer);
-          buffer.setUint32(argc, self.args.length, true);
-          var buf_size = 0;
-          var _iterator = _createForOfIteratorHelper(self.args),
-            _step;
-          try {
-            for (_iterator.s(); !(_step = _iterator.n()).done;) {
-              var arg = _step.value;
-              buf_size += arg.length + 1;
-            }
-          } catch (err) {
-            _iterator.e(err);
-          } finally {
-            _iterator.f();
-          }
-          buffer.setUint32(argv_buf_size, buf_size, true);
-          debug.log(buffer.getUint32(argc, true), buffer.getUint32(argv_buf_size, true));
-          return 0;
-        },
-        args_get: function args_get(argv, argv_buf) {
-          var buffer = new DataView(self.inst.exports.memory.buffer);
-          var buffer8 = new Uint8Array(self.inst.exports.memory.buffer);
-          var orig_argv_buf = argv_buf;
-          for (var i = 0; i < self.args.length; i++) {
-            buffer.setUint32(argv, argv_buf, true);
-            argv += 4;
-            var arg = new TextEncoder().encode(self.args[i]);
-            buffer8.set(arg, argv_buf);
-            buffer.setUint8(argv_buf + arg.length, 0);
-            argv_buf += arg.length + 1;
-          }
-          if (debug.enabled) {
-            debug.log(new TextDecoder("utf-8").decode(buffer8.slice(orig_argv_buf, argv_buf)));
-          }
-          return 0;
-        },
-        environ_sizes_get: function environ_sizes_get(environ_count, environ_size) {
-          var buffer = new DataView(self.inst.exports.memory.buffer);
-          buffer.setUint32(environ_count, self.env.length, true);
-          var buf_size = 0;
-          var _iterator2 = _createForOfIteratorHelper(self.env),
-            _step2;
-          try {
-            for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
-              var environ = _step2.value;
-              buf_size += environ.length + 1;
-            }
-          } catch (err) {
-            _iterator2.e(err);
-          } finally {
-            _iterator2.f();
-          }
-          buffer.setUint32(environ_size, buf_size, true);
-          debug.log(buffer.getUint32(environ_count, true), buffer.getUint32(environ_size, true));
-          return 0;
-        },
-        environ_get: function environ_get(environ, environ_buf) {
-          var buffer = new DataView(self.inst.exports.memory.buffer);
-          var buffer8 = new Uint8Array(self.inst.exports.memory.buffer);
-          var orig_environ_buf = environ_buf;
-          for (var i = 0; i < self.env.length; i++) {
-            buffer.setUint32(environ, environ_buf, true);
-            environ += 4;
-            var e = new TextEncoder().encode(self.env[i]);
-            buffer8.set(e, environ_buf);
-            buffer.setUint8(environ_buf + e.length, 0);
-            environ_buf += e.length + 1;
-          }
-          if (debug.enabled) {
-            debug.log(new TextDecoder("utf-8").decode(buffer8.slice(orig_environ_buf, environ_buf)));
-          }
-          return 0;
-        },
-        clock_res_get: function clock_res_get(id, res_ptr) {
-          throw "unimplemented";
-        },
-        clock_time_get: function clock_time_get(id, precision, time) {
-          var buffer = new DataView(self.inst.exports.memory.buffer);
-          if (id === CLOCKID_REALTIME) {
-            buffer.setBigUint64(time, BigInt(new Date().getTime()) * 1000000n, true);
-          } else if (id == CLOCKID_MONOTONIC) {
-            var monotonic_time;
-            try {
-              monotonic_time = BigInt(Math.round(performance.now() * 1e6));
-            } catch (e) {
-              monotonic_time = 0n;
-            }
-            buffer.setBigUint64(time, monotonic_time, true);
-          } else {
-            buffer.setBigUint64(time, 0n, true);
-          }
-          return 0;
-        },
-        fd_advise: function fd_advise(fd, offset, len, advice) {
-          if (self.fds[fd] != undefined) {
-            return self.fds[fd].fd_advise(offset, len, advice);
-          } else {
-            return ERRNO_BADF;
-          }
-        },
-        fd_allocate: function fd_allocate(fd, offset, len) {
-          if (self.fds[fd] != undefined) {
-            return self.fds[fd].fd_allocate(offset, len);
-          } else {
-            return ERRNO_BADF;
-          }
-        },
-        fd_close: function fd_close(fd) {
-          if (self.fds[fd] != undefined) {
-            var ret = self.fds[fd].fd_close();
-            self.fds[fd] = undefined;
-            return ret;
-          } else {
-            return ERRNO_BADF;
-          }
-        },
-        fd_datasync: function fd_datasync(fd) {
-          if (self.fds[fd] != undefined) {
-            return self.fds[fd].fd_datasync();
-          } else {
-            return ERRNO_BADF;
-          }
-        },
-        fd_fdstat_get: function fd_fdstat_get(fd, fdstat_ptr) {
-          if (self.fds[fd] != undefined) {
-            var _self$fds$fd$fd_fdsta = self.fds[fd].fd_fdstat_get(),
-              ret = _self$fds$fd$fd_fdsta.ret,
-              fdstat = _self$fds$fd$fd_fdsta.fdstat;
-            if (fdstat != null) {
-              fdstat.write_bytes(new DataView(self.inst.exports.memory.buffer), fdstat_ptr);
-            }
-            return ret;
-          } else {
-            return ERRNO_BADF;
-          }
-        },
-        fd_fdstat_set_flags: function fd_fdstat_set_flags(fd, flags) {
-          if (self.fds[fd] != undefined) {
-            return self.fds[fd].fd_fdstat_set_flags(flags);
-          } else {
-            return ERRNO_BADF;
-          }
-        },
-        fd_fdstat_set_rights: function fd_fdstat_set_rights(fd, fs_rights_base, fs_rights_inheriting) {
-          if (self.fds[fd] != undefined) {
-            return self.fds[fd].fd_fdstat_set_rights(fs_rights_base, fs_rights_inheriting);
-          } else {
-            return ERRNO_BADF;
-          }
-        },
-        fd_filestat_get: function fd_filestat_get(fd, filestat_ptr) {
-          if (self.fds[fd] != undefined) {
-            var _self$fds$fd$fd_files = self.fds[fd].fd_filestat_get(),
-              ret = _self$fds$fd$fd_files.ret,
-              filestat = _self$fds$fd$fd_files.filestat;
-            if (filestat != null) {
-              filestat.write_bytes(new DataView(self.inst.exports.memory.buffer), filestat_ptr);
-            }
-            return ret;
-          } else {
-            return ERRNO_BADF;
-          }
-        },
-        fd_filestat_set_size: function fd_filestat_set_size(fd, size) {
-          if (self.fds[fd] != undefined) {
-            return self.fds[fd].fd_filestat_set_size(size);
-          } else {
-            return ERRNO_BADF;
-          }
-        },
-        fd_filestat_set_times: function fd_filestat_set_times(fd, atim, mtim, fst_flags) {
-          if (self.fds[fd] != undefined) {
-            return self.fds[fd].fd_filestat_set_times(atim, mtim, fst_flags);
-          } else {
-            return ERRNO_BADF;
-          }
-        },
-        fd_pread: function fd_pread(fd, iovs_ptr, iovs_len, offset, nread_ptr) {
-          var buffer = new DataView(self.inst.exports.memory.buffer);
-          var buffer8 = new Uint8Array(self.inst.exports.memory.buffer);
-          if (self.fds[fd] != undefined) {
-            var iovecs = Iovec.read_bytes_array(buffer, iovs_ptr, iovs_len);
-            var _self$fds$fd$fd_pread = self.fds[fd].fd_pread(buffer8, iovecs, offset),
-              ret = _self$fds$fd$fd_pread.ret,
-              nread = _self$fds$fd$fd_pread.nread;
-            buffer.setUint32(nread_ptr, nread, true);
-            return ret;
-          } else {
-            return ERRNO_BADF;
-          }
-        },
-        fd_prestat_get: function fd_prestat_get(fd, buf_ptr) {
-          var buffer = new DataView(self.inst.exports.memory.buffer);
-          if (self.fds[fd] != undefined) {
-            var _self$fds$fd$fd_prest = self.fds[fd].fd_prestat_get(),
-              ret = _self$fds$fd$fd_prest.ret,
-              prestat = _self$fds$fd$fd_prest.prestat;
-            if (prestat != null) {
-              prestat.write_bytes(buffer, buf_ptr);
-            }
-            return ret;
-          } else {
-            return ERRNO_BADF;
-          }
-        },
-        fd_prestat_dir_name: function fd_prestat_dir_name(fd, path_ptr, path_len) {
-          if (self.fds[fd] != undefined) {
-            var _self$fds$fd$fd_prest2 = self.fds[fd].fd_prestat_dir_name(),
-              ret = _self$fds$fd$fd_prest2.ret,
-              prestat_dir_name = _self$fds$fd$fd_prest2.prestat_dir_name;
-            if (prestat_dir_name != null) {
-              var buffer8 = new Uint8Array(self.inst.exports.memory.buffer);
-              buffer8.set(prestat_dir_name, path_ptr);
-            }
-            return ret;
-          } else {
-            return ERRNO_BADF;
-          }
-        },
-        fd_pwrite: function fd_pwrite(fd, iovs_ptr, iovs_len, offset, nwritten_ptr) {
-          var buffer = new DataView(self.inst.exports.memory.buffer);
-          var buffer8 = new Uint8Array(self.inst.exports.memory.buffer);
-          if (self.fds[fd] != undefined) {
-            var iovecs = Ciovec.read_bytes_array(buffer, iovs_ptr, iovs_len);
-            var _self$fds$fd$fd_pwrit = self.fds[fd].fd_pwrite(buffer8, iovecs, offset),
-              ret = _self$fds$fd$fd_pwrit.ret,
-              nwritten = _self$fds$fd$fd_pwrit.nwritten;
-            buffer.setUint32(nwritten_ptr, nwritten, true);
-            return ret;
-          } else {
-            return ERRNO_BADF;
-          }
-        },
-        fd_read: function fd_read(fd, iovs_ptr, iovs_len, nread_ptr) {
-          var buffer = new DataView(self.inst.exports.memory.buffer);
-          var buffer8 = new Uint8Array(self.inst.exports.memory.buffer);
-          if (self.fds[fd] != undefined) {
-            var iovecs = Iovec.read_bytes_array(buffer, iovs_ptr, iovs_len);
-            var _self$fds$fd$fd_read = self.fds[fd].fd_read(buffer8, iovecs),
-              ret = _self$fds$fd$fd_read.ret,
-              nread = _self$fds$fd$fd_read.nread;
-            buffer.setUint32(nread_ptr, nread, true);
-            return ret;
-          } else {
-            return ERRNO_BADF;
-          }
-        },
-        fd_readdir: function fd_readdir(fd, buf, buf_len, cookie, bufused_ptr) {
-          var buffer = new DataView(self.inst.exports.memory.buffer);
-          var buffer8 = new Uint8Array(self.inst.exports.memory.buffer);
-          if (self.fds[fd] != undefined) {
-            var bufused = 0;
-            while (true) {
-              var _self$fds$fd$fd_readd = self.fds[fd].fd_readdir_single(cookie),
-                ret = _self$fds$fd$fd_readd.ret,
-                dirent = _self$fds$fd$fd_readd.dirent;
-              if (ret != 0) {
-                buffer.setUint32(bufused_ptr, bufused, true);
-                return ret;
-              }
-              if (dirent == null) {
-                break;
-              }
-              if (buf_len - bufused < dirent.head_length()) {
-                bufused = buf_len;
-                break;
-              }
-              var head_bytes = new ArrayBuffer(dirent.head_length());
-              dirent.write_head_bytes(new DataView(head_bytes), 0);
-              buffer8.set(new Uint8Array(head_bytes).slice(0, Math.min(head_bytes.byteLength, buf_len - bufused)), buf);
-              buf += dirent.head_length();
-              bufused += dirent.head_length();
-              if (buf_len - bufused < dirent.name_length()) {
-                bufused = buf_len;
-                break;
-              }
-              dirent.write_name_bytes(buffer8, buf, buf_len - bufused);
-              buf += dirent.name_length();
-              bufused += dirent.name_length();
-              cookie = dirent.d_next;
-            }
-            buffer.setUint32(bufused_ptr, bufused, true);
-            return 0;
-          } else {
-            return ERRNO_BADF;
-          }
-        },
-        fd_renumber: function fd_renumber(fd, to) {
-          if (self.fds[fd] != undefined && self.fds[to] != undefined) {
-            var ret = self.fds[to].fd_close();
-            if (ret != 0) {
-              return ret;
-            }
-            self.fds[to] = self.fds[fd];
-            self.fds[fd] = undefined;
-            return 0;
-          } else {
-            return ERRNO_BADF;
-          }
-        },
-        fd_seek: function fd_seek(fd, offset, whence, offset_out_ptr) {
-          var buffer = new DataView(self.inst.exports.memory.buffer);
-          if (self.fds[fd] != undefined) {
-            var _self$fds$fd$fd_seek = self.fds[fd].fd_seek(offset, whence),
-              ret = _self$fds$fd$fd_seek.ret,
-              offset_out = _self$fds$fd$fd_seek.offset;
-            buffer.setBigInt64(offset_out_ptr, offset_out, true);
-            return ret;
-          } else {
-            return ERRNO_BADF;
-          }
-        },
-        fd_sync: function fd_sync(fd) {
-          if (self.fds[fd] != undefined) {
-            return self.fds[fd].fd_sync();
-          } else {
-            return ERRNO_BADF;
-          }
-        },
-        fd_tell: function fd_tell(fd, offset_ptr) {
-          var buffer = new DataView(self.inst.exports.memory.buffer);
-          if (self.fds[fd] != undefined) {
-            var _self$fds$fd$fd_tell = self.fds[fd].fd_tell(),
-              ret = _self$fds$fd$fd_tell.ret,
-              offset = _self$fds$fd$fd_tell.offset;
-            buffer.setBigUint64(offset_ptr, offset, true);
-            return ret;
-          } else {
-            return ERRNO_BADF;
-          }
-        },
-        fd_write: function fd_write(fd, iovs_ptr, iovs_len, nwritten_ptr) {
-          var buffer = new DataView(self.inst.exports.memory.buffer);
-          var buffer8 = new Uint8Array(self.inst.exports.memory.buffer);
-          if (self.fds[fd] != undefined) {
-            var iovecs = Ciovec.read_bytes_array(buffer, iovs_ptr, iovs_len);
-            var _self$fds$fd$fd_write = self.fds[fd].fd_write(buffer8, iovecs),
-              ret = _self$fds$fd$fd_write.ret,
-              nwritten = _self$fds$fd$fd_write.nwritten;
-            buffer.setUint32(nwritten_ptr, nwritten, true);
-            return ret;
-          } else {
-            return ERRNO_BADF;
-          }
-        },
-        path_create_directory: function path_create_directory(fd, path_ptr, path_len) {
-          var buffer8 = new Uint8Array(self.inst.exports.memory.buffer);
-          if (self.fds[fd] != undefined) {
-            var path = new TextDecoder("utf-8").decode(buffer8.slice(path_ptr, path_ptr + path_len));
-            return self.fds[fd].path_create_directory(path);
-          }
-        },
-        path_filestat_get: function path_filestat_get(fd, flags, path_ptr, path_len, filestat_ptr) {
-          var buffer = new DataView(self.inst.exports.memory.buffer);
-          var buffer8 = new Uint8Array(self.inst.exports.memory.buffer);
-          if (self.fds[fd] != undefined) {
-            var path = new TextDecoder("utf-8").decode(buffer8.slice(path_ptr, path_ptr + path_len));
-            var _self$fds$fd$path_fil = self.fds[fd].path_filestat_get(flags, path),
-              ret = _self$fds$fd$path_fil.ret,
-              filestat = _self$fds$fd$path_fil.filestat;
-            if (filestat != null) {
-              filestat.write_bytes(buffer, filestat_ptr);
-            }
-            return ret;
-          } else {
-            return ERRNO_BADF;
-          }
-        },
-        path_filestat_set_times: function path_filestat_set_times(fd, flags, path_ptr, path_len, atim, mtim, fst_flags) {
-          var buffer8 = new Uint8Array(self.inst.exports.memory.buffer);
-          if (self.fds[fd] != undefined) {
-            var path = new TextDecoder("utf-8").decode(buffer8.slice(path_ptr, path_ptr + path_len));
-            return self.fds[fd].path_filestat_set_times(flags, path, atim, mtim, fst_flags);
-          } else {
-            return ERRNO_BADF;
-          }
-        },
-        path_link: function path_link(old_fd, old_flags, old_path_ptr, old_path_len, new_fd, new_path_ptr, new_path_len) {
-          var buffer8 = new Uint8Array(self.inst.exports.memory.buffer);
-          if (self.fds[old_fd] != undefined && self.fds[new_fd] != undefined) {
-            var old_path = new TextDecoder("utf-8").decode(buffer8.slice(old_path_ptr, old_path_ptr + old_path_len));
-            var new_path = new TextDecoder("utf-8").decode(buffer8.slice(new_path_ptr, new_path_ptr + new_path_len));
-            return self.fds[new_fd].path_link(old_fd, old_flags, old_path, new_path);
-          } else {
-            return ERRNO_BADF;
-          }
-        },
-        path_open: function path_open(fd, dirflags, path_ptr, path_len, oflags, fs_rights_base, fs_rights_inheriting, fd_flags, opened_fd_ptr) {
-          var buffer = new DataView(self.inst.exports.memory.buffer);
-          var buffer8 = new Uint8Array(self.inst.exports.memory.buffer);
-          if (self.fds[fd] != undefined) {
-            var path = new TextDecoder("utf-8").decode(buffer8.slice(path_ptr, path_ptr + path_len));
-            debug.log(path);
-            var _self$fds$fd$path_ope = self.fds[fd].path_open(dirflags, path, oflags, fs_rights_base, fs_rights_inheriting, fd_flags),
-              ret = _self$fds$fd$path_ope.ret,
-              fd_obj = _self$fds$fd$path_ope.fd_obj;
-            if (ret != 0) {
-              return ret;
-            }
-            self.fds.push(fd_obj);
-            var opened_fd = self.fds.length - 1;
-            buffer.setUint32(opened_fd_ptr, opened_fd, true);
-            return 0;
-          } else {
-            return ERRNO_BADF;
-          }
-        },
-        path_readlink: function path_readlink(fd, path_ptr, path_len, buf_ptr, buf_len, nread_ptr) {
-          var buffer = new DataView(self.inst.exports.memory.buffer);
-          var buffer8 = new Uint8Array(self.inst.exports.memory.buffer);
-          if (self.fds[fd] != undefined) {
-            var path = new TextDecoder("utf-8").decode(buffer8.slice(path_ptr, path_ptr + path_len));
-            debug.log(path);
-            var _self$fds$fd$path_rea = self.fds[fd].path_readlink(path),
-              ret = _self$fds$fd$path_rea.ret,
-              data = _self$fds$fd$path_rea.data;
-            if (data != null) {
-              if (data.length > buf_len) {
-                buffer.setUint32(nread_ptr, 0, true);
-                return ERRNO_BADF;
-              }
-              buffer8.set(data, buf_ptr);
-              buffer.setUint32(nread_ptr, data.length, true);
-            }
-            return ret;
-          } else {
-            return ERRNO_BADF;
-          }
-        },
-        path_remove_directory: function path_remove_directory(fd, path_ptr, path_len) {
-          var buffer8 = new Uint8Array(self.inst.exports.memory.buffer);
-          if (self.fds[fd] != undefined) {
-            var path = new TextDecoder("utf-8").decode(buffer8.slice(path_ptr, path_ptr + path_len));
-            return self.fds[fd].path_remove_directory(path);
-          } else {
-            return ERRNO_BADF;
-          }
-        },
-        path_rename: function path_rename(fd, old_path_ptr, old_path_len, new_fd, new_path_ptr, new_path_len) {
-          throw "FIXME what is the best abstraction for this?";
-        },
-        path_symlink: function path_symlink(old_path_ptr, old_path_len, fd, new_path_ptr, new_path_len) {
-          var buffer8 = new Uint8Array(self.inst.exports.memory.buffer);
-          if (self.fds[fd] != undefined) {
-            var old_path = new TextDecoder("utf-8").decode(buffer8.slice(old_path_ptr, old_path_ptr + old_path_len));
-            var new_path = new TextDecoder("utf-8").decode(buffer8.slice(new_path_ptr, new_path_ptr + new_path_len));
-            return self.fds[fd].path_symlink(old_path, new_path);
-          } else {
-            return ERRNO_BADF;
-          }
-        },
-        path_unlink_file: function path_unlink_file(fd, path_ptr, path_len) {
-          var buffer8 = new Uint8Array(self.inst.exports.memory.buffer);
-          if (self.fds[fd] != undefined) {
-            var path = new TextDecoder("utf-8").decode(buffer8.slice(path_ptr, path_ptr + path_len));
-            return self.fds[fd].path_unlink_file(path);
-          } else {
-            return ERRNO_BADF;
-          }
-        },
-        poll_oneoff: function poll_oneoff(in_, out, nsubscriptions) {
-          throw "async io not supported";
-        },
-        proc_exit: function proc_exit(exit_code) {
-          throw "exit with exit code " + exit_code;
-        },
-        proc_raise: function proc_raise(sig) {
-          throw "raised signal " + sig;
-        },
-        sched_yield: function sched_yield() {},
-        random_get: function random_get(buf, buf_len) {
-          var buffer8 = new Uint8Array(self.inst.exports.memory.buffer);
-          for (var i = 0; i < buf_len; i++) {
-            buffer8[buf + i] = Math.random() * 256 | 0;
-          }
-        },
-        sock_recv: function sock_recv(fd, ri_data, ri_flags) {
-          throw "sockets not supported";
-        },
-        sock_send: function sock_send(fd, si_data, si_flags) {
-          throw "sockets not supported";
-        },
-        sock_shutdown: function sock_shutdown(fd, how) {
-          throw "sockets not supported";
-        },
-        sock_accept: function sock_accept(fd, flags) {
-          throw "sockets not supported";
-        }
-      };
-    }
-    _createClass(WASI, [{
-      key: "start",
-      value: function start(instance) {
-        this.inst = instance;
-        instance.exports._start();
-      }
-    }, {
-      key: "initialize",
-      value: function initialize(instance) {
-        this.inst = instance;
-        instance.exports._initialize();
-      }
-    }]);
-    return WASI;
-  }();
-
-  var Fd = /*#__PURE__*/function () {
-    function Fd() {
-      _classCallCheck(this, Fd);
-    }
-    _createClass(Fd, [{
-      key: "fd_advise",
-      value: function fd_advise(offset, len, advice) {
-        return -1;
-      }
-    }, {
-      key: "fd_allocate",
-      value: function fd_allocate(offset, len) {
-        return -1;
-      }
-    }, {
-      key: "fd_close",
-      value: function fd_close() {
-        return 0;
-      }
-    }, {
-      key: "fd_datasync",
-      value: function fd_datasync() {
-        return -1;
-      }
-    }, {
-      key: "fd_fdstat_get",
-      value: function fd_fdstat_get() {
-        return {
-          ret: -1,
-          fdstat: null
-        };
-      }
-    }, {
-      key: "fd_fdstat_set_flags",
-      value: function fd_fdstat_set_flags(flags) {
-        return -1;
-      }
-    }, {
-      key: "fd_fdstat_set_rights",
-      value: function fd_fdstat_set_rights(fs_rights_base, fs_rights_inheriting) {
-        return -1;
-      }
-    }, {
-      key: "fd_filestat_get",
-      value: function fd_filestat_get() {
-        return {
-          ret: -1,
-          filestat: null
-        };
-      }
-    }, {
-      key: "fd_filestat_set_size",
-      value: function fd_filestat_set_size(size) {
-        return -1;
-      }
-    }, {
-      key: "fd_filestat_set_times",
-      value: function fd_filestat_set_times(atim, mtim, fst_flags) {
-        return -1;
-      }
-    }, {
-      key: "fd_pread",
-      value: function fd_pread(view8, iovs, offset) {
-        return {
-          ret: -1,
-          nread: 0
-        };
-      }
-    }, {
-      key: "fd_prestat_get",
-      value: function fd_prestat_get() {
-        return {
-          ret: -1,
-          prestat: null
-        };
-      }
-    }, {
-      key: "fd_prestat_dir_name",
-      value: function fd_prestat_dir_name() {
-        return {
-          ret: -1,
-          prestat_dir_name: null
-        };
-      }
-    }, {
-      key: "fd_pwrite",
-      value: function fd_pwrite(view8, iovs, offset) {
-        return {
-          ret: -1,
-          nwritten: 0
-        };
-      }
-    }, {
-      key: "fd_read",
-      value: function fd_read(view8, iovs) {
-        return {
-          ret: -1,
-          nread: 0
-        };
-      }
-    }, {
-      key: "fd_readdir_single",
-      value: function fd_readdir_single(cookie) {
-        return {
-          ret: -1,
-          dirent: null
-        };
-      }
-    }, {
-      key: "fd_seek",
-      value: function fd_seek(offset, whence) {
-        return {
-          ret: -1,
-          offset: 0n
-        };
-      }
-    }, {
-      key: "fd_sync",
-      value: function fd_sync() {
-        return 0;
-      }
-    }, {
-      key: "fd_tell",
-      value: function fd_tell() {
-        return {
-          ret: -1,
-          offset: 0n
-        };
-      }
-    }, {
-      key: "fd_write",
-      value: function fd_write(view8, iovs) {
-        return {
-          ret: -1,
-          nwritten: 0
-        };
-      }
-    }, {
-      key: "path_create_directory",
-      value: function path_create_directory(path) {
-        return -1;
-      }
-    }, {
-      key: "path_filestat_get",
-      value: function path_filestat_get(flags, path) {
-        return {
-          ret: -1,
-          filestat: null
-        };
-      }
-    }, {
-      key: "path_filestat_set_times",
-      value: function path_filestat_set_times(flags, path, atim, mtim, fst_flags) {
-        return -1;
-      }
-    }, {
-      key: "path_link",
-      value: function path_link(old_fd, old_flags, old_path, new_path) {
-        return -1;
-      }
-    }, {
-      key: "path_open",
-      value: function path_open(dirflags, path, oflags, fs_rights_base, fs_rights_inheriting, fdflags) {
-        return {
-          ret: -1,
-          fd_obj: null
-        };
-      }
-    }, {
-      key: "path_readlink",
-      value: function path_readlink(path) {
-        return {
-          ret: -1,
-          data: null
-        };
-      }
-    }, {
-      key: "path_remove_directory",
-      value: function path_remove_directory(path) {
-        return -1;
-      }
-    }, {
-      key: "path_rename",
-      value: function path_rename(old_path, new_fd, new_path) {
-        return -1;
-      }
-    }, {
-      key: "path_symlink",
-      value: function path_symlink(old_path, new_path) {
-        return -1;
-      }
-    }, {
-      key: "path_unlink_file",
-      value: function path_unlink_file(path) {
-        return -1;
-      }
-    }]);
-    return Fd;
-  }();
-
-  var OpenFile = /*#__PURE__*/function (_Fd) {
-    _inherits(OpenFile, _Fd);
-    var _super = _createSuper(OpenFile);
-    function OpenFile(file) {
-      var _this;
-      _classCallCheck(this, OpenFile);
-      _this = _super.call(this);
-      _this.file_pos = 0n;
-      _this.file = file;
-      return _this;
-    }
-    _createClass(OpenFile, [{
-      key: "fd_fdstat_get",
-      value: function fd_fdstat_get() {
-        return {
-          ret: 0,
-          fdstat: new Fdstat(FILETYPE_REGULAR_FILE, 0)
-        };
-      }
-    }, {
-      key: "fd_read",
-      value: function fd_read(view8, iovs) {
-        var nread = 0;
-        var _iterator = _createForOfIteratorHelper(iovs),
-          _step;
-        try {
-          for (_iterator.s(); !(_step = _iterator.n()).done;) {
-            var iovec = _step.value;
-            if (this.file_pos < this.file.data.byteLength) {
-              var slice = this.file.data.slice(Number(this.file_pos), Number(this.file_pos + BigInt(iovec.buf_len)));
-              view8.set(slice, iovec.buf);
-              this.file_pos += BigInt(slice.length);
-              nread += slice.length;
-            } else {
-              break;
-            }
-          }
-        } catch (err) {
-          _iterator.e(err);
-        } finally {
-          _iterator.f();
-        }
-        return {
-          ret: 0,
-          nread: nread
-        };
-      }
-    }, {
-      key: "fd_pread",
-      value: function fd_pread(view8, iovs, offset) {
-        var nread = 0;
-        var _iterator2 = _createForOfIteratorHelper(iovs),
-          _step2;
-        try {
-          for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
-            var iovec = _step2.value;
-            if (offset < this.file.data.byteLength) {
-              var slice = this.file.data.slice(Number(offset), Number(offset + BigInt(iovec.buf_len)));
-              view8.set(slice, iovec.buf);
-              offset += BigInt(slice.length);
-              nread += slice.length;
-            } else {
-              break;
-            }
-          }
-        } catch (err) {
-          _iterator2.e(err);
-        } finally {
-          _iterator2.f();
-        }
-        return {
-          ret: 0,
-          nread: nread
-        };
-      }
-    }, {
-      key: "fd_seek",
-      value: function fd_seek(offset, whence) {
-        var calculated_offset;
-        switch (whence) {
-          case WHENCE_SET:
-            calculated_offset = offset;
-            break;
-          case WHENCE_CUR:
-            calculated_offset = this.file_pos + offset;
-            break;
-          case WHENCE_END:
-            calculated_offset = BigInt(this.file.data.byteLength) + offset;
-            break;
-          default:
-            return {
-              ret: ERRNO_INVAL,
-              offset: 0n
-            };
-        }
-        if (calculated_offset < 0) {
-          return {
-            ret: ERRNO_INVAL,
-            offset: 0n
-          };
-        }
-        this.file_pos = calculated_offset;
-        return {
-          ret: 0,
-          offset: this.file_pos
-        };
-      }
-    }, {
-      key: "fd_write",
-      value: function fd_write(view8, iovs) {
-        var nwritten = 0;
-        if (this.file.readonly) return {
-          ret: ERRNO_BADF,
-          nwritten: nwritten
-        };
-        var _iterator3 = _createForOfIteratorHelper(iovs),
-          _step3;
-        try {
-          for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
-            var iovec = _step3.value;
-            var buffer = view8.slice(iovec.buf, iovec.buf + iovec.buf_len);
-            if (this.file_pos + BigInt(buffer.byteLength) > this.file.size) {
-              var old = this.file.data;
-              this.file.data = new Uint8Array(Number(this.file_pos + BigInt(buffer.byteLength)));
-              this.file.data.set(old);
-            }
-            this.file.data.set(buffer.slice(0, Number(this.file.size - this.file_pos)), Number(this.file_pos));
-            this.file_pos += BigInt(buffer.byteLength);
-            nwritten += iovec.buf_len;
-          }
-        } catch (err) {
-          _iterator3.e(err);
-        } finally {
-          _iterator3.f();
-        }
-        return {
-          ret: 0,
-          nwritten: nwritten
-        };
-      }
-    }, {
-      key: "fd_filestat_get",
-      value: function fd_filestat_get() {
-        return {
-          ret: 0,
-          filestat: this.file.stat()
-        };
-      }
-    }]);
-    return OpenFile;
-  }(Fd);
-
-  var File = /*#__PURE__*/function () {
-    function File(data, options) {
-      _classCallCheck(this, File);
-      this.data = new Uint8Array(data);
-      this.readonly = !!(options !== null && options !== void 0 && options.readonly);
-    }
-    _createClass(File, [{
-      key: "open",
-      value: function open(fd_flags) {
-        var file = new OpenFile(this);
-        if (fd_flags & FDFLAGS_APPEND) file.fd_seek(0n, WHENCE_END);
-        return file;
-      }
-    }, {
-      key: "size",
-      get: function get() {
-        return BigInt(this.data.byteLength);
-      }
-    }, {
-      key: "stat",
-      value: function stat() {
-        return new Filestat(FILETYPE_REGULAR_FILE, this.size);
-      }
-    }, {
-      key: "truncate",
-      value: function truncate() {
-        if (this.readonly) return ERRNO_PERM;
-        this.data = new Uint8Array([]);
-        return ERRNO_SUCCESS;
-      }
-    }]);
-    return File;
-  }();
-
   var lookup = new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 62, 0, 62, 0, 63, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 0, 0, 0, 0, 63, 0, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51]);
   function base64Decode(source, target) {
     var sourceLength = source.length;
@@ -1911,21 +869,21 @@ var bootloader = (function (exports) {
       _defineProperty(this, "_timeInJsUserCode", 0);
       this._profileFn = profileFn;
       this.interopImport = {};
-      this.interopImport.js_bind_import = this.js_bind_import.bind(this);
-      this.interopImport.js_invoke_import = this.js_invoke_import.bind(this);
-      this.interopImport.js_release_object_reference = this.js_release_object_reference.bind(this);
-      this.interopImport.js_set_name = this.js_set_name.bind(this);
-      this.interopImport.js_invoke_i_i = this.js_invoke_i_i.bind(this);
-      this.interopImport.js_invoke_i_ii = this.js_invoke_i_ii.bind(this);
-      this.interopImport.js_invoke_i_iii = this.js_invoke_i_iii.bind(this);
-      this.interopImport.js_invoke_i_o = this.js_invoke_i_o.bind(this);
-      this.interopImport.js_invoke_i_oi = this.js_invoke_i_oi.bind(this);
-      this.interopImport.js_invoke_i_on = this.js_invoke_i_on.bind(this);
-      this.interopImport.js_invoke_i_oii = this.js_invoke_i_oii.bind(this);
-      this.interopImport.js_invoke_i_oo = this.js_invoke_i_oo.bind(this);
-      this.interopImport.js_invoke_i_ooi = this.js_invoke_i_ooi.bind(this);
-      this.interopImport.js_invoke_i_ooii = this.js_invoke_i_ooii.bind(this);
-      this.interopImport.js_invoke_d_v = this.js_invoke_d_v.bind(this);
+      this.interopImport['bind-import'] = this.js_bind_import.bind(this);
+      this.interopImport['invoke-import'] = this.js_invoke_import.bind(this);
+      this.interopImport['release-object-reference'] = this.js_release_object_reference.bind(this);
+      this.interopImport['set-name'] = this.js_set_name.bind(this);
+      this.interopImport['invoke-i-i'] = this.js_invoke_i_i.bind(this);
+      this.interopImport['invoke-i-ii'] = this.js_invoke_i_ii.bind(this);
+      this.interopImport['invoke-i-iii'] = this.js_invoke_i_iii.bind(this);
+      this.interopImport['invoke-i-o'] = this.js_invoke_i_o.bind(this);
+      this.interopImport['invoke-i-oi'] = this.js_invoke_i_oi.bind(this);
+      this.interopImport['invoke-i-on'] = this.js_invoke_i_on.bind(this);
+      this.interopImport['invoke-i-oii'] = this.js_invoke_i_oii.bind(this);
+      this.interopImport['invoke-i-oo'] = this.js_invoke_i_oo.bind(this);
+      this.interopImport['invoke-i-ooi'] = this.js_invoke_i_ooi.bind(this);
+      this.interopImport['invoke-i-ooii'] = this.js_invoke_i_ooii.bind(this);
+      this.interopImport['invoke-d-v'] = this.js_invoke_d_v.bind(this);
     }
     _createClass(Interop, [{
       key: "memoryManager",
@@ -2682,6 +1640,7 @@ var bootloader = (function (exports) {
       get: function get() {
         if (this._view == null || this._viewArrayBuffer !== this._memory.buffer) {
           this._view = this.createNewView();
+          this._viewArrayBuffer = this._memory.buffer;
         }
         return this._view;
       }
@@ -2882,9 +1841,6 @@ var bootloader = (function (exports) {
           },
           getPrototypes: function getPrototypes() {
             return prototypes;
-          },
-          getArenaInfo: function getArenaInfo() {
-            return arenaInfo;
           }
         };
         var wrappedPrototypes = this.buildWrappedPrototypes(prototypes);
@@ -3042,9 +1998,9 @@ var bootloader = (function (exports) {
       key: "init",
       value: function init(exports, memoryManager) {
         _get(_getPrototypeOf(WorldBindings.prototype), "init", this).call(this, exports, memoryManager);
-        this._invoke_room_callback = exports.screepsdotnet_invoke_room_callback;
-        this._invoke_cost_callback = exports.screepsdotnet_invoke_cost_callback;
-        this._invoke_route_callback = exports.screepsdotnet_invoke_route_callback;
+        this._invoke_room_callback = exports['screeps:screepsdotnet/botapi#invoke-room-callback'];
+        this._invoke_cost_callback = exports['screeps:screepsdotnet/botapi#invoke-cost-callback'];
+        this._invoke_route_callback = exports['screeps:screepsdotnet/botapi#invoke-route-callback'];
         this._memoryCache = Memory;
         this._memoryCache = RawMemory._parsed;
         this._lastCheckIn = Game.time;
@@ -3073,12 +2029,12 @@ var bootloader = (function (exports) {
           _global$ScoreContaine,
           _this2 = this;
         _get(_getPrototypeOf(WorldBindings.prototype), "setupImports", this).call(this);
-        this.bindingsImport.js_renew_object = this.js_renew_object.bind(this);
-        this.bindingsImport.js_batch_renew_objects = this.js_batch_renew_objects.bind(this);
-        this.bindingsImport.js_fetch_object_room_position = this.js_fetch_object_room_position.bind(this);
-        this.bindingsImport.js_batch_fetch_object_room_positions = this.js_batch_fetch_object_room_positions.bind(this);
-        this.bindingsImport.js_get_object_by_id = this.js_get_object_by_id.bind(this);
-        this.bindingsImport.js_get_object_id = this.js_get_object_id.bind(this);
+        this.bindingsImport['renew-object'] = this.js_renew_object.bind(this);
+        this.bindingsImport['batch-renew-objects'] = this.js_batch_renew_objects.bind(this);
+        this.bindingsImport['fetch-object-room-position'] = this.js_fetch_object_room_position.bind(this);
+        this.bindingsImport['batch-fetch-object-room-positions'] = this.js_batch_fetch_object_room_positions.bind(this);
+        this.bindingsImport['get-object-by-id'] = this.js_get_object_by_id.bind(this);
+        this.bindingsImport['get-object-id'] = this.js_get_object_id.bind(this);
         var _global = global;
         var gameConstructors = {
           StructureContainer: StructureContainer,
@@ -3732,115 +2688,19 @@ var bootloader = (function (exports) {
     return WorldBindings;
   }(BaseBindings);
 
-  var TestBindings = /*#__PURE__*/function (_BaseBindings) {
-    _inherits(TestBindings, _BaseBindings);
-    var _super = _createSuper(TestBindings);
-    function TestBindings() {
-      _classCallCheck(this, TestBindings);
-      return _super.apply(this, arguments);
-    }
-    _createClass(TestBindings, [{
-      key: "init",
-      value: function init(exports, memoryManager) {
-        _get(_getPrototypeOf(TestBindings.prototype), "init", this).call(this, exports, memoryManager);
-      }
-    }, {
-      key: "loop",
-      value: function loop() {
-        _get(_getPrototypeOf(TestBindings.prototype), "loop", this).call(this);
-      }
-    }, {
-      key: "setupImports",
-      value: function setupImports() {
-        _get(_getPrototypeOf(TestBindings.prototype), "setupImports", this).call(this);
-        this.bindingsImport.js_renew_object = this.js_renew_object.bind(this);
-        this.bindingsImport.js_batch_renew_objects = this.js_batch_renew_objects.bind(this);
-        this.bindingsImport.js_fetch_object_room_position = this.js_fetch_object_room_position.bind(this);
-        this.bindingsImport.js_batch_fetch_object_room_positions = this.js_batch_fetch_object_room_positions.bind(this);
-        this.bindingsImport.js_get_object_by_id = this.js_get_object_by_id.bind(this);
-        this.bindingsImport.js_get_object_id = this.js_get_object_id.bind(this);
-      }
-    }, {
-      key: "js_renew_object",
-      value: function js_renew_object(jsHandle) {
-        return 1;
-      }
-    }, {
-      key: "js_batch_renew_objects",
-      value: function js_batch_renew_objects(jsHandleListPtr, count) {
-        var i32 = this._memoryManager.view.i32;
-        var baseIdx = jsHandleListPtr >> 2;
-        for (var i = 0; i < count; ++i) {
-          if (this.js_renew_object(i32[baseIdx + i]) === 0) ; else {
-            i32[baseIdx + i] = -1;
-          }
-        }
-        return 0;
-      }
-    }, {
-      key: "js_fetch_object_room_position",
-      value: function js_fetch_object_room_position(jsHandle) {
-        return 0;
-      }
-    }, {
-      key: "js_batch_fetch_object_room_positions",
-      value: function js_batch_fetch_object_room_positions(jsHandleListPtr, count, outRoomPosListPtr) {
-        var i32 = this._memoryManager.view.i32;
-        var baseJsHandleIdx = jsHandleListPtr >> 2;
-        var baseOutRoomPostListIdx = outRoomPosListPtr >> 2;
-        for (var i = 0; i < count; ++i) {
-          i32[baseOutRoomPostListIdx + i] = this.js_fetch_object_room_position(i32[baseJsHandleIdx + i]);
-        }
-      }
-    }, {
-      key: "js_get_object_by_id",
-      value: function js_get_object_by_id(objectIdPtr) {
-        return -1;
-      }
-    }, {
-      key: "js_get_object_id",
-      value: function js_get_object_id(jsHandle, outRawObjectIdPtr) {
-        return 0;
-      }
-    }]);
-    return TestBindings;
-  }(BaseBindings);
-
   var utf8Decoder = new TextDecoder();
-  var Stdio = /*#__PURE__*/function (_Fd) {
-    _inherits(Stdio, _Fd);
-    var _super = _createSuper(Stdio);
+  var Stdio = /*#__PURE__*/function () {
     function Stdio(outFunc) {
-      var _this;
       _classCallCheck(this, Stdio);
-      _this = _super.call(this);
-      _defineProperty(_assertThisInitialized(_this), "outFunc", void 0);
-      _defineProperty(_assertThisInitialized(_this), "buffer", void 0);
-      _this.outFunc = outFunc;
-      return _this;
+      _defineProperty(this, "_outFunc", void 0);
+      _defineProperty(this, "buffer", void 0);
+      this._outFunc = outFunc;
     }
     _createClass(Stdio, [{
-      key: "fd_write",
-      value: function fd_write(view8, iovs) {
-        var nwritten = 0;
-        var _iterator = _createForOfIteratorHelper(iovs),
-          _step;
-        try {
-          for (_iterator.s(); !(_step = _iterator.n()).done;) {
-            var iovec = _step.value;
-            var buffer = view8.slice(iovec.buf, iovec.buf + iovec.buf_len);
-            this.addTextToBuffer(utf8Decoder.decode(buffer));
-            nwritten += iovec.buf_len;
-          }
-        } catch (err) {
-          _iterator.e(err);
-        } finally {
-          _iterator.f();
-        }
-        return {
-          ret: 0,
-          nwritten: nwritten
-        };
+      key: "write",
+      value: function write(view, buf, buf_len) {
+        var buffer = view.u8.slice(buf, buf + buf_len);
+        this.addTextToBuffer(utf8Decoder.decode(buffer));
       }
     }, {
       key: "addTextToBuffer",
@@ -3854,13 +2714,13 @@ var bootloader = (function (exports) {
         while ((newlineIdx = this.buffer.indexOf('\n')) >= 0) {
           var _this$buffer;
           var line = this.buffer.substring(0, newlineIdx).trim();
-          this.outFunc(line);
+          this._outFunc(line);
           this.buffer = (_this$buffer = this.buffer) === null || _this$buffer === void 0 ? void 0 : _this$buffer.substring(newlineIdx + 1);
         }
       }
     }]);
     return Stdio;
-  }(Fd);
+  }();
   var JSTYPE_TO_ENUM = {
     undefined: 0,
     string: 1,
@@ -3891,31 +2751,27 @@ var bootloader = (function (exports) {
   var Bootloader = /*#__PURE__*/function () {
     function Bootloader(env, profileFn) {
       _classCallCheck(this, Bootloader);
+      _defineProperty(this, "_env", void 0);
       _defineProperty(this, "_pendingLogs", []);
       _defineProperty(this, "_deferLogsToTick", void 0);
       _defineProperty(this, "_profileFn", void 0);
-      _defineProperty(this, "_stdin", void 0);
       _defineProperty(this, "_stdout", void 0);
       _defineProperty(this, "_stderr", void 0);
-      _defineProperty(this, "_wasi", void 0);
       _defineProperty(this, "_interop", void 0);
       _defineProperty(this, "_bindings", void 0);
+      _defineProperty(this, "_systemImport", void 0);
       _defineProperty(this, "_wasmModule", void 0);
       _defineProperty(this, "_wasmInstance", void 0);
       _defineProperty(this, "_memoryManager", void 0);
-      _defineProperty(this, "_memorySize", 0);
       _defineProperty(this, "_compiled", false);
       _defineProperty(this, "_started", false);
       _defineProperty(this, "_inTick", false);
       _defineProperty(this, "_profilingEnabled", false);
+      this._env = env;
       this._deferLogsToTick = env === 'arena';
       this._profileFn = profileFn;
-      this._stdin = new OpenFile(new File([]));
       this._stdout = new Stdio(this.log.bind(this));
       this._stderr = new Stdio(this.log.bind(this));
-      this._wasi = new WASI(['ScreepsDotNet'], ["ENV=".concat(env)], [this._stdin, this._stdout, this._stderr], {
-        debug: false
-      });
       this._interop = new Interop(profileFn);
       this.setImports('__object', {
         hasProperty: function hasProperty(obj, key) {
@@ -3948,15 +2804,13 @@ var bootloader = (function (exports) {
         case 'arena':
           this._bindings = new ArenaBindings(this.log.bind(this), this._interop);
           break;
-        case 'test':
-          this._bindings = new TestBindings(this.log.bind(this), this._interop);
-          break;
       }
       if (this._bindings) {
         for (var moduleName in this._bindings.imports) {
           this.setImports(moduleName, this._bindings.imports[moduleName]);
         }
       }
+      this._systemImport = _defineProperty(_defineProperty(_defineProperty(_defineProperty({}, "get-time", this.sys_get_time.bind(this)), "get-random", this.sys_get_random.bind(this)), "write-stderr", this.sys_write_stderr.bind(this)), "write-stdout", this.sys_write_stdout.bind(this));
     }
     _createClass(Bootloader, [{
       key: "compiled",
@@ -3980,6 +2834,45 @@ var bootloader = (function (exports) {
       key: "exports",
       get: function get() {
         return this._wasmInstance.exports;
+      }
+    }, {
+      key: "sys_get_time",
+      value: function sys_get_time(time_ptr) {
+        var dataView = this._memoryManager.view.dataView;
+        dataView.setBigUint64(time_ptr, BigInt(new Date().getTime()) * 1000000n, true);
+      }
+    }, {
+      key: "sys_get_random",
+      value: function sys_get_random(buf, buf_len) {
+        var _this$_memoryManager$ = this._memoryManager.view,
+          u32 = _this$_memoryManager$.u32,
+          u8 = _this$_memoryManager$.u8;
+        while (buf_len >= 4) {
+          u32[buf >> 2] = Math.random() * (1 << 32);
+          buf += 4;
+          buf_len -= 4;
+        }
+        while (buf_len > 0) {
+          u8[buf] = Math.random() * (1 << 8);
+          ++buf;
+          --buf_len;
+        }
+      }
+    }, {
+      key: "sys_write_stderr",
+      value: function sys_write_stderr(buf, buf_len) {
+        if (!this._memoryManager) {
+          return;
+        }
+        this._stderr.write(this._memoryManager.view, buf, buf_len);
+      }
+    }, {
+      key: "sys_write_stdout",
+      value: function sys_write_stdout(buf, buf_len) {
+        if (!this._memoryManager) {
+          return;
+        }
+        this._stdout.write(this._memoryManager.view, buf, buf_len);
       }
     }, {
       key: "setImports",
@@ -4022,12 +2915,11 @@ var bootloader = (function (exports) {
           var _t = this._profileFn();
           this._wasmInstance = new WebAssembly.Instance(this._wasmModule, this.getWasmImports());
           var _t2 = this._profileFn();
-          this.log("Instantiated wasm module in ".concat(_t2 - _t, " ms (exports: ").concat(JSON.stringify(Object.keys(this._wasmInstance.exports)), ")"));
+          this.log("Instantiated wasm module in ".concat(_t2 - _t, " ms"));
         }
         // Wire things up
         this._memoryManager = new WasmMemoryManager(this._wasmInstance.exports.memory);
         this._interop.memoryManager = this._memoryManager;
-        this._memorySize = this._wasmInstance.exports.memory.buffer.byteLength;
         this._interop.malloc = this._wasmInstance.exports.malloc;
         this._compiled = true;
       }
@@ -4038,12 +2930,12 @@ var bootloader = (function (exports) {
         if (!this._wasmInstance || !this._compiled || this._started || !this._memoryManager) {
           return;
         }
-        // Start WASI
+        // Run WASM entrypoint
         try {
           var t0 = this._profileFn();
-          this._wasi.initialize(this._wasmInstance);
+          this._wasmInstance.exports._initialize();
           var t1 = this._profileFn();
-          this.log("Started WASI in ".concat(t1 - t0, " ms"));
+          this.log("Started in ".concat(t1 - t0, " ms"));
         } catch (err) {
           if (err instanceof Error) {
             var _err$stack;
@@ -4058,20 +2950,20 @@ var bootloader = (function (exports) {
         {
           var _t3 = this._profileFn();
           if (customInitExportNames) {
-            var _iterator2 = _createForOfIteratorHelper(customInitExportNames),
-              _step2;
+            var _iterator = _createForOfIteratorHelper(customInitExportNames),
+              _step;
             try {
-              for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
-                var exportName = _step2.value;
+              for (_iterator.s(); !(_step = _iterator.n()).done;) {
+                var exportName = _step.value;
                 this._wasmInstance.exports[exportName]();
               }
             } catch (err) {
-              _iterator2.e(err);
+              _iterator.e(err);
             } finally {
-              _iterator2.f();
+              _iterator.f();
             }
           }
-          this._wasmInstance.exports.screepsdotnet_init();
+          this._wasmInstance.exports['screeps:screepsdotnet/botapi#init']();
           var _t4 = this._profileFn();
           if (this._profilingEnabled) {
             this.log("Init in ".concat(((_t4 - _t3) * 100 | 0) / 100, " ms (").concat(this._interop.buildProfilerString(), ")"));
@@ -4095,7 +2987,7 @@ var bootloader = (function (exports) {
         // Run usercode loop
         {
           var t0 = this._profileFn();
-          this._wasmInstance.exports.screepsdotnet_loop();
+          this._wasmInstance.exports['screeps:screepsdotnet/botapi#loop']();
           var t1 = this._profileFn();
           if (this._profilingEnabled) {
             this.log("Loop in ".concat(((t1 - t0) * 100 | 0) / 100, " ms (").concat(this._interop.buildProfilerString(), ")"));
@@ -4105,40 +2997,15 @@ var bootloader = (function (exports) {
     }, {
       key: "getWasmImports",
       value: function getWasmImports() {
-        var _this$_bindings3;
-        return {
-          wasi_snapshot_preview1: _objectSpread2(_objectSpread2({}, this._wasi.wasiImport), {}, {
-            // Override the wasi shim's implementation of clock_res_get and clock_time_get with our own
-            clock_res_get: this.clock_res_get.bind(this),
-            clock_time_get: this.clock_time_get.bind(this)
-          }),
-          js: _objectSpread2({}, this._interop.interopImport),
-          bindings: _objectSpread2({}, (_this$_bindings3 = this._bindings) === null || _this$_bindings3 === void 0 ? void 0 : _this$_bindings3.bindingsImport)
-        };
-      }
-    }, {
-      key: "clock_res_get",
-      value: function clock_res_get(id, res_ptr) {
-        // We only support the realtime clock
-        // The monotonic clock's implementation in the wasi shim uses performance.now which isn't available in screeps
-        if (id === 0 /* WASI_CLOCKID.REALTIME */) {
-          var dataView = this._memoryManager.view.dataView;
-          dataView.setBigUint64(res_ptr, BigInt(1), true);
-          return 0;
+        var imports = _defineProperty(_defineProperty({}, 'screeps:screepsdotnet/js-bindings', _objectSpread2({}, this._interop.interopImport)), 'screeps:screepsdotnet/system-bindings', _objectSpread2({}, this._systemImport));
+        if (this._env === 'world' || this._env === 'test') {
+          var _this$_bindings3;
+          imports['screeps:screepsdotnet/world-bindings'] = _objectSpread2({}, (_this$_bindings3 = this._bindings) === null || _this$_bindings3 === void 0 ? void 0 : _this$_bindings3.bindingsImport);
+        } else if (this._env === 'arena') {
+          var _this$_bindings4;
+          imports['screeps:screepsdotnet/arena-bindings'] = _objectSpread2({}, (_this$_bindings4 = this._bindings) === null || _this$_bindings4 === void 0 ? void 0 : _this$_bindings4.bindingsImport);
         }
-        return 28 /* WASI_ERRNO.INVAL */;
-      }
-    }, {
-      key: "clock_time_get",
-      value: function clock_time_get(id, precision, time_ptr) {
-        // We only support the realtime clock
-        // The monotonic clock's implementation in the wasi shim uses performance.now which isn't available in screeps
-        if (id === 0 /* WASI_CLOCKID.REALTIME */) {
-          var dataView = this._memoryManager.view.dataView;
-          dataView.setBigUint64(time_ptr, BigInt(new Date().getTime()) * 1000000n, true);
-          return 0;
-        }
-        return 28 /* WASI_ERRNO.INVAL */;
+        return imports;
       }
     }, {
       key: "dispatchPendingLogs",

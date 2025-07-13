@@ -1,38 +1,29 @@
 import 'fastestsmallesttextencoderdecoder';
-import { WASI, File, OpenFile, Fd } from '@bjorn3/browser_wasi_shim';
 import base64Decode from 'fast-base64-decode'
 import { decode as base32768Decode } from 'base32768';
 import * as fflate from 'fflate';
 
 import { ImportTable, Interop } from './interop.js';
 import { ScreepsDotNetExports } from './common.js';
-import { WasmMemoryManager } from './memory.js';
+import { WasmMemoryManager, WasmMemoryView } from './memory.js';
 import { BaseBindings } from './bindings/base.js';
 import { ArenaBindings } from './bindings/arena.js';
 import { WorldBindings } from './bindings/world.js';
-import { TestBindings } from './bindings/test.js';
 
 const utf8Decoder = new TextDecoder();
 
-class Stdio extends Fd {
-    private readonly outFunc: (text: string) => void;
+class Stdio {
+    private readonly _outFunc: (text: string) => void;
 
     private buffer?: string;
 
     constructor(outFunc: (text: string) => void) {
-        super();
-        this.outFunc = outFunc;
+        this._outFunc = outFunc;
     }
 
-    public fd_write(view8: Uint8Array, iovs: [{ buf_len: number, buf: number }]): {ret: number, nwritten: number} {
-        let nwritten = 0;
-        for (let iovec of iovs) {
-            let buffer = view8.slice(iovec.buf, iovec.buf + iovec.buf_len);
-            this.addTextToBuffer(utf8Decoder.decode(buffer));
-
-            nwritten += iovec.buf_len;
-        }
-        return { ret: 0, nwritten };
+    public write(view: WasmMemoryView, buf: number, buf_len: number): void {
+        const buffer = view.u8.slice(buf, buf + buf_len);
+        this.addTextToBuffer(utf8Decoder.decode(buffer));
     }
 
     private addTextToBuffer(text: string): void {
@@ -44,7 +35,7 @@ class Stdio extends Fd {
         let newlineIdx: number;
         while ((newlineIdx = this.buffer.indexOf('\n')) >= 0) {
             const line = this.buffer.substring(0, newlineIdx).trim();
-            this.outFunc(line);
+            this._outFunc(line);
             this.buffer = this.buffer?.substring(newlineIdx + 1);
         }
     }
@@ -79,37 +70,26 @@ export function decodeWasm(encodedWasm: string, originalSize: number, encoding: 
     return bytes;
 }
 
-const enum WASI_CLOCKID {
-    REALTIME = 0,
-    MONOTONIC = 1,
-}
-
-const enum WASI_ERRNO {
-    SUCCESS = 0,
-    BADF = 8,
-    INVAL = 28,
-    PERM = 63,
-}
-
 const EMPTY_ARR: unknown[] = [];
 
+type Env = 'world'|'arena'|'test';
+
 export class Bootloader {
+    private readonly _env: Env;
     private readonly _pendingLogs: string[] = [];
     private readonly _deferLogsToTick: boolean;
     private readonly _profileFn: () => number;
 
-    private readonly _stdin: Fd;
-    private readonly _stdout: Fd;
-    private readonly _stderr: Fd;
+    private readonly _stdout: Stdio;
+    private readonly _stderr: Stdio;
 
-    private readonly _wasi: WASI;
     private readonly _interop: Interop;
     private readonly _bindings?: BaseBindings;
+    private readonly _systemImport: Record<string, (...args: any[]) => unknown>;
 
     private _wasmModule?: WebAssembly.Module;
     private _wasmInstance?: ScreepsDotNetWasmInstance;
     private _memoryManager?: WasmMemoryManager;
-    private _memorySize: number = 0;
     private _compiled: boolean = false;
     private _started: boolean = false;
 
@@ -124,15 +104,14 @@ export class Bootloader {
 
     public get exports() { return this._wasmInstance!.exports; }
 
-    constructor(env: 'world'|'arena'|'test', profileFn: () => number) {
+    constructor(env: Env, profileFn: () => number) {
+        this._env = env;
         this._deferLogsToTick = env === 'arena';
         this._profileFn = profileFn;
 
-        this._stdin = new OpenFile(new File([]));
         this._stdout = new Stdio(this.log.bind(this));
         this._stderr = new Stdio(this.log.bind(this));
 
-        this._wasi = new WASI(['ScreepsDotNet'], [`ENV=${env}`], [this._stdin, this._stdout, this._stderr], { debug: false });
         this._interop = new Interop(profileFn);
 
         this.setImports('__object', {
@@ -152,15 +131,49 @@ export class Bootloader {
             case 'arena':
                 this._bindings = new ArenaBindings(this.log.bind(this), this._interop);
                 break;
-            case 'test':
-                this._bindings = new TestBindings(this.log.bind(this), this._interop);
-                break;
         }
         if (this._bindings) {
             for (const moduleName in this._bindings.imports) {
                 this.setImports(moduleName, this._bindings.imports[moduleName]);
             }
         }
+
+        this._systemImport = {
+            ["get-time"]: this.sys_get_time.bind(this),
+            ["get-random"]: this.sys_get_random.bind(this),
+            ["write-stderr"]: this.sys_write_stderr.bind(this),
+            ["write-stdout"]: this.sys_write_stdout.bind(this),
+        };
+    }
+
+    private sys_get_time(time_ptr: number): void {
+        const dataView = this._memoryManager!.view.dataView;
+        dataView.setBigUint64(time_ptr, BigInt(new Date().getTime()) * 1000000n, true);
+    }
+
+    private sys_get_random(buf: number, buf_len: number): void {
+        const { u32, u8 } = this._memoryManager!.view;
+        while (buf_len >= 4) {
+            u32[buf >> 2] = Math.random() * (1 << 32);
+            buf += 4;
+            buf_len -= 4;
+        }
+        while (buf_len > 0)
+        {
+            u8[buf] = Math.random() * (1 << 8);
+            ++buf;
+            --buf_len;
+        }
+    }
+
+    private sys_write_stderr(buf: number, buf_len: number): void {
+        if (!this._memoryManager) { return; }
+        this._stderr.write(this._memoryManager.view, buf, buf_len);
+    }
+
+    private sys_write_stdout(buf: number, buf_len: number): void {
+        if (!this._memoryManager) { return; }
+        this._stdout.write(this._memoryManager.view, buf, buf_len);
     }
 
     public setImports(moduleName: string, importTable: ImportTable): void {
@@ -199,13 +212,12 @@ export class Bootloader {
             const t0 = this._profileFn();
             this._wasmInstance = new WebAssembly.Instance(this._wasmModule, this.getWasmImports()) as ScreepsDotNetWasmInstance;
             const t1 = this._profileFn();
-            this.log(`Instantiated wasm module in ${t1 - t0} ms (exports: ${JSON.stringify(Object.keys(this._wasmInstance.exports))})`);
+            this.log(`Instantiated wasm module in ${t1 - t0} ms`);
         }
 
         // Wire things up
         this._memoryManager = new WasmMemoryManager(this._wasmInstance.exports.memory);
         this._interop.memoryManager = this._memoryManager;
-        this._memorySize = this._wasmInstance.exports.memory.buffer.byteLength;
         this._interop.malloc = this._wasmInstance.exports.malloc;
         this._compiled = true;
     }
@@ -213,12 +225,12 @@ export class Bootloader {
     public start(customInitExportNames?: ReadonlyArray<string>): void {
         if (!this._wasmInstance || !this._compiled || this._started || !this._memoryManager) { return; }
 
-        // Start WASI
+        // Run WASM entrypoint
         try {
             const t0 = this._profileFn();
-            this._wasi.initialize(this._wasmInstance);
+            this._wasmInstance.exports._initialize();
             const t1 = this._profileFn();
-            this.log(`Started WASI in ${t1 - t0} ms`);
+            this.log(`Started in ${t1 - t0} ms`);
         } catch (err) {
             if (err instanceof Error) {
                 this.log(err.stack ?? `${err}`);
@@ -238,7 +250,7 @@ export class Bootloader {
                     (this._wasmInstance.exports as unknown as Record<string, () => void>)[exportName]();
                 }
             }
-            this._wasmInstance.exports.screepsdotnet_init();
+            this._wasmInstance.exports['screeps:screepsdotnet/botapi#init']();
             const t1 = this._profileFn();
             if (this._profilingEnabled) {
                 this.log(`Init in ${(((t1 - t0) * 100)|0)/100} ms (${this._interop.buildProfilerString()})`);
@@ -261,7 +273,7 @@ export class Bootloader {
         // Run usercode loop
         {
             const t0 = this._profileFn();
-            this._wasmInstance.exports.screepsdotnet_loop();
+            this._wasmInstance.exports['screeps:screepsdotnet/botapi#loop']();
             const t1 = this._profileFn();
             if (this._profilingEnabled) {
                 this.log(`Loop in ${(((t1 - t0) * 100)|0)/100} ms (${this._interop.buildProfilerString()})`);
@@ -270,42 +282,24 @@ export class Bootloader {
     }
 
     private getWasmImports(): WebAssembly.Imports {
-        return {
-            wasi_snapshot_preview1: {
-                ...this._wasi.wasiImport,
-                // Override the wasi shim's implementation of clock_res_get and clock_time_get with our own
-                clock_res_get: this.clock_res_get.bind(this),
-                clock_time_get: this.clock_time_get.bind(this),
-            },
-            js: {
+        const imports: WebAssembly.Imports = {
+            ['screeps:screepsdotnet/js-bindings']: {
                 ...this._interop.interopImport,
             },
-            bindings: {
-                ...this._bindings?.bindingsImport,
-            }
+            ['screeps:screepsdotnet/system-bindings']: {
+                ...this._systemImport,
+            },
         };
-    }
-
-    private clock_res_get(id: number, res_ptr: number): number {
-        // We only support the realtime clock
-        // The monotonic clock's implementation in the wasi shim uses performance.now which isn't available in screeps
-        if (id === WASI_CLOCKID.REALTIME) {
-            const dataView = this._memoryManager!.view.dataView;
-            dataView.setBigUint64(res_ptr, BigInt(1), true);
-            return 0;
+        if (this._env === 'world' || this._env === 'test') {
+            imports['screeps:screepsdotnet/world-bindings'] = {
+                ...this._bindings?.bindingsImport,
+            };
+        } else if (this._env === 'arena') {
+            imports['screeps:screepsdotnet/arena-bindings'] = {
+                ...this._bindings?.bindingsImport,
+            };
         }
-        return WASI_ERRNO.INVAL;
-    }
-
-    private clock_time_get(id: number, precision: number, time_ptr: number): number {
-        // We only support the realtime clock
-        // The monotonic clock's implementation in the wasi shim uses performance.now which isn't available in screeps
-        if (id === WASI_CLOCKID.REALTIME) {
-            const dataView = this._memoryManager!.view.dataView;
-            dataView.setBigUint64(time_ptr, BigInt(new Date().getTime()) * 1000000n, true);
-            return 0;
-        }
-        return WASI_ERRNO.INVAL;
+        return imports;
     }
 
     private dispatchPendingLogs(): void {

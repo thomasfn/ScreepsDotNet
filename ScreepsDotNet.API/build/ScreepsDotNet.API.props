@@ -1,8 +1,14 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+	<PropertyGroup>
+		<ScreepsWit>$(MSBuildThisFileDirectory)..\js\screeps.wit</ScreepsWit>
+	</PropertyGroup>
 	<ItemGroup>
 		<_WasmCommonCFlags Include="-mno-bulk-memory" />
 		<_WasiSdkClangArgs Include="-Wl,--features=mutable-globals" />
+    	<LinkerArg Include="-Wl,--component-type,&quot;$(ScreepsWit.Replace('\', '/'))&quot;" />
+		<LinkerArg Include="-Wl,--export=malloc" />
+		<LinkerArg Include="-Wl,--export=free" />
 	</ItemGroup>
 	<ItemGroup>
 		<_WasmRuntimePackSrcFile Include="$(MSBuildThisFileDirectory)..\Native\world.c" />

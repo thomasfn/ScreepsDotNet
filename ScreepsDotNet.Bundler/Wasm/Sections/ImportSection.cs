@@ -65,6 +65,102 @@ namespace ScreepsDotNet.Bundler.Wasm.Sections
             => $"(import \"{Module}\" \"{Name}\" {Type})";
     }
 
+    public readonly struct Limits
+    {
+        public readonly uint Min;
+        public readonly uint? Max;
+
+        public Limits(uint min, uint? max)
+        {
+            Min = min;
+            Max = max;
+        }
+
+        public Limits(BinaryReader rdr)
+        {
+            var flags = rdr.ReadByte();
+            Min = rdr.ReadVarU32();
+            Max = (flags & 1) == 1 ? (uint?)rdr.ReadVarU32() : null;
+        }
+
+        public void Write(BinaryWriter wtr)
+        {
+            wtr.WriteVarU32(Max != null ? 1u : 0u);
+            wtr.WriteVarU32(Min);
+            if (Max != null) { wtr.WriteVarU32(Max.Value); }
+        }
+    }
+
+    public class MemoryImport : BaseImport
+    {
+        public Limits Limits { get; set; }
+
+        public MemoryImport(string module, string name, Limits limits)
+            : base(module, name)
+        {
+            Limits = limits;
+        }
+
+        public MemoryImport(string module, string name, BinaryReader rdr)
+            : base(module, name)
+        {
+            Limits = new Limits(rdr);
+        }
+
+        public override void Write(BinaryWriter wtr, TypeSection typeSection)
+        {
+            base.Write(wtr, typeSection);
+            wtr.Write((byte)ImportDescTag.Mem);
+            Limits.Write(wtr);
+        }
+
+        public override string ToString()
+            => $"(memory \"{Module}\" \"{Name}\")";
+    }
+
+    public class TableImport : BaseImport
+    {
+        public Limits Limits { get; set; }
+
+        public BaseType RefType { get; set; }
+
+        public TableImport(string module, string name, Limits limits, BaseType refType)
+            : base(module, name)
+        {
+            Limits = limits;
+            RefType = refType;
+        }
+
+        public TableImport(string module, string name, BinaryReader rdr)
+            : base(module, name)
+        {
+            var tag = (TypeTag)rdr.ReadByte();
+            switch (tag)
+            {
+                case TypeTag.FuncRef:
+                    RefType = new FuncRefType();
+                    break;
+                case TypeTag.ExternRef:
+                    RefType = new ExternRefType();
+                    break;
+                default:
+                    throw new InvalidWasmException($"Unknown type tag '{tag}'");
+            }
+            Limits = new Limits(rdr);
+        }
+
+        public override void Write(BinaryWriter wtr, TypeSection typeSection)
+        {
+            base.Write(wtr, typeSection);
+            wtr.Write((byte)ImportDescTag.Mem);
+            Limits.Write(wtr);
+            RefType.Write(wtr);
+        }
+
+        public override string ToString()
+            => $"(table \"{Module}\" \"{Name}\" {RefType})";
+    }
+
     public class ImportSection : Section
     {
         public List<BaseImport> Imports { get; } = new List<BaseImport>();
@@ -88,6 +184,8 @@ namespace ScreepsDotNet.Bundler.Wasm.Sections
             switch (descTag)
             {
                 case ImportDescTag.Func: return new FunctionImport(module, name, rdr, typeSection);
+                case ImportDescTag.Mem: return new MemoryImport(module, name, rdr);
+                case ImportDescTag.Table: return new TableImport(module, name, rdr);
                 default: throw new InvalidWasmException($"Unknown import description tag {descTag}");
             }
         }

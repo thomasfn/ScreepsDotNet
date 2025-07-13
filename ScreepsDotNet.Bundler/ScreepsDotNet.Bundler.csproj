@@ -12,13 +12,13 @@
 		<Title>ScreepsDotNet Bundler</Title>
 		<Authors>thomasfn</Authors>
 		<Description>An MSBuild task that bundles wasm apps for the Screeps Arena and Screeps World environments</Description>
-		<Version>2.1.0</Version>
-		<PackageVersion>2.1.0</PackageVersion>
+		<Version>3.0.0</Version>
+		<PackageVersion>3.0.0</PackageVersion>
 		<PackageProjectUrl>https://github.com/thomasfn/ScreepsDotNet</PackageProjectUrl>
 		<PackageLicenseFile>LICENSE</PackageLicenseFile>
 		<PackageTags>screeps world arena bundler msbuild</PackageTags>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
-		<Copyright>Copyright (c) thomasfn 2024</Copyright>
+		<Copyright>Copyright (c) thomasfn 2025</Copyright>
 	</PropertyGroup>
 
 	<PropertyGroup>
@@ -43,6 +43,14 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<Content Include="build\polyfills\wasi_clocks_monotonic_clock.wasm" PackagePath="build\polyfills\" />
+		<Content Include="build\polyfills\wasi_io_poll.wasm" PackagePath="build\polyfills\" />
+		<Content Include="build\polyfills\wasi_io_streams.wasm" PackagePath="build\polyfills\" />
+		<Content Include="build\polyfills\wasi_snapshot_preview1.wasm" PackagePath="build\polyfills\" />
+		<Content Include="build\polyfills\wasi_sockets_tcp.wasm" PackagePath="build\polyfills\" />
+		<Content Include="build\polyfills\wasi_sockets_udp.wasm" PackagePath="build\polyfills\" />
+		<Content Include="build\Binaryen.Defaults.props" PackagePath="build\" />
+		<Content Include="build\dcegraph.json" PackagePath="build\" />
 		<Content Include="build\EmSdkRepo.Defaults.props" PackagePath="build\" />
 		<Content Include="build\ScreepsDotNet.Bundler.props" PackagePath="build\" />
 		<Content Include="build\ScreepsDotNet.Bundler.targets" PackagePath="build\" />
@@ -69,7 +77,7 @@
 			<CopyLocalPackageReferences Condition="'%(PackageReference.CopyLocal)' == 'true'">;@(PackageReference);</CopyLocalPackageReferences>
 		</PropertyGroup>
 		<ItemGroup>
-			<LocalPackageToCopy Include="@(ReferencePath)" Condition="$(CopyLocalPackageReferences.Contains(';%(ReferencePath.NuGetPackageId);'))"/>
+			<LocalPackageToCopy Include="@(ReferencePath)" Condition="$(CopyLocalPackageReferences.Contains(';%(ReferencePath.NuGetPackageId);'))" />
 		</ItemGroup>
 		<ItemGroup>
 			<BuildOutputInPackage Include="@(LocalPackageToCopy)" TargetPath="%(LocalPackageToCopy.DestinationSubPath)" />

@@ -6,49 +6,49 @@ using System.Runtime.InteropServices;
 
 internal static class ScreepsDotNet_Interop
 {
-    [WasmImportLinkage, DllImport("js", EntryPoint = "js_bind_import")]
+    [WasmImportLinkage, DllImport("screeps:screepsdotnet/js-bindings", EntryPoint = "bind-import")]
     public static unsafe extern int BindImport(char* moduleNamePtr, char* importNamePtr, ScreepsDotNet.Interop.FunctionSpec* importSpecPtr);
 
-    [WasmImportLinkage, DllImport("js", EntryPoint = "js_invoke_import")]
+    [WasmImportLinkage, DllImport("screeps:screepsdotnet/js-bindings", EntryPoint = "invoke-import")]
     public static unsafe extern int InvokeImport(int importIndex, ScreepsDotNet.Interop.InteropValue* paramsBufferPtr);
 
-    [WasmImportLinkage, DllImport("js", EntryPoint = "js_release_object_reference")]
+    [WasmImportLinkage, DllImport("screeps:screepsdotnet/js-bindings", EntryPoint = "release-object-reference")]
     public static unsafe extern int ReleaseObjectReference(IntPtr jsHandle);
 
-    [WasmImportLinkage, DllImport("js", EntryPoint = "js_set_name")]
+    [WasmImportLinkage, DllImport("screeps:screepsdotnet/js-bindings", EntryPoint = "set-name")]
     public static unsafe extern void SetName(int nameIndex, char* namePtr);
 
-    [WasmImportLinkage, DllImport("js", EntryPoint = "js_invoke_i_i")]
+    [WasmImportLinkage, DllImport("screeps:screepsdotnet/js-bindings", EntryPoint = "invoke-i-i")]
     public static extern int InvokeImport_i_i(int importIndex, int paramA);
 
-    [WasmImportLinkage, DllImport("js", EntryPoint = "js_invoke_i_ii")]
+    [WasmImportLinkage, DllImport("screeps:screepsdotnet/js-bindings", EntryPoint = "invoke-i-ii")]
     public static extern int InvokeImport_i_ii(int importIndex, int paramA, int paramB);
 
-    [WasmImportLinkage, DllImport("js", EntryPoint = "js_invoke_i_iii")]
+    [WasmImportLinkage, DllImport("screeps:screepsdotnet/js-bindings", EntryPoint = "invoke-i-iii")]
     public static extern int InvokeImport_i_iii(int importIndex, int paramA, int paramB, int paramC);
 
-    [WasmImportLinkage, DllImport("js", EntryPoint = "js_invoke_i_o")]
+    [WasmImportLinkage, DllImport("screeps:screepsdotnet/js-bindings", EntryPoint = "invoke-i-o")]
     public static extern int InvokeImport_i_o(int importIndex, int paramA);
 
-    [WasmImportLinkage, DllImport("js", EntryPoint = "js_invoke_i_oi")]
+    [WasmImportLinkage, DllImport("screeps:screepsdotnet/js-bindings", EntryPoint = "invoke-i-oi")]
     public static extern int InvokeImport_i_oi(int importIndex, int paramA, int paramB);
 
-    [WasmImportLinkage, DllImport("js", EntryPoint = "js_invoke_i_on")]
+    [WasmImportLinkage, DllImport("screeps:screepsdotnet/js-bindings", EntryPoint = "invoke-i-on")]
     public static extern int InvokeImport_i_on(int importIndex, int paramA, int paramB);
 
-    [WasmImportLinkage, DllImport("js", EntryPoint = "js_invoke_i_oii")]
+    [WasmImportLinkage, DllImport("screeps:screepsdotnet/js-bindings", EntryPoint = "invoke-i-oii")]
     public static extern int InvokeImport_i_oii(int importIndex, int paramA, int paramB, int paramC);
 
-    [WasmImportLinkage, DllImport("js", EntryPoint = "js_invoke_i_oo")]
+    [WasmImportLinkage, DllImport("screeps:screepsdotnet/js-bindings", EntryPoint = "invoke-i-oo")]
     public static extern int InvokeImport_i_oo(int importIndex, int paramA, int paramB);
 
-    [WasmImportLinkage, DllImport("js", EntryPoint = "js_invoke_i_ooi")]
+    [WasmImportLinkage, DllImport("screeps:screepsdotnet/js-bindings", EntryPoint = "invoke-i-ooi")]
     public static extern int InvokeImport_i_ooi(int importIndex, int paramA, int paramB, int paramC);
 
-    [WasmImportLinkage, DllImport("js", EntryPoint = "js_invoke_i_ooii")]
+    [WasmImportLinkage, DllImport("screeps:screepsdotnet/js-bindings", EntryPoint = "invoke-i-ooii")]
     public static extern int InvokeImport_i_ooii(int importIndex, int paramA, int paramB, int paramC, int paramD);
 
-    [WasmImportLinkage, DllImport("js", EntryPoint = "js_invoke_d_v")]
+    [WasmImportLinkage, DllImport("screeps:screepsdotnet/js-bindings", EntryPoint = "invoke-d-v")]
     public static extern double InvokeImport_d_v(int importIndex);
 }
 

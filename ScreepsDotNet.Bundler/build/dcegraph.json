@@ -1,0 +1,58 @@
+[
+    {
+        "name": "js",
+        "reaches": [
+            "memory",
+            "_initialize",
+            "screeps:screepsdotnet/botapi#init-world",
+            "screeps:screepsdotnet/botapi#invoke-room-callback",
+            "screeps:screepsdotnet/botapi#invoke-cost-callback",
+            "screeps:screepsdotnet/botapi#invoke-route-callback",
+            "screeps:screepsdotnet/botapi#init",
+            "screeps:screepsdotnet/botapi#loop",
+            "malloc",
+            "free"
+        ],
+        "root": true
+    },
+    {
+        "name": "memory",
+        "export": "memory"
+    },
+    {
+        "name": "_initialize",
+        "export": "_initialize"
+    },
+    {
+        "name": "screeps:screepsdotnet/botapi#init-world",
+        "export": "screeps:screepsdotnet/botapi#init-world"
+    },
+    {
+        "name": "screeps:screepsdotnet/botapi#invoke-room-callback",
+        "export": "screeps:screepsdotnet/botapi#invoke-room-callback"
+    },
+    {
+        "name": "screeps:screepsdotnet/botapi#invoke-cost-callback",
+        "export": "screeps:screepsdotnet/botapi#invoke-cost-callback"
+    },
+    {
+        "name": "screeps:screepsdotnet/botapi#invoke-route-callback",
+        "export": "screeps:screepsdotnet/botapi#invoke-route-callback"
+    },
+    {
+        "name": "screeps:screepsdotnet/botapi#init",
+        "export": "screeps:screepsdotnet/botapi#init"
+    },
+    {
+        "name": "screeps:screepsdotnet/botapi#loop",
+        "export": "screeps:screepsdotnet/botapi#loop"
+    },
+    {
+        "name": "malloc",
+        "export": "malloc"
+    },
+    {
+        "name": "free",
+        "export": "free"
+    }
+]

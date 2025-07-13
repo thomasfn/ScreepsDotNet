@@ -13,7 +13,8 @@ namespace ScreepsDotNet.Bundler.Wasm.Sections
         F64 = 0x7c,
         V128 = 0x7b,
         FuncRef = 0x70,
-        ExternRef = 0x6f
+        ExternRef = 0x6f,
+        Result = 0x40,
     }
 
     public abstract class BaseType
@@ -114,6 +115,80 @@ namespace ScreepsDotNet.Bundler.Wasm.Sections
         public static bool operator !=(ValueType? left, ValueType? right) => !(left == right);
     }
 
+    public class ResultType : BaseType
+    {
+        public override TypeTag Tag { get => TypeTag.Result; }
+
+        public List<ValueType> Results { get; } = new List<ValueType>();
+
+        public ResultType() { }
+
+        public ResultType(BinaryReader rdr)
+        {
+            rdr.ReadVector(Results, r => new ValueType((TypeTag)r.ReadByte()));
+        }
+
+        public override void Write(BinaryWriter wtr)
+        {
+            wtr.Write((byte)Tag);
+            wtr.WriteVector(Results, (w, x) => x.Write(w));
+        }
+
+        public override string ToString()
+            => $"[{string.Join(", ", Results)}]";
+
+        public override bool Equals(object? obj) => Equals(obj as FunctionType);
+
+        public bool Equals(ResultType? other)
+        {
+            if (other == null) { return false; }
+            if (Results.Count != other.Results.Count) { return false; }
+            for (int i = 0; i < Results.Count; ++i)
+            {
+                if (Results[i] != other.Results[i]) { return false; }
+            }
+            return true;
+        }
+
+        public override int GetHashCode()
+        {
+            int hashCode = 1155513406;
+            foreach (var result in Results)
+            {
+                hashCode = hashCode * -1521134295 + result.GetHashCode();
+            }
+            return hashCode;
+        }
+
+        public static bool operator ==(ResultType? left, ResultType? right) => EqualityComparer<ResultType>.Default.Equals(left, right);
+
+        public static bool operator !=(ResultType? left, ResultType? right) => !(left == right);
+    }
+
+    public class FuncRefType : BaseType
+    {
+        public override TypeTag Tag { get => TypeTag.FuncRef; }
+
+        public FuncRefType() { }
+
+        public override void Write(BinaryWriter wtr)
+        {
+            wtr.Write((byte)Tag);
+        }
+    }
+
+    public class ExternRefType : BaseType
+    {
+        public override TypeTag Tag { get => TypeTag.ExternRef; }
+
+        public ExternRefType() { }
+
+        public override void Write(BinaryWriter wtr)
+        {
+            wtr.Write((byte)Tag);
+        }
+    }
+
     public class TypeSection : Section
     {
         public List<BaseType> Types { get; } = new List<BaseType>();
@@ -141,6 +216,8 @@ namespace ScreepsDotNet.Bundler.Wasm.Sections
                 case TypeTag.F32:
                 case TypeTag.F64:
                     return new ValueType(tag);
+                case TypeTag.Result:
+                    return new ResultType(rdr);
                 default:
                     throw new InvalidWasmException($"Unknown type tag '{tag}'");
             }

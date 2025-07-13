@@ -1,0 +1,43 @@
+﻿
+package screeps:screepsdotnet;
+
+interface botapi {
+  init: func();
+  loop: func();
+  //invoke-room-callback: func(p1: s32, p2: s32) -> s32;
+  //invoke-cost-callback: func(p1: s32, p2: s32, p3: s32) -> s32;
+  //invoke-route-callback: func(p1: s32, p2: s32, p3: s32, p4: s32) -> f64;
+}
+
+interface js-bindings {
+  bind-import: func(modulenameptr: u32, importnameptr: u32, importspecptr: u32) -> s32;
+  invoke-import: func(importindex: u32, paramsbufferptr: u32) -> u32;
+  release-object-reference: func(jshandle: u32) -> u32;
+  set-name: func(nameindex: u32, valueptr: u32);
+  invoke-i-i: func(importindex: u32, p0: s32) -> s32;
+  invoke-i-ii: func(importindex: u32, p0: s32, p1: s32) -> s32;
+  invoke-i-iii: func(importindex: u32, p0: s32, p1: s32, p2: s32) -> s32;
+  invoke-i-o: func(importindex: u32, p0: s32) -> s32;
+  invoke-i-oi: func(importindex: u32, p0: s32, p1: s32) -> s32;
+  invoke-i-on: func(importindex: u32, p0: s32, p1: s32) -> s32;
+  invoke-i-oii: func(importindex: u32, p0: s32, p1: s32, p2: s32) -> s32;
+  invoke-i-oo: func(importindex: u32, p0: s32, p1: s32) -> s32;
+  invoke-i-ooi: func(importindex: u32, p0: s32, p1: s32, p2: s32) -> s32;
+  invoke-i-ooii: func(importindex: u32, p0: s32, p1: s32, p2: s32, p3: s32) -> s32;
+  invoke-d-v: func(importindex: u32) -> f64;
+}
+
+interface world-bindings {
+  renew-object: func(jshandle: u32) -> s32;
+  batch-renew-objects: func(jshandlelist: u32, count: u32) -> s32;
+  fetch-object-room-position: func(jshandle: u32) -> s32;
+  batch-fetch-object-room-positions: func(jshandlelist: u32, count: u32, outpackedroomposlist: u32);
+  get-object-by-id: func(rawobjectid: u32) -> u32;
+  get-object-id: func(jshandle: u32, outrawobjectid: u32) -> s32;
+}
+
+world hostapp {
+  import world-bindings;
+  import js-bindings;
+  export botapi;
+}

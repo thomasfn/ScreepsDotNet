@@ -14,21 +14,21 @@ internal static class ScreepsDotNet_Native
         public Span<byte> AsSpan => MemoryMarshal.CreateSpan(ref firstChar, 24);
     }
 
-    [WasmImportLinkage, DllImport("bindings", EntryPoint = "js_renew_object")]
+    [WasmImportLinkage, DllImport("screeps:screepsdotnet/world-bindings", EntryPoint = "renew-object")]
     internal static unsafe extern int RenewObject(IntPtr jsHandle);
 
-    [WasmImportLinkage, DllImport("bindings", EntryPoint = "js_batch_renew_objects")]
+    [WasmImportLinkage, DllImport("screeps:screepsdotnet/world-bindings", EntryPoint = "batch-renew-objects")]
     internal static unsafe extern int BatchRenewObjects(IntPtr* jsHandleList, int count);
 
-    [WasmImportLinkage, DllImport("bindings", EntryPoint = "js_fetch_object_room_position")]
+    [WasmImportLinkage, DllImport("screeps:screepsdotnet/world-bindings", EntryPoint = "fetch-object-room-position")]
     internal static unsafe extern int FetchObjectRoomPosition(IntPtr jsHandle);
 
-    [WasmImportLinkage, DllImport("bindings", EntryPoint = "js_batch_fetch_object_room_positions")]
+    [WasmImportLinkage, DllImport("screeps:screepsdotnet/world-bindings", EntryPoint = "batch-fetch-object-room-positions")]
     internal static unsafe extern void BatchFetchObjectRoomPositions(IntPtr* jsHandleList, int count, RoomPosition* outRoomPosList);
 
-    [WasmImportLinkage, DllImport("bindings", EntryPoint = "js_get_object_by_id")]
+    [WasmImportLinkage, DllImport("screeps:screepsdotnet/world-bindings", EntryPoint = "get-object-by-id")]
     internal static unsafe extern IntPtr GetObjectById(RawObjectId* objectId);
 
-    [WasmImportLinkage, DllImport("bindings", EntryPoint = "js_get_object_id")]
+    [WasmImportLinkage, DllImport("screeps:screepsdotnet/world-bindings", EntryPoint = "get-object-id")]
     internal static unsafe extern int GetObjectId(IntPtr jsHandle, RawObjectId* outObjectId);
 }

@@ -30,11 +30,6 @@ namespace ScreepsDotNet.Bundler.Wasm.Sections
         }
     }
 
-    public enum Opcode : byte
-    {
-
-    }
-
     public class Code
     {
         public List<Local> Locals { get; } = new List<Local>();

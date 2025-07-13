@@ -3,20 +3,20 @@ import { ImportTable } from './interop.js';
 import { ScreepsDotNetExports } from './common.js';
 export declare function decompressWasm(compressedBytes: Uint8Array, originalSize: number): Uint8Array;
 export declare function decodeWasm(encodedWasm: string, originalSize: number, encoding: 'b64' | 'b32768'): Uint8Array;
+type Env = 'world' | 'arena' | 'test';
 export declare class Bootloader {
+    private readonly _env;
     private readonly _pendingLogs;
     private readonly _deferLogsToTick;
     private readonly _profileFn;
-    private readonly _stdin;
     private readonly _stdout;
     private readonly _stderr;
-    private readonly _wasi;
     private readonly _interop;
     private readonly _bindings?;
+    private readonly _systemImport;
     private _wasmModule?;
     private _wasmInstance?;
     private _memoryManager?;
-    private _memorySize;
     private _compiled;
     private _started;
     private _inTick;
@@ -26,7 +26,11 @@ export declare class Bootloader {
     get profilingEnabled(): boolean;
     set profilingEnabled(value: boolean);
     get exports(): WebAssembly.Exports & ScreepsDotNetExports;
-    constructor(env: 'world' | 'arena' | 'test', profileFn: () => number);
+    constructor(env: Env, profileFn: () => number);
+    private sys_get_time;
+    private sys_get_random;
+    private sys_write_stderr;
+    private sys_write_stdout;
     setImports(moduleName: string, importTable: ImportTable): void;
     log(text: string): void;
     private dispatchLog;
@@ -34,7 +38,6 @@ export declare class Bootloader {
     start(customInitExportNames?: ReadonlyArray<string>): void;
     loop(): void;
     private getWasmImports;
-    private clock_res_get;
-    private clock_time_get;
     private dispatchPendingLogs;
 }
+export {};

@@ -1,0 +1,10 @@
+(module
+ (type $0 (func (param i32)))
+ (type $1 (func (param i32 i32)))
+ (export "[resource-drop]tcp-socket" (func $src/wasi_sockets_tcp/tcp_socket_resource_drop))
+ (export "[method]tcp-socket.finish-connect" (func $src/wasi_sockets_tcp/tcp_socket_finish_connect))
+ (func $src/wasi_sockets_tcp/tcp_socket_resource_drop (param $0 i32)
+ )
+ (func $src/wasi_sockets_tcp/tcp_socket_finish_connect (param $0 i32) (param $1 i32)
+ )
+)

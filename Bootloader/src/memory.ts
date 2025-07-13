@@ -33,6 +33,7 @@ export class WasmMemoryManager {
     public get view() {
         if (this._view == null || this._viewArrayBuffer !== this._memory.buffer) {
             this._view = this.createNewView();
+            this._viewArrayBuffer = this._memory.buffer;
         }
         return this._view;
     }

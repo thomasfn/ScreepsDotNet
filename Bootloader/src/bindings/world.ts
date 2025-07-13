@@ -72,15 +72,15 @@ export class WorldBindings extends BaseBindings {
 
     private _memoryCache?: Memory;
 
-    private _invoke_room_callback: ScreepsDotNetExports['screepsdotnet_invoke_room_callback'] | undefined;
-    private _invoke_cost_callback: ScreepsDotNetExports['screepsdotnet_invoke_cost_callback'] | undefined;
-    private _invoke_route_callback: ScreepsDotNetExports['screepsdotnet_invoke_route_callback'] | undefined;
+    private _invoke_room_callback: ScreepsDotNetExports['screeps:screepsdotnet/botapi#invoke-room-callback'] | undefined;
+    private _invoke_cost_callback: ScreepsDotNetExports['screeps:screepsdotnet/botapi#invoke-cost-callback'] | undefined;
+    private _invoke_route_callback: ScreepsDotNetExports['screeps:screepsdotnet/botapi#invoke-route-callback'] | undefined;
 
     public init(exports: ScreepsDotNetExports, memoryManager: WasmMemoryManager): void {
         super.init(exports, memoryManager);
-        this._invoke_room_callback = exports.screepsdotnet_invoke_room_callback;
-        this._invoke_cost_callback = exports.screepsdotnet_invoke_cost_callback;
-        this._invoke_route_callback = exports.screepsdotnet_invoke_route_callback;
+        this._invoke_room_callback = exports['screeps:screepsdotnet/botapi#invoke-room-callback'];
+        this._invoke_cost_callback = exports['screeps:screepsdotnet/botapi#invoke-cost-callback'];
+        this._invoke_route_callback = exports['screeps:screepsdotnet/botapi#invoke-route-callback'];
         this._memoryCache = Memory;
         this._memoryCache = (RawMemory as unknown as { _parsed: Memory })._parsed;
         this._lastCheckIn = Game.time;
@@ -106,12 +106,12 @@ export class WorldBindings extends BaseBindings {
 
     protected setupImports(): void {
         super.setupImports();
-        this.bindingsImport.js_renew_object = this.js_renew_object.bind(this);
-        this.bindingsImport.js_batch_renew_objects = this.js_batch_renew_objects.bind(this);
-        this.bindingsImport.js_fetch_object_room_position = this.js_fetch_object_room_position.bind(this);
-        this.bindingsImport.js_batch_fetch_object_room_positions = this.js_batch_fetch_object_room_positions.bind(this);
-        this.bindingsImport.js_get_object_by_id = this.js_get_object_by_id.bind(this);
-        this.bindingsImport.js_get_object_id = this.js_get_object_id.bind(this);
+        this.bindingsImport['renew-object'] = this.js_renew_object.bind(this);
+        this.bindingsImport['batch-renew-objects'] = this.js_batch_renew_objects.bind(this);
+        this.bindingsImport['fetch-object-room-position'] = this.js_fetch_object_room_position.bind(this);
+        this.bindingsImport['batch-fetch-object-room-positions'] = this.js_batch_fetch_object_room_positions.bind(this);
+        this.bindingsImport['get-object-by-id'] = this.js_get_object_by_id.bind(this);
+        this.bindingsImport['get-object-id'] = this.js_get_object_id.bind(this);
         const _global = global as unknown as { ScoreCollector?: GameConstructor, ScoreContainer?: GameConstructor };
         const gameConstructors: Record<string, GameConstructor> = {
             StructureContainer,

@@ -10,26 +10,46 @@
 	</PropertyGroup>
 	
 	<UsingTask TaskName="ScreepsDotNet.Bundler.BundlerBuildTask" AssemblyFile="$(ScreepsDotNetBundlerAssemblyPath)ScreepsDotNet.Bundler.dll" />
-	<UsingTask TaskName="ScreepsDotNet.Bundler.LowerBulkMemoryTask" AssemblyFile="$(ScreepsDotNetBundlerAssemblyPath)ScreepsDotNet.Bundler.dll" />
+	<UsingTask TaskName="ScreepsDotNet.Bundler.ExtractCoreModuleTask" AssemblyFile="$(ScreepsDotNetBundlerAssemblyPath)ScreepsDotNet.Bundler.dll" />
 
 	<PropertyGroup>
 		<ScreepsCompressWasm>false</ScreepsCompressWasm>
 		<ScreepsEncoding>b64</ScreepsEncoding>
 		<WasmEnableNonTrappingFloatToIntConversions>false</WasmEnableNonTrappingFloatToIntConversions>
-		<WasiSdkVersion>15</WasiSdkVersion>
+		<WasiSdkVersion>24</WasiSdkVersion>
 		<WasiSdkMinorVersion>0</WasiSdkMinorVersion>
+		<BinaryenVersion>123</BinaryenVersion>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<ScreepsDceGraph>$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)', 'dcegraph.json'))</ScreepsDceGraph>
+		<ScreepsWasmPolyfillBaseDir>$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)', 'polyfills'))</ScreepsWasmPolyfillBaseDir>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<LinkerArg Include="-Wl,--export=malloc" />
-	</ItemGroup>
+		<WasmMergeConfigurationFlags Include="-q" />
+		<WasmMergeConfigurationFlags Include="-sec" />
+		<WasmMergeConfigurationFlags Include="--enable-bulk-memory-opt" />
+		<WasmMergeConfigurationFlags Include="--enable-multimemory" />
+		
+		<WasmMergeModules Include="&quot;$(ScreepsWasmPolyfillBaseDir)wasi_clocks_monotonic_clock.wasm&quot; wasi:clocks/monotonic-clock@0.2.0" />
+		<WasmMergeModules Include="&quot;$(ScreepsWasmPolyfillBaseDir)wasi_io_poll.wasm&quot; wasi:io/poll@0.2.0" />
+		<WasmMergeModules Include="&quot;$(ScreepsWasmPolyfillBaseDir)wasi_io_streams.wasm&quot; wasi:io/streams@0.2.0" />
+		<WasmMergeModules Include="&quot;$(ScreepsWasmPolyfillBaseDir)wasi_snapshot_preview1.wasm&quot; wasi_snapshot_preview1" />
+		<WasmMergeModules Include="&quot;$(ScreepsWasmPolyfillBaseDir)wasi_sockets_tcp.wasm&quot; wasi:sockets/tcp@0.2.0" />
+		<WasmMergeModules Include="&quot;$(ScreepsWasmPolyfillBaseDir)wasi_sockets_udp.wasm&quot; wasi:sockets/udp@0.2.0" />
 
-	<ItemGroup>
+		<WasmMetadceConfigurationFlags Include="-f &quot;$(ScreepsDceGraph)&quot;" />
+		<WasmMetadceConfigurationFlags Include="--enable-bulk-memory-opt" />
+		<WasmMetadceConfigurationFlags Include="--enable-multimemory" />		
+
 		<WasmOptConfigurationFlags Include="-mvp" />
-		<WasmOptConfigurationFlags Include="--legalize-js-interface" />
-		<WasmOptConfigurationFlags Include="--disable-bulk-memory" />
-		<WasmOptConfigurationFlags Include="--disable-sign-ext" />
+		<WasmOptConfigurationFlags Include="--multi-memory-lowering" />
+		<WasmOptConfigurationFlags Include="--memory64-lowering" />
+		<WasmOptConfigurationFlags Include="--llvm-memory-copy-fill-lowering " />
+		<WasmOptConfigurationFlags Include="--llvm-nontrapping-fptoint-lowering" />
 		<WasmOptConfigurationFlags Include="--signext-lowering" />
+		<WasmOptConfigurationFlags Include="--strip-debug" />
 		<WasmOptConfigurationFlags Include="-Oz" />
 	</ItemGroup>
 </Project>

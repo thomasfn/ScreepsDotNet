@@ -1,0 +1,11 @@
+<Project>
+  <PropertyGroup>
+    <BinaryenRoot Condition="'$(BinaryenRoot)' == ''">$(BINARYEN_PATH)</BinaryenRoot>
+    <WasmOpt>$([MSBuild]::NormalizeDirectory($(BinaryenRoot), 'bin'))\wasm-opt</WasmOpt>
+    <WasmOpt Condition="$([MSBuild]::IsOSPlatform('Windows'))">$(WasmOpt).exe</WasmOpt>
+    <WasmMerge>$([MSBuild]::NormalizeDirectory($(BinaryenRoot), 'bin'))\wasm-merge</WasmMerge>
+    <WasmMerge Condition="$([MSBuild]::IsOSPlatform('Windows'))">$(WasmMerge).exe</WasmMerge>
+    <WasmMetadce>$([MSBuild]::NormalizeDirectory($(BinaryenRoot), 'bin'))\wasm-metadce</WasmMetadce>
+    <WasmMetadce Condition="$([MSBuild]::IsOSPlatform('Windows'))">$(WasmMetadce).exe</WasmMetadce>
+  </PropertyGroup>
+</Project>

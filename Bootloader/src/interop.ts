@@ -123,22 +123,22 @@ export class Interop {
     constructor(profileFn: () => number) {
         this._profileFn = profileFn;
         this.interopImport = {};
-        this.interopImport.js_bind_import = this.js_bind_import.bind(this);
-        this.interopImport.js_invoke_import = this.js_invoke_import.bind(this);
-        this.interopImport.js_release_object_reference = this.js_release_object_reference.bind(this);
-        this.interopImport.js_set_name = this.js_set_name.bind(this);
+        this.interopImport['bind-import'] = this.js_bind_import.bind(this);
+        this.interopImport['invoke-import'] = this.js_invoke_import.bind(this);
+        this.interopImport['release-object-reference'] = this.js_release_object_reference.bind(this);
+        this.interopImport['set-name'] = this.js_set_name.bind(this);
 
-        this.interopImport.js_invoke_i_i = this.js_invoke_i_i.bind(this);
-        this.interopImport.js_invoke_i_ii = this.js_invoke_i_ii.bind(this);
-        this.interopImport.js_invoke_i_iii = this.js_invoke_i_iii.bind(this);
-        this.interopImport.js_invoke_i_o = this.js_invoke_i_o.bind(this);
-        this.interopImport.js_invoke_i_oi = this.js_invoke_i_oi.bind(this);
-        this.interopImport.js_invoke_i_on = this.js_invoke_i_on.bind(this);
-        this.interopImport.js_invoke_i_oii = this.js_invoke_i_oii.bind(this);
-        this.interopImport.js_invoke_i_oo = this.js_invoke_i_oo.bind(this);
-        this.interopImport.js_invoke_i_ooi = this.js_invoke_i_ooi.bind(this);
-        this.interopImport.js_invoke_i_ooii = this.js_invoke_i_ooii.bind(this);
-        this.interopImport.js_invoke_d_v = this.js_invoke_d_v.bind(this);
+        this.interopImport['invoke-i-i'] = this.js_invoke_i_i.bind(this);
+        this.interopImport['invoke-i-ii'] = this.js_invoke_i_ii.bind(this);
+        this.interopImport['invoke-i-iii'] = this.js_invoke_i_iii.bind(this);
+        this.interopImport['invoke-i-o'] = this.js_invoke_i_o.bind(this);
+        this.interopImport['invoke-i-oi'] = this.js_invoke_i_oi.bind(this);
+        this.interopImport['invoke-i-on'] = this.js_invoke_i_on.bind(this);
+        this.interopImport['invoke-i-oii'] = this.js_invoke_i_oii.bind(this);
+        this.interopImport['invoke-i-oo'] = this.js_invoke_i_oo.bind(this);
+        this.interopImport['invoke-i-ooi'] = this.js_invoke_i_ooi.bind(this);
+        this.interopImport['invoke-i-ooii'] = this.js_invoke_i_ooii.bind(this);
+        this.interopImport['invoke-d-v'] = this.js_invoke_d_v.bind(this);
     }
 
     public setImports(moduleName: string, importTable: ImportTable): void {
@@ -365,6 +365,7 @@ export class Interop {
                 this._timeInJsUserCode += (t2 - t1);
             }
         };
+        
     }
 
     private marshalToJs(memoryView: WasmMemoryView, valuePtr: number, paramSpec: Readonly<ParamSpec>): unknown {

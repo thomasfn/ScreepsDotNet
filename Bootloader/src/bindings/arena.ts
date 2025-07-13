@@ -11,7 +11,6 @@ import type { FindPathResult, FindPathOpts } from 'game/path-finder';
 // Note: We're assuming these imports are prepended to the final bootloader.mjs file by rollup and so they're essentially available globally for us to use
 declare const utils: typeof import('game/utils');
 declare const prototypes: typeof import('game/prototypes');
-declare const arenaInfo: typeof import('game').arenaInfo;
 declare const constants: typeof import('game/constants');
 declare const pathFinder: typeof import('game/path-finder');
 declare const visual: typeof import('game/visual');
@@ -146,7 +145,6 @@ export class ArenaBindings extends BaseBindings {
         this.imports['game'] = {
             getUtils: () => utils,
             getPrototypes: () => prototypes,
-            getArenaInfo: () => arenaInfo,
         };
         const wrappedPrototypes = this.buildWrappedPrototypes(prototypes as unknown as Record<string, _Constructor<unknown>>);
         this.imports['game/prototypes/wrapped'] = {

@@ -2,16 +2,30 @@
 
 	<!-- Directory to provision and use emscripten if EMSDK_PATH env variable is not set -->
 	<PropertyGroup>
+		<_hostOS>linux</_hostOS>
+		<_hostOS Condition="$([MSBuild]::IsOSPlatform('OSX'))">osx</_hostOS>
+		<_hostOS Condition="$([MSBuild]::IsOSPlatform('WINDOWS'))">windows</_hostOS>
+
+		<WasiSdkOsName></WasiSdkOsName>
+
+		<WasiSdkOsName Condition="'$(_hostOS)' == 'windows'">x86_64-windows</WasiSdkOsName>
+		<WasiSdkOsName Condition="'$(_hostOS)' == 'osx'">x86_64-macos</WasiSdkOsName>
+		<WasiSdkOsName Condition="'$(_hostOS)' == 'linux'">x86_64-linux</WasiSdkOsName>
+
 		<EmsdkLocalPath>emsdk</EmsdkLocalPath>
-		<WasiSdkLocalPath>wasi-sdk-$(WasiSdkVersion).$(WasiSdkMinorVersion)</WasiSdkLocalPath>
+		<WasiSdkLocalPath>wasi-sdk-$(WasiSdkVersion).$(WasiSdkMinorVersion)-$(WasiSdkOsName)</WasiSdkLocalPath>
+		<BinaryenLocalPath>binaryen-version_$(BinaryenVersion)</BinaryenLocalPath>
 		<WasmLocalPath>$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)', 'wasm'))</WasmLocalPath>
 		<ProvisionEmscriptenDir>$([MSBuild]::NormalizeDirectory('$(WasmLocalPath)', '$(EmsdkLocalPath)'))</ProvisionEmscriptenDir>
+		<ProvisionBinaryenDir>$([MSBuild]::NormalizeDirectory('$(WasmLocalPath)', '$(BinaryenLocalPath)'))</ProvisionBinaryenDir>
 		<EMSDK_PATH Condition="'$(EMSDK_PATH)' == ''">$(EMSDK)</EMSDK_PATH>
 		<ProvisionWasiSdkDir>$([MSBuild]::NormalizeDirectory('$(WasmLocalPath)', '$(WasiSdkLocalPath)'))</ProvisionWasiSdkDir>
 		<ShouldProvisionEmscripten Condition="'$(EMSDK_PATH)' == '' and !Exists('$(ProvisionEmscriptenDir)')">true</ShouldProvisionEmscripten>
 		<ShouldProvisionWasiSdk Condition="'$(WASI_SDK_PATH)' == '' and !Exists('$(ProvisionWasiSdkDir)')">true</ShouldProvisionWasiSdk>
+		<ShouldProvisionBinaryen Condition="'$(BINARYEN_PATH)' == '' and !Exists('$(ProvisionBinaryenDir)')">true</ShouldProvisionBinaryen>
 		<EMSDK_PATH Condition="'$(EMSDK_PATH)' == ''">$(ProvisionEmscriptenDir.Replace('\', '/'))</EMSDK_PATH>
 		<WASI_SDK_PATH Condition="'$(WASI_SDK_PATH)' == ''">$(ProvisionWasiSdkDir.Replace('\', '/'))</WASI_SDK_PATH>
+		<BINARYEN_PATH Condition="'$(BINARYEN_PATH)' == ''">$(ProvisionBinaryenDir.Replace('\', '/'))</BINARYEN_PATH>
 		<!-- semicolon is a msbuild property separator. It is also the path separator on windows.
          So, we need to escape it here, so the paths don't get split up when converting
          to string[] for passing to Exec task -->
@@ -20,7 +34,7 @@
 	</PropertyGroup>
 
 	<!-- Sets up emscripten if you don't have the EMSDK_PATH env variable set -->
-	<Target Name="ProvisionEmscripten" Condition="'$(ShouldProvisionEmscripten)' == 'true'">
+	<Target Name="ProvisionEmscripten" Condition="'$(ShouldProvisionEmscripten)' == 'true'" BeforeTargets="CheckWasmSdks">
 		<PropertyGroup>
 			<EmsdkExt Condition="'$(HostOS)' != 'windows'"></EmsdkExt>
 			<EmsdkExt Condition="'$(HostOS)' == 'windows'">.ps1</EmsdkExt>
@@ -52,18 +66,8 @@
 	</Target>
 
 	<!-- Sets up wasi-sdk if you don't have the WASI_SDK_PATH env variable set -->
-	<Target Name="ProvisionWasiSdk" Condition="'$(ShouldProvisionWasiSdk)' == 'true'" BeforeTargets="_SetupWasiSdk">
+	<Target Name="ProvisionWasiSdk" Condition="'$(ShouldProvisionWasiSdk)' == 'true'" BeforeTargets="CheckWasmSdks">
 		<PropertyGroup>
-			<_hostOS>linux</_hostOS>
-			<_hostOS Condition="$([MSBuild]::IsOSPlatform('OSX'))">osx</_hostOS>
-			<_hostOS Condition="$([MSBuild]::IsOSPlatform('WINDOWS'))">windows</_hostOS>
-
-			<WasiSdkOsName></WasiSdkOsName>
-
-			<WasiSdkOsName Condition="'$(_hostOS)' == 'windows'">mingw</WasiSdkOsName>
-			<WasiSdkOsName Condition="'$(_hostOS)' == 'osx'">macos</WasiSdkOsName>
-			<WasiSdkOsName Condition="'$(_hostOS)' == 'linux'">linux</WasiSdkOsName>
-
 			<WasiSdkArchiveName>wasi-sdk-$(WasiSdkVersion).$(WasiSdkMinorVersion)-$(WasiSdkOsName).tar.gz</WasiSdkArchiveName>
 			<WasiSdkUrl>https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-$(WasiSdkVersion)/$(WasiSdkArchiveName)</WasiSdkUrl>
 
@@ -82,8 +86,40 @@
 		<Exec Command="tar -xf &quot;$(WasiSdkArchivePath)&quot; -C &quot;$(WasmLocalPath.TrimEnd('\'))&quot;" />
 	</Target>
 
+	<!-- Sets up wasi-sdk if you don't have the WASI_SDK_PATH env variable set -->
+	<Target Name="ProvisionBinaryen" Condition="'$(ShouldProvisionBinaryen)' == 'true'">
+		<PropertyGroup>
+			<_hostOS>linux</_hostOS>
+			<_hostOS Condition="$([MSBuild]::IsOSPlatform('OSX'))">osx</_hostOS>
+			<_hostOS Condition="$([MSBuild]::IsOSPlatform('WINDOWS'))">windows</_hostOS>
+
+			<BinaryenOsName></BinaryenOsName>
+
+			<BinaryenOsName Condition="'$(_hostOS)' == 'windows'">x86_64-windows</BinaryenOsName>
+			<BinaryenOsName Condition="'$(_hostOS)' == 'osx'">x86_64-macos</BinaryenOsName>
+			<BinaryenOsName Condition="'$(_hostOS)' == 'linux'">x86_64-linux</BinaryenOsName>
+
+			<BinaryenArchiveName>binaryen-version_$(BinaryenVersion)-$(BinaryenOsName).tar.gz</BinaryenArchiveName>
+			<BinaryenUrl>https://github.com/WebAssembly/binaryen/releases/download/version_$(BinaryenVersion)/$(BinaryenArchiveName)</BinaryenUrl>
+
+			<BinaryenArchivePath>$([MSBuild]::NormalizePath('$(WasmLocalPath)', '$(BinaryenArchiveName)'))</BinaryenArchivePath>
+
+			<BINARYEN_PATH>$(ProvisionBinaryenDir)</BINARYEN_PATH>
+		</PropertyGroup>
+
+		<Message Text="Provisioning Binaryen $(BinaryenVersion)..." Importance="High"/>
+
+		<RemoveDir Directories="$(BINARYEN_PATH)" />
+		<MakeDir Directories="$(WasmLocalPath)" />
+
+		<DownloadFile SourceUrl="$(BinaryenUrl)" DestinationFolder="$(WasmLocalPath)" DestinationFileName="$(BinaryenArchiveName)" Condition="!Exists('$(BinaryenArchivePath)')" />
+
+		<Exec Command="tar -xf &quot;$(BinaryenArchivePath)&quot; -C &quot;$(WasmLocalPath.TrimEnd('\'))&quot;" />
+	</Target>
+
 	<Import Project="$(MSBuildThisFileDirectory)EmSdkRepo.Defaults.props" />
 	<Import Project="$(MSBuildThisFileDirectory)WasiSdk.Defaults.props" />
+	<Import Project="$(MSBuildThisFileDirectory)Binaryen.Defaults.props" />
 
 	<ItemGroup>
 		<EmscriptenEnvVars Include="PATH=$(EmscriptenUpstreamBinPath)$(_PathSeparator)$([MSBuild]::Escape($(PATH)))" />
@@ -99,31 +135,65 @@
 		<EmscriptenEnvVars Include="EM_WORKAROUND_PYTHON_BUG_34780=1" />
 	</ItemGroup>
 
-	<Target Name="_LowerWasmBulkMemory" AfterTargets="LinkNativeLlvm">
-		<Message Text="Lowering wasm bulk memory instructions..." Importance="High"/>
-		<LowerBulkMemoryTask InWasmFileName="$(NativeOutputPath)\$(TargetName).wasm" OutWasmFileName="$(NativeOutputPath)\$(TargetName)-lbm.wasm" />
-	</Target>
-
-	<Target Name="_OptimiseWasm" AfterTargets="_LowerWasmBulkMemory" DependsOnTargets="ProvisionEmscripten">
-		
+	<Target Name="Screeps_ExtractCoreModule" AfterTargets="LinkNativeLlvm">
 		<PropertyGroup>
-			<InputWasmFile>$(NativeOutputPath)\$(TargetName)-lbm.wasm</InputWasmFile>
-			<OutputWasmFile>$(PublishDir)\$(TargetName)-o.wasm</OutputWasmFile>
+			<InputWasmFile>$(NativeOutputPath)\$(TargetName).wasm</InputWasmFile>
+			<OutputWasmFile>$(NativeOutputPath)\$(TargetName)-coremodule.wasm</OutputWasmFile>
 		</PropertyGroup>
 
-		<Message Text="Optimising wasm output... $(WasmMainAssemblyFileName)" Importance="High"/>
+		<Message Text="Extracting core module..." Importance="High"/>
+		<ExtractCoreModuleTask InWasmFileName="$(InputWasmFile)" OutWasmFileName="$(OutputWasmFile)" />
+	</Target>
+
+	<Target Name="Screeps_LinkCoreModule" AfterTargets="Screeps_ExtractCoreModule" DependsOnTargets="ProvisionBinaryen">
+		
+		<PropertyGroup>
+			<InputWasmFile>$(NativeOutputPath)\$(TargetName)-coremodule.wasm</InputWasmFile>
+			<OutputWasmFile>$(NativeOutputPath)\$(TargetName)-linked.wasm</OutputWasmFile>
+		</PropertyGroup>
+
+		<Message Text="Linking wasm modules... $(WasmMainAssemblyFileName)" Importance="High"/>
 		<Exec
-			Command="wasm-opt$(_ExeExt) &quot;$(InputWasmFile)&quot; @(WasmOptConfigurationFlags, ' ') -o &quot;$(OutputWasmFile)&quot;"
+			Command="&quot;$(WasmMerge)&quot; &quot;$(InputWasmFile)&quot; env @(WasmMergeModules, ' ') @(WasmMergeConfigurationFlags, ' ') -o &quot;$(OutputWasmFile)&quot;"
 			WorkingDirectory="$(WasmAppDir)"
-			EnvironmentVariables="@(EmscriptenEnvVars)"
 		/>
 	</Target>
 
-	<Target Name="_BuildScreepsBundle" AfterTargets="_WasiGenerateAppBundle" DependsOnTargets="_OptimiseWasm">
+	<Target Name="Screeps_TrimWasmExports" AfterTargets="Screeps_LinkCoreModule" DependsOnTargets="ProvisionBinaryen">
+		<PropertyGroup>
+			<InputWasmFile>$(NativeOutputPath)\$(TargetName)-linked.wasm</InputWasmFile>
+			<OutputWasmFile>$(NativeOutputPath)\$(TargetName)-trimmed.wasm</OutputWasmFile>
+		</PropertyGroup>
+
+		<Message Text="Trimming wasm exports... $(WasmMainAssemblyFileName)" Importance="High"/>
+		<Exec
+			Command="&quot;$(WasmMetadce)&quot; &quot;$(InputWasmFile)&quot; @(WasmMetadceConfigurationFlags, ' ') -o &quot;$(OutputWasmFile)&quot;"
+			WorkingDirectory="$(WasmAppDir)"
+		/>
+	</Target>
+
+	<Target Name="Screeps_OptimiseWasm" AfterTargets="Screeps_TrimWasmExports" DependsOnTargets="ProvisionBinaryen">
+		<PropertyGroup>
+			<InputWasmFile>$(NativeOutputPath)\$(TargetName)-trimmed.wasm</InputWasmFile>
+			<OutputWasmFile>$(NativeOutputPath)\$(TargetName)-opt.wasm</OutputWasmFile>
+		</PropertyGroup>
+
+		<Message Text="Optimising wasm module... $(WasmMainAssemblyFileName)" Importance="High"/>
+		<Exec
+			Command="&quot;$(WasmOpt)&quot; &quot;$(InputWasmFile)&quot; @(WasmOptConfigurationFlags, ' ') -o &quot;$(OutputWasmFile)&quot;"
+			WorkingDirectory="$(WasmAppDir)"
+		/>
+	</Target>
+
+	<Target Name="Screeps_BuildScreepsBundle" AfterTargets="Publish" DependsOnTargets="Screeps_OptimiseWasm">
+		<PropertyGroup>
+			<InputWasmFile>$(NativeOutputPath)\$(TargetName)-opt.wasm</InputWasmFile>
+		</PropertyGroup>
+
 		<Message Text="Bundling for Screeps..." Importance="High"/>
 		<BundlerBuildTask
-			AppBundleDir="$(WasmAppDir)"
-			WasmFileName="$(OutputWasmFile)"
+			AppBundleDir="$(PublishDir)"
+			WasmFileName="$(InputWasmFile)"
 			Configuration="$(Configuration)"
 			CompressWasm="$(ScreepsCompressWasm)"
 			Encoding="$(ScreepsEncoding)"
