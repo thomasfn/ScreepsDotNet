@@ -6,6 +6,7 @@ A toolset and API to build bots for [Screeps Arena](https://store.steampowered.c
 * [Quickstart](#quickstart)
 * [Migration from .Net 7](#migration)
 * [API](#api)
+* [Custom JS](#custom-js)
 * [Native](#native)
 * [Project structure](#project-structure)
 * [Limitations, Issues and Implications](#limitations-issues-and-implications)
@@ -54,7 +55,6 @@ Edit the csproj to contain the following property groups:
     <EventSourceSupport>false</EventSourceSupport>
     <UseSystemResourceKeys>true</UseSystemResourceKeys>
     <InvariantTimezone>true</InvariantTimezone>
-    <WasiSdkVersion>15</WasiSdkVersion>
 </PropertyGroup>
 
 <PropertyGroup>
@@ -76,6 +76,7 @@ dotnet add (MyProjectName) package ScreepsDotNet.Bundler
 Replace your `Program.cs` with the following code:
 ```CS
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 using ScreepsDotNet.API.Arena;
 
@@ -136,6 +137,7 @@ Do not change the namespace of the entrypoint as the native calls used to look i
 Replace your `Program.cs` with the following code:
 ```CS
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 using ScreepsDotNet.API.World;
 
@@ -257,6 +259,22 @@ More details and documentation for the API is planned.
 - JS interop is expensive. The first access of a property on a game object will always involve an interop call (two if this is the first time the object has been used in a tick, as it has to refresh the stale instance first). However, the API will cache the property for the remainder of the tick, so subsequent accesses of that property will be cheap.
 - You can't store properties directly on objects like in the JS API, nor can you extend the objects yourself. You can, however, use `IGameObject` as the key of a `Dictionary` or safely store it in any other collection like `HashSet`. Don't forget to clean up the collection when the game object is destroyed.
 - You can associate user data with any game object, using `gameObject.SetUserData<T>(T instance)` and other sibling user data methods. Only reference types can be stored in this way, and the generic type parameter itself is used as the key. You should consider user data stored in this manner to be ephemeral, e.g. it might go away at any time, so always handle the case where user data is not set. You can store as many instances of different types as you like on a game object but only one instance per type. User data lookups are more efficient than a dictionary lookup.
+
+## Custom JS
+
+There may be times when you want to include some custom JS in your distribution, for example some additional interop code or including a third party library. This can be achieved by adding the code to your project as JS files and including them via one (or more) of the following properties in your csproj file:
+
+### World
+- `ScreepsWorldJsFiles` - Adds JS files to the output distribution, e.g. `AppBundle/world`
+- `ScreepsWorldStartup` - Adds the code contained in the JS files to the `main.js` before the loop
+- `ScreepsWorldLoop` - Adds the code contained in the JS files to the `main.js` during the loop
+
+### Arena
+- `ScreepsArenaJsFiles` - Adds JS files to the output distribution, e.g. `AppBundle/arena`
+- `ScreepsArenaStartup` - Adds the code contained in the JS files to the `main.mjs` before the loop
+- `ScreepsArenaLoop` - Adds the code contained in the JS files to the `main.mjs` during the loop
+
+The API itself uses these properties to include the bootloader and startup logic in the distribution. An example of usage can be found [here](https://github.com/thomasfn/ScreepsDotNet/blob/main/ScreepsDotNet.API/build/ScreepsDotNet.API.props).
 
 ## Native
 

@@ -46,6 +46,7 @@
 		<Content Include="build\EmSdkRepo.Defaults.props" PackagePath="build\" />
 		<Content Include="build\ScreepsDotNet.Bundler.props" PackagePath="build\" />
 		<Content Include="build\ScreepsDotNet.Bundler.targets" PackagePath="build\" />
+		<Content Include="build\WasiSdk.Defaults.props" PackagePath="build\" />
 	</ItemGroup>
 
 	<ItemGroup>

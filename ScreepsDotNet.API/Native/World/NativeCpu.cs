@@ -66,7 +66,7 @@ namespace ScreepsDotNet.Native.World
 
         public HeapInfo GetHeapStatistics()
         {
-            var obj = Native_GetHeapStatistics();
+            using var obj = Native_GetHeapStatistics();
             return new HeapInfo(
                 obj.GetPropertyAsInt32("total_heap_size"),
                 obj.GetPropertyAsInt32("total_heap_size_executable"),

@@ -58,16 +58,12 @@ namespace ScreepsDotNet.Native.World
             proxyObjectValidAsOf = nativeRoot.TickIndex;
         }
 
-        public void NotifyBatchRenew(bool failed)
+        public void RenewProxyObject()
         {
+            isDead = false;
+            OnRenewProxyObject();
             proxyObjectValidAsOf = nativeRoot.TickIndex;
             ClearNativeCache();
-            if (failed)
-            {
-                proxyObject?.Dispose();
-                proxyObject = null;
-                isDead = true;
-            }
         }
 
         public void ReplaceProxyObject(JSObject? newProxyObject)
@@ -81,7 +77,6 @@ namespace ScreepsDotNet.Native.World
                 proxyObject.UserData = null;
                 proxyObject.Dispose();
             }
-            
             proxyObject = newProxyObject;
             if (proxyObject != null && !proxyObject.IsDisposed)
             {
@@ -99,6 +94,8 @@ namespace ScreepsDotNet.Native.World
 
         protected virtual void OnGetNewProxyObject(JSObject newProxyObject) { }
 
+        protected virtual void OnRenewProxyObject() { }
+
         private void TryRenewOrReacquire()
         {
             if (proxyObject != null && !proxyObject.IsDisposed)
@@ -107,14 +104,15 @@ namespace ScreepsDotNet.Native.World
                 {
                     ReplaceProxyObject(null);
                 }
+                else
+                {
+                    RenewProxyObject();
+                }
             }
             else
             {
                 ReplaceProxyObject(ReacquireProxyObject());
             }
-            proxyObjectValidAsOf = nativeRoot.TickIndex;
-            ClearNativeCache();
-            isDead = proxyObject == null || proxyObject.IsDisposed;
         }
 
         protected void TouchProxyObject()

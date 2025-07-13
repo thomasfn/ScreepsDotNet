@@ -1,4 +1,10 @@
-﻿var bootloader = (function (exports) {
+import * as utils from 'game/utils';
+import * as prototypes from 'game/prototypes';
+import * as constants from 'game/constants';
+import * as pathFinder from 'game/path-finder';
+import * as visual from 'game/visual';
+import { arenaInfo } from 'game';
+var bootloader = (function (exports) {
   'use strict';
 
   function _iterableToArrayLimit(arr, i) {
@@ -2641,6 +2647,17 @@
         var boundImportSymbol = this._boundImportSymbolList[importIndex];
         return "".concat(importIndex, ": ").concat(stringifyParamSpec(boundImportSymbol.functionSpec.returnSpec), " ").concat(boundImportSymbol.fullName, "(").concat(boundImportSymbol.functionSpec.paramSpecs.map(stringifyParamSpec).join(', '), ")");
       }
+    }, {
+      key: "visitClrTrackedObjects",
+      value: function visitClrTrackedObjects(visitor) {
+        for (var i = 0; i < this._nextClrTrackingId; ++i) {
+          var obj = this._objectTrackingList[i];
+          if (obj == null) {
+            continue;
+          }
+          visitor(obj);
+        }
+      }
     }]);
     return Interop;
   }();
@@ -2871,6 +2888,9 @@
           },
           getPrototypes: function getPrototypes() {
             return prototypes;
+          },
+          getArenaInfo: function getArenaInfo() {
+            return arenaInfo;
           }
         };
         var wrappedPrototypes = this.buildWrappedPrototypes(prototypes);
@@ -2987,7 +3007,7 @@
   }(BaseBindings);
 
   var CPU_HALT_WHEN_NO_CHECKIN_FOR = 10;
-  var RESOURCE_LIST = ["energy", "power", "H", "O", "U", "L", "K", "Z", "X", "G", "silicon", "metal", "biomass", "mist", "OH", "ZK", "UL", "UH", "UO", "KH", "KO", "LH", "LO", "ZH", "ZO", "GH", "GO", "UH2O", "UHO2", "KH2O", "KHO2", "LH2O", "LHO2", "ZH2O", "ZHO2", "GH2O", "GHO2", "XUH2O", "XUHO2", "XKH2O", "XKHO2", "XLH2O", "XLHO2", "XZH2O", "XZHO2", "XGH2O", "XGHO2", "ops", "utrium_bar", "lemergium_bar", "zynthium_bar", "keanium_bar", "ghodium_melt", "oxidant", "reductant", "purifier", "battery", "composite", "crystal", "liquid", "wire", "switch", "transistor", "microchip", "circuit", "device", "cell", "phlegm", "tissue", "muscle", "organoid", "organism", "alloy", "tube", "fixtures", "frame", "hydraulics", "machine", "condensate", "concentrate", "extract", "spirit", "emanation", "essence", "season"]; // 85 total
+  var RESOURCE_LIST = ["energy", "power", "H", "O", "U", "L", "K", "Z", "X", "G", "silicon", "metal", "biomass", "mist", "OH", "ZK", "UL", "UH", "UO", "KH", "KO", "LH", "LO", "ZH", "ZO", "GH", "GO", "UH2O", "UHO2", "KH2O", "KHO2", "LH2O", "LHO2", "ZH2O", "ZHO2", "GH2O", "GHO2", "XUH2O", "XUHO2", "XKH2O", "XKHO2", "XLH2O", "XLHO2", "XZH2O", "XZHO2", "XGH2O", "XGHO2", "ops", "utrium_bar", "lemergium_bar", "zynthium_bar", "keanium_bar", "ghodium_melt", "oxidant", "reductant", "purifier", "battery", "composite", "crystal", "liquid", "wire", "switch", "transistor", "microchip", "circuit", "device", "cell", "phlegm", "tissue", "muscle", "organoid", "organism", "alloy", "tube", "fixtures", "frame", "hydraulics", "machine", "condensate", "concentrate", "extract", "spirit", "emanation", "essence", "season", "score"]; // 85 total
   var RESOURCE_TO_ENUM_MAP = {};
   {
     var i = 0;
@@ -3055,7 +3075,9 @@
     }, {
       key: "setupImports",
       value: function setupImports() {
-        var _this2 = this;
+        var _global$ScoreCollecto,
+          _global$ScoreContaine,
+          _this2 = this;
         _get(_getPrototypeOf(WorldBindings.prototype), "setupImports", this).call(this);
         this.bindingsImport.js_renew_object = this.js_renew_object.bind(this);
         this.bindingsImport.js_batch_renew_objects = this.js_batch_renew_objects.bind(this);
@@ -3063,6 +3085,7 @@
         this.bindingsImport.js_batch_fetch_object_room_positions = this.js_batch_fetch_object_room_positions.bind(this);
         this.bindingsImport.js_get_object_by_id = this.js_get_object_by_id.bind(this);
         this.bindingsImport.js_get_object_id = this.js_get_object_id.bind(this);
+        var _global = global;
         var gameConstructors = {
           StructureContainer: StructureContainer,
           StructureController: StructureController,
@@ -3100,7 +3123,9 @@
           RoomObject: RoomObject,
           Room: Room,
           RoomVisual: RoomVisual,
-          Nuke: Nuke
+          Nuke: Nuke,
+          ScoreCollector: (_global$ScoreCollecto = _global.ScoreCollector) !== null && _global$ScoreCollecto !== void 0 ? _global$ScoreCollecto : function () {},
+          ScoreContainer: (_global$ScoreContaine = _global.ScoreContainer) !== null && _global$ScoreContaine !== void 0 ? _global$ScoreContaine : function () {}
         };
         this.imports['object'] = {
           getConstructorOf: function getConstructorOf(x) {
@@ -3652,6 +3677,63 @@
         var fromRoomCoord = this.parseRoomName(fromRoomName, TEMP_ROOM_COORD_B);
         return this._invoke_route_callback(roomCoord[0], roomCoord[1], fromRoomCoord[0], fromRoomCoord[1]);
       }
+    }, {
+      key: "accountClrTrackedObjects",
+      value: function accountClrTrackedObjects() {
+        var counts = {};
+        var totalCount = 0;
+        this._interop.visitClrTrackedObjects(function (x) {
+          var _counts$name;
+          var name;
+          if (x instanceof Creep) {
+            name = 'Creep';
+          } else if (x instanceof Structure) {
+            name = 'Structure';
+          } else if (x instanceof RoomObject) {
+            name = 'RoomObject';
+          } else if (x instanceof Room) {
+            name = 'Room';
+          } else if (x instanceof RoomPosition) {
+            name = 'RoomPosition';
+          } else if (x instanceof global.Store) {
+            name = 'Store';
+          } else if (x instanceof StructureSpawn.Spawning) {
+            name = 'StructureSpawn.Spawning';
+          } else if (x == global) {
+            name = 'global';
+          } else if (x == Game) {
+            name = 'Game';
+          } else if (x == Game.creeps) {
+            name = 'Game.creeps';
+          } else if (x == Game.structures) {
+            name = 'Game.structures';
+          } else if (x == Game.spawns) {
+            name = 'Game.spawns';
+          } else if (x == Game.rooms) {
+            name = 'Game.rooms';
+          } else if (x == Game.cpu) {
+            name = 'Game.cpu';
+          } else if (x == Game.map) {
+            name = 'Game.map';
+          } else if (Array.isArray(x)) {
+            name = 'Array';
+          } else {
+            if (_typeof(x) === 'object' && x != null) {
+              var keys = Object.keys(x);
+              name = "unknown(".concat(keys.join(','), ")");
+            } else {
+              name = 'unknown';
+            }
+          }
+          counts[name] = ((_counts$name = counts[name]) !== null && _counts$name !== void 0 ? _counts$name : 0) + 1;
+          ++totalCount;
+        });
+        var lines = ["total: ".concat(totalCount)];
+        for (var name in counts) {
+          lines.push("".concat(name, ": ").concat(counts[name]));
+        }
+        this.log(lines.join('<br />'));
+      }
     }]);
     return WorldBindings;
   }(BaseBindings);
@@ -3811,6 +3893,7 @@
     }
     return bytes;
   }
+  var EMPTY_ARR = [];
   var Bootloader = /*#__PURE__*/function () {
     function Bootloader(env, profileFn) {
       _classCallCheck(this, Bootloader);
@@ -3848,7 +3931,8 @@
           return JSTYPE_TO_ENUM[_typeof(obj[key])];
         },
         getKeys: function getKeys(obj) {
-          return Object.keys(obj);
+          var _ref;
+          return (_ref = obj ? Object.keys(obj) : null) !== null && _ref !== void 0 ? _ref : EMPTY_ARR;
         },
         getProperty: function getProperty(obj, key) {
           return obj[key];
@@ -4082,4 +4166,6 @@
 
 })({});
 
-module.exports = bootloader;
+export const Bootloader = bootloader.Bootloader;
+export const decodeWasm = bootloader.decodeWasm;
+export const decompressWasm = bootloader.decompressWasm;

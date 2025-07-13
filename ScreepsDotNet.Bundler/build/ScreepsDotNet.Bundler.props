@@ -16,6 +16,8 @@
 		<ScreepsCompressWasm>false</ScreepsCompressWasm>
 		<ScreepsEncoding>b64</ScreepsEncoding>
 		<WasmEnableNonTrappingFloatToIntConversions>false</WasmEnableNonTrappingFloatToIntConversions>
+		<WasiSdkVersion>15</WasiSdkVersion>
+		<WasiSdkMinorVersion>0</WasiSdkMinorVersion>
 	</PropertyGroup>
 
 	<ItemGroup>

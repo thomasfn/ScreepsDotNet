@@ -4,26 +4,20 @@ using ScreepsDotNet.API.World;
 namespace ScreepsDotNet.Native.World
 {
     [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
-    internal partial class NativeRuin : NativeRoomObjectWithId, IRuin
+    internal partial class NativeScoreContainer : NativeRoomObjectWithId, IScoreContainer
     {
         private readonly NativeStore store;
 
-        private long? destroyTimeCache;
-        private IStructure? structureCache;
         private int? ticksToDecayCache;
-
-        public long DestroyTime => CacheLifetime(ref destroyTimeCache) ??= ProxyObject.GetPropertyAsInt32(Names.DestroyTime);
 
         public IStore Store => store;
 
-        public IStructure? Structure => CacheLifetime(ref structureCache) ??= nativeRoot.GetOrCreateWrapperObject<IStructure>(ProxyObject.GetPropertyAsJSObject(Names.Store));
-
         public int TicksToDecay => CachePerTick(ref ticksToDecayCache) ??= ProxyObject.GetPropertyAsInt32(Names.TicksToDecay);
 
-        public NativeRuin(INativeRoot nativeRoot, JSObject proxyObject)
+        public NativeScoreContainer(INativeRoot nativeRoot, JSObject proxyObject)
             : base(nativeRoot, proxyObject)
         {
-            store = new(nativeRoot, proxyObject);
+            store = new NativeStore(nativeRoot, proxyObject);
             store.OnRequestNewProxyObject += Store_OnRequestNewProxyObject;
         }
 
@@ -52,6 +46,6 @@ namespace ScreepsDotNet.Native.World
         }
 
         public override string ToString()
-            => $"Ruin[{(Exists ? RoomPosition.ToString() : "DEAD")}]";
+            => $"ScoreContainer[{Id}]";
     }
 }

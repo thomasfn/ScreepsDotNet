@@ -42,7 +42,6 @@
 
 	<ItemGroup>
 		<PackageReference Include="ScreepsDotNet.Bundler" Version="2.1.0" PrivateAssets="All" />
-
 	</ItemGroup>
 
 </Project>

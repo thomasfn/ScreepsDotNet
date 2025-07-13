@@ -33,6 +33,24 @@ namespace ScreepsDotNet.Bundler
 
         public string? CustomInitExportNames { get; set; } = null;
 
+        [Required]
+        public string WorldJsFiles { get; set; } = null!;
+
+        [Required]
+        public string WorldStartup { get; set; } = null!;
+
+        [Required]
+        public string WorldLoop { get; set; } = null!;
+
+        [Required]
+        public string ArenaJsFiles { get; set; } = null!;
+
+        [Required]
+        public string ArenaStartup { get; set; } = null!;
+
+        [Required]
+        public string ArenaLoop { get; set; } = null!;
+
         [Output]
         public string[] BundleFilePaths { get; set; } = null!;
 
@@ -76,8 +94,18 @@ namespace ScreepsDotNet.Bundler
             mainJsReplacements.Add("ORIGINAL_WASM_SIZE", $"{originalWasmSize}");
 
             // Build bundles for arena and world
-            var arenaFilePaths = BuildArena(Path.Combine(AppBundleDir, "arena"), wasmData, CompressWasm, originalWasmSize, mainJsReplacements);
-            var worldFilePaths = BuildWorld(Path.Combine(AppBundleDir, "world"), wasmData, mainJsReplacements);
+            var mainJsWorldReplacements = new Dictionary<string, string>(mainJsReplacements)
+            {
+                { "STARTUP", GatherJs(WorldStartup, "") },
+                { "LOOP", GatherJs(WorldLoop, "    ") }
+            };
+            var arenaJsWorldReplacements = new Dictionary<string, string>(mainJsReplacements)
+            {
+                { "STARTUP", GatherJs(ArenaStartup, "") },
+                { "LOOP", GatherJs(ArenaLoop, "    ") }
+            };
+            var arenaFilePaths = BuildArena(Path.Combine(AppBundleDir, "arena"), wasmData, CompressWasm, originalWasmSize, arenaJsWorldReplacements);
+            var worldFilePaths = BuildWorld(Path.Combine(AppBundleDir, "world"), wasmData, mainJsWorldReplacements);
 
             // Collect all emitted files
             BundleFilePaths = Enumerable.Empty<string>()
@@ -86,6 +114,21 @@ namespace ScreepsDotNet.Bundler
                 .ToArray();
 
             return !Log.HasLoggedErrors;
+        }
+
+        private static string GatherJs(string pathStr, string linePrefix)
+        {
+            var lines = new List<string>();
+            var paths = pathStr.Split(',');
+            foreach (var path in paths)
+            {
+                var text = File.ReadAllText(path);
+                foreach (var line in text.Split('\n'))
+                {
+                    lines.Add($"{linePrefix}{line}");
+                }
+            }
+            return string.Join("\n", lines);
         }
 
         private string Encode(byte[] data) => Encoding switch
@@ -105,6 +148,8 @@ namespace ScreepsDotNet.Bundler
         private IEnumerable<string> BuildArena(string path, byte[] wasmData, bool wasmDataCompressed, int originalWasmSize, IReadOnlyDictionary<string, string> mainJsReplacements)
         {
             Directory.CreateDirectory(path);
+
+            var outputs = new List<string>();
 
             var bundleFilePath = Path.Combine(path, "bundle.mjs");
             using (var output = File.Open(bundleFilePath, FileMode.OpenOrCreate))
@@ -128,46 +173,68 @@ namespace ScreepsDotNet.Bundler
                     writer.WriteLine($"export const WasmBytes = decodeWasm(encodedWasm, {wasmData.Length}, '{Encoding}');");
                 }
             }
+            outputs.Add(bundleFilePath);
 
-            File.WriteAllBytes(Path.Combine(path, "bootloader.mjs"), BundleStaticAssets.arena_bootloader_mjs);
-            File.WriteAllBytes(Path.Combine(path, "bootloader.d.ts"), BundleStaticAssets.arena_bootloader_dts);
+            foreach (var jsPath in ArenaJsFiles.Split(','))
+            {
+                var outputPath = Path.Combine(path, Path.GetFileName(jsPath));
+                File.WriteAllBytes(outputPath, File.ReadAllBytes(jsPath));
+                outputs.Add(outputPath);
+            }
 
             var mainJs = System.Text.Encoding.UTF8.GetString(BundleStaticAssets.arena_main_mjs);
-            File.WriteAllText(Path.Combine(path, "main.mjs"), ProcessMainJsReplacements(mainJs, mainJsReplacements));
+            var mainOutputPath = Path.Combine(path, "main.mjs");
+            File.WriteAllText(mainOutputPath, ProcessReplacements(mainJs, mainJsReplacements));
+            outputs.Add(mainOutputPath);
 
-            return new string[]
-            {
-                bundleFilePath,
-                Path.Combine(path, "bootloader.mjs"),
-                Path.Combine(path, "bootloader.d.ts"),
-                Path.Combine(path, "main.mjs")
-            };
+            return outputs;
         }
 
         private IEnumerable<string> BuildWorld(string path, byte[] wasmData, IReadOnlyDictionary<string, string> mainJsReplacements)
         {
             Directory.CreateDirectory(path);
 
-            File.WriteAllBytes(Path.Combine(path, "ScreepsDotNet.wasm"), wasmData);
-            File.WriteAllBytes(Path.Combine(path, "bootloader.js"), BundleStaticAssets.world_bootloader_js);
+            var outputs = new List<string>();
+
+            var wasmFilePath = Path.Combine(path, "ScreepsDotNet.wasm");
+            File.WriteAllBytes(wasmFilePath, wasmData);
+            outputs.Add(wasmFilePath);
+
+            foreach (var jsPath in WorldJsFiles.Split(','))
+            {
+                var outputPath = Path.Combine(path, Path.GetFileName(jsPath));
+                File.WriteAllBytes(outputPath, File.ReadAllBytes(jsPath));
+                outputs.Add(outputPath);
+            }
 
             var mainJs = System.Text.Encoding.UTF8.GetString(BundleStaticAssets.world_main_js);
-            File.WriteAllText(Path.Combine(path, "main.js"), ProcessMainJsReplacements(mainJs, mainJsReplacements), System.Text.Encoding.UTF8);
+            var mainOutputPath = Path.Combine(path, "main.js");
+            File.WriteAllText(mainOutputPath, ProcessReplacements(mainJs, mainJsReplacements), System.Text.Encoding.UTF8);
+            outputs.Add(mainOutputPath);
 
-            return new string[]
-            {
-                Path.Combine(path, "ScreepsDotNet.wasm"),
-                Path.Combine(path, "bootloader.js"),
-                Path.Combine(path, "main.js")
-            };
+            return outputs;
         }
 
-        private string ProcessMainJsReplacements(string mainJs, IReadOnlyDictionary<string, string> replacements)
+        private static string ProcessReplacements(string mainJs, IReadOnlyDictionary<string, string> replacements)
         {
-            foreach (var pair in replacements)
+            const int maxDepth = 10;
+            bool didReplace;
+            int depth = 0;
+            do
             {
-                mainJs = mainJs.Replace($"/*{pair.Key}*/", pair.Value);
+                didReplace = false;
+                foreach (var pair in replacements)
+                {
+                    var newMainJs = mainJs.Replace($"/*{pair.Key}*/", pair.Value);
+                    if (newMainJs != mainJs)
+                    {
+                        mainJs = newMainJs;
+                        didReplace = true;
+                    }
+                }
+                ++depth;
             }
+            while (didReplace && depth < maxDepth);
             return mainJs;
         }
     }

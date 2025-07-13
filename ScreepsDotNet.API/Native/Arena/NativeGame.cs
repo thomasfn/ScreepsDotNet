@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
@@ -29,6 +29,8 @@ namespace ScreepsDotNet.Native.Arena
         public IPathFinder PathFinder { get; } = new NativePathFinder();
 
         public IConstants Constants { get; } = new NativeConstants();
+
+        public IArenaInfo ArenaInfo { get; } = new NativeArenaInfo();
 
         int INativeRoot.TickIndex => tickIndex;
 

@@ -1,6 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+
 using ScreepsDotNet.Interop;
 
 using ScreepsDotNet.API.World;
@@ -41,28 +41,48 @@ namespace ScreepsDotNet.Native.World
             return true;
         }
 
-        public bool TryGetString(string key, out string value)
+        public bool TryGetString(string key, [MaybeNullWhen(false)] out string value)
         {
             if (ProxyObject.GetTypeOfProperty(key) != JSPropertyType.String)
             {
-                value = string.Empty;
+                value = null;
                 return false;
             }
-            var str = ProxyObject.GetPropertyAsString(key);
-            value = str ?? string.Empty;
-            return str != null;
+            value = ProxyObject.GetPropertyAsString(key);
+            return value != null;
         }
 
-        public bool TryGetString(Name key, out string value)
+        public bool TryGetString(Name key, [MaybeNullWhen(false)] out string value)
         {
             if (ProxyObject.GetTypeOfProperty(key) != JSPropertyType.String)
             {
-                value = string.Empty;
+                value = null;
                 return false;
             }
-            var str = ProxyObject.GetPropertyAsString(key);
-            value = str ?? string.Empty;
-            return str != null;
+            value = ProxyObject.GetPropertyAsString(key);
+            return value != null;
+        }
+
+        public bool TryGetName(string key, out Name value)
+        {
+            if (ProxyObject.GetTypeOfProperty(key) != JSPropertyType.String)
+            {
+                value = default;
+                return false;
+            }
+            value = ProxyObject.GetPropertyAsName(key);
+            return !string.IsNullOrEmpty(value.Value);
+        }
+
+        public bool TryGetName(Name key, out Name value)
+        {
+            if (ProxyObject.GetTypeOfProperty(key) != JSPropertyType.String)
+            {
+                value = default;
+                return false;
+            }
+            value = ProxyObject.GetPropertyAsName(key);
+            return !string.IsNullOrEmpty(value.Value);
         }
 
         public bool TryGetDouble(string key, out double value)
@@ -153,6 +173,12 @@ namespace ScreepsDotNet.Native.World
             => ProxyObject.SetProperty(key, value);
 
         public void SetValue(Name key, string value)
+            => ProxyObject.SetProperty(key, value);
+
+        public void SetValue(string key, Name value)
+    => ProxyObject.SetProperty(key, value);
+
+        public void SetValue(Name key, Name value)
             => ProxyObject.SetProperty(key, value);
 
         public void SetValue(string key, double value)

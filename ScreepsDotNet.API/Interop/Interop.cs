@@ -419,28 +419,25 @@ namespace ScreepsDotNet.Interop
     [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     public static class Native
     {
-        private static readonly Dictionary<IntPtr, WeakReference<JSObject>> trackedJSObjects = new();
+        private static readonly Dictionary<IntPtr, GCHandle> trackedJSObjects = [];
         
         internal static JSObject GetJSObject(IntPtr jsHandle)
         {
-            if (trackedJSObjects.TryGetValue(jsHandle, out var objRef))
+            if (trackedJSObjects.TryGetValue(jsHandle, out var gcHandle) && gcHandle.Target is JSObject obj)
             {
-                if (objRef.TryGetTarget(out var obj) && obj != null) { return obj; }
-                obj = new(jsHandle);
-                objRef.SetTarget(obj);
                 return obj;
             }
-            else
-            {
-                var obj = new JSObject(jsHandle);
-                trackedJSObjects.Add(jsHandle, new WeakReference<JSObject>(obj));
-                return obj;
-            }
+            obj = new JSObject(jsHandle);
+            trackedJSObjects[jsHandle] = GCHandle.Alloc(obj, GCHandleType.WeakTrackResurrection);
+            return obj;
         }
 
         internal static void ReleaseJSObject(IntPtr jsHandle)
         {
-            trackedJSObjects.Remove(jsHandle);
+            if (trackedJSObjects.Remove(jsHandle, out var gcHandle))
+            {
+                gcHandle.Free();
+            }
             ScreepsDotNet_Interop.ReleaseObjectReference(jsHandle);
         }
 

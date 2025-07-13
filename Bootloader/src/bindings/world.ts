@@ -13,7 +13,11 @@ type GamePrototype = {};
 
 type GameConstructor = { readonly prototype: GamePrototype };
 
-type ResourceConstantEx = ResourceConstant | "season";
+// Season 1 objects from https://github.com/screeps/mod-season1
+declare const ScoreCollector: GameConstructor;
+declare const ScoreContainer: GameConstructor;
+
+type ResourceConstantEx = ResourceConstant | "season" | "score";
 
 const RESOURCE_LIST: readonly ResourceConstantEx[] = [
     "energy", "power",
@@ -29,7 +33,7 @@ const RESOURCE_LIST: readonly ResourceConstantEx[] = [
     "cell", "phlegm", "tissue", "muscle", "organoid", "organism",
     "alloy", "tube", "fixtures", "frame", "hydraulics", "machine",
     "condensate", "concentrate", "extract", "spirit", "emanation", "essence",
-    "season",
+    "season", "score",
 ]; // 85 total
 
 const RESOURCE_TO_ENUM_MAP: Record<ResourceConstantEx, number> = {} as Record<ResourceConstantEx, number>;
@@ -108,6 +112,7 @@ export class WorldBindings extends BaseBindings {
         this.bindingsImport.js_batch_fetch_object_room_positions = this.js_batch_fetch_object_room_positions.bind(this);
         this.bindingsImport.js_get_object_by_id = this.js_get_object_by_id.bind(this);
         this.bindingsImport.js_get_object_id = this.js_get_object_id.bind(this);
+        const _global = global as unknown as { ScoreCollector?: GameConstructor, ScoreContainer?: GameConstructor };
         const gameConstructors: Record<string, GameConstructor> = {
             StructureContainer,
             StructureController,
@@ -146,6 +151,8 @@ export class WorldBindings extends BaseBindings {
             Room,
             RoomVisual,
             Nuke,
+            ScoreCollector: _global.ScoreCollector ?? function() {},
+            ScoreContainer: _global.ScoreContainer ?? function() {},
         }
         this.imports['object'] = {
             getConstructorOf: (x: object) => Object.getPrototypeOf(x).constructor,
@@ -508,5 +515,62 @@ export class WorldBindings extends BaseBindings {
         const roomCoord = this.parseRoomName(roomName, TEMP_ROOM_COORD_A);
         const fromRoomCoord = this.parseRoomName(fromRoomName, TEMP_ROOM_COORD_B);
         return this._invoke_route_callback!(roomCoord[0], roomCoord[1], fromRoomCoord[0], fromRoomCoord[1]);
+    }
+
+    public accountClrTrackedObjects(): void {
+        const counts: Record<string, number> = {};
+        let totalCount = 0;
+        this._interop.visitClrTrackedObjects(x => {
+            let name: string;
+            if (x instanceof Creep) {
+                name = 'Creep';
+            } else if (x instanceof Structure) {
+                name = 'Structure';
+            } else if (x instanceof RoomObject) {
+                name = 'RoomObject';
+            } else if (x instanceof Room) {
+                name = 'Room';
+            } else if (x instanceof RoomPosition) {
+                name = 'RoomPosition';
+            } else if (x instanceof ((global as unknown as { Store: Function }).Store)) {
+                name = 'Store';
+            } else if (x instanceof StructureSpawn.Spawning) {
+                name = 'StructureSpawn.Spawning';
+            } else if (x == global) {
+                name = 'global';
+            } else if (x == Game) {
+                name = 'Game';
+            } else if (x == Game.creeps) {
+                name = 'Game.creeps';
+            } else if (x == Game.structures) {
+                name = 'Game.structures';
+            } else if (x == Game.spawns) {
+                name = 'Game.spawns';
+            } else if (x == Game.rooms) {
+                name = 'Game.rooms';
+            } else if (x == Game.cpu) {
+                name = 'Game.cpu';
+            } else if (x == Game.map) {
+                name = 'Game.map';
+            } else if (Array.isArray(x)) {
+                name = 'Array';
+            } else {
+                if (typeof x === 'object' && x != null) {
+                    const keys = Object.keys(x);
+                    name = `unknown(${keys.join(',')})`;
+                } else {
+                    name = 'unknown';
+                }
+            }
+            counts[name] = (counts[name] ?? 0) + 1;
+            ++totalCount;
+        });
+        const lines: string[] = [
+            `total: ${totalCount}`,
+        ];
+        for (const name in counts) {
+            lines.push(`${name}: ${counts[name]}`);
+        }
+        this.log(lines.join('<br />'));
     }
 }

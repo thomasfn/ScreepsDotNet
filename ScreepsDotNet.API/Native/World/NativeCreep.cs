@@ -111,6 +111,9 @@ namespace ScreepsDotNet.Native.World
         [JSImport("Creep.move", "game/prototypes/wrapped")]
         internal static partial int Native_Move(JSObject proxyObject, int direction);
 
+        [JSImport("Creep.move", "game/prototypes/wrapped")]
+        internal static partial int Native_Move(JSObject proxyObject, JSObject targetProxyObject);
+
         [JSImport("Creep.moveByPath", "game/prototypes/wrapped")]
         internal static partial int Native_MoveByPath(JSObject proxyObject, JSObject[] path);
 
@@ -216,6 +219,12 @@ namespace ScreepsDotNet.Native.World
             : base(nativeRoot, proxyObject)
         {
             store = new NativeStore(nativeRoot, proxyObject);
+            store.OnRequestNewProxyObject += Store_OnRequestNewProxyObject;
+        }
+
+        private void Store_OnRequestNewProxyObject()
+        {
+            TouchProxyObject();
         }
 
         protected override void ClearNativeCache()
@@ -234,6 +243,12 @@ namespace ScreepsDotNet.Native.World
         {
             base.OnGetNewProxyObject(newProxyObject);
             store.ProxyObject = newProxyObject;
+        }
+
+        protected override void OnRenewProxyObject()
+        {
+            base.OnRenewProxyObject();
+            store.RenewProxyObject();
         }
 
         public CreepAttackResult Attack(ICreep target)
@@ -286,6 +301,9 @@ namespace ScreepsDotNet.Native.World
 
         public CreepMoveResult Move(Direction direction)
             => (CreepMoveResult)Native_Move(ProxyObject, (int)direction);
+
+        public CreepMoveResult Move(ICreep creep)
+            => (CreepMoveResult)Native_Move(ProxyObject, creep.ToJS());
 
         public CreepMoveResult MoveByPath(IEnumerable<PathStep> path)
         {
@@ -366,6 +384,9 @@ namespace ScreepsDotNet.Native.World
         public CreepTransferResult Transfer(IStructure target, ResourceType resourceType, int? amount = null)
             => (CreepTransferResult)Native_Transfer(ProxyObject, target.ToJS(), resourceType.ToJS(), amount);
 
+        public CreepTransferResult Transfer(IScoreCollector target, ResourceType resourceType, int? amount = null)
+            => (CreepTransferResult)Native_Transfer(ProxyObject, target.ToJS(), resourceType.ToJS(), amount);
+
         public CreepUpgradeControllerResult UpgradeController(IStructureController target)
             => (CreepUpgradeControllerResult)Native_UpgradeController(ProxyObject, target.ToJS());
 
@@ -376,6 +397,9 @@ namespace ScreepsDotNet.Native.World
             => (CreepWithdrawResult)Native_Withdraw(ProxyObject, target.ToJS(), resourceType.ToJS(), amount);
 
         public CreepWithdrawResult Withdraw(IRuin target, ResourceType resourceType, int? amount = null)
+            => (CreepWithdrawResult)Native_Withdraw(ProxyObject, target.ToJS(), resourceType.ToJS(), amount);
+
+        public CreepWithdrawResult Withdraw(IScoreContainer target, ResourceType resourceType, int? amount = null)
             => (CreepWithdrawResult)Native_Withdraw(ProxyObject, target.ToJS(), resourceType.ToJS(), amount);
 
         private BodyPart<BodyPartType>[] FetchBody()

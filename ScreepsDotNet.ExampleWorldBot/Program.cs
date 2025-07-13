@@ -3,15 +3,10 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace ScreepsDotNet
 {
-    public interface IBot
-    {
-        void Loop();
-    }
-
     public static partial class Program
     {
         private static API.World.IGame? game;
-        private static IBot? bot;
+        private static API.Bot.IBot? bot;
 
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicMethods, typeof(Program))]
         public static void Main()

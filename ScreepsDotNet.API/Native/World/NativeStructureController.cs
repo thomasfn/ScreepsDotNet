@@ -82,7 +82,7 @@ namespace ScreepsDotNet.Native.World
 
         private ControllerReservation? FetchReservation()
         {
-            var obj = ProxyObject.GetPropertyAsJSObject(Names.Reservation);
+            using var obj = ProxyObject.GetPropertyAsJSObject(Names.Reservation);
             if (obj == null) { return null; }
             return new(obj.GetPropertyAsString(Names.Username)!, obj.GetPropertyAsInt32(Names.TicksToEnd));
         }

@@ -14,13 +14,13 @@
 		<Title>ScreepsDotNet API</Title>
 		<Authors>thomasfn</Authors>
 		<Description>A set of interfaces and a JS binding for the Screeps Arena and Screeps World APIs</Description>
-		<Version>2.0.0</Version>
-		<PackageVersion>2.0.0</PackageVersion>
+		<Version>2.1.1</Version>
+		<PackageVersion>2.1.1</PackageVersion>
 		<PackageProjectUrl>https://github.com/thomasfn/ScreepsDotNet</PackageProjectUrl>
 		<PackageLicenseFile>LICENSE</PackageLicenseFile>
 		<PackageTags>screeps world arena api</PackageTags>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
-		<Copyright>Copyright (c) thomasfn 2024</Copyright>
+		<Copyright>Copyright (c) thomasfn 2025</Copyright>
 		<GenerateDocumentationFile>True</GenerateDocumentationFile>
 	</PropertyGroup>
 
@@ -34,6 +34,13 @@
 
 	<ItemGroup>
 		<None Remove="build\ScreepsDotNet.API.props" />
+		<None Remove="js\arena\bootloader.d.ts" />
+		<None Remove="js\arena\bootloader.mjs" />
+		<None Remove="js\arena\loop.mjs" />
+		<None Remove="js\arena\startup.mjs" />
+		<None Remove="js\world\bootloader.js" />
+		<None Remove="js\world\loop.js" />
+		<None Remove="js\world\startup.js" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -53,6 +60,15 @@
 
 		<Content Include="Native\world.c" PackagePath="Native\" />
 		<Content Include="Interop\interop.c" PackagePath="Interop\" />
+
+		<Content Include="js\arena\bootloader.d.ts" PackagePath="js\arena\" />
+		<Content Include="js\arena\bootloader.mjs" PackagePath="js\arena\" />
+		<Content Include="js\arena\loop.mjs" PackagePath="js\arena\" />
+		<Content Include="js\arena\startup.mjs" PackagePath="js\arena\" />
+
+		<Content Include="js\world\bootloader.js" PackagePath="js\world\" />
+		<Content Include="js\world\loop.js" PackagePath="js\world\" />
+		<Content Include="js\world\startup.js" PackagePath="js\world\" />
 	</ItemGroup>
 
 </Project>

@@ -99,6 +99,7 @@ namespace ScreepsDotNet.Native.World
             Name.Create("emanation"),
             Name.Create("essence"),
             Name.Create("season"),
+            Name.Create("score"),
             Name.Create("unknown")
         ];
 
@@ -152,14 +153,14 @@ namespace ScreepsDotNet.Native.World
 
         private const int ResourceCount = (int)ResourceType.Unknown + 1;
 
-        private INativeRoot nativeRoot;
+        private readonly INativeRoot nativeRoot;
         private JSObject proxyObject;
         private int proxyObjectValidAsOf;
 
         private int[]? resourceCache;
         private ImmutableArray<ResourceType>? containedResourceTypesCache;
 
-        public IEnumerable<ResourceType> ContainedResourceTypes => containedResourceTypesCache ??= Native_GetStoreContainedResources(proxyObject).Select(static x => x.ParseResourceType()).ToImmutableArray();
+        public IEnumerable<ResourceType> ContainedResourceTypes => containedResourceTypesCache ??= Native_GetStoreContainedResources(ProxyObject).Select(static x => x.ParseResourceType()).ToImmutableArray();
 
         public event Action? OnRequestNewProxyObject;
 
@@ -181,8 +182,7 @@ namespace ScreepsDotNet.Native.World
             set
             {
                 proxyObject = value;
-                proxyObjectValidAsOf = nativeRoot.TickIndex;
-                ClearNativeCache();
+                RenewProxyObject();
             }
         }
 
@@ -215,6 +215,13 @@ namespace ScreepsDotNet.Native.World
             this.nativeRoot = nativeRoot;
             this.proxyObject = proxyObject;
             proxyObjectValidAsOf = nativeRoot.TickIndex;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void RenewProxyObject()
+        {
+            proxyObjectValidAsOf = nativeRoot.TickIndex;
+            ClearNativeCache();
         }
 
         public void ClearNativeCache()

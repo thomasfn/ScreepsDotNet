@@ -37,7 +37,7 @@ namespace ScreepsDotNet.API.World
         /// <param name="key"></param>
         /// <param name="value"></param>
         /// <returns></returns>
-        bool TryGetString(string key, out string value);
+        bool TryGetString(string key, [MaybeNullWhen(false)] out string value);
 
         /// <summary>
         /// Attempts to retrieve a string property from the object.
@@ -45,7 +45,23 @@ namespace ScreepsDotNet.API.World
         /// <param name="key"></param>
         /// <param name="value"></param>
         /// <returns></returns>
-        bool TryGetString(Name key, out string value);
+        bool TryGetString(Name key, [MaybeNullWhen(false)] out string value);
+
+        /// <summary>
+        /// Attempts to retrieve a string property as a Name from the object.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        bool TryGetName(string key, out Name value);
+
+        /// <summary>
+        /// Attempts to retrieve a string property as a Name from the object.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        bool TryGetName(Name key, out Name value);
 
         /// <summary>
         /// Attempts to retrieve a double property from the object.
@@ -122,6 +138,20 @@ namespace ScreepsDotNet.API.World
         /// <param name="key"></param>
         /// <param name="value"></param>
         void SetValue(Name key, string value);
+
+        /// <summary>
+        /// Sets a string property as a Name on the object.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        void SetValue(string key, Name value);
+
+        /// <summary>
+        /// Sets a string property as a Name on the object.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        void SetValue(Name key, Name value);
 
         /// <summary>
         /// Sets a double property on the object.

@@ -37,6 +37,8 @@ namespace ScreepsDotNet.Native.World
         HostilePowerCreeps = 121,
         Deposits = 122,
         Ruins = 123,
+        ScoreContainers = 10011,
+        ScoreCollectors = 10012,
     }
 
     [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
@@ -218,13 +220,15 @@ namespace ScreepsDotNet.Native.World
                 var mineralType = RegisterType<IMineral, NativeMineral>("Mineral", FindConstant.Minerals, null, null, "mineral", "mineral", static (x, y) => new NativeMineral(x, y));
                 var depositType = RegisterType<IDeposit, NativeDeposit>("Deposit", FindConstant.Deposits, null, null, "deposit", "deposit", static (x, y) => new NativeDeposit(x, y));
                 var nukeType = RegisterType<INuke, NativeNuke>("Nuke", FindConstant.Nukes, null, null, "nuke", null, static (x, y) => new NativeNuke(x, y));
-                var creepType = RegisterType<ICreep, NativeCreep>("Creep", FindConstant.Creeps, FindConstant.MyCreeps, FindConstant.HostileCreeps, "powerCreep", "powerCreep", static (x, y) => new NativeCreep(x, y));
-                var powerCreepType = RegisterType<IPowerCreep, NativePowerCreep>("PowerCreep", FindConstant.PowerCreeps, FindConstant.MyPowerCreeps, FindConstant.HostilePowerCreeps, "creep", "creep", static (x, y) => new NativePowerCreep(x, y));
+                var creepType = RegisterType<ICreep, NativeCreep>("Creep", FindConstant.Creeps, FindConstant.MyCreeps, FindConstant.HostileCreeps, "creep", "creep", static (x, y) => new NativeCreep(x, y));
+                var powerCreepType = RegisterType<IPowerCreep, NativePowerCreep>("PowerCreep", FindConstant.PowerCreeps, FindConstant.MyPowerCreeps, FindConstant.HostilePowerCreeps, "powerCreep", "powerCreep", static (x, y) => new NativePowerCreep(x, y));
                 var flagType = RegisterType<IFlag, NativeFlag>("Flag", FindConstant.Flags, null, null, "flag", null, static (x, y) => new NativeFlag(x, y));
                 var resourceType = RegisterType<IResource, NativeResource>("Resource", FindConstant.DroppedResources, null, null, "resource", null, static (x, y) => new NativeResource(x, y));
                 var constructionSiteType = RegisterType<IConstructionSite, NativeConstructionSite>("ConstructionSite", FindConstant.ConstructionSites, FindConstant.MyConstructionSites, FindConstant.HostileConstructionSites, "constructionSite", null, static (x, y) => new NativeConstructionSite(x, y));
                 var tombstoneType = RegisterType<ITombstone, NativeTombstone>("Tombstone", FindConstant.Tombstones, null, null, "tombstone", null, static (x, y) => new NativeTombstone(x, y));
                 var ruinType = RegisterType<IRuin, NativeRuin>("Ruin", FindConstant.Ruins, null, null, "ruin", null, static (x, y) => new NativeRuin(x, y));
+                var scoreCollectorType = RegisterType<IScoreCollector, NativeScoreCollector>("ScoreCollector", FindConstant.ScoreCollectors, null, null, "scoreCollector", null, static (x, y) => new NativeScoreCollector(x, y));
+                var scoreContainerType = RegisterType<IScoreContainer, NativeScoreContainer>("ScoreContainer", FindConstant.ScoreContainers, null, null, "scoreContainer", null, static (x, y) => new NativeScoreContainer(x, y));
                 var roomObjectType = RegisterType<IRoomObject, NativeRoomObject>("RoomObject", null, null, null, null, null, null);
 
                 structureSpawnType.BaseType = ownedStructureType;
@@ -263,6 +267,8 @@ namespace ScreepsDotNet.Native.World
                 constructionSiteType.BaseType = roomObjectType;
                 tombstoneType.BaseType = roomObjectType;
                 ruinType.BaseType = roomObjectType;
+                scoreCollectorType.BaseType = roomObjectType;
+                scoreContainerType.BaseType = roomObjectType;
             }
             catch (Exception ex)
             {

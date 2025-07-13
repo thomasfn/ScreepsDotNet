@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using ScreepsDotNet.Interop;
-using ScreepsDotNet.API.World;
 using System.Collections.Immutable;
+
+using ScreepsDotNet.Interop;
+
+using ScreepsDotNet.API.World;
 
 namespace ScreepsDotNet.Native.World
 {
@@ -126,7 +128,7 @@ namespace ScreepsDotNet.Native.World
 
         private Dictionary<string, MyOrderDetails>? ordersCache;
 
-        public int Credits => ProxyObject.GetPropertyAsInt32("credits");
+        public double Credits => ProxyObject.GetPropertyAsDouble("credits");
 
         public IEnumerable<TransactionDetails> IncomingTransactions
         {
