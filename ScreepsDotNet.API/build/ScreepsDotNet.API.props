@@ -11,10 +11,6 @@
 		<LinkerArg Include="-Wl,--export=free" />
 	</ItemGroup>
 	<ItemGroup>
-		<_WasmRuntimePackSrcFile Include="$(MSBuildThisFileDirectory)..\Native\world.c" />
-		<_WasmRuntimePackSrcFile Include="$(MSBuildThisFileDirectory)..\Interop\interop.c" />
-	</ItemGroup>
-	<ItemGroup>
 		<ScreepsWorldJsFiles Include="$(MSBuildThisFileDirectory)..\js\world\bootloader.js" />
 		<ScreepsWorldStartup Include="$(MSBuildThisFileDirectory)..\js\world\startup.js" />
 		<ScreepsWorldLoop Include="$(MSBuildThisFileDirectory)..\js\world\loop.js" />

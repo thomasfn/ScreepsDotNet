@@ -48,18 +48,10 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<UpToDateCheckInput Include="Native\world.c" />
-		<UpToDateCheckInput Include="Interop\interop.c" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<Content Include="..\LICENSE" PackagePath="\" />
 		<Content Include="..\README.md" PackagePath="\" />
 		
 		<Content Include="build\ScreepsDotNet.API.props" PackagePath="build\" />
-
-		<Content Include="Native\world.c" PackagePath="Native\" />
-		<Content Include="Interop\interop.c" PackagePath="Interop\" />
 
 		<Content Include="js\arena\bootloader.d.ts" PackagePath="js\arena\" />
 		<Content Include="js\arena\bootloader.mjs" PackagePath="js\arena\" />
