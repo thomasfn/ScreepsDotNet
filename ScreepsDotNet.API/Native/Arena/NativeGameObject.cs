@@ -280,6 +280,7 @@ namespace ScreepsDotNet.Native.Arena
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeResource))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeSource))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeConstructionSite))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeBodyPart))]
         static NativeGameObjectUtils()
         {
             prototypesObject = GetPrototypesObject();
@@ -301,6 +302,7 @@ namespace ScreepsDotNet.Native.Arena
                 RegisterPrototypeTypeMapping<ISource, NativeSource>("Source");
                 RegisterPrototypeTypeMapping<IConstructionSite, NativeConstructionSite>("ConstructionSite");
                 RegisterPrototypeTypeMapping<ICreep, NativeCreep>("Creep");
+                RegisterPrototypeTypeMapping<IBodyPart, NativeBodyPart>("BodyPart");
             }
             catch (Exception ex)
             {
