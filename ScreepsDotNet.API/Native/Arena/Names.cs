@@ -42,5 +42,6 @@ namespace ScreepsDotNet.Native.Arena
         public static readonly Name Object = Name.Create("object");
         public static readonly Name Error = Name.Create("error");
         public static readonly Name Cooldown = Name.Create("cooldown");
+        public static readonly Name Type = Name.Create("type");
     }
 }

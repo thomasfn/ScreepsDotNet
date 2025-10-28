@@ -205,6 +205,7 @@ namespace ScreepsDotNet.Native.Arena
         private static readonly JSObject prototypesObject;
         private static readonly List<Type> prototypeTypeMappings = [];
         private static readonly Dictionary<Type, string> prototypeNameMappings = [];
+        private static readonly HashSet<JSObject> unknownConstructors = [];
 
         [JSImport("getUtils", "game")]
         internal static partial JSObject GetUtilsObject();
@@ -238,10 +239,12 @@ namespace ScreepsDotNet.Native.Arena
 
         internal static Type? GetWrapperTypeForConstructor(JSObject constructor)
         {
+            if (unknownConstructors.Contains(constructor)) { return null; }
             int typeId = constructor.GetPropertyAsInt32(TypeIdKey) - 1;
             if (typeId < 0)
             {
-                Console.WriteLine($"Failed to retrieve wrapper type for {constructor} - typeId not found");
+                Console.WriteLine($"Failed to retrieve wrapper type for {constructor} - typeId not found ({constructor.GetPropertyAsString("name")})");
+                unknownConstructors.Add(constructor);
                 return null;
             }
             return prototypeTypeMappings[typeId];
