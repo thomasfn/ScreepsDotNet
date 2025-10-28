@@ -7,276 +7,231 @@ import { arenaInfo } from 'game';
 var bootloader = (function (exports) {
   'use strict';
 
-  function _iterableToArrayLimit(arr, i) {
-    var _i = null == arr ? null : "undefined" != typeof Symbol && arr[Symbol.iterator] || arr["@@iterator"];
-    if (null != _i) {
-      var _s,
-        _e,
-        _x,
-        _r,
-        _arr = [],
-        _n = !0,
-        _d = !1;
-      try {
-        if (_x = (_i = _i.call(arr)).next, 0 === i) {
-          if (Object(_i) !== _i) return;
-          _n = !1;
-        } else for (; !(_n = (_s = _x.call(_i)).done) && (_arr.push(_s.value), _arr.length !== i); _n = !0);
-      } catch (err) {
-        _d = !0, _e = err;
-      } finally {
-        try {
-          if (!_n && null != _i.return && (_r = _i.return(), Object(_r) !== _r)) return;
-        } finally {
-          if (_d) throw _e;
-        }
-      }
-      return _arr;
+  function _arrayLikeToArray(r, a) {
+    (null == a || a > r.length) && (a = r.length);
+    for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
+    return n;
+  }
+  function _arrayWithHoles(r) {
+    if (Array.isArray(r)) return r;
+  }
+  function _assertThisInitialized(e) {
+    if (void 0 === e) throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
+    return e;
+  }
+  function _classCallCheck(a, n) {
+    if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function");
+  }
+  function _defineProperties(e, r) {
+    for (var t = 0; t < r.length; t++) {
+      var o = r[t];
+      o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, _toPropertyKey(o.key), o);
     }
   }
-  function ownKeys(object, enumerableOnly) {
-    var keys = Object.keys(object);
-    if (Object.getOwnPropertySymbols) {
-      var symbols = Object.getOwnPropertySymbols(object);
-      enumerableOnly && (symbols = symbols.filter(function (sym) {
-        return Object.getOwnPropertyDescriptor(object, sym).enumerable;
-      })), keys.push.apply(keys, symbols);
-    }
-    return keys;
+  function _createClass(e, r, t) {
+    return r && _defineProperties(e.prototype, r), t && _defineProperties(e, t), Object.defineProperty(e, "prototype", {
+      writable: !1
+    }), e;
   }
-  function _objectSpread2(target) {
-    for (var i = 1; i < arguments.length; i++) {
-      var source = null != arguments[i] ? arguments[i] : {};
-      i % 2 ? ownKeys(Object(source), !0).forEach(function (key) {
-        _defineProperty(target, key, source[key]);
-      }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) {
-        Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
-      });
-    }
-    return target;
-  }
-  function _typeof(obj) {
-    "@babel/helpers - typeof";
-
-    return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) {
-      return typeof obj;
-    } : function (obj) {
-      return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
-    }, _typeof(obj);
-  }
-  function _classCallCheck(instance, Constructor) {
-    if (!(instance instanceof Constructor)) {
-      throw new TypeError("Cannot call a class as a function");
-    }
-  }
-  function _defineProperties(target, props) {
-    for (var i = 0; i < props.length; i++) {
-      var descriptor = props[i];
-      descriptor.enumerable = descriptor.enumerable || false;
-      descriptor.configurable = true;
-      if ("value" in descriptor) descriptor.writable = true;
-      Object.defineProperty(target, _toPropertyKey(descriptor.key), descriptor);
-    }
-  }
-  function _createClass(Constructor, protoProps, staticProps) {
-    if (protoProps) _defineProperties(Constructor.prototype, protoProps);
-    if (staticProps) _defineProperties(Constructor, staticProps);
-    Object.defineProperty(Constructor, "prototype", {
-      writable: false
-    });
-    return Constructor;
-  }
-  function _defineProperty(obj, key, value) {
-    key = _toPropertyKey(key);
-    if (key in obj) {
-      Object.defineProperty(obj, key, {
-        value: value,
-        enumerable: true,
-        configurable: true,
-        writable: true
-      });
-    } else {
-      obj[key] = value;
-    }
-    return obj;
-  }
-  function _inherits(subClass, superClass) {
-    if (typeof superClass !== "function" && superClass !== null) {
-      throw new TypeError("Super expression must either be null or a function");
-    }
-    subClass.prototype = Object.create(superClass && superClass.prototype, {
-      constructor: {
-        value: subClass,
-        writable: true,
-        configurable: true
-      }
-    });
-    Object.defineProperty(subClass, "prototype", {
-      writable: false
-    });
-    if (superClass) _setPrototypeOf(subClass, superClass);
-  }
-  function _getPrototypeOf(o) {
-    _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf.bind() : function _getPrototypeOf(o) {
-      return o.__proto__ || Object.getPrototypeOf(o);
-    };
-    return _getPrototypeOf(o);
-  }
-  function _setPrototypeOf(o, p) {
-    _setPrototypeOf = Object.setPrototypeOf ? Object.setPrototypeOf.bind() : function _setPrototypeOf(o, p) {
-      o.__proto__ = p;
-      return o;
-    };
-    return _setPrototypeOf(o, p);
-  }
-  function _isNativeReflectConstruct() {
-    if (typeof Reflect === "undefined" || !Reflect.construct) return false;
-    if (Reflect.construct.sham) return false;
-    if (typeof Proxy === "function") return true;
-    try {
-      Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {}));
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-  function _assertThisInitialized(self) {
-    if (self === void 0) {
-      throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
-    }
-    return self;
-  }
-  function _possibleConstructorReturn(self, call) {
-    if (call && (typeof call === "object" || typeof call === "function")) {
-      return call;
-    } else if (call !== void 0) {
-      throw new TypeError("Derived constructors may only return object or undefined");
-    }
-    return _assertThisInitialized(self);
-  }
-  function _createSuper(Derived) {
-    var hasNativeReflectConstruct = _isNativeReflectConstruct();
-    return function _createSuperInternal() {
-      var Super = _getPrototypeOf(Derived),
-        result;
-      if (hasNativeReflectConstruct) {
-        var NewTarget = _getPrototypeOf(this).constructor;
-        result = Reflect.construct(Super, arguments, NewTarget);
-      } else {
-        result = Super.apply(this, arguments);
-      }
-      return _possibleConstructorReturn(this, result);
-    };
-  }
-  function _superPropBase(object, property) {
-    while (!Object.prototype.hasOwnProperty.call(object, property)) {
-      object = _getPrototypeOf(object);
-      if (object === null) break;
-    }
-    return object;
-  }
-  function _get() {
-    if (typeof Reflect !== "undefined" && Reflect.get) {
-      _get = Reflect.get.bind();
-    } else {
-      _get = function _get(target, property, receiver) {
-        var base = _superPropBase(target, property);
-        if (!base) return;
-        var desc = Object.getOwnPropertyDescriptor(base, property);
-        if (desc.get) {
-          return desc.get.call(arguments.length < 3 ? target : receiver);
-        }
-        return desc.value;
-      };
-    }
-    return _get.apply(this, arguments);
-  }
-  function _slicedToArray(arr, i) {
-    return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest();
-  }
-  function _arrayWithHoles(arr) {
-    if (Array.isArray(arr)) return arr;
-  }
-  function _unsupportedIterableToArray(o, minLen) {
-    if (!o) return;
-    if (typeof o === "string") return _arrayLikeToArray(o, minLen);
-    var n = Object.prototype.toString.call(o).slice(8, -1);
-    if (n === "Object" && o.constructor) n = o.constructor.name;
-    if (n === "Map" || n === "Set") return Array.from(o);
-    if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen);
-  }
-  function _arrayLikeToArray(arr, len) {
-    if (len == null || len > arr.length) len = arr.length;
-    for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i];
-    return arr2;
-  }
-  function _nonIterableRest() {
-    throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
-  }
-  function _createForOfIteratorHelper(o, allowArrayLike) {
-    var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"];
-    if (!it) {
-      if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") {
-        if (it) o = it;
-        var i = 0;
-        var F = function () {};
+  function _createForOfIteratorHelper(r, e) {
+    var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
+    if (!t) {
+      if (Array.isArray(r) || (t = _unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) {
+        t && (r = t);
+        var n = 0,
+          F = function () {};
         return {
           s: F,
           n: function () {
-            if (i >= o.length) return {
-              done: true
-            };
-            return {
-              done: false,
-              value: o[i++]
+            return n >= r.length ? {
+              done: !0
+            } : {
+              done: !1,
+              value: r[n++]
             };
           },
-          e: function (e) {
-            throw e;
+          e: function (r) {
+            throw r;
           },
           f: F
         };
       }
       throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
     }
-    var normalCompletion = true,
-      didErr = false,
-      err;
+    var o,
+      a = !0,
+      u = !1;
     return {
       s: function () {
-        it = it.call(o);
+        t = t.call(r);
       },
       n: function () {
-        var step = it.next();
-        normalCompletion = step.done;
-        return step;
+        var r = t.next();
+        return a = r.done, r;
       },
-      e: function (e) {
-        didErr = true;
-        err = e;
+      e: function (r) {
+        u = !0, o = r;
       },
       f: function () {
         try {
-          if (!normalCompletion && it.return != null) it.return();
+          a || null == t.return || t.return();
         } finally {
-          if (didErr) throw err;
+          if (u) throw o;
         }
       }
     };
   }
-  function _toPrimitive(input, hint) {
-    if (typeof input !== "object" || input === null) return input;
-    var prim = input[Symbol.toPrimitive];
-    if (prim !== undefined) {
-      var res = prim.call(input, hint || "default");
-      if (typeof res !== "object") return res;
+  function _createSuper(t) {
+    var r = _isNativeReflectConstruct();
+    return function () {
+      var e,
+        o = _getPrototypeOf(t);
+      if (r) {
+        var s = _getPrototypeOf(this).constructor;
+        e = Reflect.construct(o, arguments, s);
+      } else e = o.apply(this, arguments);
+      return _possibleConstructorReturn(this, e);
+    };
+  }
+  function _defineProperty(e, r, t) {
+    return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, {
+      value: t,
+      enumerable: !0,
+      configurable: !0,
+      writable: !0
+    }) : e[r] = t, e;
+  }
+  function _get() {
+    return _get = "undefined" != typeof Reflect && Reflect.get ? Reflect.get.bind() : function (e, t, r) {
+      var p = _superPropBase(e, t);
+      if (p) {
+        var n = Object.getOwnPropertyDescriptor(p, t);
+        return n.get ? n.get.call(arguments.length < 3 ? e : r) : n.value;
+      }
+    }, _get.apply(null, arguments);
+  }
+  function _getPrototypeOf(t) {
+    return _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf.bind() : function (t) {
+      return t.__proto__ || Object.getPrototypeOf(t);
+    }, _getPrototypeOf(t);
+  }
+  function _inherits(t, e) {
+    if ("function" != typeof e && null !== e) throw new TypeError("Super expression must either be null or a function");
+    t.prototype = Object.create(e && e.prototype, {
+      constructor: {
+        value: t,
+        writable: !0,
+        configurable: !0
+      }
+    }), Object.defineProperty(t, "prototype", {
+      writable: !1
+    }), e && _setPrototypeOf(t, e);
+  }
+  function _isNativeReflectConstruct() {
+    try {
+      var t = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {}));
+    } catch (t) {}
+    return (_isNativeReflectConstruct = function () {
+      return !!t;
+    })();
+  }
+  function _iterableToArrayLimit(r, l) {
+    var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
+    if (null != t) {
+      var e,
+        n,
+        i,
+        u,
+        a = [],
+        f = !0,
+        o = !1;
+      try {
+        if (i = (t = t.call(r)).next, 0 === l) {
+          if (Object(t) !== t) return;
+          f = !1;
+        } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0);
+      } catch (r) {
+        o = !0, n = r;
+      } finally {
+        try {
+          if (!f && null != t.return && (u = t.return(), Object(u) !== u)) return;
+        } finally {
+          if (o) throw n;
+        }
+      }
+      return a;
+    }
+  }
+  function _nonIterableRest() {
+    throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+  }
+  function ownKeys(e, r) {
+    var t = Object.keys(e);
+    if (Object.getOwnPropertySymbols) {
+      var o = Object.getOwnPropertySymbols(e);
+      r && (o = o.filter(function (r) {
+        return Object.getOwnPropertyDescriptor(e, r).enumerable;
+      })), t.push.apply(t, o);
+    }
+    return t;
+  }
+  function _objectSpread2(e) {
+    for (var r = 1; r < arguments.length; r++) {
+      var t = null != arguments[r] ? arguments[r] : {};
+      r % 2 ? ownKeys(Object(t), !0).forEach(function (r) {
+        _defineProperty(e, r, t[r]);
+      }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) {
+        Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
+      });
+    }
+    return e;
+  }
+  function _possibleConstructorReturn(t, e) {
+    if (e && ("object" == typeof e || "function" == typeof e)) return e;
+    if (void 0 !== e) throw new TypeError("Derived constructors may only return object or undefined");
+    return _assertThisInitialized(t);
+  }
+  function _setPrototypeOf(t, e) {
+    return _setPrototypeOf = Object.setPrototypeOf ? Object.setPrototypeOf.bind() : function (t, e) {
+      return t.__proto__ = e, t;
+    }, _setPrototypeOf(t, e);
+  }
+  function _slicedToArray(r, e) {
+    return _arrayWithHoles(r) || _iterableToArrayLimit(r, e) || _unsupportedIterableToArray(r, e) || _nonIterableRest();
+  }
+  function _superPropBase(t, o) {
+    for (; !{}.hasOwnProperty.call(t, o) && null !== (t = _getPrototypeOf(t)););
+    return t;
+  }
+  function _toPrimitive(t, r) {
+    if ("object" != typeof t || !t) return t;
+    var e = t[Symbol.toPrimitive];
+    if (void 0 !== e) {
+      var i = e.call(t, r || "default");
+      if ("object" != typeof i) return i;
       throw new TypeError("@@toPrimitive must return a primitive value.");
     }
-    return (hint === "string" ? String : Number)(input);
+    return ("string" === r ? String : Number)(t);
   }
-  function _toPropertyKey(arg) {
-    var key = _toPrimitive(arg, "string");
-    return typeof key === "symbol" ? key : String(key);
+  function _toPropertyKey(t) {
+    var i = _toPrimitive(t, "string");
+    return "symbol" == typeof i ? i : i + "";
+  }
+  function _typeof(o) {
+    "@babel/helpers - typeof";
+
+    return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) {
+      return typeof o;
+    } : function (o) {
+      return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o;
+    }, _typeof(o);
+  }
+  function _unsupportedIterableToArray(r, a) {
+    if (r) {
+      if ("string" == typeof r) return _arrayLikeToArray(r, a);
+      var t = {}.toString.call(r).slice(8, -1);
+      return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0;
+    }
   }
 
   (function (r) {
@@ -1564,12 +1519,12 @@ var bootloader = (function (exports) {
     fd = _b.b;
   // map of value to reverse (assuming 16 bits)
   var rev = new u16(32768);
-  for (var i$1 = 0; i$1 < 32768; ++i$1) {
+  for (var i = 0; i < 32768; ++i) {
     // reverse table algorithm from SO
-    var x = (i$1 & 0xAAAA) >> 1 | (i$1 & 0x5555) << 1;
+    var x = (i & 0xAAAA) >> 1 | (i & 0x5555) << 1;
     x = (x & 0xCCCC) >> 2 | (x & 0x3333) << 2;
     x = (x & 0xF0F0) >> 4 | (x & 0x0F0F) << 4;
-    rev[i$1] = ((x & 0xFF00) >> 8 | (x & 0x00FF) << 8) >> 1;
+    rev[i] = ((x & 0xFF00) >> 8 | (x & 0x00FF) << 8) >> 1;
   }
   // create huffman tree from u8 "map": index -> code length for code index
   // mb (max bits) must be at most 15
@@ -1623,13 +1578,13 @@ var bootloader = (function (exports) {
   };
   // fixed length tree
   var flt = new u8(288);
-  for (var i$1 = 0; i$1 < 144; ++i$1) flt[i$1] = 8;
-  for (var i$1 = 144; i$1 < 256; ++i$1) flt[i$1] = 9;
-  for (var i$1 = 256; i$1 < 280; ++i$1) flt[i$1] = 7;
-  for (var i$1 = 280; i$1 < 288; ++i$1) flt[i$1] = 8;
+  for (var i = 0; i < 144; ++i) flt[i] = 8;
+  for (var i = 144; i < 256; ++i) flt[i] = 9;
+  for (var i = 256; i < 280; ++i) flt[i] = 7;
+  for (var i = 280; i < 288; ++i) flt[i] = 8;
   // fixed distance tree
   var fdt = new u8(32);
-  for (var i$1 = 0; i$1 < 32; ++i$1) fdt[i$1] = 5;
+  for (var i = 0; i < 32; ++i) fdt[i] = 5;
   // fixed length map
   var flrm = /*#__PURE__*/hMap(flt, 9, 1);
   // fixed distance map
@@ -2688,6 +2643,7 @@ var bootloader = (function (exports) {
       get: function get() {
         if (this._view == null || this._viewArrayBuffer !== this._memory.buffer) {
           this._view = this.createNewView();
+          this._viewArrayBuffer = this._memory.buffer;
         }
         return this._view;
       }
@@ -2735,19 +2691,31 @@ var bootloader = (function (exports) {
     return BaseBindings;
   }();
 
-  var RESOURCE_LIST$1 = ["energy", "score", "score_x", "score_y", "score_z"]; // 5 total
+  var NoopBindings = /*#__PURE__*/function (_BaseBindings) {
+    _inherits(NoopBindings, _BaseBindings);
+    var _super = _createSuper(NoopBindings);
+    function NoopBindings() {
+      _classCallCheck(this, NoopBindings);
+      return _super.apply(this, arguments);
+    }
+    return _createClass(NoopBindings);
+  }(BaseBindings);
+
+  // Note: when compiling for world, this import is replaced with the actual world bindings instead
+
+  var RESOURCE_LIST = ["energy", "score", "score_x", "score_y", "score_z"]; // 5 total
   {
-    for (var _i$1 = 0, _RESOURCE_LIST$1 = RESOURCE_LIST$1; _i$1 < _RESOURCE_LIST$1.length; _i$1++) {
-      _RESOURCE_LIST$1[_i$1];
+    for (var _i = 0, _RESOURCE_LIST = RESOURCE_LIST; _i < _RESOURCE_LIST.length; _i++) {
+      _RESOURCE_LIST[_i];
     }
   }
-  var BODYPART_LIST$1 = ['move', 'work', 'carry', 'attack', 'ranged_attack', 'heal', 'tough']; // 7 total
-  var BODYPART_TO_ENUM_MAP$1 = {};
+  var BODYPART_LIST = ['move', 'work', 'carry', 'attack', 'ranged_attack', 'heal', 'tough']; // 7 total
+  var BODYPART_TO_ENUM_MAP = {};
   {
-    var _i2$1 = 0;
-    for (var _i3$1 = 0, _BODYPART_LIST$1 = BODYPART_LIST$1; _i3$1 < _BODYPART_LIST$1.length; _i3$1++) {
-      var bodyPart$1 = _BODYPART_LIST$1[_i3$1];
-      BODYPART_TO_ENUM_MAP$1[bodyPart$1] = _i2$1++;
+    var _i2 = 0;
+    for (var _i3 = 0, _BODYPART_LIST = BODYPART_LIST; _i3 < _BODYPART_LIST.length; _i3++) {
+      var bodyPart = _BODYPART_LIST[_i3];
+      BODYPART_TO_ENUM_MAP[bodyPart] = _i2++;
     }
   }
   var ArenaBindings = /*#__PURE__*/function (_BaseBindings) {
@@ -2935,7 +2903,7 @@ var bootloader = (function (exports) {
           // type: 0-8 (4 bits 0-15) b1
           // hits: 0-100 (7 bits 0-127) b0
           var encodedBodyPart = 0;
-          encodedBodyPart |= BODYPART_TO_ENUM_MAP$1[type] << 8;
+          encodedBodyPart |= BODYPART_TO_ENUM_MAP[type] << 8;
           encodedBodyPart |= hits;
           i16[ptrI16] = encodedBodyPart;
           ++ptrI16;
@@ -3006,743 +2974,17 @@ var bootloader = (function (exports) {
     return ArenaBindings;
   }(BaseBindings);
 
-  var CPU_HALT_WHEN_NO_CHECKIN_FOR = 10;
-  var RESOURCE_LIST = ["energy", "power", "H", "O", "U", "L", "K", "Z", "X", "G", "silicon", "metal", "biomass", "mist", "OH", "ZK", "UL", "UH", "UO", "KH", "KO", "LH", "LO", "ZH", "ZO", "GH", "GO", "UH2O", "UHO2", "KH2O", "KHO2", "LH2O", "LHO2", "ZH2O", "ZHO2", "GH2O", "GHO2", "XUH2O", "XUHO2", "XKH2O", "XKHO2", "XLH2O", "XLHO2", "XZH2O", "XZHO2", "XGH2O", "XGHO2", "ops", "utrium_bar", "lemergium_bar", "zynthium_bar", "keanium_bar", "ghodium_melt", "oxidant", "reductant", "purifier", "battery", "composite", "crystal", "liquid", "wire", "switch", "transistor", "microchip", "circuit", "device", "cell", "phlegm", "tissue", "muscle", "organoid", "organism", "alloy", "tube", "fixtures", "frame", "hydraulics", "machine", "condensate", "concentrate", "extract", "spirit", "emanation", "essence", "season", "score"]; // 85 total
-  var RESOURCE_TO_ENUM_MAP = {};
-  {
-    var i = 0;
-    for (var _i = 0, _RESOURCE_LIST = RESOURCE_LIST; _i < _RESOURCE_LIST.length; _i++) {
-      var resourceName = _RESOURCE_LIST[_i];
-      RESOURCE_TO_ENUM_MAP[resourceName] = i++;
+  var bindingsTable = {
+    "arena": ArenaBindings,
+    "world": NoopBindings
+  };
+  function getBindings(env, logFunc, interop) {
+    var bindingsCtor = bindingsTable[env];
+    if (!bindingsCtor) {
+      return undefined;
     }
+    return new bindingsCtor(logFunc, interop);
   }
-  var BODYPART_LIST = ['move', 'work', 'carry', 'attack', 'ranged_attack', 'tough', 'heal', 'claim']; // 8 total
-  var BODYPART_TO_ENUM_MAP = {};
-  {
-    var _i2 = 0;
-    for (var _i3 = 0, _BODYPART_LIST = BODYPART_LIST; _i3 < _BODYPART_LIST.length; _i3++) {
-      var bodyPart = _BODYPART_LIST[_i3];
-      BODYPART_TO_ENUM_MAP[bodyPart] = _i2++;
-    }
-  }
-  var TEMP_ROOM_COORD_A = [0, 0];
-  var TEMP_ROOM_COORD_B = [0, 0];
-  var WorldBindings = /*#__PURE__*/function (_BaseBindings) {
-    _inherits(WorldBindings, _BaseBindings);
-    var _super = _createSuper(WorldBindings);
-    function WorldBindings() {
-      var _this;
-      _classCallCheck(this, WorldBindings);
-      for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
-        args[_key] = arguments[_key];
-      }
-      _this = _super.call.apply(_super, [this].concat(args));
-      _defineProperty(_assertThisInitialized(_this), "_lastCheckIn", 0);
-      _defineProperty(_assertThisInitialized(_this), "_memoryCache", void 0);
-      _defineProperty(_assertThisInitialized(_this), "_invoke_room_callback", void 0);
-      _defineProperty(_assertThisInitialized(_this), "_invoke_cost_callback", void 0);
-      _defineProperty(_assertThisInitialized(_this), "_invoke_route_callback", void 0);
-      return _this;
-    }
-    _createClass(WorldBindings, [{
-      key: "init",
-      value: function init(exports, memoryManager) {
-        _get(_getPrototypeOf(WorldBindings.prototype), "init", this).call(this, exports, memoryManager);
-        var entrypointFn = exports.screepsdotnet_init_world;
-        if (!entrypointFn) {
-          this.log("failed to call 'screepsdotnet_init_world' (not found in wasm exports)");
-          return;
-        }
-        this._invoke_room_callback = exports.screepsdotnet_invoke_room_callback;
-        this._invoke_cost_callback = exports.screepsdotnet_invoke_cost_callback;
-        this._invoke_route_callback = exports.screepsdotnet_invoke_route_callback;
-        entrypointFn();
-        this._memoryCache = Memory;
-        this._memoryCache = RawMemory._parsed;
-        this._lastCheckIn = Game.time;
-      }
-    }, {
-      key: "loop",
-      value: function loop() {
-        _get(_getPrototypeOf(WorldBindings.prototype), "loop", this).call(this);
-        // Memhack
-        var _global = global;
-        delete _global.Memory;
-        _global.Memory = this._memoryCache;
-        RawMemory._parsed = this._memoryCache;
-        // Checkin
-        var ticksSinceLestCheckIn = Game.time - this._lastCheckIn;
-        if (ticksSinceLestCheckIn >= CPU_HALT_WHEN_NO_CHECKIN_FOR) {
-          Game.cpu.halt && Game.cpu.halt();
-        } else if (ticksSinceLestCheckIn >= CPU_HALT_WHEN_NO_CHECKIN_FOR - 1) {
-          this.log("no checkin for ".concat(ticksSinceLestCheckIn, " ticks, halting cpu next tick..."));
-        }
-      }
-    }, {
-      key: "setupImports",
-      value: function setupImports() {
-        var _global$ScoreCollecto,
-          _global$ScoreContaine,
-          _this2 = this;
-        _get(_getPrototypeOf(WorldBindings.prototype), "setupImports", this).call(this);
-        this.bindingsImport.js_renew_object = this.js_renew_object.bind(this);
-        this.bindingsImport.js_batch_renew_objects = this.js_batch_renew_objects.bind(this);
-        this.bindingsImport.js_fetch_object_room_position = this.js_fetch_object_room_position.bind(this);
-        this.bindingsImport.js_batch_fetch_object_room_positions = this.js_batch_fetch_object_room_positions.bind(this);
-        this.bindingsImport.js_get_object_by_id = this.js_get_object_by_id.bind(this);
-        this.bindingsImport.js_get_object_id = this.js_get_object_id.bind(this);
-        var _global = global;
-        var gameConstructors = {
-          StructureContainer: StructureContainer,
-          StructureController: StructureController,
-          StructureExtension: StructureExtension,
-          StructureExtractor: StructureExtractor,
-          StructureFactory: StructureFactory,
-          StructureInvaderCore: StructureInvaderCore,
-          StructureKeeperLair: StructureKeeperLair,
-          StructureLab: StructureLab,
-          StructureLink: StructureLink,
-          StructureNuker: StructureNuker,
-          StructureObserver: StructureObserver,
-          StructurePowerBank: StructurePowerBank,
-          StructurePowerSpawn: StructurePowerSpawn,
-          StructurePortal: StructurePortal,
-          StructureRampart: StructureRampart,
-          StructureRoad: StructureRoad,
-          StructureSpawn: StructureSpawn,
-          StructureStorage: StructureStorage,
-          StructureTerminal: StructureTerminal,
-          StructureTower: StructureTower,
-          StructureWall: StructureWall,
-          OwnedStructure: OwnedStructure,
-          Structure: Structure,
-          Source: Source,
-          Mineral: Mineral,
-          Deposit: Deposit,
-          Creep: Creep,
-          PowerCreep: PowerCreep,
-          Flag: Flag,
-          Resource: Resource,
-          ConstructionSite: ConstructionSite,
-          Tombstone: Tombstone,
-          Ruin: Ruin,
-          RoomObject: RoomObject,
-          Room: Room,
-          RoomVisual: RoomVisual,
-          Nuke: Nuke,
-          ScoreCollector: (_global$ScoreCollecto = _global.ScoreCollector) !== null && _global$ScoreCollecto !== void 0 ? _global$ScoreCollecto : function () {},
-          ScoreContainer: (_global$ScoreContaine = _global.ScoreContainer) !== null && _global$ScoreContaine !== void 0 ? _global$ScoreContaine : function () {}
-        };
-        this.imports['object'] = {
-          getConstructorOf: function getConstructorOf(x) {
-            return Object.getPrototypeOf(x).constructor;
-          },
-          interpretDateTime: function interpretDateTime(x) {
-            return x.getTime() / 1000;
-          }
-        };
-        this.imports['game'] = {
-          checkIn: function checkIn() {
-            return _this2._lastCheckIn = Game.time;
-          },
-          getGameObj: function getGameObj() {
-            return Game;
-          },
-          getMemoryObj: function getMemoryObj() {
-            return _this2._memoryCache;
-          },
-          getConstantsObj: function getConstantsObj() {
-            return global;
-          },
-          getRawMemoryObj: function getRawMemoryObj() {
-            return RawMemory;
-          },
-          getPrototypes: function getPrototypes() {
-            return gameConstructors;
-          },
-          createRoomPosition: function createRoomPosition(encodedInt) {
-            var roomPosition = Object.create(RoomPosition.prototype);
-            roomPosition.__packedPos = encodedInt;
-            return roomPosition;
-          },
-          createCostMatrix: function createCostMatrix() {
-            return new PathFinder.CostMatrix();
-          },
-          createRoomVisual: function createRoomVisual(roomName) {
-            return new RoomVisual(roomName);
-          },
-          game: {
-            getObjectById: function getObjectById(id) {
-              return Game.getObjectById(id);
-            },
-            notify: function notify(message, groupInterval) {
-              return Game.notify(message, groupInterval);
-            }
-          },
-          interShardMemory: {
-            getLocal: function getLocal() {
-              return InterShardMemory.getLocal();
-            },
-            setLocal: function setLocal(value) {
-              return InterShardMemory.setLocal(value);
-            },
-            getRemote: function getRemote(shard) {
-              return InterShardMemory.getRemote(shard);
-            }
-          },
-          map: {
-            describeExits: function describeExits(roomName) {
-              return Game.map.describeExits(roomName);
-            },
-            findExit: function findExit(fromRoom, toRoom, opts) {
-              return Game.map.findExit(fromRoom, toRoom, opts);
-            },
-            findRoute: function findRoute(fromRoom, toRoom, opts) {
-              return Game.map.findRoute(fromRoom, toRoom, opts);
-            },
-            getRoomLinearDistance: function getRoomLinearDistance(roomName1, roomName2, continuous) {
-              return Game.map.getRoomLinearDistance(roomName1, roomName2, continuous);
-            },
-            getRoomTerrain: function getRoomTerrain(roomName) {
-              return Game.map.getRoomTerrain(roomName);
-            },
-            getWorldSize: function getWorldSize() {
-              return Game.map.getWorldSize();
-            },
-            getRoomStatus: function getRoomStatus(roomName) {
-              return Game.map.getRoomStatus(roomName);
-            },
-            getRouteCallbackObject: function getRouteCallbackObject() {
-              return _this2.routeCallback.bind(_this2);
-            }
-          },
-          market: {
-            calcTransactionCost: function calcTransactionCost(amount, roomName1, roomName2) {
-              return Game.market.calcTransactionCost(amount, roomName1, roomName2);
-            },
-            cancelOrder: function cancelOrder(orderId) {
-              return Game.market.cancelOrder(orderId);
-            },
-            changeOrderPrice: function changeOrderPrice(orderId, newPrice) {
-              return Game.market.changeOrderPrice(orderId, newPrice);
-            },
-            createOrder: function createOrder(params) {
-              return Game.market.createOrder(params);
-            },
-            deal: function deal(orderId, amount, targetRoomName) {
-              return Game.market.deal(orderId, amount, targetRoomName);
-            },
-            extendOrder: function extendOrder(orderId, addAmount) {
-              return Game.market.extendOrder(orderId, addAmount);
-            },
-            getAllOrders: function getAllOrders(filter) {
-              return Game.market.getAllOrders(filter);
-            },
-            getHistory: function getHistory(resource) {
-              var result = Game.market.getHistory(resource);
-              return Array.isArray(result) ? result : [];
-            },
-            getOrderById: function getOrderById(id) {
-              return Game.market.getOrderById(id);
-            }
-          },
-          cpu: {
-            getHeapStatistics: function getHeapStatistics() {
-              return Game.cpu.getHeapStatistics && Game.cpu.getHeapStatistics();
-            },
-            getUsed: function getUsed() {
-              return Game.cpu.getUsed();
-            },
-            halt: function halt() {
-              return Game.cpu.halt && Game.cpu.halt();
-            },
-            setShardLimits: function setShardLimits(limits) {
-              return Game.cpu.setShardLimits(limits);
-            },
-            unlock: function unlock() {
-              return Game.cpu.unlock();
-            },
-            generatePixel: function generatePixel() {
-              return Game.cpu.generatePixel();
-            }
-          },
-          rawMemory: {
-            get: function get() {
-              return RawMemory.get();
-            },
-            set: function set(value) {
-              return RawMemory.set(value);
-            },
-            setActiveSegments: function setActiveSegments(ids) {
-              return RawMemory.setActiveSegments(ids);
-            },
-            setActiveForeignSegment: function setActiveForeignSegment(username, id) {
-              return RawMemory.setActiveForeignSegment(username, id);
-            },
-            setDefaultPublicSegment: function setDefaultPublicSegment(id) {
-              return RawMemory.setDefaultPublicSegment(id);
-            },
-            setPublicSegments: function setPublicSegments(ids) {
-              return RawMemory.setPublicSegments(ids);
-            }
-          },
-          visual: {
-            line: function line(pos1, pos2, style) {
-              return Game.map.visual.line(pos1, pos2, style);
-            },
-            circle: function circle(pos, style) {
-              return Game.map.visual.circle(pos, style);
-            },
-            rect: function rect(topLeftPos, width, height, style) {
-              return Game.map.visual.rect(topLeftPos, width, height, style);
-            },
-            poly: function poly(points, style) {
-              return Game.map.visual.poly(points, style);
-            },
-            text: function text(_text, pos, style) {
-              return Game.map.visual.text(_text, pos, style);
-            },
-            clear: function clear() {
-              return Game.map.visual.clear();
-            },
-            getSize: function getSize() {
-              return Game.map.visual.getSize();
-            },
-            "export": function _export() {
-              return Game.map.visual["export"]();
-            },
-            "import": function _import(data) {
-              return Game.map.visual["import"](data);
-            }
-          },
-          powerCreep: {
-            create: PowerCreep.create
-          }
-        };
-        var wrappedPrototypes = this.buildWrappedPrototypes(gameConstructors);
-        this.imports['game/prototypes/wrapped'] = _objectSpread2(_objectSpread2({}, wrappedPrototypes), {}, {
-          Spawning: this.buildWrappedPrototype(StructureSpawn.Spawning),
-          RoomObject: _objectSpread2(_objectSpread2({}, wrappedPrototypes.RoomObject), {}, {
-            getStoreCapacity: function getStoreCapacity(thisObj, resourceType) {
-              return thisObj.store.getCapacity(resourceType);
-            },
-            getStoreUsedCapacity: function getStoreUsedCapacity(thisObj, resourceType) {
-              return thisObj.store.getUsedCapacity(resourceType);
-            },
-            getStoreFreeCapacity: function getStoreFreeCapacity(thisObj, resourceType) {
-              return thisObj.store.getFreeCapacity(resourceType);
-            },
-            getStoreContainedResources: function getStoreContainedResources(thisObj) {
-              return Object.keys(thisObj.store);
-            },
-            indexStore: function indexStore(thisObj, resourceType) {
-              return thisObj.store[resourceType];
-            }
-          }),
-          CostMatrix: _objectSpread2(_objectSpread2({}, this.buildWrappedPrototype(PathFinder.CostMatrix)), {}, {
-            setRect: function setRect(thisObj, minX, minY, maxX, maxY, dataView) {
-              var i = 0;
-              for (var y = minY; y <= maxY; ++y) {
-                for (var x = minX; x <= maxX; ++x) {
-                  thisObj.set(x, y, dataView.getUint8(i));
-                  ++i;
-                }
-              }
-            }
-          }),
-          Room: _objectSpread2(_objectSpread2({}, wrappedPrototypes.Room), {}, {
-            createFlag: function createFlag(thisObj, x, y, name, color, secondaryColor) {
-              var result = thisObj.createFlag(x, y, name, color, secondaryColor);
-              if (typeof result === 'string') {
-                return {
-                  name: result,
-                  code: 0
-                };
-              } else {
-                return {
-                  code: result
-                };
-              }
-            },
-            findFast: function findFast(thisObj, type, outRoomObjectArrayPtr, maxObjectCount) {
-              return _this2.encodeRoomObjectArray(_this2._memoryManager.view, thisObj.find(type), undefined, outRoomObjectArrayPtr, maxObjectCount);
-            },
-            lookAtFast: function lookAtFast(thisObj, x, y, outRoomObjectArrayPtr, maxObjectCount) {
-              return _this2.encodeRoomObjectArray(_this2._memoryManager.view, thisObj.lookAt(x, y), undefined, outRoomObjectArrayPtr, maxObjectCount);
-            },
-            lookAtAreaFast: function lookAtAreaFast(thisObj, top, left, bottom, right, outRoomObjectArrayPtr, maxObjectCount) {
-              return _this2.encodeRoomObjectArray(_this2._memoryManager.view, thisObj.lookAtArea(top, left, bottom, right, true), undefined, outRoomObjectArrayPtr, maxObjectCount);
-            },
-            lookForAtFast: function lookForAtFast(thisObj, type, x, y, outRoomObjectArrayPtr, maxObjectCount) {
-              return _this2.encodeRoomObjectArray(_this2._memoryManager.view, thisObj.lookForAt(type, x, y), undefined, outRoomObjectArrayPtr, maxObjectCount);
-            },
-            lookForAtAreaFast: function lookForAtAreaFast(thisObj, type, top, left, bottom, right, outRoomObjectArrayPtr, maxObjectCount) {
-              return _this2.encodeRoomObjectArray(_this2._memoryManager.view, thisObj.lookForAtArea(type, top, left, bottom, right, true), type, outRoomObjectArrayPtr, maxObjectCount);
-            }
-          }),
-          Creep: _objectSpread2(_objectSpread2({}, wrappedPrototypes.Creep), {}, {
-            getEncodedBody: function getEncodedBody(thisObj, outPtr) {
-              return _this2.encodeCreepBody(_this2._memoryManager.view, thisObj.body, outPtr);
-            }
-          }),
-          PathFinder: _objectSpread2(_objectSpread2({}, PathFinder), {}, {
-            search: function search(origin, goal, opts) {
-              return PathFinder.search(origin, goal, opts);
-            },
-            getRoomCallbackObject: function getRoomCallbackObject() {
-              return _this2.roomCallback.bind(_this2);
-            },
-            getCostCallbackObject: function getCostCallbackObject() {
-              return _this2.costCallback.bind(_this2);
-            }
-          }),
-          RoomTerrain: {
-            get: function get(thisObj, x, y) {
-              return thisObj.get(x, y);
-            },
-            getRawBuffer: function getRawBuffer(thisObj, dataView) {
-              return thisObj.getRawBuffer(new Uint8Array(dataView.buffer, dataView.byteOffset, dataView.byteLength));
-            }
-          }
-        });
-      }
-    }, {
-      key: "js_renew_object",
-      value: function js_renew_object(jsHandle) {
-        var oldObject = this._interop.getClrTrackedObject(jsHandle);
-        if (oldObject == null) {
-          return 1;
-        } // clr tracked object not found (clr object disposed?)
-        if (oldObject instanceof Room) {
-          var newRoom = Game.rooms[oldObject.name];
-          if (newRoom == null) {
-            return 3;
-          } // no longer exists (lost visibilty)
-          this._interop.replaceClrTrackedObject(jsHandle, newRoom);
-          return 0; // success
-        }
-
-        if (oldObject instanceof Flag) {
-          var newFlag = Game.flags[oldObject.name];
-          if (newFlag == null) {
-            return 3;
-          } // no longer exists (removed or lost visibilty)
-          this._interop.replaceClrTrackedObject(jsHandle, newFlag);
-          return 0; // success
-        }
-
-        var id = oldObject.id;
-        if (id == null) {
-          return 2;
-        } // unrenewable (not a room object, e.g. unrelated js object)
-        var newRoomObject = Game.getObjectById(id);
-        if (newRoomObject == null) {
-          return 3;
-        } // no longer exists (destroyed or lost visibilty)
-        this._interop.replaceClrTrackedObject(jsHandle, newRoomObject);
-        return 0;
-      }
-    }, {
-      key: "js_batch_renew_objects",
-      value: function js_batch_renew_objects(jsHandleListPtr, count) {
-        var i32 = this._memoryManager.view.i32;
-        var baseIdx = jsHandleListPtr >> 2;
-        var numSuccess = 0;
-        for (var _i4 = 0; _i4 < count; ++_i4) {
-          if (this.js_renew_object(i32[baseIdx + _i4]) === 0) {
-            ++numSuccess;
-          } else {
-            i32[baseIdx + _i4] = -1;
-          }
-        }
-        return numSuccess;
-      }
-    }, {
-      key: "js_fetch_object_room_position",
-      value: function js_fetch_object_room_position(jsHandle) {
-        var roomObject = this._interop.getClrTrackedObject(jsHandle);
-        var pos = roomObject.pos;
-        if (pos == null) {
-          return 0;
-        }
-        return pos.__packedPos;
-      }
-    }, {
-      key: "js_batch_fetch_object_room_positions",
-      value: function js_batch_fetch_object_room_positions(jsHandleListPtr, count, outRoomPosListPtr) {
-        var i32 = this._memoryManager.view.i32;
-        var baseJsHandleIdx = jsHandleListPtr >> 2;
-        var baseOutRoomPostListIdx = outRoomPosListPtr >> 2;
-        for (var _i5 = 0; _i5 < count; ++_i5) {
-          i32[baseOutRoomPostListIdx + _i5] = this.js_fetch_object_room_position(i32[baseJsHandleIdx + _i5]);
-        }
-      }
-    }, {
-      key: "js_get_object_by_id",
-      value: function js_get_object_by_id(objectIdPtr) {
-        var _this$_interop$getClr;
-        var u8 = this._memoryManager.view.u8;
-        var id = '';
-        for (var _i6 = 0; _i6 < 24; ++_i6) {
-          var code = u8[objectIdPtr + _i6];
-          if (code === 0) {
-            break;
-          }
-          id += String.fromCharCode(code);
-        }
-        var obj = Game.getObjectById(id);
-        if (obj == null) {
-          //this.log(`js_get_object_by_id: failed to retrieve '${id}'`);
-          return -1;
-        }
-        return (_this$_interop$getClr = this._interop.getClrTrackingId(obj)) !== null && _this$_interop$getClr !== void 0 ? _this$_interop$getClr : this._interop.assignClrTrackingId(obj);
-      }
-    }, {
-      key: "js_get_object_id",
-      value: function js_get_object_id(jsHandle, outRawObjectIdPtr) {
-        var obj = this._interop.getClrTrackedObject(jsHandle);
-        if (obj == null) {
-          return 0;
-        }
-        var id = obj.id;
-        if (typeof id !== 'string') {
-          return 0;
-        }
-        this.copyRawObjectId(this._memoryManager.view, id, outRawObjectIdPtr);
-        return id.length;
-      }
-    }, {
-      key: "copyRawObjectId",
-      value: function copyRawObjectId(memoryView, id, outPtr) {
-        var u8 = memoryView.u8,
-          i32 = memoryView.i32;
-        if (id) {
-          var l = id.length;
-          for (var j = 0; j < l; ++j) {
-            u8[outPtr + j] = id.charCodeAt(j);
-          }
-          for (var _j = l; _j < 24; ++_j) {
-            u8[outPtr + _j] = 0;
-          }
-        } else {
-          for (var _j2 = 0; _j2 < 6; ++_j2) {
-            i32[outPtr + _j2] = 0;
-          }
-        }
-      }
-    }, {
-      key: "encodeRoomObjectArray",
-      value: function encodeRoomObjectArray(memoryView, arr, key, outRoomObjectArrayPtr, maxObjectCount) {
-        var i32 = memoryView.i32;
-        var numEncoded = 0;
-        var nextRoomObjectArrayPtrI32 = outRoomObjectArrayPtr >> 2;
-        for (var _i7 = 0; _i7 < Math.min(maxObjectCount, arr.length); ++_i7) {
-          // Lookup object
-          var obj = arr[_i7];
-          if (key) {
-            obj = obj[key];
-          }
-          if (!(obj instanceof RoomObject) && obj.type) {
-            obj = obj[obj.type];
-          }
-          if (!(obj instanceof RoomObject)) {
-            continue;
-          }
-          // Copy metadata
-          i32[nextRoomObjectArrayPtrI32++] = Object.getPrototypeOf(obj).constructor.__dotnet_typeId || 0;
-          i32[nextRoomObjectArrayPtrI32++] = this._interop.getOrAssignClrTrackingId(obj);
-          ++numEncoded;
-        }
-        return numEncoded;
-      }
-    }, {
-      key: "encodeCreepBody",
-      value: function encodeCreepBody(memoryView, body, outPtr) {
-        var i32 = memoryView.i32;
-        for (var _i8 = 0; _i8 < body.length; ++_i8) {
-          var _body$_i = body[_i8],
-            type = _body$_i.type,
-            hits = _body$_i.hits,
-            boost = _body$_i.boost;
-          // Encode each body part to a 32 bit int as 4 bytes
-          // unused: b3
-          // type: 0-8 (4 bits 0-15) b2
-          // hits: 0-100 (7 bits 0-127) b1
-          // boost: null or 0-85 (7 bits 0-127, 127 means null) b0
-          var encodedBodyPart = 0;
-          encodedBodyPart |= BODYPART_TO_ENUM_MAP[type] << 16;
-          encodedBodyPart |= hits << 8;
-          encodedBodyPart |= boost == null ? 127 : RESOURCE_TO_ENUM_MAP[boost];
-          i32[outPtr >> 2] = encodedBodyPart;
-          outPtr += 4;
-        }
-        return body.length;
-      }
-    }, {
-      key: "buildWrappedPrototypes",
-      value: function buildWrappedPrototypes(prototypes) {
-        var wrappedPrototypes = {};
-        for (var prototypeName in prototypes) {
-          wrappedPrototypes[prototypeName] = this.buildWrappedPrototype(prototypes[prototypeName]);
-        }
-        return wrappedPrototypes;
-      }
-    }, {
-      key: "buildWrappedPrototype",
-      value: function buildWrappedPrototype(constructor) {
-        /** @type {Record<string, Function>} */
-        var wrappedPrototype = {};
-        var prototype = constructor.prototype;
-        var keys = Object.getOwnPropertyNames(prototype);
-        var _iterator = _createForOfIteratorHelper(keys),
-          _step;
-        try {
-          var _loop = function _loop() {
-              var _Object$getOwnPropert;
-              var key = _step.value;
-              if (key === 'constructor') {
-                return 0; // continue
-              }
-              var value = (_Object$getOwnPropert = Object.getOwnPropertyDescriptor(prototype, key)) === null || _Object$getOwnPropert === void 0 ? void 0 : _Object$getOwnPropert.value;
-              if (typeof value !== 'function') {
-                return 0; // continue
-              }
-              wrappedPrototype[key] = function (thisObj) {
-                for (var _len2 = arguments.length, args = new Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
-                  args[_key2 - 1] = arguments[_key2];
-                }
-                return value.call.apply(value, [thisObj].concat(args));
-              };
-            },
-            _ret;
-          for (_iterator.s(); !(_step = _iterator.n()).done;) {
-            _ret = _loop();
-            if (_ret === 0) continue;
-          }
-        } catch (err) {
-          _iterator.e(err);
-        } finally {
-          _iterator.f();
-        }
-        return wrappedPrototype;
-      }
-    }, {
-      key: "parseRoomName",
-      value: function parseRoomName(roomName, outCoord) {
-        var xx = parseInt(roomName.substr(1), 10);
-        var verticalPos = 2;
-        if (xx >= 100) {
-          verticalPos = 4;
-        } else if (xx >= 10) {
-          verticalPos = 3;
-        }
-        var yy = parseInt(roomName.substr(verticalPos + 1), 10);
-        var horizontalDir = roomName.charAt(0);
-        var verticalDir = roomName.charAt(verticalPos);
-        if (horizontalDir === 'W' || horizontalDir === 'w') {
-          xx = -xx - 1;
-        }
-        if (verticalDir === 'N' || verticalDir === 'n') {
-          yy = -yy - 1;
-        }
-        if (outCoord) {
-          outCoord[0] = xx;
-          outCoord[1] = yy;
-        } else {
-          outCoord = [xx, yy];
-        }
-        return outCoord;
-      }
-    }, {
-      key: "roomCallback",
-      value: function roomCallback(roomName) {
-        var roomCoord = this.parseRoomName(roomName, TEMP_ROOM_COORD_A);
-        var result = this._invoke_room_callback(roomCoord[0], roomCoord[1]);
-        if (result < 0) {
-          return false;
-        }
-        if (result === 0) {
-          return undefined;
-        }
-        return this._interop.getClrTrackedObject(result);
-      }
-    }, {
-      key: "costCallback",
-      value: function costCallback(roomName, costMatrix) {
-        var roomCoord = this.parseRoomName(roomName, TEMP_ROOM_COORD_A);
-        var result = this._invoke_cost_callback(roomCoord[0], roomCoord[1], this._interop.getOrAssignClrTrackingId(costMatrix));
-        if (result === 0) {
-          return undefined;
-        }
-        return this._interop.getClrTrackedObject(result);
-      }
-    }, {
-      key: "routeCallback",
-      value: function routeCallback(roomName, fromRoomName) {
-        var roomCoord = this.parseRoomName(roomName, TEMP_ROOM_COORD_A);
-        var fromRoomCoord = this.parseRoomName(fromRoomName, TEMP_ROOM_COORD_B);
-        return this._invoke_route_callback(roomCoord[0], roomCoord[1], fromRoomCoord[0], fromRoomCoord[1]);
-      }
-    }, {
-      key: "accountClrTrackedObjects",
-      value: function accountClrTrackedObjects() {
-        var counts = {};
-        var totalCount = 0;
-        this._interop.visitClrTrackedObjects(function (x) {
-          var _counts$name;
-          var name;
-          if (x instanceof Creep) {
-            name = 'Creep';
-          } else if (x instanceof Structure) {
-            name = 'Structure';
-          } else if (x instanceof RoomObject) {
-            name = 'RoomObject';
-          } else if (x instanceof Room) {
-            name = 'Room';
-          } else if (x instanceof RoomPosition) {
-            name = 'RoomPosition';
-          } else if (x instanceof global.Store) {
-            name = 'Store';
-          } else if (x instanceof StructureSpawn.Spawning) {
-            name = 'StructureSpawn.Spawning';
-          } else if (x == global) {
-            name = 'global';
-          } else if (x == Game) {
-            name = 'Game';
-          } else if (x == Game.creeps) {
-            name = 'Game.creeps';
-          } else if (x == Game.structures) {
-            name = 'Game.structures';
-          } else if (x == Game.spawns) {
-            name = 'Game.spawns';
-          } else if (x == Game.rooms) {
-            name = 'Game.rooms';
-          } else if (x == Game.cpu) {
-            name = 'Game.cpu';
-          } else if (x == Game.map) {
-            name = 'Game.map';
-          } else if (Array.isArray(x)) {
-            name = 'Array';
-          } else {
-            if (_typeof(x) === 'object' && x != null) {
-              var keys = Object.keys(x);
-              name = "unknown(".concat(keys.join(','), ")");
-            } else {
-              name = 'unknown';
-            }
-          }
-          counts[name] = ((_counts$name = counts[name]) !== null && _counts$name !== void 0 ? _counts$name : 0) + 1;
-          ++totalCount;
-        });
-        var lines = ["total: ".concat(totalCount)];
-        for (var name in counts) {
-          lines.push("".concat(name, ": ").concat(counts[name]));
-        }
-        this.log(lines.join('<br />'));
-      }
-    }]);
-    return WorldBindings;
-  }(BaseBindings);
 
   var utf8Decoder = new TextDecoder();
   var Stdio = /*#__PURE__*/function (_Fd) {
@@ -3879,14 +3121,7 @@ var bootloader = (function (exports) {
           return Object.create(proto);
         }
       });
-      switch (env) {
-        case 'world':
-          this._bindings = new WorldBindings(this.log.bind(this), this._interop);
-          break;
-        case 'arena':
-          this._bindings = new ArenaBindings(this.log.bind(this), this._interop);
-          break;
-      }
+      this._bindings = getBindings(env, this.log.bind(this), this._interop);
       if (this._bindings) {
         for (var moduleName in this._bindings.imports) {
           this.setImports(moduleName, this._bindings.imports[moduleName]);

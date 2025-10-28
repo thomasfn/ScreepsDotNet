@@ -2,7 +2,7 @@ import { ScreepsDotNetExports } from '../common.js';
 import type { ImportTable, Interop, MallocFunction } from '../interop.js';
 import { WasmMemoryManager } from '../memory.js';
 
-export abstract class BaseBindings {
+export default abstract class BaseBindings {
     public readonly bindingsImport: Record<string, (...args: any[]) => unknown>;
     public readonly imports: Record<string, ImportTable> = {};
 

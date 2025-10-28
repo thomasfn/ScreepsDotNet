@@ -1,276 +1,231 @@
 var bootloader = (function (exports) {
   'use strict';
 
-  function _iterableToArrayLimit(arr, i) {
-    var _i = null == arr ? null : "undefined" != typeof Symbol && arr[Symbol.iterator] || arr["@@iterator"];
-    if (null != _i) {
-      var _s,
-        _e,
-        _x,
-        _r,
-        _arr = [],
-        _n = !0,
-        _d = !1;
-      try {
-        if (_x = (_i = _i.call(arr)).next, 0 === i) {
-          if (Object(_i) !== _i) return;
-          _n = !1;
-        } else for (; !(_n = (_s = _x.call(_i)).done) && (_arr.push(_s.value), _arr.length !== i); _n = !0);
-      } catch (err) {
-        _d = !0, _e = err;
-      } finally {
-        try {
-          if (!_n && null != _i.return && (_r = _i.return(), Object(_r) !== _r)) return;
-        } finally {
-          if (_d) throw _e;
-        }
-      }
-      return _arr;
+  function _arrayLikeToArray(r, a) {
+    (null == a || a > r.length) && (a = r.length);
+    for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
+    return n;
+  }
+  function _arrayWithHoles(r) {
+    if (Array.isArray(r)) return r;
+  }
+  function _assertThisInitialized(e) {
+    if (void 0 === e) throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
+    return e;
+  }
+  function _classCallCheck(a, n) {
+    if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function");
+  }
+  function _defineProperties(e, r) {
+    for (var t = 0; t < r.length; t++) {
+      var o = r[t];
+      o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, _toPropertyKey(o.key), o);
     }
   }
-  function ownKeys(object, enumerableOnly) {
-    var keys = Object.keys(object);
-    if (Object.getOwnPropertySymbols) {
-      var symbols = Object.getOwnPropertySymbols(object);
-      enumerableOnly && (symbols = symbols.filter(function (sym) {
-        return Object.getOwnPropertyDescriptor(object, sym).enumerable;
-      })), keys.push.apply(keys, symbols);
-    }
-    return keys;
+  function _createClass(e, r, t) {
+    return r && _defineProperties(e.prototype, r), t && _defineProperties(e, t), Object.defineProperty(e, "prototype", {
+      writable: !1
+    }), e;
   }
-  function _objectSpread2(target) {
-    for (var i = 1; i < arguments.length; i++) {
-      var source = null != arguments[i] ? arguments[i] : {};
-      i % 2 ? ownKeys(Object(source), !0).forEach(function (key) {
-        _defineProperty(target, key, source[key]);
-      }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) {
-        Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
-      });
-    }
-    return target;
-  }
-  function _typeof(obj) {
-    "@babel/helpers - typeof";
-
-    return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) {
-      return typeof obj;
-    } : function (obj) {
-      return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
-    }, _typeof(obj);
-  }
-  function _classCallCheck(instance, Constructor) {
-    if (!(instance instanceof Constructor)) {
-      throw new TypeError("Cannot call a class as a function");
-    }
-  }
-  function _defineProperties(target, props) {
-    for (var i = 0; i < props.length; i++) {
-      var descriptor = props[i];
-      descriptor.enumerable = descriptor.enumerable || false;
-      descriptor.configurable = true;
-      if ("value" in descriptor) descriptor.writable = true;
-      Object.defineProperty(target, _toPropertyKey(descriptor.key), descriptor);
-    }
-  }
-  function _createClass(Constructor, protoProps, staticProps) {
-    if (protoProps) _defineProperties(Constructor.prototype, protoProps);
-    if (staticProps) _defineProperties(Constructor, staticProps);
-    Object.defineProperty(Constructor, "prototype", {
-      writable: false
-    });
-    return Constructor;
-  }
-  function _defineProperty(obj, key, value) {
-    key = _toPropertyKey(key);
-    if (key in obj) {
-      Object.defineProperty(obj, key, {
-        value: value,
-        enumerable: true,
-        configurable: true,
-        writable: true
-      });
-    } else {
-      obj[key] = value;
-    }
-    return obj;
-  }
-  function _inherits(subClass, superClass) {
-    if (typeof superClass !== "function" && superClass !== null) {
-      throw new TypeError("Super expression must either be null or a function");
-    }
-    subClass.prototype = Object.create(superClass && superClass.prototype, {
-      constructor: {
-        value: subClass,
-        writable: true,
-        configurable: true
-      }
-    });
-    Object.defineProperty(subClass, "prototype", {
-      writable: false
-    });
-    if (superClass) _setPrototypeOf(subClass, superClass);
-  }
-  function _getPrototypeOf(o) {
-    _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf.bind() : function _getPrototypeOf(o) {
-      return o.__proto__ || Object.getPrototypeOf(o);
-    };
-    return _getPrototypeOf(o);
-  }
-  function _setPrototypeOf(o, p) {
-    _setPrototypeOf = Object.setPrototypeOf ? Object.setPrototypeOf.bind() : function _setPrototypeOf(o, p) {
-      o.__proto__ = p;
-      return o;
-    };
-    return _setPrototypeOf(o, p);
-  }
-  function _isNativeReflectConstruct() {
-    if (typeof Reflect === "undefined" || !Reflect.construct) return false;
-    if (Reflect.construct.sham) return false;
-    if (typeof Proxy === "function") return true;
-    try {
-      Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {}));
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-  function _assertThisInitialized(self) {
-    if (self === void 0) {
-      throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
-    }
-    return self;
-  }
-  function _possibleConstructorReturn(self, call) {
-    if (call && (typeof call === "object" || typeof call === "function")) {
-      return call;
-    } else if (call !== void 0) {
-      throw new TypeError("Derived constructors may only return object or undefined");
-    }
-    return _assertThisInitialized(self);
-  }
-  function _createSuper(Derived) {
-    var hasNativeReflectConstruct = _isNativeReflectConstruct();
-    return function _createSuperInternal() {
-      var Super = _getPrototypeOf(Derived),
-        result;
-      if (hasNativeReflectConstruct) {
-        var NewTarget = _getPrototypeOf(this).constructor;
-        result = Reflect.construct(Super, arguments, NewTarget);
-      } else {
-        result = Super.apply(this, arguments);
-      }
-      return _possibleConstructorReturn(this, result);
-    };
-  }
-  function _superPropBase(object, property) {
-    while (!Object.prototype.hasOwnProperty.call(object, property)) {
-      object = _getPrototypeOf(object);
-      if (object === null) break;
-    }
-    return object;
-  }
-  function _get() {
-    if (typeof Reflect !== "undefined" && Reflect.get) {
-      _get = Reflect.get.bind();
-    } else {
-      _get = function _get(target, property, receiver) {
-        var base = _superPropBase(target, property);
-        if (!base) return;
-        var desc = Object.getOwnPropertyDescriptor(base, property);
-        if (desc.get) {
-          return desc.get.call(arguments.length < 3 ? target : receiver);
-        }
-        return desc.value;
-      };
-    }
-    return _get.apply(this, arguments);
-  }
-  function _slicedToArray(arr, i) {
-    return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest();
-  }
-  function _arrayWithHoles(arr) {
-    if (Array.isArray(arr)) return arr;
-  }
-  function _unsupportedIterableToArray(o, minLen) {
-    if (!o) return;
-    if (typeof o === "string") return _arrayLikeToArray(o, minLen);
-    var n = Object.prototype.toString.call(o).slice(8, -1);
-    if (n === "Object" && o.constructor) n = o.constructor.name;
-    if (n === "Map" || n === "Set") return Array.from(o);
-    if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen);
-  }
-  function _arrayLikeToArray(arr, len) {
-    if (len == null || len > arr.length) len = arr.length;
-    for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i];
-    return arr2;
-  }
-  function _nonIterableRest() {
-    throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
-  }
-  function _createForOfIteratorHelper(o, allowArrayLike) {
-    var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"];
-    if (!it) {
-      if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") {
-        if (it) o = it;
-        var i = 0;
-        var F = function () {};
+  function _createForOfIteratorHelper(r, e) {
+    var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
+    if (!t) {
+      if (Array.isArray(r) || (t = _unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) {
+        t && (r = t);
+        var n = 0,
+          F = function () {};
         return {
           s: F,
           n: function () {
-            if (i >= o.length) return {
-              done: true
-            };
-            return {
-              done: false,
-              value: o[i++]
+            return n >= r.length ? {
+              done: !0
+            } : {
+              done: !1,
+              value: r[n++]
             };
           },
-          e: function (e) {
-            throw e;
+          e: function (r) {
+            throw r;
           },
           f: F
         };
       }
       throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
     }
-    var normalCompletion = true,
-      didErr = false,
-      err;
+    var o,
+      a = !0,
+      u = !1;
     return {
       s: function () {
-        it = it.call(o);
+        t = t.call(r);
       },
       n: function () {
-        var step = it.next();
-        normalCompletion = step.done;
-        return step;
+        var r = t.next();
+        return a = r.done, r;
       },
-      e: function (e) {
-        didErr = true;
-        err = e;
+      e: function (r) {
+        u = !0, o = r;
       },
       f: function () {
         try {
-          if (!normalCompletion && it.return != null) it.return();
+          a || null == t.return || t.return();
         } finally {
-          if (didErr) throw err;
+          if (u) throw o;
         }
       }
     };
   }
-  function _toPrimitive(input, hint) {
-    if (typeof input !== "object" || input === null) return input;
-    var prim = input[Symbol.toPrimitive];
-    if (prim !== undefined) {
-      var res = prim.call(input, hint || "default");
-      if (typeof res !== "object") return res;
+  function _createSuper(t) {
+    var r = _isNativeReflectConstruct();
+    return function () {
+      var e,
+        o = _getPrototypeOf(t);
+      if (r) {
+        var s = _getPrototypeOf(this).constructor;
+        e = Reflect.construct(o, arguments, s);
+      } else e = o.apply(this, arguments);
+      return _possibleConstructorReturn(this, e);
+    };
+  }
+  function _defineProperty(e, r, t) {
+    return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, {
+      value: t,
+      enumerable: !0,
+      configurable: !0,
+      writable: !0
+    }) : e[r] = t, e;
+  }
+  function _get() {
+    return _get = "undefined" != typeof Reflect && Reflect.get ? Reflect.get.bind() : function (e, t, r) {
+      var p = _superPropBase(e, t);
+      if (p) {
+        var n = Object.getOwnPropertyDescriptor(p, t);
+        return n.get ? n.get.call(arguments.length < 3 ? e : r) : n.value;
+      }
+    }, _get.apply(null, arguments);
+  }
+  function _getPrototypeOf(t) {
+    return _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf.bind() : function (t) {
+      return t.__proto__ || Object.getPrototypeOf(t);
+    }, _getPrototypeOf(t);
+  }
+  function _inherits(t, e) {
+    if ("function" != typeof e && null !== e) throw new TypeError("Super expression must either be null or a function");
+    t.prototype = Object.create(e && e.prototype, {
+      constructor: {
+        value: t,
+        writable: !0,
+        configurable: !0
+      }
+    }), Object.defineProperty(t, "prototype", {
+      writable: !1
+    }), e && _setPrototypeOf(t, e);
+  }
+  function _isNativeReflectConstruct() {
+    try {
+      var t = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {}));
+    } catch (t) {}
+    return (_isNativeReflectConstruct = function () {
+      return !!t;
+    })();
+  }
+  function _iterableToArrayLimit(r, l) {
+    var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
+    if (null != t) {
+      var e,
+        n,
+        i,
+        u,
+        a = [],
+        f = !0,
+        o = !1;
+      try {
+        if (i = (t = t.call(r)).next, 0 === l) {
+          if (Object(t) !== t) return;
+          f = !1;
+        } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0);
+      } catch (r) {
+        o = !0, n = r;
+      } finally {
+        try {
+          if (!f && null != t.return && (u = t.return(), Object(u) !== u)) return;
+        } finally {
+          if (o) throw n;
+        }
+      }
+      return a;
+    }
+  }
+  function _nonIterableRest() {
+    throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+  }
+  function ownKeys(e, r) {
+    var t = Object.keys(e);
+    if (Object.getOwnPropertySymbols) {
+      var o = Object.getOwnPropertySymbols(e);
+      r && (o = o.filter(function (r) {
+        return Object.getOwnPropertyDescriptor(e, r).enumerable;
+      })), t.push.apply(t, o);
+    }
+    return t;
+  }
+  function _objectSpread2(e) {
+    for (var r = 1; r < arguments.length; r++) {
+      var t = null != arguments[r] ? arguments[r] : {};
+      r % 2 ? ownKeys(Object(t), !0).forEach(function (r) {
+        _defineProperty(e, r, t[r]);
+      }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) {
+        Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
+      });
+    }
+    return e;
+  }
+  function _possibleConstructorReturn(t, e) {
+    if (e && ("object" == typeof e || "function" == typeof e)) return e;
+    if (void 0 !== e) throw new TypeError("Derived constructors may only return object or undefined");
+    return _assertThisInitialized(t);
+  }
+  function _setPrototypeOf(t, e) {
+    return _setPrototypeOf = Object.setPrototypeOf ? Object.setPrototypeOf.bind() : function (t, e) {
+      return t.__proto__ = e, t;
+    }, _setPrototypeOf(t, e);
+  }
+  function _slicedToArray(r, e) {
+    return _arrayWithHoles(r) || _iterableToArrayLimit(r, e) || _unsupportedIterableToArray(r, e) || _nonIterableRest();
+  }
+  function _superPropBase(t, o) {
+    for (; !{}.hasOwnProperty.call(t, o) && null !== (t = _getPrototypeOf(t)););
+    return t;
+  }
+  function _toPrimitive(t, r) {
+    if ("object" != typeof t || !t) return t;
+    var e = t[Symbol.toPrimitive];
+    if (void 0 !== e) {
+      var i = e.call(t, r || "default");
+      if ("object" != typeof i) return i;
       throw new TypeError("@@toPrimitive must return a primitive value.");
     }
-    return (hint === "string" ? String : Number)(input);
+    return ("string" === r ? String : Number)(t);
   }
-  function _toPropertyKey(arg) {
-    var key = _toPrimitive(arg, "string");
-    return typeof key === "symbol" ? key : String(key);
+  function _toPropertyKey(t) {
+    var i = _toPrimitive(t, "string");
+    return "symbol" == typeof i ? i : i + "";
+  }
+  function _typeof(o) {
+    "@babel/helpers - typeof";
+
+    return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) {
+      return typeof o;
+    } : function (o) {
+      return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o;
+    }, _typeof(o);
+  }
+  function _unsupportedIterableToArray(r, a) {
+    if (r) {
+      if ("string" == typeof r) return _arrayLikeToArray(r, a);
+      var t = {}.toString.call(r).slice(8, -1);
+      return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0;
+    }
   }
 
   (function (r) {
@@ -2682,6 +2637,7 @@ var bootloader = (function (exports) {
       get: function get() {
         if (this._view == null || this._viewArrayBuffer !== this._memory.buffer) {
           this._view = this.createNewView();
+          this._viewArrayBuffer = this._memory.buffer;
         }
         return this._view;
       }
@@ -2728,277 +2684,6 @@ var bootloader = (function (exports) {
     }]);
     return BaseBindings;
   }();
-
-  var RESOURCE_LIST$1 = ["energy", "score", "score_x", "score_y", "score_z"]; // 5 total
-  {
-    for (var _i$1 = 0, _RESOURCE_LIST$1 = RESOURCE_LIST$1; _i$1 < _RESOURCE_LIST$1.length; _i$1++) {
-      _RESOURCE_LIST$1[_i$1];
-    }
-  }
-  var BODYPART_LIST$1 = ['move', 'work', 'carry', 'attack', 'ranged_attack', 'heal', 'tough']; // 7 total
-  var BODYPART_TO_ENUM_MAP$1 = {};
-  {
-    var _i2$1 = 0;
-    for (var _i3$1 = 0, _BODYPART_LIST$1 = BODYPART_LIST$1; _i3$1 < _BODYPART_LIST$1.length; _i3$1++) {
-      var bodyPart$1 = _BODYPART_LIST$1[_i3$1];
-      BODYPART_TO_ENUM_MAP$1[bodyPart$1] = _i2$1++;
-    }
-  }
-  var ArenaBindings = /*#__PURE__*/function (_BaseBindings) {
-    _inherits(ArenaBindings, _BaseBindings);
-    var _super = _createSuper(ArenaBindings);
-    function ArenaBindings() {
-      _classCallCheck(this, ArenaBindings);
-      return _super.apply(this, arguments);
-    }
-    _createClass(ArenaBindings, [{
-      key: "init",
-      value: function init(exports, memoryManager) {
-        _get(_getPrototypeOf(ArenaBindings.prototype), "init", this).call(this, exports, memoryManager);
-      }
-    }, {
-      key: "loop",
-      value: function loop() {
-        _get(_getPrototypeOf(ArenaBindings.prototype), "loop", this).call(this);
-      }
-    }, {
-      key: "setupImports",
-      value: function setupImports() {
-        var _this = this;
-        _get(_getPrototypeOf(ArenaBindings.prototype), "setupImports", this).call(this);
-        this.bindingsImport.js_renew_object = function () {};
-        this.bindingsImport.js_batch_renew_objects = function () {};
-        this.bindingsImport.js_fetch_object_room_position = function () {};
-        this.bindingsImport.js_batch_fetch_object_room_positions = function () {};
-        this.bindingsImport.js_get_object_by_id = function () {};
-        this.bindingsImport.js_get_object_id = function () {};
-        this.imports['object'] = {
-          getConstructorOf: function getConstructorOf(x) {
-            return Object.getPrototypeOf(x).constructor;
-          },
-          interpretDateTime: function interpretDateTime(x) {
-            return x.getTime() / 1000;
-          }
-        };
-        this.imports['game/utils'] = _objectSpread2(_objectSpread2({}, utils), {}, {
-          getTerrain: function getTerrain(minX, minY, maxX, maxY, outMemoryView) {
-            var pos = {
-              x: 0,
-              y: 0
-            };
-            var i = 0;
-            for (var y = minY; y <= maxY; ++y) {
-              pos.y = y;
-              for (var x = minX; x <= maxX; ++x) {
-                pos.x = x;
-                outMemoryView.setInt8(i, utils.getTerrainAt(pos));
-                ++i;
-              }
-            }
-          }
-        });
-        this.imports['game/prototypes'] = prototypes;
-        this.imports['game/constants'] = {
-          get: function get() {
-            return constants;
-          }
-        };
-        this.imports['game/pathFinder'] = _objectSpread2(_objectSpread2({}, pathFinder), {}, {
-          searchPath: function searchPath(origin, goalsPtr, goalsCnt, options) {
-            var i32 = _this._memoryManager.view.i32;
-            var goal;
-            var goalsPtrI32 = goalsPtr >> 2;
-            if (goalsCnt == 1) {
-              var r = i32[goalsPtrI32 + 2];
-              if (r === 0) {
-                goal = {
-                  x: i32[goalsPtrI32 + 0],
-                  y: i32[goalsPtrI32 + 1]
-                };
-              } else {
-                goal = {
-                  pos: {
-                    x: i32[goalsPtrI32 + 0],
-                    y: i32[goalsPtrI32 + 1]
-                  },
-                  range: r
-                };
-              }
-            } else {
-              goal = [];
-              goal.length = goalsCnt;
-              for (var _i4 = 0; _i4 < goalsCnt; ++_i4) {
-                var _r = i32[goalsPtrI32 + 2];
-                if (_r === 0) {
-                  goal[_i4] = {
-                    x: i32[goalsPtrI32 + 0],
-                    y: i32[goalsPtrI32 + 1]
-                  };
-                } else {
-                  goal[_i4] = {
-                    pos: {
-                      x: i32[goalsPtrI32 + 0],
-                      y: i32[goalsPtrI32 + 1]
-                    },
-                    range: _r
-                  };
-                }
-                goalsPtrI32 += 3;
-              }
-            }
-            var originPos = {
-              x: origin >> 16,
-              y: origin & 0xffff
-            };
-            return pathFinder.searchPath(originPos, goal, options);
-          },
-          decodePath: function decodePath(resultObj, outPtr) {
-            return _this.copyPath(_this._memoryManager.view, resultObj.path, outPtr);
-          },
-          CostMatrix: _objectSpread2(_objectSpread2({}, this.buildWrappedPrototype(pathFinder.CostMatrix)), {}, {
-            setRect: function setRect(thisObj, minX, minY, maxX, maxY, memoryView) {
-              var i = 0;
-              for (var y = minY; y <= maxY; ++y) {
-                for (var x = minX; x <= maxX; ++x) {
-                  thisObj.set(x, y, memoryView.getInt8(i));
-                  ++i;
-                }
-              }
-            }
-          }),
-          createCostMatrix: function createCostMatrix() {
-            return new pathFinder.CostMatrix();
-          }
-        });
-        this.imports['game/visual'] = {
-          Visual: this.buildWrappedPrototype(visual.Visual),
-          createVisual: function createVisual(layer, persistent) {
-            return new visual.Visual(layer, persistent);
-          }
-        };
-        this.imports['game'] = {
-          getUtils: function getUtils() {
-            return utils;
-          },
-          getPrototypes: function getPrototypes() {
-            return prototypes;
-          },
-          getArenaInfo: function getArenaInfo() {
-            return arenaInfo;
-          }
-        };
-        var wrappedPrototypes = this.buildWrappedPrototypes(prototypes);
-        this.imports['game/prototypes/wrapped'] = _objectSpread2(_objectSpread2({}, wrappedPrototypes), {}, {
-          GameObject: _objectSpread2(_objectSpread2({}, wrappedPrototypes.GameObject), {}, {
-            findPathTo: function findPathTo(thisObj, pos, opts, outPtr) {
-              var result = thisObj.findPathTo(pos, opts != null ? opts : undefined);
-              if (!result) {
-                return 0;
-              }
-              return _this.copyPath(_this._memoryManager.view, result, outPtr);
-            }
-          }),
-          Store: {
-            getCapacity: function getCapacity(thisObj, resourceType) {
-              return thisObj.getCapacity(resourceType);
-            },
-            getUsedCapacity: function getUsedCapacity(thisObj, resourceType) {
-              return thisObj.getUsedCapacity(resourceType);
-            },
-            getFreeCapacity: function getFreeCapacity(thisObj, resourceType) {
-              return thisObj.getFreeCapacity(resourceType);
-            }
-          },
-          Creep: _objectSpread2(_objectSpread2({}, wrappedPrototypes.Creep), {}, {
-            getEncodedBody: function getEncodedBody(thisObj, outPtr) {
-              return _this.encodeCreepBody(_this._memoryManager.view, thisObj.body, outPtr);
-            }
-          })
-        });
-      }
-    }, {
-      key: "encodeCreepBody",
-      value: function encodeCreepBody(memoryView, body, outPtr) {
-        var i16 = memoryView.i16;
-        var ptrI16 = outPtr >> 1;
-        for (var _i5 = 0; _i5 < body.length; ++_i5) {
-          var _body$_i = body[_i5],
-            type = _body$_i.type,
-            hits = _body$_i.hits;
-          // Encode each body part to a 16 bit int as 2 bytes
-          // type: 0-8 (4 bits 0-15) b1
-          // hits: 0-100 (7 bits 0-127) b0
-          var encodedBodyPart = 0;
-          encodedBodyPart |= BODYPART_TO_ENUM_MAP$1[type] << 8;
-          encodedBodyPart |= hits;
-          i16[ptrI16] = encodedBodyPart;
-          ++ptrI16;
-        }
-        return body.length;
-      }
-    }, {
-      key: "copyPath",
-      value: function copyPath(memoryView, path, outPtr) {
-        var i32 = memoryView.i32;
-        var ptrI32 = outPtr >> 2;
-        for (var _i6 = 0; _i6 < path.length; ++_i6) {
-          i32[ptrI32 + 0] = path[_i6].x;
-          i32[ptrI32 + 1] = path[_i6].y;
-          ptrI32 += 2;
-        }
-        return path.length;
-      }
-    }, {
-      key: "buildWrappedPrototypes",
-      value: function buildWrappedPrototypes(prototypes) {
-        var wrappedPrototypes = {};
-        for (var prototypeName in prototypes) {
-          wrappedPrototypes[prototypeName] = this.buildWrappedPrototype(prototypes[prototypeName]);
-        }
-        return wrappedPrototypes;
-      }
-    }, {
-      key: "buildWrappedPrototype",
-      value: function buildWrappedPrototype(constructor) {
-        /** @type {Record<string, Function>} */
-        var wrappedPrototype = {};
-        var prototype = constructor.prototype;
-        var keys = Object.getOwnPropertyNames(prototype);
-        var _iterator = _createForOfIteratorHelper(keys),
-          _step;
-        try {
-          var _loop = function _loop() {
-              var _Object$getOwnPropert;
-              var key = _step.value;
-              if (key === 'constructor') {
-                return 0; // continue
-              }
-              var value = (_Object$getOwnPropert = Object.getOwnPropertyDescriptor(prototype, key)) === null || _Object$getOwnPropert === void 0 ? void 0 : _Object$getOwnPropert.value;
-              if (typeof value !== 'function') {
-                return 0; // continue
-              }
-              wrappedPrototype[key] = function (thisObj) {
-                for (var _len = arguments.length, args = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
-                  args[_key - 1] = arguments[_key];
-                }
-                return value.call.apply(value, [thisObj].concat(args));
-              };
-            },
-            _ret;
-          for (_iterator.s(); !(_step = _iterator.n()).done;) {
-            _ret = _loop();
-            if (_ret === 0) continue;
-          }
-        } catch (err) {
-          _iterator.e(err);
-        } finally {
-          _iterator.f();
-        }
-        return wrappedPrototype;
-      }
-    }]);
-    return ArenaBindings;
-  }(BaseBindings);
 
   var CPU_HALT_WHEN_NO_CHECKIN_FOR = 10;
   var RESOURCE_LIST = ["energy", "power", "H", "O", "U", "L", "K", "Z", "X", "G", "silicon", "metal", "biomass", "mist", "OH", "ZK", "UL", "UH", "UO", "KH", "KO", "LH", "LO", "ZH", "ZO", "GH", "GO", "UH2O", "UHO2", "KH2O", "KHO2", "LH2O", "LHO2", "ZH2O", "ZHO2", "GH2O", "GHO2", "XUH2O", "XUHO2", "XKH2O", "XKHO2", "XLH2O", "XLHO2", "XZH2O", "XZHO2", "XGH2O", "XGHO2", "ops", "utrium_bar", "lemergium_bar", "zynthium_bar", "keanium_bar", "ghodium_melt", "oxidant", "reductant", "purifier", "battery", "composite", "crystal", "liquid", "wire", "switch", "transistor", "microchip", "circuit", "device", "cell", "phlegm", "tissue", "muscle", "organoid", "organism", "alloy", "tube", "fixtures", "frame", "hydraulics", "machine", "condensate", "concentrate", "extract", "spirit", "emanation", "essence", "season", "score"]; // 85 total
@@ -3738,6 +3423,30 @@ var bootloader = (function (exports) {
     return WorldBindings;
   }(BaseBindings);
 
+  var NoopBindings = /*#__PURE__*/function (_BaseBindings) {
+    _inherits(NoopBindings, _BaseBindings);
+    var _super = _createSuper(NoopBindings);
+    function NoopBindings() {
+      _classCallCheck(this, NoopBindings);
+      return _super.apply(this, arguments);
+    }
+    return _createClass(NoopBindings);
+  }(BaseBindings);
+
+  // Note: when compiling for arena, this import is replaced with the actual arena bindings instead
+
+  var bindingsTable = {
+    "arena": NoopBindings,
+    "world": WorldBindings
+  };
+  function getBindings(env, logFunc, interop) {
+    var bindingsCtor = bindingsTable[env];
+    if (!bindingsCtor) {
+      return undefined;
+    }
+    return new bindingsCtor(logFunc, interop);
+  }
+
   var utf8Decoder = new TextDecoder();
   var Stdio = /*#__PURE__*/function (_Fd) {
     _inherits(Stdio, _Fd);
@@ -3873,14 +3582,7 @@ var bootloader = (function (exports) {
           return Object.create(proto);
         }
       });
-      switch (env) {
-        case 'world':
-          this._bindings = new WorldBindings(this.log.bind(this), this._interop);
-          break;
-        case 'arena':
-          this._bindings = new ArenaBindings(this.log.bind(this), this._interop);
-          break;
-      }
+      this._bindings = getBindings(env, this.log.bind(this), this._interop);
       if (this._bindings) {
         for (var moduleName in this._bindings.imports) {
           this.setImports(moduleName, this._bindings.imports[moduleName]);

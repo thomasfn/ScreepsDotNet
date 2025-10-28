@@ -7,9 +7,8 @@ import * as fflate from 'fflate';
 import { ImportTable, Interop } from './interop.js';
 import { ScreepsDotNetExports } from './common.js';
 import { WasmMemoryManager } from './memory.js';
-import { BaseBindings } from './bindings/base.js';
-import { ArenaBindings } from './bindings/arena.js';
-import { WorldBindings } from './bindings/world.js';
+import BaseBindings from './bindings/base.js';
+import { getBindings } from './bindings/index.js';
 
 const utf8Decoder = new TextDecoder();
 
@@ -144,14 +143,7 @@ export class Bootloader {
             create: (proto: object) => Object.create(proto),
         });
 
-        switch (env) {
-            case 'world':
-                this._bindings = new WorldBindings(this.log.bind(this), this._interop);
-                break;
-            case 'arena':
-                 this._bindings = new ArenaBindings(this.log.bind(this), this._interop);
-                break;
-        }
+        this._bindings = getBindings(env, this.log.bind(this), this._interop);
         if (this._bindings) {
             for (const moduleName in this._bindings.imports) {
                 this.setImports(moduleName, this._bindings.imports[moduleName]);
@@ -175,7 +167,7 @@ export class Bootloader {
         console.log(`DOTNET: ${text}`);
     }
 
-    public compile(wasmBytes: Uint8Array): void {
+    public compile(wasmBytes: Uint8Array<ArrayBuffer>): void {
         if (this._compiled) { return; }
 
         // Compile wasm module

@@ -3,7 +3,7 @@
 import { ScreepsDotNetExports } from '../common.js';
 import type { Importable } from '../interop.js';
 import { WasmMemoryManager, WasmMemoryView } from '../memory.js';
-import { BaseBindings } from './base.js';
+import BaseBindings from './base.js';
 
 declare const global: typeof globalThis;
 
@@ -67,7 +67,7 @@ const TEMP_ROOM_COORD_A: [number, number] = [0, 0];
 
 const TEMP_ROOM_COORD_B: [number, number] = [0, 0];
 
-export class WorldBindings extends BaseBindings {
+export default class WorldBindings extends BaseBindings {
     private _lastCheckIn: number = 0;
 
     private _memoryCache?: Memory;
