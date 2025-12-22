@@ -1,0 +1,63 @@
+import * as fs from 'fs';
+
+import typescript from '@rollup/plugin-typescript';
+import { nodeResolve } from '@rollup/plugin-node-resolve';
+import alias from '@rollup/plugin-alias';
+import { babel } from '@rollup/plugin-babel';
+import path from 'path';
+
+export default {
+	input: 'src/bootloader.ts',
+    output: {
+        file: 'dist/bootloader.js',
+        format: 'iife',
+        inlineDynamicImports: true,
+        name: 'bootloader',
+    },
+    external: ['screeps'],
+    context: 'global',
+    plugins: [
+        alias({
+            entries: [
+                { find: './noop-arena.js', replacement: './arena.js' },
+            ],
+        }),
+        typescript({}),
+        nodeResolve({
+            browser: true,
+        }),
+        babel({
+            babelHelpers: 'bundled',
+            presets: [
+                [
+                    '@babel/preset-env',
+                    {
+                        modules: 'auto'
+                    },
+                ],
+            ],
+            extensions: ['.js', '.mjs', '.cjs', '.ts'],
+            include: ['**/*'],
+        }),
+        {
+            writeBundle(bundle) {
+                if (bundle.file !== 'dist/bootloader.js') { return; }
+                const str = fs.readFileSync(bundle.file, { encoding: 'utf8' });
+                const arenaStr = [
+                    `import * as utils from 'game/utils';`,
+                    `import * as prototypes from 'game/prototypes';`,
+                    `import * as constants from 'game/constants';`,
+                    `import * as pathFinder from 'game/path-finder';`,
+                    `import * as visual from 'game/visual';`,
+                    `import { arenaInfo } from 'game';`,
+                    `${str}`,
+                    `export const Bootloader = bootloader.Bootloader;`,
+                    `export const decodeWasm = bootloader.decodeWasm;`,
+                    `export const decompressWasm = bootloader.decompressWasm;`,
+                    ``,
+                ].join('\n');
+                fs.writeFileSync(bundle.file.replace(path.extname(bundle.file), '-arena.mjs'), arenaStr);
+            }
+        }
+    ],
+};

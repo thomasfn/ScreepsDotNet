@@ -629,7 +629,7 @@ namespace ScreepsDotNet.API.World
         /// <summary>
         /// There are no WORK body parts in this creep’s body.
         /// </summary>
-        NoBodypart = -10
+        NoBodypart = -12
     }
 
     public enum CreepWithdrawResult

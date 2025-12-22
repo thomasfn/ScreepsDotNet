@@ -7,276 +7,231 @@ import { arenaInfo } from 'game';
 var bootloader = (function (exports) {
   'use strict';
 
-  function _iterableToArrayLimit(arr, i) {
-    var _i = null == arr ? null : "undefined" != typeof Symbol && arr[Symbol.iterator] || arr["@@iterator"];
-    if (null != _i) {
-      var _s,
-        _e,
-        _x,
-        _r,
-        _arr = [],
-        _n = !0,
-        _d = !1;
-      try {
-        if (_x = (_i = _i.call(arr)).next, 0 === i) {
-          if (Object(_i) !== _i) return;
-          _n = !1;
-        } else for (; !(_n = (_s = _x.call(_i)).done) && (_arr.push(_s.value), _arr.length !== i); _n = !0);
-      } catch (err) {
-        _d = !0, _e = err;
-      } finally {
-        try {
-          if (!_n && null != _i.return && (_r = _i.return(), Object(_r) !== _r)) return;
-        } finally {
-          if (_d) throw _e;
-        }
-      }
-      return _arr;
+  function _arrayLikeToArray(r, a) {
+    (null == a || a > r.length) && (a = r.length);
+    for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
+    return n;
+  }
+  function _arrayWithHoles(r) {
+    if (Array.isArray(r)) return r;
+  }
+  function _assertThisInitialized(e) {
+    if (void 0 === e) throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
+    return e;
+  }
+  function _classCallCheck(a, n) {
+    if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function");
+  }
+  function _defineProperties(e, r) {
+    for (var t = 0; t < r.length; t++) {
+      var o = r[t];
+      o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, _toPropertyKey(o.key), o);
     }
   }
-  function ownKeys(object, enumerableOnly) {
-    var keys = Object.keys(object);
-    if (Object.getOwnPropertySymbols) {
-      var symbols = Object.getOwnPropertySymbols(object);
-      enumerableOnly && (symbols = symbols.filter(function (sym) {
-        return Object.getOwnPropertyDescriptor(object, sym).enumerable;
-      })), keys.push.apply(keys, symbols);
-    }
-    return keys;
+  function _createClass(e, r, t) {
+    return r && _defineProperties(e.prototype, r), t && _defineProperties(e, t), Object.defineProperty(e, "prototype", {
+      writable: !1
+    }), e;
   }
-  function _objectSpread2(target) {
-    for (var i = 1; i < arguments.length; i++) {
-      var source = null != arguments[i] ? arguments[i] : {};
-      i % 2 ? ownKeys(Object(source), !0).forEach(function (key) {
-        _defineProperty(target, key, source[key]);
-      }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) {
-        Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
-      });
-    }
-    return target;
-  }
-  function _typeof(obj) {
-    "@babel/helpers - typeof";
-
-    return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) {
-      return typeof obj;
-    } : function (obj) {
-      return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
-    }, _typeof(obj);
-  }
-  function _classCallCheck(instance, Constructor) {
-    if (!(instance instanceof Constructor)) {
-      throw new TypeError("Cannot call a class as a function");
-    }
-  }
-  function _defineProperties(target, props) {
-    for (var i = 0; i < props.length; i++) {
-      var descriptor = props[i];
-      descriptor.enumerable = descriptor.enumerable || false;
-      descriptor.configurable = true;
-      if ("value" in descriptor) descriptor.writable = true;
-      Object.defineProperty(target, _toPropertyKey(descriptor.key), descriptor);
-    }
-  }
-  function _createClass(Constructor, protoProps, staticProps) {
-    if (protoProps) _defineProperties(Constructor.prototype, protoProps);
-    if (staticProps) _defineProperties(Constructor, staticProps);
-    Object.defineProperty(Constructor, "prototype", {
-      writable: false
-    });
-    return Constructor;
-  }
-  function _defineProperty(obj, key, value) {
-    key = _toPropertyKey(key);
-    if (key in obj) {
-      Object.defineProperty(obj, key, {
-        value: value,
-        enumerable: true,
-        configurable: true,
-        writable: true
-      });
-    } else {
-      obj[key] = value;
-    }
-    return obj;
-  }
-  function _inherits(subClass, superClass) {
-    if (typeof superClass !== "function" && superClass !== null) {
-      throw new TypeError("Super expression must either be null or a function");
-    }
-    subClass.prototype = Object.create(superClass && superClass.prototype, {
-      constructor: {
-        value: subClass,
-        writable: true,
-        configurable: true
-      }
-    });
-    Object.defineProperty(subClass, "prototype", {
-      writable: false
-    });
-    if (superClass) _setPrototypeOf(subClass, superClass);
-  }
-  function _getPrototypeOf(o) {
-    _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf.bind() : function _getPrototypeOf(o) {
-      return o.__proto__ || Object.getPrototypeOf(o);
-    };
-    return _getPrototypeOf(o);
-  }
-  function _setPrototypeOf(o, p) {
-    _setPrototypeOf = Object.setPrototypeOf ? Object.setPrototypeOf.bind() : function _setPrototypeOf(o, p) {
-      o.__proto__ = p;
-      return o;
-    };
-    return _setPrototypeOf(o, p);
-  }
-  function _isNativeReflectConstruct() {
-    if (typeof Reflect === "undefined" || !Reflect.construct) return false;
-    if (Reflect.construct.sham) return false;
-    if (typeof Proxy === "function") return true;
-    try {
-      Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {}));
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-  function _assertThisInitialized(self) {
-    if (self === void 0) {
-      throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
-    }
-    return self;
-  }
-  function _possibleConstructorReturn(self, call) {
-    if (call && (typeof call === "object" || typeof call === "function")) {
-      return call;
-    } else if (call !== void 0) {
-      throw new TypeError("Derived constructors may only return object or undefined");
-    }
-    return _assertThisInitialized(self);
-  }
-  function _createSuper(Derived) {
-    var hasNativeReflectConstruct = _isNativeReflectConstruct();
-    return function _createSuperInternal() {
-      var Super = _getPrototypeOf(Derived),
-        result;
-      if (hasNativeReflectConstruct) {
-        var NewTarget = _getPrototypeOf(this).constructor;
-        result = Reflect.construct(Super, arguments, NewTarget);
-      } else {
-        result = Super.apply(this, arguments);
-      }
-      return _possibleConstructorReturn(this, result);
-    };
-  }
-  function _superPropBase(object, property) {
-    while (!Object.prototype.hasOwnProperty.call(object, property)) {
-      object = _getPrototypeOf(object);
-      if (object === null) break;
-    }
-    return object;
-  }
-  function _get() {
-    if (typeof Reflect !== "undefined" && Reflect.get) {
-      _get = Reflect.get.bind();
-    } else {
-      _get = function _get(target, property, receiver) {
-        var base = _superPropBase(target, property);
-        if (!base) return;
-        var desc = Object.getOwnPropertyDescriptor(base, property);
-        if (desc.get) {
-          return desc.get.call(arguments.length < 3 ? target : receiver);
-        }
-        return desc.value;
-      };
-    }
-    return _get.apply(this, arguments);
-  }
-  function _slicedToArray(arr, i) {
-    return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest();
-  }
-  function _arrayWithHoles(arr) {
-    if (Array.isArray(arr)) return arr;
-  }
-  function _unsupportedIterableToArray(o, minLen) {
-    if (!o) return;
-    if (typeof o === "string") return _arrayLikeToArray(o, minLen);
-    var n = Object.prototype.toString.call(o).slice(8, -1);
-    if (n === "Object" && o.constructor) n = o.constructor.name;
-    if (n === "Map" || n === "Set") return Array.from(o);
-    if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen);
-  }
-  function _arrayLikeToArray(arr, len) {
-    if (len == null || len > arr.length) len = arr.length;
-    for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i];
-    return arr2;
-  }
-  function _nonIterableRest() {
-    throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
-  }
-  function _createForOfIteratorHelper(o, allowArrayLike) {
-    var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"];
-    if (!it) {
-      if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") {
-        if (it) o = it;
-        var i = 0;
-        var F = function () {};
+  function _createForOfIteratorHelper(r, e) {
+    var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
+    if (!t) {
+      if (Array.isArray(r) || (t = _unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) {
+        t && (r = t);
+        var n = 0,
+          F = function () {};
         return {
           s: F,
           n: function () {
-            if (i >= o.length) return {
-              done: true
-            };
-            return {
-              done: false,
-              value: o[i++]
+            return n >= r.length ? {
+              done: !0
+            } : {
+              done: !1,
+              value: r[n++]
             };
           },
-          e: function (e) {
-            throw e;
+          e: function (r) {
+            throw r;
           },
           f: F
         };
       }
       throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
     }
-    var normalCompletion = true,
-      didErr = false,
-      err;
+    var o,
+      a = !0,
+      u = !1;
     return {
       s: function () {
-        it = it.call(o);
+        t = t.call(r);
       },
       n: function () {
-        var step = it.next();
-        normalCompletion = step.done;
-        return step;
+        var r = t.next();
+        return a = r.done, r;
       },
-      e: function (e) {
-        didErr = true;
-        err = e;
+      e: function (r) {
+        u = !0, o = r;
       },
       f: function () {
         try {
-          if (!normalCompletion && it.return != null) it.return();
+          a || null == t.return || t.return();
         } finally {
-          if (didErr) throw err;
+          if (u) throw o;
         }
       }
     };
   }
-  function _toPrimitive(input, hint) {
-    if (typeof input !== "object" || input === null) return input;
-    var prim = input[Symbol.toPrimitive];
-    if (prim !== undefined) {
-      var res = prim.call(input, hint || "default");
-      if (typeof res !== "object") return res;
+  function _createSuper(t) {
+    var r = _isNativeReflectConstruct();
+    return function () {
+      var e,
+        o = _getPrototypeOf(t);
+      if (r) {
+        var s = _getPrototypeOf(this).constructor;
+        e = Reflect.construct(o, arguments, s);
+      } else e = o.apply(this, arguments);
+      return _possibleConstructorReturn(this, e);
+    };
+  }
+  function _defineProperty(e, r, t) {
+    return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, {
+      value: t,
+      enumerable: !0,
+      configurable: !0,
+      writable: !0
+    }) : e[r] = t, e;
+  }
+  function _get() {
+    return _get = "undefined" != typeof Reflect && Reflect.get ? Reflect.get.bind() : function (e, t, r) {
+      var p = _superPropBase(e, t);
+      if (p) {
+        var n = Object.getOwnPropertyDescriptor(p, t);
+        return n.get ? n.get.call(arguments.length < 3 ? e : r) : n.value;
+      }
+    }, _get.apply(null, arguments);
+  }
+  function _getPrototypeOf(t) {
+    return _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf.bind() : function (t) {
+      return t.__proto__ || Object.getPrototypeOf(t);
+    }, _getPrototypeOf(t);
+  }
+  function _inherits(t, e) {
+    if ("function" != typeof e && null !== e) throw new TypeError("Super expression must either be null or a function");
+    t.prototype = Object.create(e && e.prototype, {
+      constructor: {
+        value: t,
+        writable: !0,
+        configurable: !0
+      }
+    }), Object.defineProperty(t, "prototype", {
+      writable: !1
+    }), e && _setPrototypeOf(t, e);
+  }
+  function _isNativeReflectConstruct() {
+    try {
+      var t = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {}));
+    } catch (t) {}
+    return (_isNativeReflectConstruct = function () {
+      return !!t;
+    })();
+  }
+  function _iterableToArrayLimit(r, l) {
+    var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
+    if (null != t) {
+      var e,
+        n,
+        i,
+        u,
+        a = [],
+        f = !0,
+        o = !1;
+      try {
+        if (i = (t = t.call(r)).next, 0 === l) {
+          if (Object(t) !== t) return;
+          f = !1;
+        } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0);
+      } catch (r) {
+        o = !0, n = r;
+      } finally {
+        try {
+          if (!f && null != t.return && (u = t.return(), Object(u) !== u)) return;
+        } finally {
+          if (o) throw n;
+        }
+      }
+      return a;
+    }
+  }
+  function _nonIterableRest() {
+    throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+  }
+  function ownKeys(e, r) {
+    var t = Object.keys(e);
+    if (Object.getOwnPropertySymbols) {
+      var o = Object.getOwnPropertySymbols(e);
+      r && (o = o.filter(function (r) {
+        return Object.getOwnPropertyDescriptor(e, r).enumerable;
+      })), t.push.apply(t, o);
+    }
+    return t;
+  }
+  function _objectSpread2(e) {
+    for (var r = 1; r < arguments.length; r++) {
+      var t = null != arguments[r] ? arguments[r] : {};
+      r % 2 ? ownKeys(Object(t), !0).forEach(function (r) {
+        _defineProperty(e, r, t[r]);
+      }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) {
+        Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
+      });
+    }
+    return e;
+  }
+  function _possibleConstructorReturn(t, e) {
+    if (e && ("object" == typeof e || "function" == typeof e)) return e;
+    if (void 0 !== e) throw new TypeError("Derived constructors may only return object or undefined");
+    return _assertThisInitialized(t);
+  }
+  function _setPrototypeOf(t, e) {
+    return _setPrototypeOf = Object.setPrototypeOf ? Object.setPrototypeOf.bind() : function (t, e) {
+      return t.__proto__ = e, t;
+    }, _setPrototypeOf(t, e);
+  }
+  function _slicedToArray(r, e) {
+    return _arrayWithHoles(r) || _iterableToArrayLimit(r, e) || _unsupportedIterableToArray(r, e) || _nonIterableRest();
+  }
+  function _superPropBase(t, o) {
+    for (; !{}.hasOwnProperty.call(t, o) && null !== (t = _getPrototypeOf(t)););
+    return t;
+  }
+  function _toPrimitive(t, r) {
+    if ("object" != typeof t || !t) return t;
+    var e = t[Symbol.toPrimitive];
+    if (void 0 !== e) {
+      var i = e.call(t, r || "default");
+      if ("object" != typeof i) return i;
       throw new TypeError("@@toPrimitive must return a primitive value.");
     }
-    return (hint === "string" ? String : Number)(input);
+    return ("string" === r ? String : Number)(t);
   }
-  function _toPropertyKey(arg) {
-    var key = _toPrimitive(arg, "string");
-    return typeof key === "symbol" ? key : String(key);
+  function _toPropertyKey(t) {
+    var i = _toPrimitive(t, "string");
+    return "symbol" == typeof i ? i : i + "";
+  }
+  function _typeof(o) {
+    "@babel/helpers - typeof";
+
+    return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) {
+      return typeof o;
+    } : function (o) {
+      return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o;
+    }, _typeof(o);
+  }
+  function _unsupportedIterableToArray(r, a) {
+    if (r) {
+      if ("string" == typeof r) return _arrayLikeToArray(r, a);
+      var t = {}.toString.call(r).slice(8, -1);
+      return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0;
+    }
   }
 
   (function (r) {
@@ -379,6 +334,1048 @@ var bootloader = (function (exports) {
     };
     E || (r.TextDecoder = x, r.TextEncoder = y);
   })("" + void 0 == (typeof global === "undefined" ? "undefined" : _typeof(global)) ? "" + void 0 == (typeof self === "undefined" ? "undefined" : _typeof(self)) ? global : self : global); //AnonyCo
+
+  var CLOCKID_REALTIME = 0;
+  var CLOCKID_MONOTONIC = 1;
+  var ERRNO_SUCCESS = 0;
+  var ERRNO_BADF = 8;
+  var ERRNO_INVAL = 28;
+  var ERRNO_PERM = 63;
+  var Iovec = /*#__PURE__*/function () {
+    function Iovec() {
+      _classCallCheck(this, Iovec);
+    }
+    _createClass(Iovec, null, [{
+      key: "read_bytes",
+      value: function read_bytes(view, ptr) {
+        var iovec = new Iovec();
+        iovec.buf = view.getUint32(ptr, true);
+        iovec.buf_len = view.getUint32(ptr + 4, true);
+        return iovec;
+      }
+    }, {
+      key: "read_bytes_array",
+      value: function read_bytes_array(view, ptr, len) {
+        var iovecs = [];
+        for (var i = 0; i < len; i++) {
+          iovecs.push(Iovec.read_bytes(view, ptr + 8 * i));
+        }
+        return iovecs;
+      }
+    }]);
+    return Iovec;
+  }();
+  var Ciovec = /*#__PURE__*/function () {
+    function Ciovec() {
+      _classCallCheck(this, Ciovec);
+    }
+    _createClass(Ciovec, null, [{
+      key: "read_bytes",
+      value: function read_bytes(view, ptr) {
+        var iovec = new Ciovec();
+        iovec.buf = view.getUint32(ptr, true);
+        iovec.buf_len = view.getUint32(ptr + 4, true);
+        return iovec;
+      }
+    }, {
+      key: "read_bytes_array",
+      value: function read_bytes_array(view, ptr, len) {
+        var iovecs = [];
+        for (var i = 0; i < len; i++) {
+          iovecs.push(Ciovec.read_bytes(view, ptr + 8 * i));
+        }
+        return iovecs;
+      }
+    }]);
+    return Ciovec;
+  }();
+  var WHENCE_SET = 0;
+  var WHENCE_CUR = 1;
+  var WHENCE_END = 2;
+  var FILETYPE_REGULAR_FILE = 4;
+  var FDFLAGS_APPEND = 1 << 0;
+  var Fdstat = /*#__PURE__*/function () {
+    function Fdstat(filetype, flags) {
+      _classCallCheck(this, Fdstat);
+      this.fs_rights_base = 0n;
+      this.fs_rights_inherited = 0n;
+      this.fs_filetype = filetype;
+      this.fs_flags = flags;
+    }
+    _createClass(Fdstat, [{
+      key: "write_bytes",
+      value: function write_bytes(view, ptr) {
+        view.setUint8(ptr, this.fs_filetype);
+        view.setUint16(ptr + 2, this.fs_flags, true);
+        view.setBigUint64(ptr + 8, this.fs_rights_base, true);
+        view.setBigUint64(ptr + 16, this.fs_rights_inherited, true);
+      }
+    }]);
+    return Fdstat;
+  }();
+  var Filestat = /*#__PURE__*/function () {
+    function Filestat(filetype, size) {
+      _classCallCheck(this, Filestat);
+      this.dev = 0n;
+      this.ino = 0n;
+      this.nlink = 0n;
+      this.atim = 0n;
+      this.mtim = 0n;
+      this.ctim = 0n;
+      this.filetype = filetype;
+      this.size = size;
+    }
+    _createClass(Filestat, [{
+      key: "write_bytes",
+      value: function write_bytes(view, ptr) {
+        view.setBigUint64(ptr, this.dev, true);
+        view.setBigUint64(ptr + 8, this.ino, true);
+        view.setUint8(ptr + 16, this.filetype);
+        view.setBigUint64(ptr + 24, this.nlink, true);
+        view.setBigUint64(ptr + 32, this.size, true);
+        view.setBigUint64(ptr + 38, this.atim, true);
+        view.setBigUint64(ptr + 46, this.mtim, true);
+        view.setBigUint64(ptr + 52, this.ctim, true);
+      }
+    }]);
+    return Filestat;
+  }();
+
+  var Debug = /*#__PURE__*/function () {
+    function Debug(isEnabled) {
+      _classCallCheck(this, Debug);
+      this.isEnabled = isEnabled;
+      this.prefix = "wasi:";
+      this.enable(isEnabled);
+    }
+    _createClass(Debug, [{
+      key: "enable",
+      value: function enable(enabled) {
+        this.log = createLogger(enabled === undefined ? true : enabled, this.prefix);
+      }
+    }, {
+      key: "enabled",
+      get: function get() {
+        return this.isEnabled;
+      }
+    }]);
+    return Debug;
+  }();
+  function createLogger(enabled, prefix) {
+    if (enabled) {
+      var a = console.log.bind(console, "%c%s", "color: #265BA0", prefix);
+      return a;
+    } else {
+      return function () {};
+    }
+  }
+  var debug = new Debug(false);
+
+  var WASI = /*#__PURE__*/function () {
+    function WASI(args, env, fds) {
+      var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
+      _classCallCheck(this, WASI);
+      this.args = [];
+      this.env = [];
+      this.fds = [];
+      debug.enable(options.debug);
+      this.args = args;
+      this.env = env;
+      this.fds = fds;
+      var self = this;
+      this.wasiImport = {
+        args_sizes_get: function args_sizes_get(argc, argv_buf_size) {
+          var buffer = new DataView(self.inst.exports.memory.buffer);
+          buffer.setUint32(argc, self.args.length, true);
+          var buf_size = 0;
+          var _iterator = _createForOfIteratorHelper(self.args),
+            _step;
+          try {
+            for (_iterator.s(); !(_step = _iterator.n()).done;) {
+              var arg = _step.value;
+              buf_size += arg.length + 1;
+            }
+          } catch (err) {
+            _iterator.e(err);
+          } finally {
+            _iterator.f();
+          }
+          buffer.setUint32(argv_buf_size, buf_size, true);
+          debug.log(buffer.getUint32(argc, true), buffer.getUint32(argv_buf_size, true));
+          return 0;
+        },
+        args_get: function args_get(argv, argv_buf) {
+          var buffer = new DataView(self.inst.exports.memory.buffer);
+          var buffer8 = new Uint8Array(self.inst.exports.memory.buffer);
+          var orig_argv_buf = argv_buf;
+          for (var i = 0; i < self.args.length; i++) {
+            buffer.setUint32(argv, argv_buf, true);
+            argv += 4;
+            var arg = new TextEncoder().encode(self.args[i]);
+            buffer8.set(arg, argv_buf);
+            buffer.setUint8(argv_buf + arg.length, 0);
+            argv_buf += arg.length + 1;
+          }
+          if (debug.enabled) {
+            debug.log(new TextDecoder("utf-8").decode(buffer8.slice(orig_argv_buf, argv_buf)));
+          }
+          return 0;
+        },
+        environ_sizes_get: function environ_sizes_get(environ_count, environ_size) {
+          var buffer = new DataView(self.inst.exports.memory.buffer);
+          buffer.setUint32(environ_count, self.env.length, true);
+          var buf_size = 0;
+          var _iterator2 = _createForOfIteratorHelper(self.env),
+            _step2;
+          try {
+            for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
+              var environ = _step2.value;
+              buf_size += environ.length + 1;
+            }
+          } catch (err) {
+            _iterator2.e(err);
+          } finally {
+            _iterator2.f();
+          }
+          buffer.setUint32(environ_size, buf_size, true);
+          debug.log(buffer.getUint32(environ_count, true), buffer.getUint32(environ_size, true));
+          return 0;
+        },
+        environ_get: function environ_get(environ, environ_buf) {
+          var buffer = new DataView(self.inst.exports.memory.buffer);
+          var buffer8 = new Uint8Array(self.inst.exports.memory.buffer);
+          var orig_environ_buf = environ_buf;
+          for (var i = 0; i < self.env.length; i++) {
+            buffer.setUint32(environ, environ_buf, true);
+            environ += 4;
+            var e = new TextEncoder().encode(self.env[i]);
+            buffer8.set(e, environ_buf);
+            buffer.setUint8(environ_buf + e.length, 0);
+            environ_buf += e.length + 1;
+          }
+          if (debug.enabled) {
+            debug.log(new TextDecoder("utf-8").decode(buffer8.slice(orig_environ_buf, environ_buf)));
+          }
+          return 0;
+        },
+        clock_res_get: function clock_res_get(id, res_ptr) {
+          throw "unimplemented";
+        },
+        clock_time_get: function clock_time_get(id, precision, time) {
+          var buffer = new DataView(self.inst.exports.memory.buffer);
+          if (id === CLOCKID_REALTIME) {
+            buffer.setBigUint64(time, BigInt(new Date().getTime()) * 1000000n, true);
+          } else if (id == CLOCKID_MONOTONIC) {
+            var monotonic_time;
+            try {
+              monotonic_time = BigInt(Math.round(performance.now() * 1e6));
+            } catch (e) {
+              monotonic_time = 0n;
+            }
+            buffer.setBigUint64(time, monotonic_time, true);
+          } else {
+            buffer.setBigUint64(time, 0n, true);
+          }
+          return 0;
+        },
+        fd_advise: function fd_advise(fd, offset, len, advice) {
+          if (self.fds[fd] != undefined) {
+            return self.fds[fd].fd_advise(offset, len, advice);
+          } else {
+            return ERRNO_BADF;
+          }
+        },
+        fd_allocate: function fd_allocate(fd, offset, len) {
+          if (self.fds[fd] != undefined) {
+            return self.fds[fd].fd_allocate(offset, len);
+          } else {
+            return ERRNO_BADF;
+          }
+        },
+        fd_close: function fd_close(fd) {
+          if (self.fds[fd] != undefined) {
+            var ret = self.fds[fd].fd_close();
+            self.fds[fd] = undefined;
+            return ret;
+          } else {
+            return ERRNO_BADF;
+          }
+        },
+        fd_datasync: function fd_datasync(fd) {
+          if (self.fds[fd] != undefined) {
+            return self.fds[fd].fd_datasync();
+          } else {
+            return ERRNO_BADF;
+          }
+        },
+        fd_fdstat_get: function fd_fdstat_get(fd, fdstat_ptr) {
+          if (self.fds[fd] != undefined) {
+            var _self$fds$fd$fd_fdsta = self.fds[fd].fd_fdstat_get(),
+              ret = _self$fds$fd$fd_fdsta.ret,
+              fdstat = _self$fds$fd$fd_fdsta.fdstat;
+            if (fdstat != null) {
+              fdstat.write_bytes(new DataView(self.inst.exports.memory.buffer), fdstat_ptr);
+            }
+            return ret;
+          } else {
+            return ERRNO_BADF;
+          }
+        },
+        fd_fdstat_set_flags: function fd_fdstat_set_flags(fd, flags) {
+          if (self.fds[fd] != undefined) {
+            return self.fds[fd].fd_fdstat_set_flags(flags);
+          } else {
+            return ERRNO_BADF;
+          }
+        },
+        fd_fdstat_set_rights: function fd_fdstat_set_rights(fd, fs_rights_base, fs_rights_inheriting) {
+          if (self.fds[fd] != undefined) {
+            return self.fds[fd].fd_fdstat_set_rights(fs_rights_base, fs_rights_inheriting);
+          } else {
+            return ERRNO_BADF;
+          }
+        },
+        fd_filestat_get: function fd_filestat_get(fd, filestat_ptr) {
+          if (self.fds[fd] != undefined) {
+            var _self$fds$fd$fd_files = self.fds[fd].fd_filestat_get(),
+              ret = _self$fds$fd$fd_files.ret,
+              filestat = _self$fds$fd$fd_files.filestat;
+            if (filestat != null) {
+              filestat.write_bytes(new DataView(self.inst.exports.memory.buffer), filestat_ptr);
+            }
+            return ret;
+          } else {
+            return ERRNO_BADF;
+          }
+        },
+        fd_filestat_set_size: function fd_filestat_set_size(fd, size) {
+          if (self.fds[fd] != undefined) {
+            return self.fds[fd].fd_filestat_set_size(size);
+          } else {
+            return ERRNO_BADF;
+          }
+        },
+        fd_filestat_set_times: function fd_filestat_set_times(fd, atim, mtim, fst_flags) {
+          if (self.fds[fd] != undefined) {
+            return self.fds[fd].fd_filestat_set_times(atim, mtim, fst_flags);
+          } else {
+            return ERRNO_BADF;
+          }
+        },
+        fd_pread: function fd_pread(fd, iovs_ptr, iovs_len, offset, nread_ptr) {
+          var buffer = new DataView(self.inst.exports.memory.buffer);
+          var buffer8 = new Uint8Array(self.inst.exports.memory.buffer);
+          if (self.fds[fd] != undefined) {
+            var iovecs = Iovec.read_bytes_array(buffer, iovs_ptr, iovs_len);
+            var _self$fds$fd$fd_pread = self.fds[fd].fd_pread(buffer8, iovecs, offset),
+              ret = _self$fds$fd$fd_pread.ret,
+              nread = _self$fds$fd$fd_pread.nread;
+            buffer.setUint32(nread_ptr, nread, true);
+            return ret;
+          } else {
+            return ERRNO_BADF;
+          }
+        },
+        fd_prestat_get: function fd_prestat_get(fd, buf_ptr) {
+          var buffer = new DataView(self.inst.exports.memory.buffer);
+          if (self.fds[fd] != undefined) {
+            var _self$fds$fd$fd_prest = self.fds[fd].fd_prestat_get(),
+              ret = _self$fds$fd$fd_prest.ret,
+              prestat = _self$fds$fd$fd_prest.prestat;
+            if (prestat != null) {
+              prestat.write_bytes(buffer, buf_ptr);
+            }
+            return ret;
+          } else {
+            return ERRNO_BADF;
+          }
+        },
+        fd_prestat_dir_name: function fd_prestat_dir_name(fd, path_ptr, path_len) {
+          if (self.fds[fd] != undefined) {
+            var _self$fds$fd$fd_prest2 = self.fds[fd].fd_prestat_dir_name(),
+              ret = _self$fds$fd$fd_prest2.ret,
+              prestat_dir_name = _self$fds$fd$fd_prest2.prestat_dir_name;
+            if (prestat_dir_name != null) {
+              var buffer8 = new Uint8Array(self.inst.exports.memory.buffer);
+              buffer8.set(prestat_dir_name, path_ptr);
+            }
+            return ret;
+          } else {
+            return ERRNO_BADF;
+          }
+        },
+        fd_pwrite: function fd_pwrite(fd, iovs_ptr, iovs_len, offset, nwritten_ptr) {
+          var buffer = new DataView(self.inst.exports.memory.buffer);
+          var buffer8 = new Uint8Array(self.inst.exports.memory.buffer);
+          if (self.fds[fd] != undefined) {
+            var iovecs = Ciovec.read_bytes_array(buffer, iovs_ptr, iovs_len);
+            var _self$fds$fd$fd_pwrit = self.fds[fd].fd_pwrite(buffer8, iovecs, offset),
+              ret = _self$fds$fd$fd_pwrit.ret,
+              nwritten = _self$fds$fd$fd_pwrit.nwritten;
+            buffer.setUint32(nwritten_ptr, nwritten, true);
+            return ret;
+          } else {
+            return ERRNO_BADF;
+          }
+        },
+        fd_read: function fd_read(fd, iovs_ptr, iovs_len, nread_ptr) {
+          var buffer = new DataView(self.inst.exports.memory.buffer);
+          var buffer8 = new Uint8Array(self.inst.exports.memory.buffer);
+          if (self.fds[fd] != undefined) {
+            var iovecs = Iovec.read_bytes_array(buffer, iovs_ptr, iovs_len);
+            var _self$fds$fd$fd_read = self.fds[fd].fd_read(buffer8, iovecs),
+              ret = _self$fds$fd$fd_read.ret,
+              nread = _self$fds$fd$fd_read.nread;
+            buffer.setUint32(nread_ptr, nread, true);
+            return ret;
+          } else {
+            return ERRNO_BADF;
+          }
+        },
+        fd_readdir: function fd_readdir(fd, buf, buf_len, cookie, bufused_ptr) {
+          var buffer = new DataView(self.inst.exports.memory.buffer);
+          var buffer8 = new Uint8Array(self.inst.exports.memory.buffer);
+          if (self.fds[fd] != undefined) {
+            var bufused = 0;
+            while (true) {
+              var _self$fds$fd$fd_readd = self.fds[fd].fd_readdir_single(cookie),
+                ret = _self$fds$fd$fd_readd.ret,
+                dirent = _self$fds$fd$fd_readd.dirent;
+              if (ret != 0) {
+                buffer.setUint32(bufused_ptr, bufused, true);
+                return ret;
+              }
+              if (dirent == null) {
+                break;
+              }
+              if (buf_len - bufused < dirent.head_length()) {
+                bufused = buf_len;
+                break;
+              }
+              var head_bytes = new ArrayBuffer(dirent.head_length());
+              dirent.write_head_bytes(new DataView(head_bytes), 0);
+              buffer8.set(new Uint8Array(head_bytes).slice(0, Math.min(head_bytes.byteLength, buf_len - bufused)), buf);
+              buf += dirent.head_length();
+              bufused += dirent.head_length();
+              if (buf_len - bufused < dirent.name_length()) {
+                bufused = buf_len;
+                break;
+              }
+              dirent.write_name_bytes(buffer8, buf, buf_len - bufused);
+              buf += dirent.name_length();
+              bufused += dirent.name_length();
+              cookie = dirent.d_next;
+            }
+            buffer.setUint32(bufused_ptr, bufused, true);
+            return 0;
+          } else {
+            return ERRNO_BADF;
+          }
+        },
+        fd_renumber: function fd_renumber(fd, to) {
+          if (self.fds[fd] != undefined && self.fds[to] != undefined) {
+            var ret = self.fds[to].fd_close();
+            if (ret != 0) {
+              return ret;
+            }
+            self.fds[to] = self.fds[fd];
+            self.fds[fd] = undefined;
+            return 0;
+          } else {
+            return ERRNO_BADF;
+          }
+        },
+        fd_seek: function fd_seek(fd, offset, whence, offset_out_ptr) {
+          var buffer = new DataView(self.inst.exports.memory.buffer);
+          if (self.fds[fd] != undefined) {
+            var _self$fds$fd$fd_seek = self.fds[fd].fd_seek(offset, whence),
+              ret = _self$fds$fd$fd_seek.ret,
+              offset_out = _self$fds$fd$fd_seek.offset;
+            buffer.setBigInt64(offset_out_ptr, offset_out, true);
+            return ret;
+          } else {
+            return ERRNO_BADF;
+          }
+        },
+        fd_sync: function fd_sync(fd) {
+          if (self.fds[fd] != undefined) {
+            return self.fds[fd].fd_sync();
+          } else {
+            return ERRNO_BADF;
+          }
+        },
+        fd_tell: function fd_tell(fd, offset_ptr) {
+          var buffer = new DataView(self.inst.exports.memory.buffer);
+          if (self.fds[fd] != undefined) {
+            var _self$fds$fd$fd_tell = self.fds[fd].fd_tell(),
+              ret = _self$fds$fd$fd_tell.ret,
+              offset = _self$fds$fd$fd_tell.offset;
+            buffer.setBigUint64(offset_ptr, offset, true);
+            return ret;
+          } else {
+            return ERRNO_BADF;
+          }
+        },
+        fd_write: function fd_write(fd, iovs_ptr, iovs_len, nwritten_ptr) {
+          var buffer = new DataView(self.inst.exports.memory.buffer);
+          var buffer8 = new Uint8Array(self.inst.exports.memory.buffer);
+          if (self.fds[fd] != undefined) {
+            var iovecs = Ciovec.read_bytes_array(buffer, iovs_ptr, iovs_len);
+            var _self$fds$fd$fd_write = self.fds[fd].fd_write(buffer8, iovecs),
+              ret = _self$fds$fd$fd_write.ret,
+              nwritten = _self$fds$fd$fd_write.nwritten;
+            buffer.setUint32(nwritten_ptr, nwritten, true);
+            return ret;
+          } else {
+            return ERRNO_BADF;
+          }
+        },
+        path_create_directory: function path_create_directory(fd, path_ptr, path_len) {
+          var buffer8 = new Uint8Array(self.inst.exports.memory.buffer);
+          if (self.fds[fd] != undefined) {
+            var path = new TextDecoder("utf-8").decode(buffer8.slice(path_ptr, path_ptr + path_len));
+            return self.fds[fd].path_create_directory(path);
+          }
+        },
+        path_filestat_get: function path_filestat_get(fd, flags, path_ptr, path_len, filestat_ptr) {
+          var buffer = new DataView(self.inst.exports.memory.buffer);
+          var buffer8 = new Uint8Array(self.inst.exports.memory.buffer);
+          if (self.fds[fd] != undefined) {
+            var path = new TextDecoder("utf-8").decode(buffer8.slice(path_ptr, path_ptr + path_len));
+            var _self$fds$fd$path_fil = self.fds[fd].path_filestat_get(flags, path),
+              ret = _self$fds$fd$path_fil.ret,
+              filestat = _self$fds$fd$path_fil.filestat;
+            if (filestat != null) {
+              filestat.write_bytes(buffer, filestat_ptr);
+            }
+            return ret;
+          } else {
+            return ERRNO_BADF;
+          }
+        },
+        path_filestat_set_times: function path_filestat_set_times(fd, flags, path_ptr, path_len, atim, mtim, fst_flags) {
+          var buffer8 = new Uint8Array(self.inst.exports.memory.buffer);
+          if (self.fds[fd] != undefined) {
+            var path = new TextDecoder("utf-8").decode(buffer8.slice(path_ptr, path_ptr + path_len));
+            return self.fds[fd].path_filestat_set_times(flags, path, atim, mtim, fst_flags);
+          } else {
+            return ERRNO_BADF;
+          }
+        },
+        path_link: function path_link(old_fd, old_flags, old_path_ptr, old_path_len, new_fd, new_path_ptr, new_path_len) {
+          var buffer8 = new Uint8Array(self.inst.exports.memory.buffer);
+          if (self.fds[old_fd] != undefined && self.fds[new_fd] != undefined) {
+            var old_path = new TextDecoder("utf-8").decode(buffer8.slice(old_path_ptr, old_path_ptr + old_path_len));
+            var new_path = new TextDecoder("utf-8").decode(buffer8.slice(new_path_ptr, new_path_ptr + new_path_len));
+            return self.fds[new_fd].path_link(old_fd, old_flags, old_path, new_path);
+          } else {
+            return ERRNO_BADF;
+          }
+        },
+        path_open: function path_open(fd, dirflags, path_ptr, path_len, oflags, fs_rights_base, fs_rights_inheriting, fd_flags, opened_fd_ptr) {
+          var buffer = new DataView(self.inst.exports.memory.buffer);
+          var buffer8 = new Uint8Array(self.inst.exports.memory.buffer);
+          if (self.fds[fd] != undefined) {
+            var path = new TextDecoder("utf-8").decode(buffer8.slice(path_ptr, path_ptr + path_len));
+            debug.log(path);
+            var _self$fds$fd$path_ope = self.fds[fd].path_open(dirflags, path, oflags, fs_rights_base, fs_rights_inheriting, fd_flags),
+              ret = _self$fds$fd$path_ope.ret,
+              fd_obj = _self$fds$fd$path_ope.fd_obj;
+            if (ret != 0) {
+              return ret;
+            }
+            self.fds.push(fd_obj);
+            var opened_fd = self.fds.length - 1;
+            buffer.setUint32(opened_fd_ptr, opened_fd, true);
+            return 0;
+          } else {
+            return ERRNO_BADF;
+          }
+        },
+        path_readlink: function path_readlink(fd, path_ptr, path_len, buf_ptr, buf_len, nread_ptr) {
+          var buffer = new DataView(self.inst.exports.memory.buffer);
+          var buffer8 = new Uint8Array(self.inst.exports.memory.buffer);
+          if (self.fds[fd] != undefined) {
+            var path = new TextDecoder("utf-8").decode(buffer8.slice(path_ptr, path_ptr + path_len));
+            debug.log(path);
+            var _self$fds$fd$path_rea = self.fds[fd].path_readlink(path),
+              ret = _self$fds$fd$path_rea.ret,
+              data = _self$fds$fd$path_rea.data;
+            if (data != null) {
+              if (data.length > buf_len) {
+                buffer.setUint32(nread_ptr, 0, true);
+                return ERRNO_BADF;
+              }
+              buffer8.set(data, buf_ptr);
+              buffer.setUint32(nread_ptr, data.length, true);
+            }
+            return ret;
+          } else {
+            return ERRNO_BADF;
+          }
+        },
+        path_remove_directory: function path_remove_directory(fd, path_ptr, path_len) {
+          var buffer8 = new Uint8Array(self.inst.exports.memory.buffer);
+          if (self.fds[fd] != undefined) {
+            var path = new TextDecoder("utf-8").decode(buffer8.slice(path_ptr, path_ptr + path_len));
+            return self.fds[fd].path_remove_directory(path);
+          } else {
+            return ERRNO_BADF;
+          }
+        },
+        path_rename: function path_rename(fd, old_path_ptr, old_path_len, new_fd, new_path_ptr, new_path_len) {
+          throw "FIXME what is the best abstraction for this?";
+        },
+        path_symlink: function path_symlink(old_path_ptr, old_path_len, fd, new_path_ptr, new_path_len) {
+          var buffer8 = new Uint8Array(self.inst.exports.memory.buffer);
+          if (self.fds[fd] != undefined) {
+            var old_path = new TextDecoder("utf-8").decode(buffer8.slice(old_path_ptr, old_path_ptr + old_path_len));
+            var new_path = new TextDecoder("utf-8").decode(buffer8.slice(new_path_ptr, new_path_ptr + new_path_len));
+            return self.fds[fd].path_symlink(old_path, new_path);
+          } else {
+            return ERRNO_BADF;
+          }
+        },
+        path_unlink_file: function path_unlink_file(fd, path_ptr, path_len) {
+          var buffer8 = new Uint8Array(self.inst.exports.memory.buffer);
+          if (self.fds[fd] != undefined) {
+            var path = new TextDecoder("utf-8").decode(buffer8.slice(path_ptr, path_ptr + path_len));
+            return self.fds[fd].path_unlink_file(path);
+          } else {
+            return ERRNO_BADF;
+          }
+        },
+        poll_oneoff: function poll_oneoff(in_, out, nsubscriptions) {
+          throw "async io not supported";
+        },
+        proc_exit: function proc_exit(exit_code) {
+          throw "exit with exit code " + exit_code;
+        },
+        proc_raise: function proc_raise(sig) {
+          throw "raised signal " + sig;
+        },
+        sched_yield: function sched_yield() {},
+        random_get: function random_get(buf, buf_len) {
+          var buffer8 = new Uint8Array(self.inst.exports.memory.buffer);
+          for (var i = 0; i < buf_len; i++) {
+            buffer8[buf + i] = Math.random() * 256 | 0;
+          }
+        },
+        sock_recv: function sock_recv(fd, ri_data, ri_flags) {
+          throw "sockets not supported";
+        },
+        sock_send: function sock_send(fd, si_data, si_flags) {
+          throw "sockets not supported";
+        },
+        sock_shutdown: function sock_shutdown(fd, how) {
+          throw "sockets not supported";
+        },
+        sock_accept: function sock_accept(fd, flags) {
+          throw "sockets not supported";
+        }
+      };
+    }
+    _createClass(WASI, [{
+      key: "start",
+      value: function start(instance) {
+        this.inst = instance;
+        instance.exports._start();
+      }
+    }, {
+      key: "initialize",
+      value: function initialize(instance) {
+        this.inst = instance;
+        instance.exports._initialize();
+      }
+    }]);
+    return WASI;
+  }();
+
+  var Fd = /*#__PURE__*/function () {
+    function Fd() {
+      _classCallCheck(this, Fd);
+    }
+    _createClass(Fd, [{
+      key: "fd_advise",
+      value: function fd_advise(offset, len, advice) {
+        return -1;
+      }
+    }, {
+      key: "fd_allocate",
+      value: function fd_allocate(offset, len) {
+        return -1;
+      }
+    }, {
+      key: "fd_close",
+      value: function fd_close() {
+        return 0;
+      }
+    }, {
+      key: "fd_datasync",
+      value: function fd_datasync() {
+        return -1;
+      }
+    }, {
+      key: "fd_fdstat_get",
+      value: function fd_fdstat_get() {
+        return {
+          ret: -1,
+          fdstat: null
+        };
+      }
+    }, {
+      key: "fd_fdstat_set_flags",
+      value: function fd_fdstat_set_flags(flags) {
+        return -1;
+      }
+    }, {
+      key: "fd_fdstat_set_rights",
+      value: function fd_fdstat_set_rights(fs_rights_base, fs_rights_inheriting) {
+        return -1;
+      }
+    }, {
+      key: "fd_filestat_get",
+      value: function fd_filestat_get() {
+        return {
+          ret: -1,
+          filestat: null
+        };
+      }
+    }, {
+      key: "fd_filestat_set_size",
+      value: function fd_filestat_set_size(size) {
+        return -1;
+      }
+    }, {
+      key: "fd_filestat_set_times",
+      value: function fd_filestat_set_times(atim, mtim, fst_flags) {
+        return -1;
+      }
+    }, {
+      key: "fd_pread",
+      value: function fd_pread(view8, iovs, offset) {
+        return {
+          ret: -1,
+          nread: 0
+        };
+      }
+    }, {
+      key: "fd_prestat_get",
+      value: function fd_prestat_get() {
+        return {
+          ret: -1,
+          prestat: null
+        };
+      }
+    }, {
+      key: "fd_prestat_dir_name",
+      value: function fd_prestat_dir_name() {
+        return {
+          ret: -1,
+          prestat_dir_name: null
+        };
+      }
+    }, {
+      key: "fd_pwrite",
+      value: function fd_pwrite(view8, iovs, offset) {
+        return {
+          ret: -1,
+          nwritten: 0
+        };
+      }
+    }, {
+      key: "fd_read",
+      value: function fd_read(view8, iovs) {
+        return {
+          ret: -1,
+          nread: 0
+        };
+      }
+    }, {
+      key: "fd_readdir_single",
+      value: function fd_readdir_single(cookie) {
+        return {
+          ret: -1,
+          dirent: null
+        };
+      }
+    }, {
+      key: "fd_seek",
+      value: function fd_seek(offset, whence) {
+        return {
+          ret: -1,
+          offset: 0n
+        };
+      }
+    }, {
+      key: "fd_sync",
+      value: function fd_sync() {
+        return 0;
+      }
+    }, {
+      key: "fd_tell",
+      value: function fd_tell() {
+        return {
+          ret: -1,
+          offset: 0n
+        };
+      }
+    }, {
+      key: "fd_write",
+      value: function fd_write(view8, iovs) {
+        return {
+          ret: -1,
+          nwritten: 0
+        };
+      }
+    }, {
+      key: "path_create_directory",
+      value: function path_create_directory(path) {
+        return -1;
+      }
+    }, {
+      key: "path_filestat_get",
+      value: function path_filestat_get(flags, path) {
+        return {
+          ret: -1,
+          filestat: null
+        };
+      }
+    }, {
+      key: "path_filestat_set_times",
+      value: function path_filestat_set_times(flags, path, atim, mtim, fst_flags) {
+        return -1;
+      }
+    }, {
+      key: "path_link",
+      value: function path_link(old_fd, old_flags, old_path, new_path) {
+        return -1;
+      }
+    }, {
+      key: "path_open",
+      value: function path_open(dirflags, path, oflags, fs_rights_base, fs_rights_inheriting, fdflags) {
+        return {
+          ret: -1,
+          fd_obj: null
+        };
+      }
+    }, {
+      key: "path_readlink",
+      value: function path_readlink(path) {
+        return {
+          ret: -1,
+          data: null
+        };
+      }
+    }, {
+      key: "path_remove_directory",
+      value: function path_remove_directory(path) {
+        return -1;
+      }
+    }, {
+      key: "path_rename",
+      value: function path_rename(old_path, new_fd, new_path) {
+        return -1;
+      }
+    }, {
+      key: "path_symlink",
+      value: function path_symlink(old_path, new_path) {
+        return -1;
+      }
+    }, {
+      key: "path_unlink_file",
+      value: function path_unlink_file(path) {
+        return -1;
+      }
+    }]);
+    return Fd;
+  }();
+
+  var OpenFile = /*#__PURE__*/function (_Fd) {
+    _inherits(OpenFile, _Fd);
+    var _super = _createSuper(OpenFile);
+    function OpenFile(file) {
+      var _this;
+      _classCallCheck(this, OpenFile);
+      _this = _super.call(this);
+      _this.file_pos = 0n;
+      _this.file = file;
+      return _this;
+    }
+    _createClass(OpenFile, [{
+      key: "fd_fdstat_get",
+      value: function fd_fdstat_get() {
+        return {
+          ret: 0,
+          fdstat: new Fdstat(FILETYPE_REGULAR_FILE, 0)
+        };
+      }
+    }, {
+      key: "fd_read",
+      value: function fd_read(view8, iovs) {
+        var nread = 0;
+        var _iterator = _createForOfIteratorHelper(iovs),
+          _step;
+        try {
+          for (_iterator.s(); !(_step = _iterator.n()).done;) {
+            var iovec = _step.value;
+            if (this.file_pos < this.file.data.byteLength) {
+              var slice = this.file.data.slice(Number(this.file_pos), Number(this.file_pos + BigInt(iovec.buf_len)));
+              view8.set(slice, iovec.buf);
+              this.file_pos += BigInt(slice.length);
+              nread += slice.length;
+            } else {
+              break;
+            }
+          }
+        } catch (err) {
+          _iterator.e(err);
+        } finally {
+          _iterator.f();
+        }
+        return {
+          ret: 0,
+          nread: nread
+        };
+      }
+    }, {
+      key: "fd_pread",
+      value: function fd_pread(view8, iovs, offset) {
+        var nread = 0;
+        var _iterator2 = _createForOfIteratorHelper(iovs),
+          _step2;
+        try {
+          for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
+            var iovec = _step2.value;
+            if (offset < this.file.data.byteLength) {
+              var slice = this.file.data.slice(Number(offset), Number(offset + BigInt(iovec.buf_len)));
+              view8.set(slice, iovec.buf);
+              offset += BigInt(slice.length);
+              nread += slice.length;
+            } else {
+              break;
+            }
+          }
+        } catch (err) {
+          _iterator2.e(err);
+        } finally {
+          _iterator2.f();
+        }
+        return {
+          ret: 0,
+          nread: nread
+        };
+      }
+    }, {
+      key: "fd_seek",
+      value: function fd_seek(offset, whence) {
+        var calculated_offset;
+        switch (whence) {
+          case WHENCE_SET:
+            calculated_offset = offset;
+            break;
+          case WHENCE_CUR:
+            calculated_offset = this.file_pos + offset;
+            break;
+          case WHENCE_END:
+            calculated_offset = BigInt(this.file.data.byteLength) + offset;
+            break;
+          default:
+            return {
+              ret: ERRNO_INVAL,
+              offset: 0n
+            };
+        }
+        if (calculated_offset < 0) {
+          return {
+            ret: ERRNO_INVAL,
+            offset: 0n
+          };
+        }
+        this.file_pos = calculated_offset;
+        return {
+          ret: 0,
+          offset: this.file_pos
+        };
+      }
+    }, {
+      key: "fd_write",
+      value: function fd_write(view8, iovs) {
+        var nwritten = 0;
+        if (this.file.readonly) return {
+          ret: ERRNO_BADF,
+          nwritten: nwritten
+        };
+        var _iterator3 = _createForOfIteratorHelper(iovs),
+          _step3;
+        try {
+          for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
+            var iovec = _step3.value;
+            var buffer = view8.slice(iovec.buf, iovec.buf + iovec.buf_len);
+            if (this.file_pos + BigInt(buffer.byteLength) > this.file.size) {
+              var old = this.file.data;
+              this.file.data = new Uint8Array(Number(this.file_pos + BigInt(buffer.byteLength)));
+              this.file.data.set(old);
+            }
+            this.file.data.set(buffer.slice(0, Number(this.file.size - this.file_pos)), Number(this.file_pos));
+            this.file_pos += BigInt(buffer.byteLength);
+            nwritten += iovec.buf_len;
+          }
+        } catch (err) {
+          _iterator3.e(err);
+        } finally {
+          _iterator3.f();
+        }
+        return {
+          ret: 0,
+          nwritten: nwritten
+        };
+      }
+    }, {
+      key: "fd_filestat_get",
+      value: function fd_filestat_get() {
+        return {
+          ret: 0,
+          filestat: this.file.stat()
+        };
+      }
+    }]);
+    return OpenFile;
+  }(Fd);
+
+  var File = /*#__PURE__*/function () {
+    function File(data, options) {
+      _classCallCheck(this, File);
+      this.data = new Uint8Array(data);
+      this.readonly = !!(options !== null && options !== void 0 && options.readonly);
+    }
+    _createClass(File, [{
+      key: "open",
+      value: function open(fd_flags) {
+        var file = new OpenFile(this);
+        if (fd_flags & FDFLAGS_APPEND) file.fd_seek(0n, WHENCE_END);
+        return file;
+      }
+    }, {
+      key: "size",
+      get: function get() {
+        return BigInt(this.data.byteLength);
+      }
+    }, {
+      key: "stat",
+      value: function stat() {
+        return new Filestat(FILETYPE_REGULAR_FILE, this.size);
+      }
+    }, {
+      key: "truncate",
+      value: function truncate() {
+        if (this.readonly) return ERRNO_PERM;
+        this.data = new Uint8Array([]);
+        return ERRNO_SUCCESS;
+      }
+    }]);
+    return File;
+  }();
 
   var lookup = new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 62, 0, 62, 0, 63, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 0, 0, 0, 0, 63, 0, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51]);
   function base64Decode(source, target) {
@@ -522,12 +1519,12 @@ var bootloader = (function (exports) {
     fd = _b.b;
   // map of value to reverse (assuming 16 bits)
   var rev = new u16(32768);
-  for (var i$1 = 0; i$1 < 32768; ++i$1) {
+  for (var i = 0; i < 32768; ++i) {
     // reverse table algorithm from SO
-    var x = (i$1 & 0xAAAA) >> 1 | (i$1 & 0x5555) << 1;
+    var x = (i & 0xAAAA) >> 1 | (i & 0x5555) << 1;
     x = (x & 0xCCCC) >> 2 | (x & 0x3333) << 2;
     x = (x & 0xF0F0) >> 4 | (x & 0x0F0F) << 4;
-    rev[i$1] = ((x & 0xFF00) >> 8 | (x & 0x00FF) << 8) >> 1;
+    rev[i] = ((x & 0xFF00) >> 8 | (x & 0x00FF) << 8) >> 1;
   }
   // create huffman tree from u8 "map": index -> code length for code index
   // mb (max bits) must be at most 15
@@ -581,13 +1578,13 @@ var bootloader = (function (exports) {
   };
   // fixed length tree
   var flt = new u8(288);
-  for (var i$1 = 0; i$1 < 144; ++i$1) flt[i$1] = 8;
-  for (var i$1 = 144; i$1 < 256; ++i$1) flt[i$1] = 9;
-  for (var i$1 = 256; i$1 < 280; ++i$1) flt[i$1] = 7;
-  for (var i$1 = 280; i$1 < 288; ++i$1) flt[i$1] = 8;
+  for (var i = 0; i < 144; ++i) flt[i] = 8;
+  for (var i = 144; i < 256; ++i) flt[i] = 9;
+  for (var i = 256; i < 280; ++i) flt[i] = 7;
+  for (var i = 280; i < 288; ++i) flt[i] = 8;
   // fixed distance tree
   var fdt = new u8(32);
-  for (var i$1 = 0; i$1 < 32; ++i$1) fdt[i$1] = 5;
+  for (var i = 0; i < 32; ++i) fdt[i] = 5;
   // fixed length map
   var flrm = /*#__PURE__*/hMap(flt, 9, 1);
   // fixed distance map
@@ -875,21 +1872,21 @@ var bootloader = (function (exports) {
       _defineProperty(this, "_timeInJsUserCode", 0);
       this._profileFn = profileFn;
       this.interopImport = {};
-      this.interopImport['bind-import'] = this.js_bind_import.bind(this);
-      this.interopImport['invoke-import'] = this.js_invoke_import.bind(this);
-      this.interopImport['release-object-reference'] = this.js_release_object_reference.bind(this);
-      this.interopImport['set-name'] = this.js_set_name.bind(this);
-      this.interopImport['invoke-i-i'] = this.js_invoke_i_i.bind(this);
-      this.interopImport['invoke-i-ii'] = this.js_invoke_i_ii.bind(this);
-      this.interopImport['invoke-i-iii'] = this.js_invoke_i_iii.bind(this);
-      this.interopImport['invoke-i-o'] = this.js_invoke_i_o.bind(this);
-      this.interopImport['invoke-i-oi'] = this.js_invoke_i_oi.bind(this);
-      this.interopImport['invoke-i-on'] = this.js_invoke_i_on.bind(this);
-      this.interopImport['invoke-i-oii'] = this.js_invoke_i_oii.bind(this);
-      this.interopImport['invoke-i-oo'] = this.js_invoke_i_oo.bind(this);
-      this.interopImport['invoke-i-ooi'] = this.js_invoke_i_ooi.bind(this);
-      this.interopImport['invoke-i-ooii'] = this.js_invoke_i_ooii.bind(this);
-      this.interopImport['invoke-d-v'] = this.js_invoke_d_v.bind(this);
+      this.interopImport.js_bind_import = this.js_bind_import.bind(this);
+      this.interopImport.js_invoke_import = this.js_invoke_import.bind(this);
+      this.interopImport.js_release_object_reference = this.js_release_object_reference.bind(this);
+      this.interopImport.js_set_name = this.js_set_name.bind(this);
+      this.interopImport.js_invoke_i_i = this.js_invoke_i_i.bind(this);
+      this.interopImport.js_invoke_i_ii = this.js_invoke_i_ii.bind(this);
+      this.interopImport.js_invoke_i_iii = this.js_invoke_i_iii.bind(this);
+      this.interopImport.js_invoke_i_o = this.js_invoke_i_o.bind(this);
+      this.interopImport.js_invoke_i_oi = this.js_invoke_i_oi.bind(this);
+      this.interopImport.js_invoke_i_on = this.js_invoke_i_on.bind(this);
+      this.interopImport.js_invoke_i_oii = this.js_invoke_i_oii.bind(this);
+      this.interopImport.js_invoke_i_oo = this.js_invoke_i_oo.bind(this);
+      this.interopImport.js_invoke_i_ooi = this.js_invoke_i_ooi.bind(this);
+      this.interopImport.js_invoke_i_ooii = this.js_invoke_i_ooii.bind(this);
+      this.interopImport.js_invoke_d_v = this.js_invoke_d_v.bind(this);
     }
     _createClass(Interop, [{
       key: "memoryManager",
@@ -1694,19 +2691,31 @@ var bootloader = (function (exports) {
     return BaseBindings;
   }();
 
-  var RESOURCE_LIST$1 = ["energy", "score", "score_x", "score_y", "score_z"]; // 5 total
+  var NoopBindings = /*#__PURE__*/function (_BaseBindings) {
+    _inherits(NoopBindings, _BaseBindings);
+    var _super = _createSuper(NoopBindings);
+    function NoopBindings() {
+      _classCallCheck(this, NoopBindings);
+      return _super.apply(this, arguments);
+    }
+    return _createClass(NoopBindings);
+  }(BaseBindings);
+
+  // Note: when compiling for world, this import is replaced with the actual world bindings instead
+
+  var RESOURCE_LIST = ["energy", "score", "score_x", "score_y", "score_z"]; // 5 total
   {
-    for (var _i$1 = 0, _RESOURCE_LIST$1 = RESOURCE_LIST$1; _i$1 < _RESOURCE_LIST$1.length; _i$1++) {
-      _RESOURCE_LIST$1[_i$1];
+    for (var _i = 0, _RESOURCE_LIST = RESOURCE_LIST; _i < _RESOURCE_LIST.length; _i++) {
+      _RESOURCE_LIST[_i];
     }
   }
-  var BODYPART_LIST$1 = ['move', 'work', 'carry', 'attack', 'ranged_attack', 'heal', 'tough']; // 7 total
-  var BODYPART_TO_ENUM_MAP$1 = {};
+  var BODYPART_LIST = ['move', 'work', 'carry', 'attack', 'ranged_attack', 'heal', 'tough']; // 7 total
+  var BODYPART_TO_ENUM_MAP = {};
   {
-    var _i2$1 = 0;
-    for (var _i3$1 = 0, _BODYPART_LIST$1 = BODYPART_LIST$1; _i3$1 < _BODYPART_LIST$1.length; _i3$1++) {
-      var bodyPart$1 = _BODYPART_LIST$1[_i3$1];
-      BODYPART_TO_ENUM_MAP$1[bodyPart$1] = _i2$1++;
+    var _i2 = 0;
+    for (var _i3 = 0, _BODYPART_LIST = BODYPART_LIST; _i3 < _BODYPART_LIST.length; _i3++) {
+      var bodyPart = _BODYPART_LIST[_i3];
+      BODYPART_TO_ENUM_MAP[bodyPart] = _i2++;
     }
   }
   var ArenaBindings = /*#__PURE__*/function (_BaseBindings) {
@@ -1847,6 +2856,9 @@ var bootloader = (function (exports) {
           },
           getPrototypes: function getPrototypes() {
             return prototypes;
+          },
+          getArenaInfo: function getArenaInfo() {
+            return arenaInfo;
           }
         };
         var wrappedPrototypes = this.buildWrappedPrototypes(prototypes);
@@ -1891,7 +2903,7 @@ var bootloader = (function (exports) {
           // type: 0-8 (4 bits 0-15) b1
           // hits: 0-100 (7 bits 0-127) b0
           var encodedBodyPart = 0;
-          encodedBodyPart |= BODYPART_TO_ENUM_MAP$1[type] << 8;
+          encodedBodyPart |= BODYPART_TO_ENUM_MAP[type] << 8;
           encodedBodyPart |= hits;
           i16[ptrI16] = encodedBodyPart;
           ++ptrI16;
@@ -1962,751 +2974,53 @@ var bootloader = (function (exports) {
     return ArenaBindings;
   }(BaseBindings);
 
-  var CPU_HALT_WHEN_NO_CHECKIN_FOR = 10;
-  var RESOURCE_LIST = ["energy", "power", "H", "O", "U", "L", "K", "Z", "X", "G", "silicon", "metal", "biomass", "mist", "OH", "ZK", "UL", "UH", "UO", "KH", "KO", "LH", "LO", "ZH", "ZO", "GH", "GO", "UH2O", "UHO2", "KH2O", "KHO2", "LH2O", "LHO2", "ZH2O", "ZHO2", "GH2O", "GHO2", "XUH2O", "XUHO2", "XKH2O", "XKHO2", "XLH2O", "XLHO2", "XZH2O", "XZHO2", "XGH2O", "XGHO2", "ops", "utrium_bar", "lemergium_bar", "zynthium_bar", "keanium_bar", "ghodium_melt", "oxidant", "reductant", "purifier", "battery", "composite", "crystal", "liquid", "wire", "switch", "transistor", "microchip", "circuit", "device", "cell", "phlegm", "tissue", "muscle", "organoid", "organism", "alloy", "tube", "fixtures", "frame", "hydraulics", "machine", "condensate", "concentrate", "extract", "spirit", "emanation", "essence", "season", "score"]; // 85 total
-  var RESOURCE_TO_ENUM_MAP = {};
-  {
-    var i = 0;
-    for (var _i = 0, _RESOURCE_LIST = RESOURCE_LIST; _i < _RESOURCE_LIST.length; _i++) {
-      var resourceName = _RESOURCE_LIST[_i];
-      RESOURCE_TO_ENUM_MAP[resourceName] = i++;
+  var bindingsTable = {
+    "arena": ArenaBindings,
+    "world": NoopBindings
+  };
+  function getBindings(env, logFunc, interop) {
+    var bindingsCtor = bindingsTable[env];
+    if (!bindingsCtor) {
+      return undefined;
     }
+    return new bindingsCtor(logFunc, interop);
   }
-  var BODYPART_LIST = ['move', 'work', 'carry', 'attack', 'ranged_attack', 'tough', 'heal', 'claim']; // 8 total
-  var BODYPART_TO_ENUM_MAP = {};
-  {
-    var _i2 = 0;
-    for (var _i3 = 0, _BODYPART_LIST = BODYPART_LIST; _i3 < _BODYPART_LIST.length; _i3++) {
-      var bodyPart = _BODYPART_LIST[_i3];
-      BODYPART_TO_ENUM_MAP[bodyPart] = _i2++;
-    }
-  }
-  var TEMP_ROOM_COORD_A = [0, 0];
-  var TEMP_ROOM_COORD_B = [0, 0];
-  var WorldBindings = /*#__PURE__*/function (_BaseBindings) {
-    _inherits(WorldBindings, _BaseBindings);
-    var _super = _createSuper(WorldBindings);
-    function WorldBindings() {
+
+  var utf8Decoder = new TextDecoder();
+  var Stdio = /*#__PURE__*/function (_Fd) {
+    _inherits(Stdio, _Fd);
+    var _super = _createSuper(Stdio);
+    function Stdio(outFunc) {
       var _this;
-      _classCallCheck(this, WorldBindings);
-      for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
-        args[_key] = arguments[_key];
-      }
-      _this = _super.call.apply(_super, [this].concat(args));
-      _defineProperty(_assertThisInitialized(_this), "_lastCheckIn", 0);
-      _defineProperty(_assertThisInitialized(_this), "_memoryCache", void 0);
-      _defineProperty(_assertThisInitialized(_this), "_invoke_room_callback", void 0);
-      _defineProperty(_assertThisInitialized(_this), "_invoke_cost_callback", void 0);
-      _defineProperty(_assertThisInitialized(_this), "_invoke_route_callback", void 0);
+      _classCallCheck(this, Stdio);
+      _this = _super.call(this);
+      _defineProperty(_assertThisInitialized(_this), "outFunc", void 0);
+      _defineProperty(_assertThisInitialized(_this), "buffer", void 0);
+      _this.outFunc = outFunc;
       return _this;
     }
-    _createClass(WorldBindings, [{
-      key: "init",
-      value: function init(exports, memoryManager) {
-        _get(_getPrototypeOf(WorldBindings.prototype), "init", this).call(this, exports, memoryManager);
-        this._invoke_room_callback = exports['screeps:screepsdotnet/botapi#invoke-room-callback'];
-        this._invoke_cost_callback = exports['screeps:screepsdotnet/botapi#invoke-cost-callback'];
-        this._invoke_route_callback = exports['screeps:screepsdotnet/botapi#invoke-route-callback'];
-        this._memoryCache = Memory;
-        this._memoryCache = RawMemory._parsed;
-        this._lastCheckIn = Game.time;
-      }
-    }, {
-      key: "loop",
-      value: function loop() {
-        _get(_getPrototypeOf(WorldBindings.prototype), "loop", this).call(this);
-        // Memhack
-        var _global = global;
-        delete _global.Memory;
-        _global.Memory = this._memoryCache;
-        RawMemory._parsed = this._memoryCache;
-        // Checkin
-        var ticksSinceLestCheckIn = Game.time - this._lastCheckIn;
-        if (ticksSinceLestCheckIn >= CPU_HALT_WHEN_NO_CHECKIN_FOR) {
-          Game.cpu.halt && Game.cpu.halt();
-        } else if (ticksSinceLestCheckIn >= CPU_HALT_WHEN_NO_CHECKIN_FOR - 1) {
-          this.log("no checkin for ".concat(ticksSinceLestCheckIn, " ticks, halting cpu next tick..."));
-        }
-      }
-    }, {
-      key: "setupImports",
-      value: function setupImports() {
-        var _global$ScoreCollecto,
-          _global$ScoreContaine,
-          _this2 = this;
-        _get(_getPrototypeOf(WorldBindings.prototype), "setupImports", this).call(this);
-        this.bindingsImport['renew-object'] = this.js_renew_object.bind(this);
-        this.bindingsImport['batch-renew-objects'] = this.js_batch_renew_objects.bind(this);
-        this.bindingsImport['fetch-object-room-position'] = this.js_fetch_object_room_position.bind(this);
-        this.bindingsImport['batch-fetch-object-room-positions'] = this.js_batch_fetch_object_room_positions.bind(this);
-        this.bindingsImport['get-object-by-id'] = this.js_get_object_by_id.bind(this);
-        this.bindingsImport['get-object-id'] = this.js_get_object_id.bind(this);
-        var _global = global;
-        var gameConstructors = {
-          StructureContainer: StructureContainer,
-          StructureController: StructureController,
-          StructureExtension: StructureExtension,
-          StructureExtractor: StructureExtractor,
-          StructureFactory: StructureFactory,
-          StructureInvaderCore: StructureInvaderCore,
-          StructureKeeperLair: StructureKeeperLair,
-          StructureLab: StructureLab,
-          StructureLink: StructureLink,
-          StructureNuker: StructureNuker,
-          StructureObserver: StructureObserver,
-          StructurePowerBank: StructurePowerBank,
-          StructurePowerSpawn: StructurePowerSpawn,
-          StructurePortal: StructurePortal,
-          StructureRampart: StructureRampart,
-          StructureRoad: StructureRoad,
-          StructureSpawn: StructureSpawn,
-          StructureStorage: StructureStorage,
-          StructureTerminal: StructureTerminal,
-          StructureTower: StructureTower,
-          StructureWall: StructureWall,
-          OwnedStructure: OwnedStructure,
-          Structure: Structure,
-          Source: Source,
-          Mineral: Mineral,
-          Deposit: Deposit,
-          Creep: Creep,
-          PowerCreep: PowerCreep,
-          Flag: Flag,
-          Resource: Resource,
-          ConstructionSite: ConstructionSite,
-          Tombstone: Tombstone,
-          Ruin: Ruin,
-          RoomObject: RoomObject,
-          Room: Room,
-          RoomVisual: RoomVisual,
-          Nuke: Nuke,
-          ScoreCollector: (_global$ScoreCollecto = _global.ScoreCollector) !== null && _global$ScoreCollecto !== void 0 ? _global$ScoreCollecto : function () {},
-          ScoreContainer: (_global$ScoreContaine = _global.ScoreContainer) !== null && _global$ScoreContaine !== void 0 ? _global$ScoreContaine : function () {}
-        };
-        this.imports['object'] = {
-          getConstructorOf: function getConstructorOf(x) {
-            return Object.getPrototypeOf(x).constructor;
-          },
-          interpretDateTime: function interpretDateTime(x) {
-            return x.getTime() / 1000;
-          }
-        };
-        this.imports['game'] = {
-          checkIn: function checkIn() {
-            return _this2._lastCheckIn = Game.time;
-          },
-          getGameObj: function getGameObj() {
-            return Game;
-          },
-          getMemoryObj: function getMemoryObj() {
-            return _this2._memoryCache;
-          },
-          getConstantsObj: function getConstantsObj() {
-            return global;
-          },
-          getRawMemoryObj: function getRawMemoryObj() {
-            return RawMemory;
-          },
-          getPrototypes: function getPrototypes() {
-            return gameConstructors;
-          },
-          createRoomPosition: function createRoomPosition(encodedInt) {
-            var roomPosition = Object.create(RoomPosition.prototype);
-            roomPosition.__packedPos = encodedInt;
-            return roomPosition;
-          },
-          createCostMatrix: function createCostMatrix() {
-            return new PathFinder.CostMatrix();
-          },
-          createRoomVisual: function createRoomVisual(roomName) {
-            return new RoomVisual(roomName);
-          },
-          game: {
-            getObjectById: function getObjectById(id) {
-              return Game.getObjectById(id);
-            },
-            notify: function notify(message, groupInterval) {
-              return Game.notify(message, groupInterval);
-            }
-          },
-          interShardMemory: {
-            getLocal: function getLocal() {
-              return InterShardMemory.getLocal();
-            },
-            setLocal: function setLocal(value) {
-              return InterShardMemory.setLocal(value);
-            },
-            getRemote: function getRemote(shard) {
-              return InterShardMemory.getRemote(shard);
-            }
-          },
-          map: {
-            describeExits: function describeExits(roomName) {
-              return Game.map.describeExits(roomName);
-            },
-            findExit: function findExit(fromRoom, toRoom, opts) {
-              return Game.map.findExit(fromRoom, toRoom, opts);
-            },
-            findRoute: function findRoute(fromRoom, toRoom, opts) {
-              return Game.map.findRoute(fromRoom, toRoom, opts);
-            },
-            getRoomLinearDistance: function getRoomLinearDistance(roomName1, roomName2, continuous) {
-              return Game.map.getRoomLinearDistance(roomName1, roomName2, continuous);
-            },
-            getRoomTerrain: function getRoomTerrain(roomName) {
-              return Game.map.getRoomTerrain(roomName);
-            },
-            getWorldSize: function getWorldSize() {
-              return Game.map.getWorldSize();
-            },
-            getRoomStatus: function getRoomStatus(roomName) {
-              return Game.map.getRoomStatus(roomName);
-            },
-            getRouteCallbackObject: function getRouteCallbackObject() {
-              return _this2.routeCallback.bind(_this2);
-            }
-          },
-          market: {
-            calcTransactionCost: function calcTransactionCost(amount, roomName1, roomName2) {
-              return Game.market.calcTransactionCost(amount, roomName1, roomName2);
-            },
-            cancelOrder: function cancelOrder(orderId) {
-              return Game.market.cancelOrder(orderId);
-            },
-            changeOrderPrice: function changeOrderPrice(orderId, newPrice) {
-              return Game.market.changeOrderPrice(orderId, newPrice);
-            },
-            createOrder: function createOrder(params) {
-              return Game.market.createOrder(params);
-            },
-            deal: function deal(orderId, amount, targetRoomName) {
-              return Game.market.deal(orderId, amount, targetRoomName);
-            },
-            extendOrder: function extendOrder(orderId, addAmount) {
-              return Game.market.extendOrder(orderId, addAmount);
-            },
-            getAllOrders: function getAllOrders(filter) {
-              return Game.market.getAllOrders(filter);
-            },
-            getHistory: function getHistory(resource) {
-              var result = Game.market.getHistory(resource);
-              return Array.isArray(result) ? result : [];
-            },
-            getOrderById: function getOrderById(id) {
-              return Game.market.getOrderById(id);
-            }
-          },
-          cpu: {
-            getHeapStatistics: function getHeapStatistics() {
-              return Game.cpu.getHeapStatistics && Game.cpu.getHeapStatistics();
-            },
-            getUsed: function getUsed() {
-              return Game.cpu.getUsed();
-            },
-            halt: function halt() {
-              return Game.cpu.halt && Game.cpu.halt();
-            },
-            setShardLimits: function setShardLimits(limits) {
-              return Game.cpu.setShardLimits(limits);
-            },
-            unlock: function unlock() {
-              return Game.cpu.unlock();
-            },
-            generatePixel: function generatePixel() {
-              return Game.cpu.generatePixel();
-            }
-          },
-          rawMemory: {
-            get: function get() {
-              return RawMemory.get();
-            },
-            set: function set(value) {
-              return RawMemory.set(value);
-            },
-            setActiveSegments: function setActiveSegments(ids) {
-              return RawMemory.setActiveSegments(ids);
-            },
-            setActiveForeignSegment: function setActiveForeignSegment(username, id) {
-              return RawMemory.setActiveForeignSegment(username, id);
-            },
-            setDefaultPublicSegment: function setDefaultPublicSegment(id) {
-              return RawMemory.setDefaultPublicSegment(id);
-            },
-            setPublicSegments: function setPublicSegments(ids) {
-              return RawMemory.setPublicSegments(ids);
-            }
-          },
-          visual: {
-            line: function line(pos1, pos2, style) {
-              return Game.map.visual.line(pos1, pos2, style);
-            },
-            circle: function circle(pos, style) {
-              return Game.map.visual.circle(pos, style);
-            },
-            rect: function rect(topLeftPos, width, height, style) {
-              return Game.map.visual.rect(topLeftPos, width, height, style);
-            },
-            poly: function poly(points, style) {
-              return Game.map.visual.poly(points, style);
-            },
-            text: function text(_text, pos, style) {
-              return Game.map.visual.text(_text, pos, style);
-            },
-            clear: function clear() {
-              return Game.map.visual.clear();
-            },
-            getSize: function getSize() {
-              return Game.map.visual.getSize();
-            },
-            "export": function _export() {
-              return Game.map.visual["export"]();
-            },
-            "import": function _import(data) {
-              return Game.map.visual["import"](data);
-            }
-          },
-          powerCreep: {
-            create: PowerCreep.create
-          }
-        };
-        var wrappedPrototypes = this.buildWrappedPrototypes(gameConstructors);
-        this.imports['game/prototypes/wrapped'] = _objectSpread2(_objectSpread2({}, wrappedPrototypes), {}, {
-          Spawning: this.buildWrappedPrototype(StructureSpawn.Spawning),
-          RoomObject: _objectSpread2(_objectSpread2({}, wrappedPrototypes.RoomObject), {}, {
-            getStoreCapacity: function getStoreCapacity(thisObj, resourceType) {
-              return thisObj.store.getCapacity(resourceType);
-            },
-            getStoreUsedCapacity: function getStoreUsedCapacity(thisObj, resourceType) {
-              return thisObj.store.getUsedCapacity(resourceType);
-            },
-            getStoreFreeCapacity: function getStoreFreeCapacity(thisObj, resourceType) {
-              return thisObj.store.getFreeCapacity(resourceType);
-            },
-            getStoreContainedResources: function getStoreContainedResources(thisObj) {
-              return Object.keys(thisObj.store);
-            },
-            indexStore: function indexStore(thisObj, resourceType) {
-              return thisObj.store[resourceType];
-            }
-          }),
-          CostMatrix: _objectSpread2(_objectSpread2({}, this.buildWrappedPrototype(PathFinder.CostMatrix)), {}, {
-            setRect: function setRect(thisObj, minX, minY, maxX, maxY, dataView) {
-              var i = 0;
-              for (var y = minY; y <= maxY; ++y) {
-                for (var x = minX; x <= maxX; ++x) {
-                  thisObj.set(x, y, dataView.getUint8(i));
-                  ++i;
-                }
-              }
-            }
-          }),
-          Room: _objectSpread2(_objectSpread2({}, wrappedPrototypes.Room), {}, {
-            createFlag: function createFlag(thisObj, x, y, name, color, secondaryColor) {
-              var result = thisObj.createFlag(x, y, name, color, secondaryColor);
-              if (typeof result === 'string') {
-                return {
-                  name: result,
-                  code: 0
-                };
-              } else {
-                return {
-                  code: result
-                };
-              }
-            },
-            findFast: function findFast(thisObj, type, outRoomObjectArrayPtr, maxObjectCount) {
-              return _this2.encodeRoomObjectArray(_this2._memoryManager.view, thisObj.find(type), undefined, outRoomObjectArrayPtr, maxObjectCount);
-            },
-            lookAtFast: function lookAtFast(thisObj, x, y, outRoomObjectArrayPtr, maxObjectCount) {
-              return _this2.encodeRoomObjectArray(_this2._memoryManager.view, thisObj.lookAt(x, y), undefined, outRoomObjectArrayPtr, maxObjectCount);
-            },
-            lookAtAreaFast: function lookAtAreaFast(thisObj, top, left, bottom, right, outRoomObjectArrayPtr, maxObjectCount) {
-              return _this2.encodeRoomObjectArray(_this2._memoryManager.view, thisObj.lookAtArea(top, left, bottom, right, true), undefined, outRoomObjectArrayPtr, maxObjectCount);
-            },
-            lookForAtFast: function lookForAtFast(thisObj, type, x, y, outRoomObjectArrayPtr, maxObjectCount) {
-              return _this2.encodeRoomObjectArray(_this2._memoryManager.view, thisObj.lookForAt(type, x, y), undefined, outRoomObjectArrayPtr, maxObjectCount);
-            },
-            lookForAtAreaFast: function lookForAtAreaFast(thisObj, type, top, left, bottom, right, outRoomObjectArrayPtr, maxObjectCount) {
-              return _this2.encodeRoomObjectArray(_this2._memoryManager.view, thisObj.lookForAtArea(type, top, left, bottom, right, true), type, outRoomObjectArrayPtr, maxObjectCount);
-            }
-          }),
-          Creep: _objectSpread2(_objectSpread2({}, wrappedPrototypes.Creep), {}, {
-            getEncodedBody: function getEncodedBody(thisObj, outPtr) {
-              return _this2.encodeCreepBody(_this2._memoryManager.view, thisObj.body, outPtr);
-            }
-          }),
-          PathFinder: _objectSpread2(_objectSpread2({}, PathFinder), {}, {
-            search: function search(origin, goal, opts) {
-              return PathFinder.search(origin, goal, opts);
-            },
-            getRoomCallbackObject: function getRoomCallbackObject() {
-              return _this2.roomCallback.bind(_this2);
-            },
-            getCostCallbackObject: function getCostCallbackObject() {
-              return _this2.costCallback.bind(_this2);
-            }
-          }),
-          RoomTerrain: {
-            get: function get(thisObj, x, y) {
-              return thisObj.get(x, y);
-            },
-            getRawBuffer: function getRawBuffer(thisObj, dataView) {
-              return thisObj.getRawBuffer(new Uint8Array(dataView.buffer, dataView.byteOffset, dataView.byteLength));
-            }
-          }
-        });
-      }
-    }, {
-      key: "js_renew_object",
-      value: function js_renew_object(jsHandle) {
-        var oldObject = this._interop.getClrTrackedObject(jsHandle);
-        if (oldObject == null) {
-          return 1;
-        } // clr tracked object not found (clr object disposed?)
-        if (oldObject instanceof Room) {
-          var newRoom = Game.rooms[oldObject.name];
-          if (newRoom == null) {
-            return 3;
-          } // no longer exists (lost visibilty)
-          this._interop.replaceClrTrackedObject(jsHandle, newRoom);
-          return 0; // success
-        }
-
-        if (oldObject instanceof Flag) {
-          var newFlag = Game.flags[oldObject.name];
-          if (newFlag == null) {
-            return 3;
-          } // no longer exists (removed or lost visibilty)
-          this._interop.replaceClrTrackedObject(jsHandle, newFlag);
-          return 0; // success
-        }
-
-        var id = oldObject.id;
-        if (id == null) {
-          return 2;
-        } // unrenewable (not a room object, e.g. unrelated js object)
-        var newRoomObject = Game.getObjectById(id);
-        if (newRoomObject == null) {
-          return 3;
-        } // no longer exists (destroyed or lost visibilty)
-        this._interop.replaceClrTrackedObject(jsHandle, newRoomObject);
-        return 0;
-      }
-    }, {
-      key: "js_batch_renew_objects",
-      value: function js_batch_renew_objects(jsHandleListPtr, count) {
-        var i32 = this._memoryManager.view.i32;
-        var baseIdx = jsHandleListPtr >> 2;
-        var numSuccess = 0;
-        for (var _i4 = 0; _i4 < count; ++_i4) {
-          if (this.js_renew_object(i32[baseIdx + _i4]) === 0) {
-            ++numSuccess;
-          } else {
-            i32[baseIdx + _i4] = -1;
-          }
-        }
-        return numSuccess;
-      }
-    }, {
-      key: "js_fetch_object_room_position",
-      value: function js_fetch_object_room_position(jsHandle) {
-        var roomObject = this._interop.getClrTrackedObject(jsHandle);
-        var pos = roomObject.pos;
-        if (pos == null) {
-          return 0;
-        }
-        return pos.__packedPos;
-      }
-    }, {
-      key: "js_batch_fetch_object_room_positions",
-      value: function js_batch_fetch_object_room_positions(jsHandleListPtr, count, outRoomPosListPtr) {
-        var i32 = this._memoryManager.view.i32;
-        var baseJsHandleIdx = jsHandleListPtr >> 2;
-        var baseOutRoomPostListIdx = outRoomPosListPtr >> 2;
-        for (var _i5 = 0; _i5 < count; ++_i5) {
-          i32[baseOutRoomPostListIdx + _i5] = this.js_fetch_object_room_position(i32[baseJsHandleIdx + _i5]);
-        }
-      }
-    }, {
-      key: "js_get_object_by_id",
-      value: function js_get_object_by_id(objectIdPtr) {
-        var _this$_interop$getClr;
-        var u8 = this._memoryManager.view.u8;
-        var id = '';
-        for (var _i6 = 0; _i6 < 24; ++_i6) {
-          var code = u8[objectIdPtr + _i6];
-          if (code === 0) {
-            break;
-          }
-          id += String.fromCharCode(code);
-        }
-        var obj = Game.getObjectById(id);
-        if (obj == null) {
-          //this.log(`js_get_object_by_id: failed to retrieve '${id}'`);
-          return -1;
-        }
-        return (_this$_interop$getClr = this._interop.getClrTrackingId(obj)) !== null && _this$_interop$getClr !== void 0 ? _this$_interop$getClr : this._interop.assignClrTrackingId(obj);
-      }
-    }, {
-      key: "js_get_object_id",
-      value: function js_get_object_id(jsHandle, outRawObjectIdPtr) {
-        var obj = this._interop.getClrTrackedObject(jsHandle);
-        if (obj == null) {
-          return 0;
-        }
-        var id = obj.id;
-        if (typeof id !== 'string') {
-          return 0;
-        }
-        this.copyRawObjectId(this._memoryManager.view, id, outRawObjectIdPtr);
-        return id.length;
-      }
-    }, {
-      key: "copyRawObjectId",
-      value: function copyRawObjectId(memoryView, id, outPtr) {
-        var u8 = memoryView.u8,
-          i32 = memoryView.i32;
-        if (id) {
-          var l = id.length;
-          for (var j = 0; j < l; ++j) {
-            u8[outPtr + j] = id.charCodeAt(j);
-          }
-          for (var _j = l; _j < 24; ++_j) {
-            u8[outPtr + _j] = 0;
-          }
-        } else {
-          for (var _j2 = 0; _j2 < 6; ++_j2) {
-            i32[outPtr + _j2] = 0;
-          }
-        }
-      }
-    }, {
-      key: "encodeRoomObjectArray",
-      value: function encodeRoomObjectArray(memoryView, arr, key, outRoomObjectArrayPtr, maxObjectCount) {
-        var i32 = memoryView.i32;
-        var numEncoded = 0;
-        var nextRoomObjectArrayPtrI32 = outRoomObjectArrayPtr >> 2;
-        for (var _i7 = 0; _i7 < Math.min(maxObjectCount, arr.length); ++_i7) {
-          // Lookup object
-          var obj = arr[_i7];
-          if (key) {
-            obj = obj[key];
-          }
-          if (!(obj instanceof RoomObject) && obj.type) {
-            obj = obj[obj.type];
-          }
-          if (!(obj instanceof RoomObject)) {
-            continue;
-          }
-          // Copy metadata
-          i32[nextRoomObjectArrayPtrI32++] = Object.getPrototypeOf(obj).constructor.__dotnet_typeId || 0;
-          i32[nextRoomObjectArrayPtrI32++] = this._interop.getOrAssignClrTrackingId(obj);
-          ++numEncoded;
-        }
-        return numEncoded;
-      }
-    }, {
-      key: "encodeCreepBody",
-      value: function encodeCreepBody(memoryView, body, outPtr) {
-        var i32 = memoryView.i32;
-        for (var _i8 = 0; _i8 < body.length; ++_i8) {
-          var _body$_i = body[_i8],
-            type = _body$_i.type,
-            hits = _body$_i.hits,
-            boost = _body$_i.boost;
-          // Encode each body part to a 32 bit int as 4 bytes
-          // unused: b3
-          // type: 0-8 (4 bits 0-15) b2
-          // hits: 0-100 (7 bits 0-127) b1
-          // boost: null or 0-85 (7 bits 0-127, 127 means null) b0
-          var encodedBodyPart = 0;
-          encodedBodyPart |= BODYPART_TO_ENUM_MAP[type] << 16;
-          encodedBodyPart |= hits << 8;
-          encodedBodyPart |= boost == null ? 127 : RESOURCE_TO_ENUM_MAP[boost];
-          i32[outPtr >> 2] = encodedBodyPart;
-          outPtr += 4;
-        }
-        return body.length;
-      }
-    }, {
-      key: "buildWrappedPrototypes",
-      value: function buildWrappedPrototypes(prototypes) {
-        var wrappedPrototypes = {};
-        for (var prototypeName in prototypes) {
-          wrappedPrototypes[prototypeName] = this.buildWrappedPrototype(prototypes[prototypeName]);
-        }
-        return wrappedPrototypes;
-      }
-    }, {
-      key: "buildWrappedPrototype",
-      value: function buildWrappedPrototype(constructor) {
-        /** @type {Record<string, Function>} */
-        var wrappedPrototype = {};
-        var prototype = constructor.prototype;
-        var keys = Object.getOwnPropertyNames(prototype);
-        var _iterator = _createForOfIteratorHelper(keys),
+    _createClass(Stdio, [{
+      key: "fd_write",
+      value: function fd_write(view8, iovs) {
+        var nwritten = 0;
+        var _iterator = _createForOfIteratorHelper(iovs),
           _step;
         try {
-          var _loop = function _loop() {
-              var _Object$getOwnPropert;
-              var key = _step.value;
-              if (key === 'constructor') {
-                return 0; // continue
-              }
-              var value = (_Object$getOwnPropert = Object.getOwnPropertyDescriptor(prototype, key)) === null || _Object$getOwnPropert === void 0 ? void 0 : _Object$getOwnPropert.value;
-              if (typeof value !== 'function') {
-                return 0; // continue
-              }
-              wrappedPrototype[key] = function (thisObj) {
-                for (var _len2 = arguments.length, args = new Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
-                  args[_key2 - 1] = arguments[_key2];
-                }
-                return value.call.apply(value, [thisObj].concat(args));
-              };
-            },
-            _ret;
           for (_iterator.s(); !(_step = _iterator.n()).done;) {
-            _ret = _loop();
-            if (_ret === 0) continue;
+            var iovec = _step.value;
+            var buffer = view8.slice(iovec.buf, iovec.buf + iovec.buf_len);
+            this.addTextToBuffer(utf8Decoder.decode(buffer));
+            nwritten += iovec.buf_len;
           }
         } catch (err) {
           _iterator.e(err);
         } finally {
           _iterator.f();
         }
-        return wrappedPrototype;
-      }
-    }, {
-      key: "parseRoomName",
-      value: function parseRoomName(roomName, outCoord) {
-        var xx = parseInt(roomName.substr(1), 10);
-        var verticalPos = 2;
-        if (xx >= 100) {
-          verticalPos = 4;
-        } else if (xx >= 10) {
-          verticalPos = 3;
-        }
-        var yy = parseInt(roomName.substr(verticalPos + 1), 10);
-        var horizontalDir = roomName.charAt(0);
-        var verticalDir = roomName.charAt(verticalPos);
-        if (horizontalDir === 'W' || horizontalDir === 'w') {
-          xx = -xx - 1;
-        }
-        if (verticalDir === 'N' || verticalDir === 'n') {
-          yy = -yy - 1;
-        }
-        if (outCoord) {
-          outCoord[0] = xx;
-          outCoord[1] = yy;
-        } else {
-          outCoord = [xx, yy];
-        }
-        return outCoord;
-      }
-    }, {
-      key: "roomCallback",
-      value: function roomCallback(roomName) {
-        var roomCoord = this.parseRoomName(roomName, TEMP_ROOM_COORD_A);
-        var result = this._invoke_room_callback(roomCoord[0], roomCoord[1]);
-        if (result < 0) {
-          return false;
-        }
-        if (result === 0) {
-          return undefined;
-        }
-        return this._interop.getClrTrackedObject(result);
-      }
-    }, {
-      key: "costCallback",
-      value: function costCallback(roomName, costMatrix) {
-        var roomCoord = this.parseRoomName(roomName, TEMP_ROOM_COORD_A);
-        var result = this._invoke_cost_callback(roomCoord[0], roomCoord[1], this._interop.getOrAssignClrTrackingId(costMatrix));
-        if (result === 0) {
-          return undefined;
-        }
-        return this._interop.getClrTrackedObject(result);
-      }
-    }, {
-      key: "routeCallback",
-      value: function routeCallback(roomName, fromRoomName) {
-        var roomCoord = this.parseRoomName(roomName, TEMP_ROOM_COORD_A);
-        var fromRoomCoord = this.parseRoomName(fromRoomName, TEMP_ROOM_COORD_B);
-        return this._invoke_route_callback(roomCoord[0], roomCoord[1], fromRoomCoord[0], fromRoomCoord[1]);
-      }
-    }, {
-      key: "accountClrTrackedObjects",
-      value: function accountClrTrackedObjects() {
-        var counts = {};
-        var totalCount = 0;
-        this._interop.visitClrTrackedObjects(function (x) {
-          var _counts$name;
-          var name;
-          if (x instanceof Creep) {
-            name = 'Creep';
-          } else if (x instanceof Structure) {
-            name = 'Structure';
-          } else if (x instanceof RoomObject) {
-            name = 'RoomObject';
-          } else if (x instanceof Room) {
-            name = 'Room';
-          } else if (x instanceof RoomPosition) {
-            name = 'RoomPosition';
-          } else if (x instanceof global.Store) {
-            name = 'Store';
-          } else if (x instanceof StructureSpawn.Spawning) {
-            name = 'StructureSpawn.Spawning';
-          } else if (x == global) {
-            name = 'global';
-          } else if (x == Game) {
-            name = 'Game';
-          } else if (x == Game.creeps) {
-            name = 'Game.creeps';
-          } else if (x == Game.structures) {
-            name = 'Game.structures';
-          } else if (x == Game.spawns) {
-            name = 'Game.spawns';
-          } else if (x == Game.rooms) {
-            name = 'Game.rooms';
-          } else if (x == Game.cpu) {
-            name = 'Game.cpu';
-          } else if (x == Game.map) {
-            name = 'Game.map';
-          } else if (Array.isArray(x)) {
-            name = 'Array';
-          } else {
-            if (_typeof(x) === 'object' && x != null) {
-              var keys = Object.keys(x);
-              name = "unknown(".concat(keys.join(','), ")");
-            } else {
-              name = 'unknown';
-            }
-          }
-          counts[name] = ((_counts$name = counts[name]) !== null && _counts$name !== void 0 ? _counts$name : 0) + 1;
-          ++totalCount;
-        });
-        var lines = ["total: ".concat(totalCount)];
-        for (var name in counts) {
-          lines.push("".concat(name, ": ").concat(counts[name]));
-        }
-        this.log(lines.join('<br />'));
-      }
-    }]);
-    return WorldBindings;
-  }(BaseBindings);
-
-  var utf8Decoder = new TextDecoder();
-  var Stdio = /*#__PURE__*/function () {
-    function Stdio(outFunc) {
-      _classCallCheck(this, Stdio);
-      _defineProperty(this, "_outFunc", void 0);
-      _defineProperty(this, "buffer", void 0);
-      this._outFunc = outFunc;
-    }
-    _createClass(Stdio, [{
-      key: "write",
-      value: function write(view, buf, buf_len) {
-        var buffer = view.u8.slice(buf, buf + buf_len);
-        this.addTextToBuffer(utf8Decoder.decode(buffer));
+        return {
+          ret: 0,
+          nwritten: nwritten
+        };
       }
     }, {
       key: "addTextToBuffer",
@@ -2720,13 +3034,13 @@ var bootloader = (function (exports) {
         while ((newlineIdx = this.buffer.indexOf('\n')) >= 0) {
           var _this$buffer;
           var line = this.buffer.substring(0, newlineIdx).trim();
-          this._outFunc(line);
+          this.outFunc(line);
           this.buffer = (_this$buffer = this.buffer) === null || _this$buffer === void 0 ? void 0 : _this$buffer.substring(newlineIdx + 1);
         }
       }
     }]);
     return Stdio;
-  }();
+  }(Fd);
   var JSTYPE_TO_ENUM = {
     undefined: 0,
     string: 1,
@@ -2757,27 +3071,31 @@ var bootloader = (function (exports) {
   var Bootloader = /*#__PURE__*/function () {
     function Bootloader(env, profileFn) {
       _classCallCheck(this, Bootloader);
-      _defineProperty(this, "_env", void 0);
       _defineProperty(this, "_pendingLogs", []);
       _defineProperty(this, "_deferLogsToTick", void 0);
       _defineProperty(this, "_profileFn", void 0);
+      _defineProperty(this, "_stdin", void 0);
       _defineProperty(this, "_stdout", void 0);
       _defineProperty(this, "_stderr", void 0);
+      _defineProperty(this, "_wasi", void 0);
       _defineProperty(this, "_interop", void 0);
       _defineProperty(this, "_bindings", void 0);
-      _defineProperty(this, "_systemImport", void 0);
       _defineProperty(this, "_wasmModule", void 0);
       _defineProperty(this, "_wasmInstance", void 0);
       _defineProperty(this, "_memoryManager", void 0);
+      _defineProperty(this, "_memorySize", 0);
       _defineProperty(this, "_compiled", false);
       _defineProperty(this, "_started", false);
       _defineProperty(this, "_inTick", false);
       _defineProperty(this, "_profilingEnabled", false);
-      this._env = env;
       this._deferLogsToTick = env === 'arena';
       this._profileFn = profileFn;
+      this._stdin = new OpenFile(new File([]));
       this._stdout = new Stdio(this.log.bind(this));
       this._stderr = new Stdio(this.log.bind(this));
+      this._wasi = new WASI(['ScreepsDotNet'], ["ENV=".concat(env)], [this._stdin, this._stdout, this._stderr], {
+        debug: false
+      });
       this._interop = new Interop(profileFn);
       this.setImports('__object', {
         hasProperty: function hasProperty(obj, key) {
@@ -2803,20 +3121,12 @@ var bootloader = (function (exports) {
           return Object.create(proto);
         }
       });
-      switch (env) {
-        case 'world':
-          this._bindings = new WorldBindings(this.log.bind(this), this._interop);
-          break;
-        case 'arena':
-          this._bindings = new ArenaBindings(this.log.bind(this), this._interop);
-          break;
-      }
+      this._bindings = getBindings(env, this.log.bind(this), this._interop);
       if (this._bindings) {
         for (var moduleName in this._bindings.imports) {
           this.setImports(moduleName, this._bindings.imports[moduleName]);
         }
       }
-      this._systemImport = _defineProperty(_defineProperty(_defineProperty(_defineProperty({}, "get-time", this.sys_get_time.bind(this)), "get-random", this.sys_get_random.bind(this)), "write-stderr", this.sys_write_stderr.bind(this)), "write-stdout", this.sys_write_stdout.bind(this));
     }
     _createClass(Bootloader, [{
       key: "compiled",
@@ -2840,45 +3150,6 @@ var bootloader = (function (exports) {
       key: "exports",
       get: function get() {
         return this._wasmInstance.exports;
-      }
-    }, {
-      key: "sys_get_time",
-      value: function sys_get_time(time_ptr) {
-        var dataView = this._memoryManager.view.dataView;
-        dataView.setBigUint64(time_ptr, BigInt(new Date().getTime()) * 1000000n, true);
-      }
-    }, {
-      key: "sys_get_random",
-      value: function sys_get_random(buf, buf_len) {
-        var _this$_memoryManager$ = this._memoryManager.view,
-          u32 = _this$_memoryManager$.u32,
-          u8 = _this$_memoryManager$.u8;
-        while (buf_len >= 4) {
-          u32[buf >> 2] = Math.random() * (1 << 32);
-          buf += 4;
-          buf_len -= 4;
-        }
-        while (buf_len > 0) {
-          u8[buf] = Math.random() * (1 << 8);
-          ++buf;
-          --buf_len;
-        }
-      }
-    }, {
-      key: "sys_write_stderr",
-      value: function sys_write_stderr(buf, buf_len) {
-        if (!this._memoryManager) {
-          return;
-        }
-        this._stderr.write(this._memoryManager.view, buf, buf_len);
-      }
-    }, {
-      key: "sys_write_stdout",
-      value: function sys_write_stdout(buf, buf_len) {
-        if (!this._memoryManager) {
-          return;
-        }
-        this._stdout.write(this._memoryManager.view, buf, buf_len);
       }
     }, {
       key: "setImports",
@@ -2926,6 +3197,7 @@ var bootloader = (function (exports) {
         // Wire things up
         this._memoryManager = new WasmMemoryManager(this._wasmInstance.exports.memory);
         this._interop.memoryManager = this._memoryManager;
+        this._memorySize = this._wasmInstance.exports.memory.buffer.byteLength;
         this._interop.malloc = this._wasmInstance.exports.malloc;
         this._compiled = true;
       }
@@ -2936,12 +3208,12 @@ var bootloader = (function (exports) {
         if (!this._wasmInstance || !this._compiled || this._started || !this._memoryManager) {
           return;
         }
-        // Run WASM entrypoint
+        // Start WASI
         try {
           var t0 = this._profileFn();
-          this._wasmInstance.exports._initialize();
+          this._wasi.start(this._wasmInstance);
           var t1 = this._profileFn();
-          this.log("Started in ".concat(t1 - t0, " ms"));
+          this.log("Started WASI in ".concat(t1 - t0, " ms"));
         } catch (err) {
           if (err instanceof Error) {
             var _err$stack;
@@ -2956,20 +3228,20 @@ var bootloader = (function (exports) {
         {
           var _t3 = this._profileFn();
           if (customInitExportNames) {
-            var _iterator = _createForOfIteratorHelper(customInitExportNames),
-              _step;
+            var _iterator2 = _createForOfIteratorHelper(customInitExportNames),
+              _step2;
             try {
-              for (_iterator.s(); !(_step = _iterator.n()).done;) {
-                var exportName = _step.value;
+              for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
+                var exportName = _step2.value;
                 this._wasmInstance.exports[exportName]();
               }
             } catch (err) {
-              _iterator.e(err);
+              _iterator2.e(err);
             } finally {
-              _iterator.f();
+              _iterator2.f();
             }
           }
-          this._wasmInstance.exports['screeps:screepsdotnet/botapi#init']();
+          this._wasmInstance.exports.screepsdotnet_init();
           var _t4 = this._profileFn();
           if (this._profilingEnabled) {
             this.log("Init in ".concat(((_t4 - _t3) * 100 | 0) / 100, " ms (").concat(this._interop.buildProfilerString(), ")"));
@@ -2993,7 +3265,7 @@ var bootloader = (function (exports) {
         // Run usercode loop
         {
           var t0 = this._profileFn();
-          this._wasmInstance.exports['screeps:screepsdotnet/botapi#loop']();
+          this._wasmInstance.exports.screepsdotnet_loop();
           var t1 = this._profileFn();
           if (this._profilingEnabled) {
             this.log("Loop in ".concat(((t1 - t0) * 100 | 0) / 100, " ms (").concat(this._interop.buildProfilerString(), ")"));
@@ -3003,15 +3275,40 @@ var bootloader = (function (exports) {
     }, {
       key: "getWasmImports",
       value: function getWasmImports() {
-        var imports = _defineProperty(_defineProperty({}, 'screeps:screepsdotnet/js-bindings', _objectSpread2({}, this._interop.interopImport)), 'screeps:screepsdotnet/system-bindings', _objectSpread2({}, this._systemImport));
-        if (this._env === 'world' || this._env === 'test') {
-          var _this$_bindings3;
-          imports['screeps:screepsdotnet/world-bindings'] = _objectSpread2({}, (_this$_bindings3 = this._bindings) === null || _this$_bindings3 === void 0 ? void 0 : _this$_bindings3.bindingsImport);
-        } else if (this._env === 'arena') {
-          var _this$_bindings4;
-          imports['screeps:screepsdotnet/arena-bindings'] = _objectSpread2({}, (_this$_bindings4 = this._bindings) === null || _this$_bindings4 === void 0 ? void 0 : _this$_bindings4.bindingsImport);
+        var _this$_bindings3;
+        return {
+          wasi_snapshot_preview1: _objectSpread2(_objectSpread2({}, this._wasi.wasiImport), {}, {
+            // Override the wasi shim's implementation of clock_res_get and clock_time_get with our own
+            clock_res_get: this.clock_res_get.bind(this),
+            clock_time_get: this.clock_time_get.bind(this)
+          }),
+          js: _objectSpread2({}, this._interop.interopImport),
+          bindings: _objectSpread2({}, (_this$_bindings3 = this._bindings) === null || _this$_bindings3 === void 0 ? void 0 : _this$_bindings3.bindingsImport)
+        };
+      }
+    }, {
+      key: "clock_res_get",
+      value: function clock_res_get(id, res_ptr) {
+        // We only support the realtime clock
+        // The monotonic clock's implementation in the wasi shim uses performance.now which isn't available in screeps
+        if (id === 0 /* WASI_CLOCKID.REALTIME */) {
+          var dataView = this._memoryManager.view.dataView;
+          dataView.setBigUint64(res_ptr, BigInt(1), true);
+          return 0;
         }
-        return imports;
+        return 28 /* WASI_ERRNO.INVAL */;
+      }
+    }, {
+      key: "clock_time_get",
+      value: function clock_time_get(id, precision, time_ptr) {
+        // We only support the realtime clock
+        // The monotonic clock's implementation in the wasi shim uses performance.now which isn't available in screeps
+        if (id === 0 /* WASI_CLOCKID.REALTIME */) {
+          var dataView = this._memoryManager.view.dataView;
+          dataView.setBigUint64(time_ptr, BigInt(new Date().getTime()) * 1000000n, true);
+          return 0;
+        }
+        return 28 /* WASI_ERRNO.INVAL */;
       }
     }, {
       key: "dispatchPendingLogs",

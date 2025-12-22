@@ -3,7 +3,7 @@
 import { ScreepsDotNetExports } from '../common.js';
 import type { ImportTable } from '../interop.js';
 import { WasmMemoryManager, WasmMemoryView } from '../memory.js';
-import { BaseBindings } from './base.js';
+import BaseBindings from './base.js';
 
 import type { RoomPosition, GameObject, Store } from 'game/prototypes';
 import type { FindPathResult, FindPathOpts } from 'game/path-finder';
@@ -51,7 +51,7 @@ const BODYPART_TO_ENUM_MAP: Record<BodyPartConstant, number> = {} as Record<Body
     }
 }
 
-export class ArenaBindings extends BaseBindings {
+export default class ArenaBindings extends BaseBindings {
     public init(exports: ScreepsDotNetExports, memoryManager: WasmMemoryManager): void {
         super.init(exports, memoryManager);
     }

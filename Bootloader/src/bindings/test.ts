@@ -2,9 +2,9 @@
 
 import { ScreepsDotNetExports } from '../common.js';
 import { WasmMemoryManager } from '../memory.js';
-import { BaseBindings } from './base.js';
+import BaseBindings from './base.js';
 
-export class TestBindings extends BaseBindings {
+export default class TestBindings extends BaseBindings {
 
     public init(exports: ScreepsDotNetExports, memoryManager: WasmMemoryManager): void {
         super.init(exports, memoryManager);

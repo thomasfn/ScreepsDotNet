@@ -205,6 +205,7 @@ namespace ScreepsDotNet.Native.Arena
         private static readonly JSObject prototypesObject;
         private static readonly List<Type> prototypeTypeMappings = [];
         private static readonly Dictionary<Type, string> prototypeNameMappings = [];
+        private static readonly HashSet<JSObject> unknownConstructors = [];
 
         [JSImport("getUtils", "game")]
         internal static partial JSObject GetUtilsObject();
@@ -238,10 +239,12 @@ namespace ScreepsDotNet.Native.Arena
 
         internal static Type? GetWrapperTypeForConstructor(JSObject constructor)
         {
+            if (unknownConstructors.Contains(constructor)) { return null; }
             int typeId = constructor.GetPropertyAsInt32(TypeIdKey) - 1;
             if (typeId < 0)
             {
-                Console.WriteLine($"Failed to retrieve wrapper type for {constructor} - typeId not found");
+                Console.WriteLine($"Failed to retrieve wrapper type for {constructor} - typeId not found ({constructor.GetPropertyAsString("name")})");
+                unknownConstructors.Add(constructor);
                 return null;
             }
             return prototypeTypeMappings[typeId];
@@ -277,6 +280,7 @@ namespace ScreepsDotNet.Native.Arena
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeResource))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeSource))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeConstructionSite))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(NativeBodyPart))]
         static NativeGameObjectUtils()
         {
             prototypesObject = GetPrototypesObject();
@@ -298,6 +302,7 @@ namespace ScreepsDotNet.Native.Arena
                 RegisterPrototypeTypeMapping<ISource, NativeSource>("Source");
                 RegisterPrototypeTypeMapping<IConstructionSite, NativeConstructionSite>("ConstructionSite");
                 RegisterPrototypeTypeMapping<ICreep, NativeCreep>("Creep");
+                RegisterPrototypeTypeMapping<IBodyPart, NativeBodyPart>("BodyPart");
             }
             catch (Exception ex)
             {
