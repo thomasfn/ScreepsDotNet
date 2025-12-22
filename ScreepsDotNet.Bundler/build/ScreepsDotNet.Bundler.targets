@@ -34,7 +34,7 @@
 	</PropertyGroup>
 
 	<!-- Sets up emscripten if you don't have the EMSDK_PATH env variable set -->
-	<Target Name="ProvisionEmscripten" Condition="'$(ShouldProvisionEmscripten)' == 'true'" BeforeTargets="CheckWasmSdks">
+	<Target Name="ProvisionEmscripten" Condition="'$(ShouldProvisionEmscripten)' == 'true'" BeforeTargets="ValidateEmsdk">
 		<PropertyGroup>
 			<EmsdkExt Condition="'$(HostOS)' != 'windows'"></EmsdkExt>
 			<EmsdkExt Condition="'$(HostOS)' == 'windows'">.ps1</EmsdkExt>
@@ -66,7 +66,7 @@
 	</Target>
 
 	<!-- Sets up wasi-sdk if you don't have the WASI_SDK_PATH env variable set -->
-	<Target Name="ProvisionWasiSdk" Condition="'$(ShouldProvisionWasiSdk)' == 'true'" BeforeTargets="CheckWasmSdks">
+	<Target Name="ProvisionWasiSdk" Condition="'$(ShouldProvisionWasiSdk)' == 'true'" BeforeTargets="ValidateWasiSdk">
 		<PropertyGroup>
 			<WasiSdkArchiveName>wasi-sdk-$(WasiSdkVersion).$(WasiSdkMinorVersion)-$(WasiSdkOsName).tar.gz</WasiSdkArchiveName>
 			<WasiSdkUrl>https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-$(WasiSdkVersion)/$(WasiSdkArchiveName)</WasiSdkUrl>
@@ -86,7 +86,7 @@
 		<Exec Command="tar -xf &quot;$(WasiSdkArchivePath)&quot; -C &quot;$(WasmLocalPath.TrimEnd('\'))&quot;" />
 	</Target>
 
-	<!-- Sets up wasi-sdk if you don't have the WASI_SDK_PATH env variable set -->
+	<!-- Sets up binaryen if you don't have the BINARYEN_PATH env variable set -->
 	<Target Name="ProvisionBinaryen" Condition="'$(ShouldProvisionBinaryen)' == 'true'">
 		<PropertyGroup>
 			<_hostOS>linux</_hostOS>
