@@ -13,7 +13,7 @@ internal static class ScreepsDotNet_Interop
     public static unsafe extern int InvokeImport(int importIndex, ScreepsDotNet.Interop.InteropValue* paramsBufferPtr);
 
     [WasmImportLinkage, DllImport("screeps:screepsdotnet/js-bindings", EntryPoint = "release-object-reference")]
-    public static unsafe extern int ReleaseObjectReference(IntPtr jsHandle);
+    public static unsafe extern void ReleaseObjectReference(IntPtr jsHandle);
 
     [WasmImportLinkage, DllImport("screeps:screepsdotnet/js-bindings", EntryPoint = "set-name")]
     public static unsafe extern void SetName(int nameIndex, char* namePtr);

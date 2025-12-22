@@ -85,6 +85,10 @@ function hasId(obj: object): obj is { id: string } {
     return 'id' in obj;
 }
 
+const IMPORT_BINDING_SCOPE = {
+    EXCEPTION_PARAM_SPEC,
+};
+
 export class Interop {
     public readonly interopImport: Record<string, (...args: any[]) => unknown>;
 
@@ -331,41 +335,44 @@ export class Interop {
     }
 
     private createImportBinding(importFunction: (...args: unknown[]) => unknown, functionSpec: Readonly<FunctionSpec>, importIndex: number): BoundImportFunction {
-        return (paramsBufferPtr) => {
-            if (!this._memoryManager) { return 0; }
-            const memoryView = this._memoryManager.view;
-            const t0 = this._profileFn();
-            // TODO: Cache args array to eliminate allocation here
-            const args: unknown[] = [];
-            args.length = functionSpec.paramSpecs.length;
-            const returnValPtr = paramsBufferPtr;
-            const exceptionValPtr = paramsBufferPtr + 16;
-            let argsPtr = exceptionValPtr + 16;
-            try {
-                for (let i = 0; i < functionSpec.paramSpecs.length; ++i) {
-                    args[i] = this.marshalToJs(memoryView, argsPtr, functionSpec.paramSpecs[i]);
-                    argsPtr += 16;
-                }
-            } catch (err) {
-                throw new Error(`${this.stringifyImportBindingForDisplay(importIndex)}: ${(err as Error).message}`);
+        const lines: string[] = [];
+        lines.push(`var memoryView = this._memoryManager.view;`);
+        lines.push(`var t0 = this._profileFn();`);
+        lines.push(`var returnValPtr = paramsBufferPtr;`);
+        lines.push(`var exceptionValPtr = paramsBufferPtr + 16;`);
+        lines.push(`var argsPtr = exceptionValPtr + 16;`);
+        let paramList: string = '';
+        if (functionSpec.paramSpecs.length > 0) {
+            const paramListArr: string[] = [];
+            for (let i = 0; i < functionSpec.paramSpecs.length; ++i) {
+                lines.push(`var arg${i};`);
+                paramListArr.push(`arg${i}`);
             }
-            const t1 = this._profileFn();
-            this._timeInInterop += (t1 - t0);
-            let returnVal: unknown;
-            try {
-                returnVal = importFunction(...args);
-                this.marshalToClr(memoryView, returnValPtr, functionSpec.returnSpec, returnVal);
-                //console.log(`${importIndex}:${this._boundImportSymbolList[importIndex]}(${args.map(this.stringifyValueForDisplay.bind(this)).join(', ')}) -> ${this.stringifyValueForDisplay(returnVal)}`);
-                return 1;
-            } catch (err) {
-                this.marshalToClr(memoryView, exceptionValPtr, EXCEPTION_PARAM_SPEC, `${err}`);
-                return 0;
-            } finally {
-                const t2 = this._profileFn();
-                this._timeInJsUserCode += (t2 - t1);
+            paramList = paramListArr.join(', ');
+            lines.push(`try {`);
+            for (let i = 0; i < functionSpec.paramSpecs.length; ++i) {
+                lines.push(`  arg${i} = this.marshalToJs(memoryView, argsPtr, functionSpec.paramSpecs[${i}]);`)
+                lines.push(`  argsPtr += 16;`);
             }
-        };
-        
+            lines.push(`} catch (err) {`);
+            lines.push(`  throw new Error(this.stringifyImportBindingForDisplay(importIndex) + ': ' + err.message);`);
+            lines.push(`}`);
+        }
+        lines.push(`var t1 = this._profileFn();`);
+        lines.push(`this._timeInInterop += (t1 - t0);`);
+        lines.push(`var returnVal;`);
+        lines.push(`try {`);
+        lines.push(`  returnVal = importFunction(${paramList});`);
+        lines.push(`  this.marshalToClr(memoryView, returnValPtr, functionSpec.returnSpec, returnVal);`);
+        lines.push(`  return 1;`);
+        lines.push(`} catch (err) {`);
+        lines.push(`  this.marshalToClr(memoryView, exceptionValPtr, scope.EXCEPTION_PARAM_SPEC, err.toString());`);
+        lines.push(`} finally {`);
+        lines.push(`  var t2 = this._profileFn();`);
+        lines.push(`  this._timeInJsUserCode += (t2 - t1);`);
+        lines.push(`}`);
+        const compiler = (Function(`return function import_binding_${importIndex}(scope, importIndex, importFunction, functionSpec, paramsBufferPtr) {\n${lines.join('\n')}\n};`) as () => ((scope: typeof IMPORT_BINDING_SCOPE, importIndex: number, importFunction: (...args: unknown[]) => unknown, functionSpec: Readonly<FunctionSpec>, paramsBufferPtr: number) => number));
+        return compiler().bind(this, IMPORT_BINDING_SCOPE, importIndex, importFunction, functionSpec);
     }
 
     private marshalToJs(memoryView: WasmMemoryView, valuePtr: number, paramSpec: Readonly<ParamSpec>): unknown {
