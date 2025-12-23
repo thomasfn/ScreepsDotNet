@@ -58,11 +58,11 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Compile Update="BundleStaticAssets.Designer.cs">
-			<DesignTime>True</DesignTime>
-			<AutoGen>True</AutoGen>
-			<DependentUpon>BundleStaticAssets.resx</DependentUpon>
-		</Compile>
+	  <Compile Update="BundleStaticAssets.Designer.cs">
+	    <DesignTime>True</DesignTime>
+	    <AutoGen>True</AutoGen>
+	    <DependentUpon>BundleStaticAssets.resx</DependentUpon>
+	  </Compile>
 	</ItemGroup>
 
 	<ItemGroup>

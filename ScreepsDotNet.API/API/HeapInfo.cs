@@ -2,34 +2,20 @@
 
 namespace ScreepsDotNet.API
 {
-    public readonly struct HeapInfo
+    public readonly struct HeapInfo(int totalHeapSize, int totalHeapSizeExecutable, int totalPhysicalSize, int totalAvailableSize, int usedHeapSize, int heapSizeLimit, int mallocedMemory, int peakMallocedMemory, int doesZapGarbage, int externallyAllocatedSize)
     {
-        public readonly int TotalHeapSize;
-        public readonly int TotalHeapSizeExecutable;
-        public readonly int TotalPhysicalSize;
-        public readonly int TotalAvailableSize;
-        public readonly int UsedHeapSize;
-        public readonly int HeapSizeLimit;
-        public readonly int MallocedMemory;
-        public readonly int PeakMallocedMemory;
-        public readonly int DoesZapGarbage;
+        public readonly int TotalHeapSize = totalHeapSize;
+        public readonly int TotalHeapSizeExecutable = totalHeapSizeExecutable;
+        public readonly int TotalPhysicalSize = totalPhysicalSize;
+        public readonly int TotalAvailableSize = totalAvailableSize;
+        public readonly int UsedHeapSize = usedHeapSize;
+        public readonly int HeapSizeLimit = heapSizeLimit;
+        public readonly int MallocedMemory = mallocedMemory;
+        public readonly int PeakMallocedMemory = peakMallocedMemory;
+        public readonly int DoesZapGarbage = doesZapGarbage;
         public readonly int NumberOfNativeContexts;
         public readonly int NumberOfDetachedContexts;
-        public readonly int ExternallyAllocatedSize;
-
-        public HeapInfo(int totalHeapSize, int totalHeapSizeExecutable, int totalPhysicalSize, int totalAvailableSize, int usedHeapSize, int heapSizeLimit, int mallocedMemory, int peakMallocedMemory, int doesZapGarbage, int externallyAllocatedSize)
-        {
-            TotalHeapSize = totalHeapSize;
-            TotalHeapSizeExecutable = totalHeapSizeExecutable;
-            TotalPhysicalSize = totalPhysicalSize;
-            TotalAvailableSize = totalAvailableSize;
-            UsedHeapSize = usedHeapSize;
-            HeapSizeLimit = heapSizeLimit;
-            MallocedMemory = mallocedMemory;
-            PeakMallocedMemory = peakMallocedMemory;
-            DoesZapGarbage = doesZapGarbage;
-            ExternallyAllocatedSize = externallyAllocatedSize;
-        }
+        public readonly int ExternallyAllocatedSize = externallyAllocatedSize;
 
         public override string ToString()
         {

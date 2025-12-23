@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 
 using Microsoft.CodeAnalysis;
 
@@ -45,14 +46,14 @@ namespace ScreepsDotNet.SourceGen.Marshalling
             return false;
         }
 
-        public override bool CanMarshalToJS(IParameterSymbol paramSymbol)
+        public override MarshalMode CanMarshalToJS(IParameterSymbol paramSymbol)
         {
             var attrs = paramSymbol.GetAttributes();
-            if (!attrs.Any(x => x.AttributeClass?.ToDisplayString() == "ScreepsDotNet.Interop.JSMarshalAsDataViewAttribute")) { return false; }
+            if (!attrs.Any(x => x.AttributeClass?.ToDisplayString() == "ScreepsDotNet.Interop.JSMarshalAsDataViewAttribute")) { return MarshalMode.Unsupported; }
             return CanMarshalToJS(paramSymbol.Type);
         }
 
-        public override bool CanMarshalToJS(ITypeSymbol paramTypeSymbol) => CanMarshalAsDataView(paramTypeSymbol, out _);
+        public override MarshalMode CanMarshalToJS(ITypeSymbol paramTypeSymbol) => CanMarshalAsDataView(paramTypeSymbol, out _) ? MarshalMode.Scoped : MarshalMode.Unsupported;
 
         public override void BeginMarshalToJS(ITypeSymbol paramTypeSymbol, string clrParamName, string jsParamName, SourceEmitter emitter)
         {
@@ -67,15 +68,22 @@ namespace ScreepsDotNet.SourceGen.Marshalling
             emitter.CloseScope();
         }
 
-        public override bool CanMarshalFromJS(ITypeSymbol returnTypeSymbol) => false;
+        public override MarshalMode CanMarshalFromJS(ITypeSymbol returnTypeSymbol) => MarshalMode.Unsupported;
 
-        public override void MarshalFromJS(ITypeSymbol returnTypeSymbol, string jsParamName, SourceEmitter emitter)
+        public override void BeginMarshalFromJS(ITypeSymbol returnTypeSymbol, string clrParamName, string jsParamName, SourceEmitter emitter)
         {
-            
+            throw new NotImplementedException();
         }
 
-        public override ParamSpec GenerateParamSpec(ITypeSymbol paramTypeSymbol) => new(InteropValueType.Ptr, InteropValueFlags.None);
+        public override void EndMarshalFromJS(ITypeSymbol returnTypeSymbol, string clrParamName, string jsParamName, SourceEmitter emitter)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override ParamSpec GenerateParamSpec(ITypeSymbol paramTypeSymbol) => new(InteropValueType.Pointer, InteropValueFlags.None);
 
         public override ParamSpec GenerateReturnParamSpec(ITypeSymbol returnTypeSymbol) => GenerateParamSpec(returnTypeSymbol);
+
+
     }
 }

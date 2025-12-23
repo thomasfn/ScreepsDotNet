@@ -18,6 +18,9 @@ internal static class ScreepsDotNet_Interop
     [WasmImportLinkage, DllImport("screeps:screepsdotnet/js-bindings", EntryPoint = "set-name")]
     public static unsafe extern void SetName(int nameIndex, char* namePtr);
 
+    [WasmImportLinkage, DllImport("screeps:screepsdotnet/js-bindings", EntryPoint = "define-struct")]
+    public static unsafe extern int DefineStruct(int numFields, ScreepsDotNet.Interop.StructFieldSpec* fieldsPtr);
+
     [WasmImportLinkage, DllImport("screeps:screepsdotnet/js-bindings", EntryPoint = "invoke-i-i")]
     public static extern int InvokeImport_i_i(int importIndex, int paramA);
 
@@ -69,7 +72,7 @@ namespace ScreepsDotNet.Interop
         public Span<ParamSpec> Params => MemoryMarshal.CreateSpan(ref P0, 8);
     }
 
-    [StructLayout(LayoutKind.Explicit, Pack = 4, Size = 36)]
+    [StructLayout(LayoutKind.Explicit, Size = 36)]
     public struct FunctionSpec
     {
         [FieldOffset(0)]
@@ -79,13 +82,15 @@ namespace ScreepsDotNet.Interop
     }
 
     [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
+    [StructLayout(LayoutKind.Explicit, Size = 16)]
     public struct InteropValue
     {
-        public static readonly InteropValue Void = new InteropValue { Slot = new InteropValueImpl { Type = InteropValueType.Void } };
+        public static readonly InteropValue Void = new() { Slot = new InteropValueImpl { Type = InteropValueType.Void } };
 
+        [FieldOffset(0)]
         internal InteropValueImpl Slot;
 
-        [StructLayout(LayoutKind.Explicit, Pack = 16, Size = 16)]
+        [StructLayout(LayoutKind.Explicit, Size = 16)]
         internal struct InteropValueImpl
         {
             [FieldOffset(0)]
@@ -119,6 +124,8 @@ namespace ScreepsDotNet.Interop
             internal IntPtr JSHandle;
             [FieldOffset(4)]
             internal IntPtr GCHandle;
+            [FieldOffset(4)]
+            internal int StructIndex;
 
             [FieldOffset(8)]
             internal int Length;
@@ -127,6 +134,8 @@ namespace ScreepsDotNet.Interop
             internal InteropValueType Type;
             [FieldOffset(13)]
             internal InteropValueType ElementType;
+            [FieldOffset(14)]
+            internal ushort FieldKey;
         }
 
         #region Constructors
@@ -168,25 +177,28 @@ namespace ScreepsDotNet.Interop
         public InteropValue(double value) => Slot = new InteropValueImpl { DoubleValue = value, Type = InteropValueType.F64 };
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public InteropValue(IntPtr value) => Slot = new InteropValueImpl { IntPtrValue = value, Type = InteropValueType.Ptr };
+        public InteropValue(IntPtr value) => Slot = new InteropValueImpl { IntPtrValue = value, Type = InteropValueType.Pointer };
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe InteropValue(char* value) => Slot = new InteropValueImpl { IntPtrValue = (IntPtr)value, Type = InteropValueType.Str };
+        public unsafe InteropValue(char* value) => Slot = new InteropValueImpl { IntPtrValue = (IntPtr)value, Type = InteropValueType.String };
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe InteropValue(char* value, int arrayLength) => Slot = new InteropValueImpl { IntPtrValue = (IntPtr)value, Type = InteropValueType.Arr, Length = arrayLength };
+        public unsafe InteropValue(char* value, int arrayLength) => Slot = new InteropValueImpl { IntPtrValue = (IntPtr)value, Type = InteropValueType.Array, Length = arrayLength };
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public InteropValue(JSObject value) => Slot = new InteropValueImpl { JSHandle = value.JSHandle, Type = InteropValueType.Obj };
+        public InteropValue(JSObject value) => Slot = new InteropValueImpl { JSHandle = value.JSHandle, Type = InteropValueType.Object };
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe InteropValue(InteropValue* value, int length) => Slot = new InteropValueImpl { IntPtrValue = (IntPtr)value, Type = InteropValueType.Arr, Length = length };
+        public unsafe InteropValue(InteropValue* value, int length) => Slot = new InteropValueImpl { IntPtrValue = (IntPtr)value, Type = InteropValueType.Array, Length = length };
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe InteropValue(void* value, int length) => Slot = new InteropValueImpl { IntPtrValue = (IntPtr)value, Type = InteropValueType.Ptr, Length = length };
+        public unsafe InteropValue(void* value, int length) => Slot = new InteropValueImpl { IntPtrValue = (IntPtr)value, Type = InteropValueType.Pointer, Length = length };
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public InteropValue(Name name) => Slot = new InteropValueImpl { Int32Value = name.NameIndex, Type = InteropValueType.Nme };
+        public unsafe InteropValue(InteropValue* fields, int structIndex, int fieldCount) => Slot = new InteropValueImpl { IntPtrValue = (IntPtr)fields, StructIndex = structIndex, Type = InteropValueType.Struct, Length = fieldCount };
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public InteropValue(Name name) => Slot = new InteropValueImpl { Int32Value = name.NameIndex, Type = InteropValueType.Name };
 
         #endregion
 
@@ -315,7 +327,7 @@ namespace ScreepsDotNet.Interop
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly IntPtr AsIntPtr()
         {
-            Debug.Assert(Slot.Type == InteropValueType.Void || Slot.Type == InteropValueType.Ptr);
+            Debug.Assert(Slot.Type == InteropValueType.Void || Slot.Type == InteropValueType.Pointer);
             return Slot.Type == InteropValueType.Void ? IntPtr.Zero : Slot.IntPtrValue;
         }
 
@@ -323,8 +335,8 @@ namespace ScreepsDotNet.Interop
         public readonly unsafe string? AsString(bool freeMem = true)
         {
             if (Slot.Type == InteropValueType.Void) { return null; }
-            Debug.Assert(Slot.Type == InteropValueType.Str || Slot.Type == InteropValueType.Nme);
-            if (Slot.Type == InteropValueType.Nme) { return Name.GetNameValue(Slot.Int32Value); }
+            Debug.Assert(Slot.Type == InteropValueType.String || Slot.Type == InteropValueType.Name);
+            if (Slot.Type == InteropValueType.Name) { return Name.GetNameValue(Slot.Int32Value); }
             var str = new string((char*)Slot.IntPtrValue);
             if (freeMem) { Marshal.FreeHGlobal(Slot.IntPtrValue); }
             return str;
@@ -334,7 +346,7 @@ namespace ScreepsDotNet.Interop
         public readonly unsafe T[]? AsArray<T>(Func<InteropValue, T> elementMarshaller, bool freeMem = true)
         {
             if (Slot.Type == InteropValueType.Void) { return null; }
-            Debug.Assert(Slot.Type == InteropValueType.Arr);
+            Debug.Assert(Slot.Type == InteropValueType.Array);
             ReadOnlySpan<InteropValue> valueArr = new((void*)Slot.IntPtrValue, Slot.Length);
             T[] arr = new T[Slot.Length];
             for (int i = 0; i < Slot.Length; ++i)
@@ -348,8 +360,8 @@ namespace ScreepsDotNet.Interop
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly unsafe Name AsName(bool freeMem = true)
         {
-            Debug.Assert(Slot.Type == InteropValueType.Str || Slot.Type == InteropValueType.Nme);
-            if (Slot.Type == InteropValueType.Str)
+            Debug.Assert(Slot.Type == InteropValueType.String || Slot.Type == InteropValueType.Name);
+            if (Slot.Type == InteropValueType.String)
             {
                 var str = new string((char*)Slot.IntPtrValue);
                 if (freeMem) { Marshal.FreeHGlobal(Slot.IntPtrValue); }
@@ -367,7 +379,7 @@ namespace ScreepsDotNet.Interop
         public readonly unsafe string[]? AsStringArray(bool freeMem = true)
         {
             if (Slot.Type == InteropValueType.Void) { return null; }
-            Debug.Assert(Slot.Type == InteropValueType.Arr);
+            Debug.Assert(Slot.Type == InteropValueType.Array);
             string[] arr = new string[Slot.Length];
             char* head = (char*)Slot.IntPtrValue;
             for (int i = 0; i < Slot.Length; ++i)
@@ -384,7 +396,7 @@ namespace ScreepsDotNet.Interop
         public readonly unsafe string?[]? AsNullableStringArray(bool freeMem = true)
         {
             if (Slot.Type == InteropValueType.Void) { return null; }
-            Debug.Assert(Slot.Type == InteropValueType.Arr);
+            Debug.Assert(Slot.Type == InteropValueType.Array);
             string?[] arr = new string[Slot.Length];
             char* head = (char*)Slot.IntPtrValue;
             for (int i = 0; i < Slot.Length; ++i)
@@ -409,9 +421,15 @@ namespace ScreepsDotNet.Interop
         public readonly JSObject? AsObject()
         {
             if (Slot.Type == InteropValueType.Void) { return null; }
-            Debug.Assert(Slot.Type == InteropValueType.Obj);
+            Debug.Assert(Slot.Type == InteropValueType.Object);
             return Native.GetJSObject(Slot.JSHandle);
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly bool IsVoid() => Slot.Type == InteropValueType.Struct;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly bool IsStruct() => Slot.Type == InteropValueType.Struct;
 
         #endregion
     }
@@ -419,6 +437,10 @@ namespace ScreepsDotNet.Interop
     [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     public static class Native
     {
+        public const int InvokeImportReturnValArgIndex = 0;
+        public const int InvokeImportExceptionArgIndex = 1;
+        public const int InvokeImportArgsReserveCount = 2;
+
         private static readonly Dictionary<IntPtr, GCHandle> trackedJSObjects = [];
         
         internal static JSObject GetJSObject(IntPtr jsHandle)
@@ -441,6 +463,14 @@ namespace ScreepsDotNet.Interop
             ScreepsDotNet_Interop.ReleaseObjectReference(jsHandle);
         }
 
+        public static unsafe int DefineStruct(ReadOnlySpan<StructFieldSpec> fieldSpecs)
+        {
+            fixed (StructFieldSpec* fieldsPtr = fieldSpecs)
+            {
+                return ScreepsDotNet_Interop.DefineStruct(fieldSpecs.Length, fieldsPtr);
+            }
+        }
+
         public static unsafe int BindImport(string importName, string moduleName, FunctionSpec functionSpec)
         {
             int result;
@@ -457,22 +487,16 @@ namespace ScreepsDotNet.Interop
 
         public static unsafe InteropValue InvokeImport(int importIndex, Span<InteropValue> args)
         {
-            Span<InteropValue> paramsBuffer = stackalloc InteropValue[args.Length + 2];
-            if (args.Length > 0) { args.CopyTo(paramsBuffer[2..]); }
-
-            ref InteropValue returnVal = ref paramsBuffer[0];
-            ref InteropValue exceptionVal = ref paramsBuffer[1];
-
             int result;
-            fixed (InteropValue* paramsBufferPtr = paramsBuffer)
+            fixed (InteropValue* paramsBufferPtr = args)
             {
                 result = ScreepsDotNet_Interop.InvokeImport(importIndex, paramsBufferPtr);
             }
             if (result == 0)
             {
-                if (exceptionVal.Slot.Type == InteropValueType.Str)
+                if (args[InvokeImportExceptionArgIndex].Slot.Type == InteropValueType.String)
                 {
-                    string? errorText = exceptionVal.AsString();
+                    string? errorText = args[InvokeImportExceptionArgIndex].AsString();
                     if (!string.IsNullOrEmpty(errorText))
                     {
                         throw new JSException(errorText);
@@ -482,7 +506,7 @@ namespace ScreepsDotNet.Interop
             }
             else
             {
-                return returnVal;
+                return args[InvokeImportReturnValArgIndex];
             }
 
         }

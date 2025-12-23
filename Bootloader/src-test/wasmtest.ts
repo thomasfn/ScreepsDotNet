@@ -1,7 +1,7 @@
 import { promises as fs } from 'fs';
 import { Bootloader } from '../src/bootloader.js';
 
-const wasmFilename = '/ScreepsDotNet/ScreepsDotNet.ExampleWorldBot.wasm';
+const wasmFilename = '/ScreepsDotNet/world/ScreepsDotNet.wasm';
 
 async function main() {
     console.log(`Loading '${wasmFilename}'...`);
@@ -10,7 +10,7 @@ async function main() {
     console.log(`Starting bootloader...`);
     try {
         const bootloader = new Bootloader('test', () => performance.now());
-        bootloader.compile(wasmData);
+        bootloader.compile(wasmData as unknown as Uint8Array<ArrayBuffer>);
         bootloader.start([]);
         bootloader.loop();
     } catch (err) {

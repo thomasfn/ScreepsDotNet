@@ -41,7 +41,8 @@ namespace ScreepsDotNet.SourceGen.Marshalling
             { "double?", (InteropValueType.F64, InteropValueFlags.Nullable, "AsDoubleNullable") },
         };
 
-        public override bool CanMarshalToJS(ITypeSymbol paramTypeSymbol) => primitiveTypeToInteropData.ContainsKey(paramTypeSymbol.WithNullableAnnotation(NullableAnnotation.None).ToDisplayString());
+        public override MarshalMode CanMarshalToJS(ITypeSymbol paramTypeSymbol)
+            => primitiveTypeToInteropData.ContainsKey(paramTypeSymbol.WithNullableAnnotation(NullableAnnotation.None).ToDisplayString()) ? MarshalMode.Trivial : MarshalMode.Unsupported;
 
         public override void BeginMarshalToJS(ITypeSymbol paramTypeSymbol, string clrParamName, string jsParamName, SourceEmitter emitter)
         {
@@ -55,18 +56,18 @@ namespace ScreepsDotNet.SourceGen.Marshalling
             }
         }
 
-        public override void EndMarshalToJS(ITypeSymbol paramTypeSymbol, string clrParamName, string jsParamName, SourceEmitter emitter)
-        {
-            
-        }
+        public override void EndMarshalToJS(ITypeSymbol paramTypeSymbol, string clrParamName, string jsParamName, SourceEmitter emitter) { }
 
-        public override bool CanMarshalFromJS(ITypeSymbol returnTypeSymbol) => primitiveTypeToInteropData.ContainsKey(returnTypeSymbol.WithNullableAnnotation(NullableAnnotation.None).ToDisplayString());
+        public override MarshalMode CanMarshalFromJS(ITypeSymbol returnTypeSymbol)
+            => primitiveTypeToInteropData.ContainsKey(returnTypeSymbol.WithNullableAnnotation(NullableAnnotation.None).ToDisplayString()) ? MarshalMode.Trivial : MarshalMode.Unsupported;
 
-        public override void MarshalFromJS(ITypeSymbol returnTypeSymbol, string jsParamName, SourceEmitter emitter)
+        public override void BeginMarshalFromJS(ITypeSymbol returnTypeSymbol, string clrParamName, string jsParamName, SourceEmitter emitter) { }
+
+        public override void EndMarshalFromJS(ITypeSymbol returnTypeSymbol, string clrParamName, string jsParamName, SourceEmitter emitter)
         {
             var typeName = returnTypeSymbol.WithNullableAnnotation(NullableAnnotation.None).ToDisplayString();
             var interopData = primitiveTypeToInteropData[typeName];
-            emitter.WriteLine($"return ({typeName}){jsParamName}.{interopData.Item3}();");
+            emitter.WriteLine($"{clrParamName} = ({typeName}){jsParamName}.{interopData.Item3}();");
         }
 
         public override ParamSpec GenerateParamSpec(ITypeSymbol paramTypeSymbol)

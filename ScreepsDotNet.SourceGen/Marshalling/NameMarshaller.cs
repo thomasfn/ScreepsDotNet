@@ -8,10 +8,10 @@ namespace ScreepsDotNet.SourceGen.Marshalling
     {
         public override bool Unsafe => false;
 
-        public override bool CanMarshalToJS(ITypeSymbol paramTypeSymbol)
+        public override MarshalMode CanMarshalToJS(ITypeSymbol paramTypeSymbol)
         {
             var type = paramTypeSymbol.ToDisplayString();
-            return type == "ScreepsDotNet.Interop.Name" || type == "ScreepsDotNet.Interop.Name?";
+            return (type == "ScreepsDotNet.Interop.Name" || type == "ScreepsDotNet.Interop.Name?") ? MarshalMode.Trivial : MarshalMode.Unsupported;
         }
 
         public override void BeginMarshalToJS(ITypeSymbol paramTypeSymbol, string clrParamName, string jsParamName, SourceEmitter emitter)
@@ -41,25 +41,30 @@ namespace ScreepsDotNet.SourceGen.Marshalling
             
         }
 
-        public override bool CanMarshalFromJS(ITypeSymbol returnTypeSymbol)
+        public override MarshalMode CanMarshalFromJS(ITypeSymbol returnTypeSymbol)
         {
             var type = returnTypeSymbol.ToDisplayString();
-            return type == "ScreepsDotNet.Interop.Name" || type == "ScreepsDotNet.Interop.Name?";
+            return (type == "ScreepsDotNet.Interop.Name" || type == "ScreepsDotNet.Interop.Name?") ? MarshalMode.Trivial : MarshalMode.Unsupported;
         }
 
-        public override void MarshalFromJS(ITypeSymbol returnTypeSymbol, string jsParamName, SourceEmitter emitter)
+        public override void BeginMarshalFromJS(ITypeSymbol returnTypeSymbol, string clrParamName, string jsParamName, SourceEmitter emitter)
+        {
+            
+        }
+
+        public override void EndMarshalFromJS(ITypeSymbol returnTypeSymbol, string clrParamName, string jsParamName, SourceEmitter emitter)
         {
             if (returnTypeSymbol.NullableAnnotation == NullableAnnotation.Annotated)
             {
-                emitter.WriteLine($"return {jsParamName}.AsNameNullable();");
+                emitter.WriteLine($"{clrParamName} = {jsParamName}.AsNameNullable();");
             }
             else
             {
-                emitter.WriteLine($"return {jsParamName}.AsName();");
+                emitter.WriteLine($"{clrParamName} = {jsParamName}.AsName();");
             }
         }
 
-        public override ParamSpec GenerateParamSpec(ITypeSymbol paramTypeSymbol) => new(InteropValueType.Nme, paramTypeSymbol.NullableAnnotation == NullableAnnotation.Annotated ? InteropValueFlags.Nullable : InteropValueFlags.None);
+        public override ParamSpec GenerateParamSpec(ITypeSymbol paramTypeSymbol) => new(InteropValueType.Name, paramTypeSymbol.NullableAnnotation == NullableAnnotation.Annotated ? InteropValueFlags.Nullable : InteropValueFlags.None);
 
         public override ParamSpec GenerateReturnParamSpec(ITypeSymbol returnTypeSymbol) => GenerateParamSpec(returnTypeSymbol);
     }

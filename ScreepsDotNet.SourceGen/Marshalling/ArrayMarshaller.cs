@@ -56,16 +56,16 @@ namespace ScreepsDotNet.SourceGen.Marshalling
             return false;
         }
 
-        public override bool CanMarshalToJS(ITypeSymbol paramTypeSymbol)
+        public override MarshalMode CanMarshalToJS(ITypeSymbol paramTypeSymbol)
         {
-            if (!CanMarshalAsArray(paramTypeSymbol, out var marshallingData)) { return false; }
-            return elementMarshallers.Any(x => !x.Unsafe && x.CanMarshalToJS(marshallingData.ElementType));
+            if (!CanMarshalAsArray(paramTypeSymbol, out var marshallingData)) { return MarshalMode.Unsupported; }
+            return elementMarshallers.Any(x => x.CanMarshalToJS(marshallingData.ElementType) == MarshalMode.Trivial) ? MarshalMode.Scoped : MarshalMode.Unsupported;
         }
 
         public override void BeginMarshalToJS(ITypeSymbol paramTypeSymbol, string clrParamName, string jsParamName, SourceEmitter emitter)
         {
             if (!CanMarshalAsArray(paramTypeSymbol, out var marshallingData)) { return; }
-            var elementMarshaller = elementMarshallers.First(x => !x.Unsafe && x.CanMarshalToJS(marshallingData.ElementType));
+            var elementMarshaller = elementMarshallers.First(x => x.CanMarshalToJS(marshallingData.ElementType) == MarshalMode.Trivial);
             if (marshallingData.WrapperTypeNullable)
             {
                 // TODO: Switch to managed allocation if array length is too big to avoid stack overflow
@@ -103,19 +103,25 @@ namespace ScreepsDotNet.SourceGen.Marshalling
             emitter.CloseScope();
         }
 
-        public override bool CanMarshalFromJS(ITypeSymbol returnTypeSymbol)
+        public override MarshalMode CanMarshalFromJS(ITypeSymbol returnTypeSymbol)
         {
-            if (!CanMarshalAsArray(returnTypeSymbol, out var marshallingData)) { return false; }
-            return elementMarshallers.Any(x => !x.Unsafe && x.CanMarshalToJS(marshallingData.ElementType));
+            if (!CanMarshalAsArray(returnTypeSymbol, out var marshallingData)) { return MarshalMode.Unsupported; }
+            return elementMarshallers.Any(x => x.CanMarshalToJS(marshallingData.ElementType) == MarshalMode.Trivial) ? MarshalMode.Trivial : MarshalMode.Unsupported;
         }
 
-        public override void MarshalFromJS(ITypeSymbol returnTypeSymbol, string jsParamName, SourceEmitter emitter)
+        public override void BeginMarshalFromJS(ITypeSymbol returnTypeSymbol, string clrParamName, string jsParamName, SourceEmitter emitter)
+        {
+            
+        }
+
+        public override void EndMarshalFromJS(ITypeSymbol returnTypeSymbol, string clrParamName, string jsParamName, SourceEmitter emitter)
         {
             if (!CanMarshalAsArray(returnTypeSymbol, out var marshallingData)) { return; }
-            var elementMarshaller = elementMarshallers.First(x => !x.Unsafe && x.CanMarshalToJS(marshallingData.ElementType));
+            var elementMarshaller = elementMarshallers.First(x => x.CanMarshalToJS(marshallingData.ElementType) == MarshalMode.Trivial);
             emitter.WriteLine($"Func<InteropValue, {marshallingData.ElementType.ToDisplayString()}> elementMarshaller = (interopValue) =>");
             emitter.OpenScope();
-            elementMarshaller.MarshalFromJS(marshallingData.ElementType, "interopValue", emitter);
+            elementMarshaller.EndMarshalFromJS(marshallingData.ElementType, "var elementRetVal", "interopValue", emitter);
+            emitter.WriteLine($"return elementRetVal;");
             emitter.DecrementIndent();
             emitter.WriteLine($"}};");
             string retVarName;
@@ -134,10 +140,10 @@ namespace ScreepsDotNet.SourceGen.Marshalling
                 case WrapperType.Array:
                 case WrapperType.Span:
                 case WrapperType.ReadOnlySpan:
-                    emitter.WriteLine($"return {retVarName};");
+                    emitter.WriteLine($"{clrParamName} = {retVarName};");
                     break;
                 case WrapperType.ImmutableArray:
-                    emitter.WriteLine($"return {retVarName}.ToImmutableArray();");
+                    emitter.WriteLine($"{clrParamName} = {retVarName}.ToImmutableArray();");
                     break;
             }
         }
@@ -145,9 +151,9 @@ namespace ScreepsDotNet.SourceGen.Marshalling
         public override ParamSpec GenerateParamSpec(ITypeSymbol paramTypeSymbol)
         {
             if (!CanMarshalAsArray(paramTypeSymbol, out var marshallingData)) { return new(InteropValueType.Void, InteropValueFlags.None); }
-            var elementMarshaller = elementMarshallers.First(x => !x.Unsafe && x.CanMarshalToJS(marshallingData.ElementType));
+            var elementMarshaller = elementMarshallers.First(x => x.CanMarshalToJS(marshallingData.ElementType) == MarshalMode.Trivial);
             var elementParamSpec = elementMarshaller.GenerateParamSpec(marshallingData.ElementType);
-            return new(InteropValueType.Arr, marshallingData.WrapperTypeNullable ? InteropValueFlags.Nullable : InteropValueFlags.None, elementParamSpec.Type, elementParamSpec.Flags);
+            return new(InteropValueType.Array, marshallingData.WrapperTypeNullable ? InteropValueFlags.Nullable : InteropValueFlags.None, elementParamSpec.Type, elementParamSpec.Flags);
         }
 
         public override ParamSpec GenerateReturnParamSpec(ITypeSymbol returnTypeSymbol) => GenerateParamSpec(returnTypeSymbol);

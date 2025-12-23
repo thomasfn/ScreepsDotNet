@@ -14,6 +14,7 @@ interface js-bindings {
   invoke-import: func(importindex: u32, paramsbufferptr: u32) -> u32;
   release-object-reference: func(jshandle: u32);
   set-name: func(nameindex: u32, valueptr: u32);
+  define-struct: func(numfields: u32, fieldsptr: u32) -> u32;
   invoke-i-i: func(importindex: u32, p0: s32) -> s32;
   invoke-i-ii: func(importindex: u32, p0: s32, p1: s32) -> s32;
   invoke-i-iii: func(importindex: u32, p0: s32, p1: s32, p2: s32) -> s32;

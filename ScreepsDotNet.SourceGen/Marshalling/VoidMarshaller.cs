@@ -8,7 +8,7 @@ namespace ScreepsDotNet.SourceGen.Marshalling
     {
         public override bool Unsafe => false;
 
-        public override bool CanMarshalToJS(ITypeSymbol paramTypeSymbol) => false;
+        public override MarshalMode CanMarshalToJS(ITypeSymbol paramTypeSymbol) => MarshalMode.Unsupported;
 
         public override void BeginMarshalToJS(ITypeSymbol typeSymbol, string clrParamName, string jsParamName, SourceEmitter emitter)
         {
@@ -20,9 +20,14 @@ namespace ScreepsDotNet.SourceGen.Marshalling
             
         }
 
-        public override bool CanMarshalFromJS(ITypeSymbol returnTypeSymbol) => returnTypeSymbol.ToDisplayString() == "void";
+        public override MarshalMode CanMarshalFromJS(ITypeSymbol returnTypeSymbol) => returnTypeSymbol.ToDisplayString() == "void" ? MarshalMode.Trivial : MarshalMode.Unsupported;
 
-        public override void MarshalFromJS(ITypeSymbol returnTypeSymbol, string paramName, SourceEmitter emitter)
+        public override void BeginMarshalFromJS(ITypeSymbol returnTypeSymbol, string clrParamName, string paramName, SourceEmitter emitter)
+        {
+
+        }
+
+        public override void EndMarshalFromJS(ITypeSymbol returnTypeSymbol, string clrParamName, string paramName, SourceEmitter emitter)
         {
             
         }

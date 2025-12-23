@@ -24,7 +24,7 @@ namespace ScreepsDotNet.SourceGen
         {
             var primitiveMarshallers = new BaseMarshaller[] { new VoidMarshaller(), new NumericMarshaller(), new StringMarshaller(), new JSObjectMarshaller(), new NameMarshaller() };
             var unlayerableMarshallers = new BaseMarshaller[] { new DataViewMarshaller(), new StringArrayMarshaller() };
-            var layeredMarshallers = new BaseMarshaller[] { new ArrayMarshaller(primitiveMarshallers.ToImmutableArray()) };
+            var layeredMarshallers = new BaseMarshaller[] { new ArrayMarshaller(primitiveMarshallers.ToImmutableArray()), new StructMarshaller(primitiveMarshallers.ToImmutableArray()) };
 
             allMarshallers = Enumerable.Empty<BaseMarshaller>()
                 .Concat(primitiveMarshallers)
@@ -130,7 +130,7 @@ namespace ScreepsDotNet.SourceGen
                 bool found = false;
                 foreach (var marshaller in allMarshallers)
                 {
-                    if (marshaller.CanMarshalToJS(methodSymbol.Parameters[i]))
+                    if (marshaller.CanMarshalToJS(methodSymbol.Parameters[i]) != MarshalMode.Unsupported)
                     {
                         marshallers[i] = marshaller;
                         isUnsafe |= marshaller.Unsafe;
@@ -141,6 +141,7 @@ namespace ScreepsDotNet.SourceGen
                 if (!found)
                 {
                     sourceEmitter.WriteLine($"// Unable to marshal parameter '{methodSymbol.Parameters[i].Name}' ({methodSymbol.Parameters[i].Type.ToDisplayString()})");
+                    sourceEmitter.WriteLine($"// {string.Join(", ", methodSymbol.Parameters[i].Type.GetAttributes().Select(x => x.AttributeClass?.ToDisplayString()))}");
                     sourceEmitter.WriteLine($"throw new NotImplementedException();");
                     return;
                 }
@@ -149,7 +150,7 @@ namespace ScreepsDotNet.SourceGen
             {
                 foreach (var marshaller in allMarshallers)
                 {
-                    if (marshaller.CanMarshalFromJS(methodSymbol.ReturnType))
+                    if (marshaller.CanMarshalFromJS(methodSymbol.ReturnType) != MarshalMode.Unsupported)
                     {
                         retMarshaller = marshaller;
                         isUnsafe |= marshaller.Unsafe;
@@ -159,6 +160,7 @@ namespace ScreepsDotNet.SourceGen
                 if (retMarshaller == null)
                 {
                     sourceEmitter.WriteLine($"// Unable to marshal return type ({methodSymbol.ReturnType.ToDisplayString()})");
+                    sourceEmitter.WriteLine($"// {string.Join(", ", methodSymbol.ReturnType.GetAttributes().Select(x => x.AttributeClass?.ToDisplayString()))}");
                     sourceEmitter.WriteLine($"throw new NotImplementedException();");
                     return;
                 }
@@ -191,24 +193,25 @@ namespace ScreepsDotNet.SourceGen
                 sourceEmitter.WriteLine($"unsafe");
                 sourceEmitter.OpenScope();
             }
-            if (methodSymbol.Parameters.Length > 0)
+            sourceEmitter.WriteLine($"Span<InteropValue> args = stackalloc InteropValue[Interop.Native.InvokeImportArgsReserveCount + {methodSymbol.Parameters.Length}];");
+            for (int i = 0; i < methodSymbol.Parameters.Length; ++i)
             {
-                sourceEmitter.WriteLine($"Span<InteropValue> args = stackalloc InteropValue[{methodSymbol.Parameters.Length}];");
-                for (int i = 0; i < methodSymbol.Parameters.Length; ++i)
-                {
-                    marshallers[i].BeginMarshalToJS(methodSymbol.Parameters[i].Type, methodSymbol.Parameters[i].Name, $"args[{i}]", sourceEmitter);
-                }
-                sourceEmitter.WriteLine($"var returnVal = Interop.Native.InvokeImport({importIndexFieldName}, args);");
-                retMarshaller.MarshalFromJS(methodSymbol.ReturnType, "returnVal", sourceEmitter);
-                for (int i = methodSymbol.Parameters.Length - 1; i >= 0; --i)
-                {
-                    marshallers[i].EndMarshalToJS(methodSymbol.Parameters[i].Type, methodSymbol.Parameters[i].Name, $"args[{i}]", sourceEmitter);
-                }
+                marshallers[i].BeginMarshalToJS(methodSymbol.Parameters[i].Type, methodSymbol.Parameters[i].Name, $"args[Interop.Native.InvokeImportArgsReserveCount + {i}]", sourceEmitter);
             }
-            else
+            if (!methodSymbol.ReturnsVoid)
             {
-                sourceEmitter.WriteLine($"var returnVal = Interop.Native.InvokeImport({importIndexFieldName}, Span<InteropValue>.Empty);");
-                retMarshaller.MarshalFromJS(methodSymbol.ReturnType, "returnVal", sourceEmitter);
+                sourceEmitter.WriteLine($"{methodSymbol.ReturnType.ToDisplayString()} returnVal;");
+            }
+            retMarshaller.BeginMarshalFromJS(methodSymbol.ReturnType, "returnVal", "args[Interop.Native.InvokeImportReturnValArgIndex]", sourceEmitter);
+            sourceEmitter.WriteLine($"var returnValFromJS = Interop.Native.InvokeImport({importIndexFieldName}, args);");
+            retMarshaller.EndMarshalFromJS(methodSymbol.ReturnType, "returnVal", "returnValFromJS", sourceEmitter);
+            if (!methodSymbol.ReturnsVoid)
+            {
+                sourceEmitter.WriteLine($"return returnVal;");
+            }
+            for (int i = methodSymbol.Parameters.Length - 1; i >= 0; --i)
+            {
+                marshallers[i].EndMarshalToJS(methodSymbol.Parameters[i].Type, methodSymbol.Parameters[i].Name, $"args[{i}]", sourceEmitter);
             }
             if (isUnsafe)
             {
@@ -216,7 +219,7 @@ namespace ScreepsDotNet.SourceGen
             }
         }
 
-        private static string ParamSpecToCs(ParamSpec paramSpec)
+        public static string ParamSpecToCs(ParamSpec paramSpec)
         {
             var sb = new StringBuilder();
             sb.Append("new(");

@@ -17,11 +17,12 @@ namespace ScreepsDotNet.Interop
         I64 = 9,
         F32 = 10,
         F64 = 11,
-        Ptr = 12,
-        Str = 13,
-        Obj = 14,
-        Arr = 15,
-        Nme = 16,
+        Pointer = 12,
+        String = 13,
+        Object = 14,
+        Array = 15,
+        Name = 16,
+        Struct = 17,
     }
 
     [Flags]
@@ -32,7 +33,7 @@ namespace ScreepsDotNet.Interop
         NullAsUndefined = 1 << 1,
     }
 
-    [StructLayout(LayoutKind.Explicit, Pack = 4, Size = 4)]
+    [StructLayout(LayoutKind.Explicit, Size = 4)]
     public struct ParamSpec
     {
         [FieldOffset(0)]
@@ -59,5 +60,14 @@ namespace ScreepsDotNet.Interop
             ElementType = elementType;
             ElementFlags = elementFlags;
         }
+    }
+
+    [StructLayout(LayoutKind.Explicit, Size = 8)]
+    public struct StructFieldSpec
+    {
+        [FieldOffset(0)]
+        public IntPtr NamePtr;
+        [FieldOffset(4)]
+        public ParamSpec ParamSpec;
     }
 }

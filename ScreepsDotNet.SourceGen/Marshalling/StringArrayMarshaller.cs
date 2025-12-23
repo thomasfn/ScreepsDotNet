@@ -48,7 +48,7 @@ namespace ScreepsDotNet.SourceGen.Marshalling
             return false;
         }
 
-        public override bool CanMarshalToJS(ITypeSymbol paramTypeSymbol) => CanMarshalAsStringArray(paramTypeSymbol, out _);
+        public override MarshalMode CanMarshalToJS(ITypeSymbol paramTypeSymbol) => CanMarshalAsStringArray(paramTypeSymbol, out _) ? MarshalMode.Scoped : MarshalMode.Unsupported;
 
         public override void BeginMarshalToJS(ITypeSymbol paramTypeSymbol, string clrParamName, string jsParamName, SourceEmitter emitter)
         {
@@ -133,9 +133,11 @@ namespace ScreepsDotNet.SourceGen.Marshalling
             emitter.CloseScope();
         }
 
-        public override bool CanMarshalFromJS(ITypeSymbol returnTypeSymbol) => CanMarshalAsStringArray(returnTypeSymbol, out _);
+        public override MarshalMode CanMarshalFromJS(ITypeSymbol returnTypeSymbol) => CanMarshalAsStringArray(returnTypeSymbol, out _) ? MarshalMode.Trivial : MarshalMode.Unsupported;
 
-        public override void MarshalFromJS(ITypeSymbol returnTypeSymbol, string jsParamName, SourceEmitter emitter)
+        public override void BeginMarshalFromJS(ITypeSymbol returnTypeSymbol, string clrParamName, string jsParamName, SourceEmitter emitter) { }
+
+        public override void EndMarshalFromJS(ITypeSymbol returnTypeSymbol, string clrParamName, string jsParamName, SourceEmitter emitter)
         {
             if (!CanMarshalAsStringArray(returnTypeSymbol, out var marshallingData)) { return; }
 
@@ -153,18 +155,18 @@ namespace ScreepsDotNet.SourceGen.Marshalling
             }
             if (marshallingData.WrapperType == WrapperType.ImmutableArray)
             {
-                emitter.WriteLine($"return retArr.ToImmutableArray();");
+                emitter.WriteLine($"{clrParamName} = retArr.ToImmutableArray();");
             }
             else
             {
-                emitter.WriteLine($"return retArr;");
+                emitter.WriteLine($"{clrParamName} = retArr;");
             }
         }
 
         public override ParamSpec GenerateParamSpec(ITypeSymbol paramTypeSymbol)
         {
-            if (!CanMarshalAsStringArray(paramTypeSymbol, out var marshallingData)) { return new ParamSpec(InteropValueType.Arr, InteropValueFlags.None); }
-            return new(InteropValueType.Arr, marshallingData.WrapperTypeNullable ? InteropValueFlags.Nullable : InteropValueFlags.None, InteropValueType.Str, marshallingData.ElementTypeNullable ? InteropValueFlags.Nullable : InteropValueFlags.None);
+            if (!CanMarshalAsStringArray(paramTypeSymbol, out var marshallingData)) { return new ParamSpec(InteropValueType.Array, InteropValueFlags.None); }
+            return new(InteropValueType.Array, marshallingData.WrapperTypeNullable ? InteropValueFlags.Nullable : InteropValueFlags.None, InteropValueType.String, marshallingData.ElementTypeNullable ? InteropValueFlags.Nullable : InteropValueFlags.None);
         }
 
         public override ParamSpec GenerateReturnParamSpec(ITypeSymbol returnTypeSymbol) => GenerateParamSpec(returnTypeSymbol);

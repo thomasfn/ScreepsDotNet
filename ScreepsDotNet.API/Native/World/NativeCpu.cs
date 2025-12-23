@@ -6,32 +6,45 @@ using ScreepsDotNet.API.World;
 
 namespace ScreepsDotNet.Native.World
 {
+    [JSStruct]
+    internal partial struct JSHeapInfo
+    {
+        [JSStructField("total_heap_size")] public int TotalHeapSize;
+        [JSStructField("total_heap_size_executable")] public int TotalHeapSizeExecutable;
+        [JSStructField("total_physical_size")] public int TotalPhysicalSize;
+        [JSStructField("total_available_size")] public int TotalAvailableSize;
+        [JSStructField("used_heap_size")] public int UsedHeapSize;
+        [JSStructField("heap_size_limit")] public int HeapSizeLimit;
+        [JSStructField("malloced_memory")] public int MallocedMemory;
+        [JSStructField("peak_malloced_memory")] public int PeakMallocedMemory;
+        [JSStructField("does_zap_garbage")] public int DoesZapGarbage;
+        [JSStructField("externally_allocated_size")] public int ExternallyAllocatedSize;
+    }
+
     [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal partial class NativeCpu : ICpu
     {
         #region Imports
 
         [JSImport("cpu.getHeapStatistics", "game")]
-        
-        internal static partial JSObject Native_GetHeapStatistics();
+        internal static partial JSHeapInfo Native_GetHeapStatistics();
+
+        [JSImport("cpu.getHeapStatistics", "game")]
+        internal static partial JSHeapInfo? Native_GetHeapStatisticsNullable();
 
         [JSImport("cpu.getUsed", "game")]
-        
         internal static partial double Native_GetUsed();
 
         [JSImport("cpu.halt", "game")]
         internal static partial void Native_Halt();
 
         [JSImport("cpu.setShardLimits", "game")]
-        
         internal static partial int Native_SetShardLimits(JSObject newShardLimits);
 
         [JSImport("cpu.unlock", "game")]
-        
         internal static partial int Native_Unlock();
 
         [JSImport("cpu.generatePixel", "game")]
-        
         internal static partial int Native_GeneratePixel();
 
         #endregion
@@ -66,18 +79,18 @@ namespace ScreepsDotNet.Native.World
 
         public HeapInfo GetHeapStatistics()
         {
-            using var obj = Native_GetHeapStatistics();
+            var heapInfo = Native_GetHeapStatistics();
             return new HeapInfo(
-                obj.GetPropertyAsInt32("total_heap_size"),
-                obj.GetPropertyAsInt32("total_heap_size_executable"),
-                obj.GetPropertyAsInt32("total_physical_size"),
-                obj.GetPropertyAsInt32("total_available_size"),
-                obj.GetPropertyAsInt32("used_heap_size"),
-                obj.GetPropertyAsInt32("heap_size_limit"),
-                obj.GetPropertyAsInt32("malloced_memory"),
-                obj.GetPropertyAsInt32("peak_malloced_memory"),
-                obj.GetPropertyAsInt32("does_zap_garbage"),
-                obj.GetPropertyAsInt32("externally_allocated_size")
+                heapInfo.TotalHeapSize,
+                heapInfo.TotalHeapSizeExecutable,
+                heapInfo.TotalPhysicalSize,
+                heapInfo.TotalAvailableSize,
+                heapInfo.UsedHeapSize,
+                heapInfo.HeapSizeLimit,
+                heapInfo.MallocedMemory,
+                heapInfo.PeakMallocedMemory,
+                heapInfo.DoesZapGarbage,
+                heapInfo.ExternallyAllocatedSize
             );
         }
 
