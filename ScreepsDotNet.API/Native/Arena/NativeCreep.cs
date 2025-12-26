@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 
 using ScreepsDotNet.Interop;
@@ -13,7 +12,7 @@ namespace ScreepsDotNet.Native.Arena
 {
     internal static class BodyPartTypeExtensions
     {
-        private static readonly ImmutableArray<Name> bodyPartTypeToName =
+        private static readonly Name[] bodyPartTypeToName =
         [
             Name.Create("move"),
             Name.Create("work"),

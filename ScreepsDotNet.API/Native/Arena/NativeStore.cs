@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
@@ -12,7 +11,7 @@ namespace ScreepsDotNet.Native.Arena
 {
     internal static class ResourceTypeExtensions
     {
-        private static readonly ImmutableArray<Name> resourceToName =
+        private static readonly Name[] resourceToName =
         [
             Names.Energy,
             Name.Create("score"),
@@ -62,7 +61,7 @@ namespace ScreepsDotNet.Native.Arena
         internal readonly JSObject? ProxyObject;
 
         private int[]? resourceCache;
-        private ImmutableArray<ResourceType>? containedResourceTypesCache;
+        private ResourceType[]? containedResourceTypesCache;
         private bool disposedValue;
 
         public IEnumerable<ResourceType> ContainedResourceTypes
@@ -70,7 +69,7 @@ namespace ScreepsDotNet.Native.Arena
             get
             {
                 ObjectDisposedException.ThrowIf(disposedValue, this);
-                return containedResourceTypesCache ??= (ProxyObject?.GetPropertyNamesAsNames() ?? []).Select(static x => x.ParseResourceType()).ToImmutableArray();
+                return containedResourceTypesCache ??= [.. (ProxyObject?.GetPropertyNamesAsNames() ?? []).Select(static x => x.ParseResourceType())];
             }
         }
 

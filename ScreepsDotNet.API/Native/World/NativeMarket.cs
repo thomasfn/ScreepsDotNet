@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Collections.Immutable;
 
 using ScreepsDotNet.Interop;
 
@@ -203,7 +202,7 @@ namespace ScreepsDotNet.Native.World
         private Dictionary<string, MyOrderDetails> GetOrders()
         {
             using var ordersObj = ProxyObject.GetPropertyAsJSObject("orders");
-            var keys = ordersObj?.GetPropertyNames() ?? ImmutableArray<string>.Empty;
+            var keys = ordersObj?.GetPropertyNames() ?? [];
             var result = new Dictionary<string, MyOrderDetails>();
             foreach (var key in keys)
             {

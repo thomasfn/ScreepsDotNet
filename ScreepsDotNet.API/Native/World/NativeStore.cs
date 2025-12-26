@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Immutable;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Linq;
@@ -12,7 +11,7 @@ namespace ScreepsDotNet.Native.World
 {
     internal static class ResourceTypeExtensions
     {
-        private static readonly ImmutableArray<Name> resourceToName =
+        private static readonly Name[] resourceToName =
         [
             Names.Energy,
             Names.Power,
@@ -158,9 +157,9 @@ namespace ScreepsDotNet.Native.World
         private int proxyObjectValidAsOf;
 
         private int[]? resourceCache;
-        private ImmutableArray<ResourceType>? containedResourceTypesCache;
+        private ResourceType[]? containedResourceTypesCache;
 
-        public IEnumerable<ResourceType> ContainedResourceTypes => containedResourceTypesCache ??= Native_GetStoreContainedResources(ProxyObject).Select(static x => x.ParseResourceType()).ToImmutableArray();
+        public IEnumerable<ResourceType> ContainedResourceTypes => containedResourceTypesCache ??= [.. Native_GetStoreContainedResources(ProxyObject).Select(static x => x.ParseResourceType())];
 
         public event Action? OnRequestNewProxyObject;
 

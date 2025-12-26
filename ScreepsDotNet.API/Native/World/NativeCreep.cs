@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
@@ -13,7 +12,7 @@ namespace ScreepsDotNet.Native.World
     [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     internal static class NativeCreepExtensions
     {
-        private static readonly ImmutableArray<Name> bodyPartTypeToName =
+        private static readonly Name[] bodyPartTypeToName =
         [
             Name.Create("move"),
             Name.Create("work"),
@@ -25,7 +24,7 @@ namespace ScreepsDotNet.Native.World
             Name.Create("claim"),
         ];
 
-        private static readonly ImmutableArray<Name> creepOrderTypeToName =
+        private static readonly Name[] creepOrderTypeToName =
         [
             Name.Create("attack"),
             Name.Create("attackController"),

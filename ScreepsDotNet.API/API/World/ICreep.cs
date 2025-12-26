@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using System.Collections.Immutable;
+﻿using System;
+using System.Collections.Generic;
 
 namespace ScreepsDotNet.API.World
 {
@@ -17,9 +17,13 @@ namespace ScreepsDotNet.API.World
 
     public static class BodyPartTypes
     {
-        public static readonly ImmutableArray<BodyPartType> All = [BodyPartType.Move, BodyPartType.Work, BodyPartType.Carry, BodyPartType.Attack, BodyPartType.RangedAttack, BodyPartType.Tough, BodyPartType.Heal, BodyPartType.Claim];
+        private static readonly BodyPartType[] all = [BodyPartType.Move, BodyPartType.Work, BodyPartType.Carry, BodyPartType.Attack, BodyPartType.RangedAttack, BodyPartType.Tough, BodyPartType.Heal, BodyPartType.Claim];
 
-        public static readonly ImmutableArray<string> Names = [nameof(BodyPartType.Move), nameof(BodyPartType.Work), nameof(BodyPartType.Carry), nameof(BodyPartType.Attack), nameof(BodyPartType.RangedAttack), nameof(BodyPartType.Tough), nameof(BodyPartType.Heal), nameof(BodyPartType.Claim)];
+        public static ReadOnlySpan<BodyPartType> All => all;
+
+        private static readonly string[] names = [nameof(BodyPartType.Move), nameof(BodyPartType.Work), nameof(BodyPartType.Carry), nameof(BodyPartType.Attack), nameof(BodyPartType.RangedAttack), nameof(BodyPartType.Tough), nameof(BodyPartType.Heal), nameof(BodyPartType.Claim)];
+
+        public static ReadOnlySpan<string> Names => names;
 
         public const int Count = 8;
     }

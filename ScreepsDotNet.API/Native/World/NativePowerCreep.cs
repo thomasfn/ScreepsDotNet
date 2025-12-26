@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Linq;
 
@@ -13,7 +12,7 @@ namespace ScreepsDotNet.Native.World
 {
     internal static class NativePowerCreepExtensions
     {
-        private static readonly ImmutableArray<Name> powerCreepOrderTypeToName =
+        private static readonly Name[] powerCreepOrderTypeToName =
         [
             Name.Create("drop"),
             Name.Create("move"),
@@ -26,7 +25,7 @@ namespace ScreepsDotNet.Native.World
             Name.Create("withdraw"),
         ];
 
-        private static readonly ImmutableArray<Name> powerCreepClassToName =
+        private static readonly Name[] powerCreepClassToName =
         [
             Name.Create("operator"),
         ];

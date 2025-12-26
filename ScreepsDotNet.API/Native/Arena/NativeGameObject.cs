@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Linq;
-using System.Collections.Immutable;
 
 using ScreepsDotNet.Interop;
 
@@ -111,32 +110,32 @@ namespace ScreepsDotNet.Native.Arena
 
         public T? FindClosestByPath<T>(IEnumerable<T> positions, FindPathOptions? options) where T : class, IPosition
             => (options != null
-                ? Native_FindClosestByPath(proxyObject, positions.Select(x => x.ToJS()).ToArray(), options.Value.ToJS())
-                : Native_FindClosestByPath_NoOpts(proxyObject, positions.Select(x => x.ToJS()).ToArray())
+                ? Native_FindClosestByPath(proxyObject, [.. positions.Select(x => x.ToJS())], options.Value.ToJS())
+                : Native_FindClosestByPath_NoOpts(proxyObject, [.. positions.Select(x => x.ToJS())])
             ).ToGameObject<IGameObject>(nativeRoot) as T;
 
         public Position? FindClosestByPath(IEnumerable<Position> positions, FindPathOptions? options)
             => (options != null
-                ? Native_FindClosestByPath(proxyObject, positions.Select(x => x.ToJS()).ToArray(), options.Value.ToJS())
-                : Native_FindClosestByPath_NoOpts(proxyObject, positions.Select(x => x.ToJS()).ToArray())
+                ? Native_FindClosestByPath(proxyObject, [.. positions.Select(x => x.ToJS())], options.Value.ToJS())
+                : Native_FindClosestByPath_NoOpts(proxyObject, [.. positions.Select(x => x.ToJS())])
             ).ToPositionNullable();
 
         public T? FindClosestByRange<T>(IEnumerable<T> positions) where T : class, IPosition
-            => Native_FindClosestByRange(proxyObject, positions.Select(x => x.ToJS()).ToArray()).ToGameObject<IGameObject>(nativeRoot) as T;
+            => Native_FindClosestByRange(proxyObject, [.. positions.Select(x => x.ToJS())]).ToGameObject<IGameObject>(nativeRoot) as T;
 
         public Position? FindClosestByRange(IEnumerable<Position> positions)
-            => Native_FindClosestByRange(proxyObject, positions.Select(x => x.ToJS()).ToArray()).ToPosition();
+            => Native_FindClosestByRange(proxyObject, [.. positions.Select(x => x.ToJS())]).ToPosition();
 
         public IEnumerable<T> FindInRange<T>(IEnumerable<T> positions, int range) where T : class, IPosition
-            => Native_FindInRange(proxyObject, positions.Select(x => x.ToJS()).ToArray(), range)
+            => Native_FindInRange(proxyObject, [.. positions.Select(x => x.ToJS())], range)
                 .Select(nativeRoot.GetOrCreateWrapperForObject)
                 .OfType<T>();
 
         public IEnumerable<Position> FindInRange(IEnumerable<Position> positions, int range)
-            => Native_FindInRange(proxyObject, positions.Select(x => x.ToJS()).ToArray(), range)
+            => Native_FindInRange(proxyObject, [.. positions.Select(x => x.ToJS())], range)
                 .Select(x => x.ToPosition());
 
-        public ImmutableArray<Position> FindPathTo(IPosition pos, FindPathOptions? options)
+        public Position[] FindPathTo(IPosition pos, FindPathOptions? options)
         {
             using var optionsJs = options?.ToJS();
             int pathLength;
@@ -148,10 +147,10 @@ namespace ScreepsDotNet.Native.Arena
                 }
             }
             if (pathLength == 0) { return []; }
-            return NativePathFinder.pathPositionBuffer.AsSpan()[..pathLength].ToImmutableArray();
+            return [.. NativePathFinder.pathPositionBuffer.AsSpan()[..pathLength]];
         }
 
-        public ImmutableArray<Position> FindPathTo(Position pos, FindPathOptions? options)
+        public Position[] FindPathTo(Position pos, FindPathOptions? options)
         {
             using var optionsJs = options?.ToJS();
             int pathLength;
@@ -163,7 +162,7 @@ namespace ScreepsDotNet.Native.Arena
                 }
             }
             if (pathLength == 0) { return []; }
-            return NativePathFinder.pathPositionBuffer.AsSpan()[..pathLength].ToImmutableArray();
+            return [.. NativePathFinder.pathPositionBuffer.AsSpan()[..pathLength]];
         }
 
         public int GetRangeTo(IPosition pos)

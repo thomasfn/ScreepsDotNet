@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 
 namespace ScreepsDotNet.Interop
@@ -35,10 +33,10 @@ namespace ScreepsDotNet.Interop
         private static partial int GetTypeOfPropertyOnObject(JSObject obj, Name key);
 
         [JSImport("getKeys", "__object")]
-        private static partial ImmutableArray<string> GetKeysOnObject(JSObject obj);
+        private static partial string[] GetKeysOnObject(JSObject obj);
 
         [JSImport("getKeys", "__object")]
-        private static partial ImmutableArray<Name> GetKeysAsNamesOnObject(JSObject obj);
+        private static partial Name[] GetKeysAsNamesOnObject(JSObject obj);
 
         [JSImport("getProperty", "__object")]
         private static partial bool GetPropertyAsBooleanOnObject(JSObject obj, string key);
@@ -194,10 +192,10 @@ namespace ScreepsDotNet.Interop
         public JSPropertyType GetTypeOfProperty(Name propertyName) => (JSPropertyType)GetTypeOfPropertyOnObject(this, propertyName);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ImmutableArray<string> GetPropertyNames() => GetKeysOnObject(this);
+        public string[] GetPropertyNames() => GetKeysOnObject(this);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ImmutableArray<Name> GetPropertyNamesAsNames() => GetKeysAsNamesOnObject(this);
+        public Name[] GetPropertyNamesAsNames() => GetKeysAsNamesOnObject(this);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool GetPropertyAsBoolean(string propertyName) => GetPropertyAsBooleanOnObject(this, propertyName);
