@@ -262,9 +262,7 @@ export class Interop {
             fieldsPtr += 4;
             spec.fieldSpecs[i] = { fieldName, paramSpec };
         }
-        const structIndex = this._structList.push(spec) - 1;
-        console.log("js_define_struct", spec, structIndex);
-        return structIndex;
+        return this._structList.push(spec) - 1;
     }
 
     private js_invoke_i_i(importIndex: number, p0: number): number {

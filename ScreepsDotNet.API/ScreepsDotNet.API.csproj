@@ -41,6 +41,7 @@
 		<None Remove="js\world\bootloader.js" />
 		<None Remove="js\world\loop.js" />
 		<None Remove="js\world\startup.js" />
+		<None Remove="js\screeps.wit" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -61,6 +62,8 @@
 		<Content Include="js\world\bootloader.js" PackagePath="js\world\" />
 		<Content Include="js\world\loop.js" PackagePath="js\world\" />
 		<Content Include="js\world\startup.js" PackagePath="js\world\" />
+
+		<Content Include="js\screeps.wit" PackagePath="js\" />
 	</ItemGroup>
 
 </Project>

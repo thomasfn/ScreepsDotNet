@@ -20,6 +20,7 @@ export default {
         alias({
             entries: [
                 { find: './noop-world.js', replacement: './world.js' },
+                { find: './test.js', replacement: './noop.js' },
             ],
         }),
         typescript({}),
