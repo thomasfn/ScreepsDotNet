@@ -9,6 +9,7 @@
     	<LinkerArg Include="-Wl,--component-type,&quot;$(ScreepsWit.Replace('\', '/'))&quot;" />
 		<LinkerArg Include="-Wl,--export=malloc" />
 		<LinkerArg Include="-Wl,--export=free" />
+		<UnmanagedEntryPointsAssembly Include="ScreepsDotNet.API" />
 	</ItemGroup>
 	<ItemGroup>
 		<ScreepsWorldJsFiles Include="$(MSBuildThisFileDirectory)..\js\world\bootloader.js" />

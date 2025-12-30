@@ -4,9 +4,9 @@ package screeps:screepsdotnet;
 interface botapi {
   init: func();
   loop: func();
-  //invoke-room-callback: func(p1: s32, p2: s32) -> s32;
-  //invoke-cost-callback: func(p1: s32, p2: s32, p3: s32) -> s32;
-  //invoke-route-callback: func(p1: s32, p2: s32, p3: s32, p4: s32) -> f64;
+  invoke-room-callback: func(p1: s32, p2: s32) -> s32;
+  invoke-cost-callback: func(p1: s32, p2: s32, p3: s32) -> s32;
+  invoke-route-callback: func(p1: s32, p2: s32, p3: s32, p4: s32) -> f64;
 }
 
 interface js-bindings {

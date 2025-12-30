@@ -41,7 +41,7 @@
 
 		<WasmMetadceConfigurationFlags Include="-f &quot;$(ScreepsDceGraph)&quot;" />
 		<WasmMetadceConfigurationFlags Include="--enable-bulk-memory-opt" />
-		<WasmMetadceConfigurationFlags Include="--enable-multimemory" />		
+		<WasmMetadceConfigurationFlags Include="--enable-multimemory" />
 
 		<WasmOptConfigurationFlags Include="-mvp" />
 		<WasmOptConfigurationFlags Include="--multi-memory-lowering" />

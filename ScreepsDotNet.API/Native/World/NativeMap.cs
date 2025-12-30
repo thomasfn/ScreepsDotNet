@@ -10,7 +10,7 @@ using ScreepsDotNet.API.World;
 namespace ScreepsDotNet.Native.World
 {
     [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
-    public static partial class NativeMapExtensions
+    internal static partial class NativeMapExtensions
     {
         #region Imports
 
