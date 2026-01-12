@@ -101,6 +101,18 @@ namespace ScreepsDotNet.API
             Y = y;
         }
 
+        public FractionalPosition(int x, int y)
+        {
+            X = Convert.ToDouble(x);
+            Y = Convert.ToDouble(y);
+        }
+
+        public FractionalPosition( Position position )
+        {
+            X = Convert.ToDouble(position.X);
+            Y = Convert.ToDouble(position.Y);
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double CartesianDistanceTo(FractionalPosition other)
             => Math.Sqrt((X - other.X) * (X - other.X) + (Y - other.Y) * (Y - other.Y));
