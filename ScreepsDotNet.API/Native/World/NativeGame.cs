@@ -47,6 +47,14 @@ namespace ScreepsDotNet.Native.World
         IEnumerable<T> GetWrapperObjectsFromBuffer<T>(ReadOnlySpan<RoomObjectMetadata> objectMetadatas) where T : class, IRoomObject;
     }
 
+    [JSStruct]
+    internal partial struct JSGCLInfo
+    {
+        [JSStructField("level")] public int Level;
+        [JSStructField("progress")] public int Progress;
+        [JSStructField("progressTotal")] public int ProgressTotal;
+    }
+
     [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
     public partial class NativeGame : IGame, INativeRoot
     {
@@ -72,6 +80,9 @@ namespace ScreepsDotNet.Native.World
 
         [JSImport("powerCreep.create", "game")]
         internal static partial int Native_CreatePowerCreep(string name, Name className);
+
+        [JSImport("getProperty", "__object")]
+        private static partial JSGCLInfo GetPropertyAsGCLInfoOnObject(JSObject obj, Name key);
 
         #endregion
 
@@ -100,6 +111,8 @@ namespace ScreepsDotNet.Native.World
 
         private long? timeCache;
         private ShardInfo? shardInfoCache;
+        private GCLInfo? gclInfoCache;
+        private GPLInfo? gplInfoCache;
 
         public JSObject GameObj => ProxyObject;
 
@@ -146,6 +159,10 @@ namespace ScreepsDotNet.Native.World
         public IReadOnlyDictionary<string, IStructureSpawn> Spawns => spawnLazyLookup;
 
         public ShardInfo Shard => shardInfoCache ??= GetShardInfo();
+
+        public GCLInfo GCL => gclInfoCache ??= GetGCLInfo();
+
+        public GPLInfo GPL => gplInfoCache ??= GetGPLInfo();
 
         public IReadOnlyDictionary<string, IStructure> Structures => structureLazyLookup;
 
@@ -206,6 +223,8 @@ namespace ScreepsDotNet.Native.World
             spawnLazyLookup.InvalidateProxyObject();
             structureLazyLookup.InvalidateProxyObject();
             timeCache = null;
+            gclInfoCache = null;
+            gplInfoCache = null;
             if (TickIndex % 10 == 0)
             {
                 PruneRoomsByCoordCache();
@@ -381,10 +400,22 @@ namespace ScreepsDotNet.Native.World
         {
             using var shardObj = GameObj.GetPropertyAsJSObject(Names.Shard)!;
             return new(
-                name: shardObj.GetPropertyAsString(Names.Name)!,
-                type: shardObj.GetPropertyAsString(Names.Type)!,
-                ptr: shardObj.GetPropertyAsBoolean(Names.Ptr)!
+                Name: shardObj.GetPropertyAsString(Names.Name)!,
+                Type: shardObj.GetPropertyAsString(Names.Type)!,
+                PTR: shardObj.GetPropertyAsBoolean(Names.Ptr)!
             );
+        }
+
+        private GCLInfo GetGCLInfo()
+        {
+            var gclInfo = GetPropertyAsGCLInfoOnObject(GameObj, Names.GCL)!;
+            return new(gclInfo.Level, gclInfo.Progress, gclInfo.ProgressTotal);
+        }
+
+        private GPLInfo GetGPLInfo()
+        {
+            var gplInfo = GetPropertyAsGCLInfoOnObject(GameObj, Names.GPL)!;
+            return new(gplInfo.Level, gplInfo.Progress, gplInfo.ProgressTotal);
         }
     }
 }

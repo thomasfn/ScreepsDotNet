@@ -17,28 +17,41 @@ namespace ScreepsDotNet.API.World
           System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
     }
 
-    public readonly struct ShardInfo
-    {
-        /// <summary>
-        /// The name of the shard.
-        /// </summary>
-        public readonly string Name;
-        /// <summary>
-        /// Currently always equals to normal.
-        /// </summary>
-        public readonly string Type;
-        /// <summary>
-        /// Whether this shard belongs to the PTR.
-        /// </summary>
-        public readonly bool PTR;
+    /// <param name="Name">The name of the shard.</param>
+    /// <param name="Type">Currently always equals to normal.</param>
+    /// <param name="PTR">Whether this shard belongs to the PTR.</param>
+    public readonly record struct ShardInfo
+    (
+        string Name,
+        string Type,
+        bool PTR
+    );
 
-        public ShardInfo(string name, string type, bool ptr)
-        {
-            Name = name;
-            Type = type;
-            PTR = ptr;
-        }
-    }
+    /// <summary>
+    /// Your Global Control Level.
+    /// </summary>
+    /// <param name="Level">The current level.</param>
+    /// <param name="Progress">The current progress to the next level.</param>
+    /// <param name="ProgressTotal">The progress required to reach the next level.</param>
+    public readonly record struct GCLInfo
+    (
+        int Level,
+        int Progress,
+        int ProgressTotal
+    );
+
+    /// <summary>
+    /// Your Global Power Level.
+    /// </summary>
+    /// <param name="Level">The current level.</param>
+    /// <param name="Progress">The current progress to the next level.</param>
+    /// <param name="ProgressTotal">The progress required to reach the next level.</param>
+    public readonly record struct GPLInfo
+    (
+        int Level,
+        int Progress,
+        int ProgressTotal
+    );
 
     public enum PowerCreepCreateResult
     {
@@ -137,6 +150,16 @@ namespace ScreepsDotNet.API.World
         /// An object describing the world shard where your script is currently being executed in.
         /// </summary>
         ShardInfo Shard { get; }
+
+        /// <summary>
+        /// Your Global Control Level.
+        /// </summary>
+        GCLInfo GCL { get; }
+
+        /// <summary>
+        /// Your Global Power Level.
+        /// </summary>
+        GPLInfo GPL { get; }
 
         /// <summary>
         /// A hash containing all your spawns with spawn names as hash keys.

@@ -136,5 +136,7 @@ namespace ScreepsDotNet.Native.World
         public static readonly Name Pos = Name.Create("pos");
         public static readonly Name RouteCallback = Name.Create("routeCallback");
         public static readonly Name Exit = Name.Create("exit");
+        public static readonly Name GCL = Name.Create("gcl");
+        public static readonly Name GPL = Name.Create("gpl");
     }
 }
