@@ -441,26 +441,83 @@ namespace ScreepsDotNet.Interop
         public const int InvokeImportExceptionArgIndex = 1;
         public const int InvokeImportArgsReserveCount = 2;
 
-        private static readonly Dictionary<IntPtr, GCHandle> trackedJSObjects = [];
-        
+        private static Dictionary<IntPtr, GCHandle> trackedJSObjects = [];
+        private static List<(IntPtr, GCHandle)> trackedJSObjectsList = [];
+
         internal static JSObject GetJSObject(IntPtr jsHandle)
+        {
+            try
+            {
+                return GetJSObjectInternal(jsHandle);
+            }
+            catch (IndexOutOfRangeException)
+            {
+                // Something weird is happening to the dictionary sometimes that causes it to get into a corrupt state
+                // When this happens, any attempts to use the dictionary (both reads and writes) throw a ArgumentOutOfRangeException
+                // Supposedly this can happen when you try and use the dictionary from multiple threads, but this is WASM and threads aren't involved...
+                // It could be some kind of weird WASM memory corruption thing but it seems weirdly consistent to always corrupt this dictionary and nothing else
+                // Maybe we're trying to insert too many things and running out of memory? Or an insert is causing a WASM heap expansion and breaking something?
+                // Maybe we need to stop using a dictionary for this and come up with a bespoke solution
+                // For now, let's detect this case and try to recover from it
+                Console.WriteLine($"trackedJSObjects corruption detected,rReconstructing TrackedJSObjects...");
+                ReconstructTrackedJSObjects();
+                return GetJSObjectInternal(jsHandle);
+            }
+        }
+
+        internal static JSObject GetJSObjectInternal(IntPtr jsHandle)
         {
             if (trackedJSObjects.TryGetValue(jsHandle, out var gcHandle) && gcHandle.Target is JSObject obj)
             {
                 return obj;
             }
             obj = new JSObject(jsHandle);
-            trackedJSObjects[jsHandle] = GCHandle.Alloc(obj, GCHandleType.WeakTrackResurrection);
+            gcHandle = GCHandle.Alloc(obj, GCHandleType.WeakTrackResurrection);
+            trackedJSObjects[jsHandle] = gcHandle;
+            trackedJSObjectsList.Add((jsHandle, gcHandle));
             return obj;
         }
 
         internal static void ReleaseJSObject(IntPtr jsHandle)
+        {
+            try
+            {
+                ReleaseJSObjectInternal(jsHandle);
+            }
+            catch (IndexOutOfRangeException)
+            {
+                // See note in GetJSObject about corruption
+                Console.WriteLine($"trackedJSObjects corruption detected,rReconstructing TrackedJSObjects...");
+                ReconstructTrackedJSObjects();
+                ReleaseJSObjectInternal(jsHandle);
+            }
+        }
+
+        internal static void ReleaseJSObjectInternal(IntPtr jsHandle)
         {
             if (trackedJSObjects.Remove(jsHandle, out var gcHandle))
             {
                 gcHandle.Free();
             }
             ScreepsDotNet_Interop.ReleaseObjectReference(jsHandle);
+        }
+
+        internal static void ReconstructTrackedJSObjects()
+        {
+            trackedJSObjects = [];
+            trackedJSObjects.EnsureCapacity(trackedJSObjectsList.Count);
+            foreach (var pair in trackedJSObjectsList)
+            {
+                if (pair.Item2.Target is JSObject)
+                {
+                    trackedJSObjects.Add(pair.Item1, pair.Item2);
+                }
+            }
+            trackedJSObjectsList.Clear();
+            foreach (var pair in trackedJSObjects)
+            {
+                trackedJSObjectsList.Add((pair.Key, pair.Value));
+            }
         }
 
         public static unsafe int DefineStruct(ReadOnlySpan<StructFieldSpec> fieldSpecs)
