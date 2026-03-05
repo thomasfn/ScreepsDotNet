@@ -385,7 +385,7 @@ export class Interop {
                 lines.push(`  argsPtr += 16;`);
             }
             lines.push(`} catch (err) {`);
-            lines.push(`  throw new Error(this.stringifyImportBindingForDisplay(importIndex) + ': ' + err.message);`);
+            lines.push(`  throw new Error(this.stringifyImportBindingForDisplay(${importIndex}) + ': ' + err.message);`);
             lines.push(`}`);
         }
         lines.push(`var t1 = this._profileFn();`);
@@ -393,6 +393,7 @@ export class Interop {
         lines.push(`var returnVal;`);
         lines.push(`try {`);
         lines.push(`  returnVal = importFunction(${paramList});`);
+        lines.push(`  memoryView.flush();`);
         lines.push(`  this.marshalToClr(memoryView, returnValPtr, functionSpec.returnSpec, returnVal);`);
         lines.push(`  return 1;`);
         lines.push(`} catch (err) {`);
@@ -401,8 +402,8 @@ export class Interop {
         lines.push(`  var t2 = this._profileFn();`);
         lines.push(`  this._timeInJsUserCode += (t2 - t1);`);
         lines.push(`}`);
-        const compiler = (Function(`return function import_binding_${importIndex}(scope, importIndex, importFunction, functionSpec, paramsBufferPtr) {\n${lines.join('\n')}\n};`) as () => ((scope: typeof IMPORT_BINDING_SCOPE, importIndex: number, importFunction: (...args: unknown[]) => unknown, functionSpec: Readonly<FunctionSpec>, paramsBufferPtr: number) => number));
-        return compiler().bind(this, IMPORT_BINDING_SCOPE, importIndex, importFunction, functionSpec);
+        const compiler = (Function(`return function import_binding_${importIndex}(scope, importFunction, functionSpec, paramsBufferPtr) {\n${lines.join('\n')}\n};`) as () => ((scope: typeof IMPORT_BINDING_SCOPE, importFunction: (...args: unknown[]) => unknown, functionSpec: Readonly<FunctionSpec>, paramsBufferPtr: number) => number));
+        return compiler().bind(this, IMPORT_BINDING_SCOPE, importFunction, functionSpec);
     }
 
     private marshalToJs(memoryView: WasmMemoryView, valuePtr: number, paramSpec: Readonly<ParamSpec>): unknown {
@@ -563,6 +564,7 @@ export class Interop {
 
     private stringToClr(memoryView: WasmMemoryView, str: string): number {
         const strPtr = this._malloc!((str.length + 1) * 2);
+        memoryView.flush();
         let charPtr = strPtr;
         for (let i = 0; i < str.length; ++i) {
             memoryView.u16[charPtr >> 1] = str.charCodeAt(i);
@@ -584,6 +586,7 @@ export class Interop {
 
     private arrayToClr(memoryView: WasmMemoryView, value: unknown[], elementSpec: Readonly<ParamSpec>): number {
         const arrPtr = this._malloc!(value.length * 16);
+        memoryView.flush();
         let elPtr = arrPtr;
         for (let i = 0; i < value.length; ++i) {
             this.marshalToClr(memoryView, elPtr, elementSpec, value[i]);
@@ -631,6 +634,7 @@ export class Interop {
             bufferSize += str.length + 1;
         }
         const strPtr = this._malloc!(bufferSize * 2);
+        memoryView.flush();
         let charPtr = strPtr;
         for (const element of value) {
             if (elementSpec.nullable) {

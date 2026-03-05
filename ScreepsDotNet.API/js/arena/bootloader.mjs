@@ -1134,7 +1134,7 @@ var bootloader = (function (exports) {
             lines.push("  argsPtr += 16;");
           }
           lines.push("} catch (err) {");
-          lines.push("  throw new Error(this.stringifyImportBindingForDisplay(importIndex) + ': ' + err.message);");
+          lines.push("  throw new Error(this.stringifyImportBindingForDisplay(".concat(importIndex, ") + ': ' + err.message);"));
           lines.push("}");
         }
         lines.push("var t1 = this._profileFn();");
@@ -1142,6 +1142,7 @@ var bootloader = (function (exports) {
         lines.push("var returnVal;");
         lines.push("try {");
         lines.push("  returnVal = importFunction(".concat(paramList, ");"));
+        lines.push("  memoryView.flush();");
         lines.push("  this.marshalToClr(memoryView, returnValPtr, functionSpec.returnSpec, returnVal);");
         lines.push("  return 1;");
         lines.push("} catch (err) {");
@@ -1150,8 +1151,8 @@ var bootloader = (function (exports) {
         lines.push("  var t2 = this._profileFn();");
         lines.push("  this._timeInJsUserCode += (t2 - t1);");
         lines.push("}");
-        var compiler = Function("return function import_binding_".concat(importIndex, "(scope, importIndex, importFunction, functionSpec, paramsBufferPtr) {\n").concat(lines.join('\n'), "\n};"));
-        return compiler().bind(this, IMPORT_BINDING_SCOPE, importIndex, importFunction, functionSpec);
+        var compiler = Function("return function import_binding_".concat(importIndex, "(scope, importFunction, functionSpec, paramsBufferPtr) {\n").concat(lines.join('\n'), "\n};"));
+        return compiler().bind(this, IMPORT_BINDING_SCOPE, importFunction, functionSpec);
       }
     }, {
       key: "marshalToJs",
@@ -1358,6 +1359,7 @@ var bootloader = (function (exports) {
       key: "stringToClr",
       value: function stringToClr(memoryView, str) {
         var strPtr = this._malloc((str.length + 1) * 2);
+        memoryView.flush();
         var charPtr = strPtr;
         for (var i = 0; i < str.length; ++i) {
           memoryView.u16[charPtr >> 1] = str.charCodeAt(i);
@@ -1381,6 +1383,7 @@ var bootloader = (function (exports) {
       key: "arrayToClr",
       value: function arrayToClr(memoryView, value, elementSpec) {
         var arrPtr = this._malloc(value.length * 16);
+        memoryView.flush();
         var elPtr = arrPtr;
         for (var i = 0; i < value.length; ++i) {
           this.marshalToClr(memoryView, elPtr, elementSpec, value[i]);
@@ -1441,6 +1444,7 @@ var bootloader = (function (exports) {
           _iterator2.f();
         }
         var strPtr = this._malloc(bufferSize * 2);
+        memoryView.flush();
         var charPtr = strPtr;
         var _iterator3 = _createForOfIteratorHelper(value),
           _step3;
@@ -1654,40 +1658,63 @@ var bootloader = (function (exports) {
     return Interop;
   }();
 
-  function createWasmMemoryView(memory) {
-    return {
-      u8: new Uint8Array(memory.buffer),
-      i8: new Int8Array(memory.buffer),
-      u16: new Uint16Array(memory.buffer),
-      i16: new Int16Array(memory.buffer),
-      u32: new Uint32Array(memory.buffer),
-      i32: new Int32Array(memory.buffer),
-      f32: new Float32Array(memory.buffer),
-      f64: new Float64Array(memory.buffer),
-      dataView: new DataView(memory.buffer)
-    };
-  }
+  var WasmMemoryViewImpl = /*#__PURE__*/function () {
+    function WasmMemoryViewImpl(memory) {
+      _classCallCheck(this, WasmMemoryViewImpl);
+      _defineProperty(this, "_memory", void 0);
+      _defineProperty(this, "_viewArrayBuffer", void 0);
+      _defineProperty(this, "u8", void 0);
+      _defineProperty(this, "i8", void 0);
+      _defineProperty(this, "u16", void 0);
+      _defineProperty(this, "i16", void 0);
+      _defineProperty(this, "u32", void 0);
+      _defineProperty(this, "i32", void 0);
+      _defineProperty(this, "f32", void 0);
+      _defineProperty(this, "f64", void 0);
+      _defineProperty(this, "dataView", void 0);
+      this._memory = memory;
+      this._viewArrayBuffer = memory.buffer;
+      this.u8 = new Uint8Array(memory.buffer);
+      this.i8 = new Int8Array(memory.buffer);
+      this.u16 = new Uint16Array(memory.buffer);
+      this.i16 = new Int16Array(memory.buffer);
+      this.u32 = new Uint32Array(memory.buffer);
+      this.i32 = new Int32Array(memory.buffer);
+      this.f32 = new Float32Array(memory.buffer);
+      this.f64 = new Float64Array(memory.buffer);
+      this.dataView = new DataView(memory.buffer);
+    }
+    _createClass(WasmMemoryViewImpl, [{
+      key: "flush",
+      value: function flush() {
+        if (this._memory.buffer === this._viewArrayBuffer) {
+          return;
+        }
+        this._viewArrayBuffer = this._memory.buffer;
+        this.u8 = new Uint8Array(this._memory.buffer);
+        this.i8 = new Int8Array(this._memory.buffer);
+        this.u16 = new Uint16Array(this._memory.buffer);
+        this.i16 = new Int16Array(this._memory.buffer);
+        this.u32 = new Uint32Array(this._memory.buffer);
+        this.i32 = new Int32Array(this._memory.buffer);
+        this.f32 = new Float32Array(this._memory.buffer);
+        this.f64 = new Float64Array(this._memory.buffer);
+        this.dataView = new DataView(this._memory.buffer);
+      }
+    }]);
+    return WasmMemoryViewImpl;
+  }();
   var WasmMemoryManager = /*#__PURE__*/function () {
     function WasmMemoryManager(memory) {
       _classCallCheck(this, WasmMemoryManager);
-      _defineProperty(this, "_memory", void 0);
       _defineProperty(this, "_view", void 0);
-      _defineProperty(this, "_viewArrayBuffer", void 0);
-      this._memory = memory;
+      this._view = new WasmMemoryViewImpl(memory);
     }
     _createClass(WasmMemoryManager, [{
       key: "view",
       get: function get() {
-        if (this._view == null || this._viewArrayBuffer !== this._memory.buffer) {
-          this._view = this.createNewView();
-          this._viewArrayBuffer = this._memory.buffer;
-        }
+        this._view.flush();
         return this._view;
-      }
-    }, {
-      key: "createNewView",
-      value: function createNewView() {
-        return createWasmMemoryView(this._memory);
       }
     }]);
     return WasmMemoryManager;

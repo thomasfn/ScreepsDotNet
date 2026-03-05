@@ -459,7 +459,7 @@ namespace ScreepsDotNet.Interop
                 // Maybe we're trying to insert too many things and running out of memory? Or an insert is causing a WASM heap expansion and breaking something?
                 // Maybe we need to stop using a dictionary for this and come up with a bespoke solution
                 // For now, let's detect this case and try to recover from it
-                Console.WriteLine($"trackedJSObjects corruption detected,rReconstructing TrackedJSObjects...");
+                Console.WriteLine($"trackedJSObjects corruption detected, attempting recovery...");
                 ReconstructTrackedJSObjects();
                 return GetJSObjectInternal(jsHandle);
             }
@@ -487,7 +487,7 @@ namespace ScreepsDotNet.Interop
             catch (IndexOutOfRangeException)
             {
                 // See note in GetJSObject about corruption
-                Console.WriteLine($"trackedJSObjects corruption detected,rReconstructing TrackedJSObjects...");
+                Console.WriteLine($"trackedJSObjects corruption detected, attempting recovery...");
                 ReconstructTrackedJSObjects();
                 ReleaseJSObjectInternal(jsHandle);
             }
