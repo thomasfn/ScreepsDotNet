@@ -229,10 +229,7 @@ namespace ScreepsDotNet.Native.World
             {
                 PruneRoomsByCoordCache();
             }
-            if (TickIndex % 108 == 0)
-            {
-                Interop.Native.ReconstructTrackedJSObjects();
-            }
+            Interop.Native.ReleasePendingJSObjects();
             Native_CheckIn();
         }
 

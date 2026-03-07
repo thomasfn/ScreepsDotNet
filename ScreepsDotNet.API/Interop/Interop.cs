@@ -441,82 +441,43 @@ namespace ScreepsDotNet.Interop
         public const int InvokeImportExceptionArgIndex = 1;
         public const int InvokeImportArgsReserveCount = 2;
 
-        private static Dictionary<IntPtr, GCHandle> trackedJSObjects = [];
-        private static List<(IntPtr, GCHandle)> trackedJSObjectsList = [];
+        private static readonly Dictionary<IntPtr, GCHandle> trackedJSObjects = [];
+        private static readonly List<IntPtr> releaseQueue = new(128);
 
         internal static JSObject GetJSObject(IntPtr jsHandle)
         {
-            try
+            if (trackedJSObjects.TryGetValue(jsHandle, out var gcHandle))
             {
-                return GetJSObjectInternal(jsHandle);
+                if (gcHandle.Target is JSObject obj) { return obj; }
+                if (gcHandle.IsAllocated) { gcHandle.Free(); }
             }
-            catch (IndexOutOfRangeException)
-            {
-                // Something weird is happening to the dictionary sometimes that causes it to get into a corrupt state
-                // When this happens, any attempts to use the dictionary (both reads and writes) throw a ArgumentOutOfRangeException
-                // Supposedly this can happen when you try and use the dictionary from multiple threads, but this is WASM and threads aren't involved...
-                // It could be some kind of weird WASM memory corruption thing but it seems weirdly consistent to always corrupt this dictionary and nothing else
-                // Maybe we're trying to insert too many things and running out of memory? Or an insert is causing a WASM heap expansion and breaking something?
-                // Maybe we need to stop using a dictionary for this and come up with a bespoke solution
-                // For now, let's detect this case and try to recover from it
-                Console.WriteLine($"trackedJSObjects corruption detected, attempting recovery...");
-                ReconstructTrackedJSObjects();
-                return GetJSObjectInternal(jsHandle);
-            }
-        }
-
-        internal static JSObject GetJSObjectInternal(IntPtr jsHandle)
-        {
-            if (trackedJSObjects.TryGetValue(jsHandle, out var gcHandle) && gcHandle.Target is JSObject obj)
-            {
-                return obj;
-            }
-            obj = new JSObject(jsHandle);
-            gcHandle = GCHandle.Alloc(obj, GCHandleType.WeakTrackResurrection);
+            var newObj = new JSObject(jsHandle);
+            gcHandle = GCHandle.Alloc(newObj, GCHandleType.Weak);
             trackedJSObjects[jsHandle] = gcHandle;
-            trackedJSObjectsList.Add((jsHandle, gcHandle));
-            return obj;
+            return newObj;
         }
 
         internal static void ReleaseJSObject(IntPtr jsHandle)
         {
-            try
+            releaseQueue.Add(jsHandle);
+            ScreepsDotNet_Interop.ReleaseObjectReference(jsHandle);
+        }
+
+        internal static void ReleasePendingJSObjects()
+        {
+            for (int i = 0; i < releaseQueue.Count; ++i)
             {
-                ReleaseJSObjectInternal(jsHandle);
+                ReleaseJSObjectInternal(releaseQueue[i]);
             }
-            catch (IndexOutOfRangeException)
-            {
-                // See note in GetJSObject about corruption
-                Console.WriteLine($"trackedJSObjects corruption detected, attempting recovery...");
-                ReconstructTrackedJSObjects();
-                ReleaseJSObjectInternal(jsHandle);
-            }
+            releaseQueue.Clear();
         }
 
         internal static void ReleaseJSObjectInternal(IntPtr jsHandle)
         {
-            if (trackedJSObjects.Remove(jsHandle, out var gcHandle))
+            if (trackedJSObjects.TryGetValue(jsHandle, out var gcHandle) && (!gcHandle.IsAllocated || gcHandle.Target == null))
             {
-                gcHandle.Free();
-            }
-            ScreepsDotNet_Interop.ReleaseObjectReference(jsHandle);
-        }
-
-        internal static void ReconstructTrackedJSObjects()
-        {
-            trackedJSObjects = [];
-            trackedJSObjects.EnsureCapacity(trackedJSObjectsList.Count);
-            foreach (var pair in trackedJSObjectsList)
-            {
-                if (pair.Item2.Target is JSObject)
-                {
-                    trackedJSObjects.Add(pair.Item1, pair.Item2);
-                }
-            }
-            trackedJSObjectsList.Clear();
-            foreach (var pair in trackedJSObjects)
-            {
-                trackedJSObjectsList.Add((pair.Key, pair.Value));
+                trackedJSObjects.Remove(jsHandle);
+                if (gcHandle.IsAllocated) { gcHandle.Free(); }
             }
         }
 
