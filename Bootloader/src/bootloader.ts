@@ -5,7 +5,7 @@ import * as fflate from 'fflate';
 
 import { ImportTable, Interop } from './interop.js';
 import { ScreepsDotNetExports } from './common.js';
-import { WasmMemoryManager, WasmMemoryView } from './memory.js';
+import { WasmMemoryManager } from './memory.js';
 import BaseBindings from './bindings/base.js';
 import { getBindings } from './bindings/index.js';
 
@@ -20,8 +20,8 @@ class Stdio {
         this._outFunc = outFunc;
     }
 
-    public write(view: WasmMemoryView, buf: number, buf_len: number): void {
-        const buffer = view.u8.slice(buf, buf + buf_len);
+    public write(memory: WasmMemoryManager, buf: number, buf_len: number): void {
+        const buffer = memory.getArrayView(buf, buf_len);
         this.addTextToBuffer(utf8Decoder.decode(buffer));
     }
 
@@ -88,7 +88,7 @@ export class Bootloader {
 
     private _wasmModule?: WebAssembly.Module;
     private _wasmInstance?: ScreepsDotNetWasmInstance;
-    private _memoryManager?: WasmMemoryManager;
+    private _memory?: WasmMemoryManager;
     private _compiled: boolean = false;
     private _started: boolean = false;
 
@@ -139,32 +139,37 @@ export class Bootloader {
     }
 
     private sys_get_time(time_ptr: number): void {
-        const dataView = this._memoryManager!.view.dataView;
-        dataView.setBigUint64(time_ptr, BigInt(new Date().getTime()) * 1000000n, true);
+        this._memory!.flush();
+        this._memory!.writeU64(time_ptr, BigInt(new Date().getTime()) * 1000000n);
     }
 
     private sys_get_random(buf: number, buf_len: number): void {
-        const { u32, u8 } = this._memoryManager!.view;
-        while (buf_len >= 4) {
-            u32[buf >> 2] = Math.random() * (1 << 32);
-            buf += 4;
-            buf_len -= 4;
-        }
-        while (buf_len > 0) {
-            u8[buf] = Math.random() * (1 << 8);
-            ++buf;
-            --buf_len;
+        try {
+            this._memory!.flush();
+            this._memory!.enterConstrainedRange(buf, buf_len);
+            while (buf_len >= 4) {
+                this._memory!.writeU32(buf, Math.random() * 0xffffffff);
+                buf += 4;
+                buf_len -= 4;
+            }
+            while (buf_len > 0) {
+                this._memory!.writeU8(buf, Math.random() * 0xff);
+                ++buf;
+                --buf_len;
+            }
+        } finally {
+            this._memory!.exitConstrainedRange();
         }
     }
 
     private sys_write_stderr(buf: number, buf_len: number): void {
-        if (!this._memoryManager) { return; }
-        this._stderr.write(this._memoryManager.view, buf, buf_len);
+        this._memory!.flush();
+        this._stderr.write(this._memory!, buf, buf_len);
     }
 
     private sys_write_stdout(buf: number, buf_len: number): void {
-        if (!this._memoryManager) { return; }
-        this._stdout.write(this._memoryManager.view, buf, buf_len);
+        this._memory!.flush();
+        this._stdout.write(this._memory!, buf, buf_len);
     }
 
     public setImports(moduleName: string, importTable: ImportTable): void {
@@ -207,14 +212,14 @@ export class Bootloader {
         }
 
         // Wire things up
-        this._memoryManager = new WasmMemoryManager(this._wasmInstance.exports.memory);
-        this._interop.memoryManager = this._memoryManager;
+        this._memory = new WasmMemoryManager(this._wasmInstance.exports.memory);
+        this._interop.memory = this._memory;
         this._interop.malloc = this._wasmInstance.exports.malloc;
         this._compiled = true;
     }
 
     public start(customInitExportNames?: ReadonlyArray<string>): void {
-        if (!this._wasmInstance || !this._compiled || this._started || !this._memoryManager) { return; }
+        if (!this._wasmInstance || !this._compiled || this._started || !this._memory) { return; }
 
         // Run WASM entrypoint
         try {
@@ -231,7 +236,7 @@ export class Bootloader {
         }
 
         // Run bindings init
-        this._bindings?.init(this._wasmInstance.exports, this._memoryManager);
+        this._bindings?.init(this._wasmInstance.exports, this._memory);
 
         // Run usercode init
         {

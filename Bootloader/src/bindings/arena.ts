@@ -2,7 +2,7 @@
 
 import { ScreepsDotNetExports } from '../common.js';
 import type { ImportTable } from '../interop.js';
-import { WasmMemoryManager, WasmMemoryView } from '../memory.js';
+import { WasmMemoryManager } from '../memory.js';
 import BaseBindings from './base.js';
 
 import type { RoomPosition, GameObject, Store } from 'game/prototypes';
@@ -52,8 +52,8 @@ const BODYPART_TO_ENUM_MAP: Record<BodyPartConstant, number> = {} as Record<Body
 }
 
 export default class ArenaBindings extends BaseBindings {
-    public init(exports: ScreepsDotNetExports, memoryManager: WasmMemoryManager): void {
-        super.init(exports, memoryManager);
+    public init(exports: ScreepsDotNetExports, memory: WasmMemoryManager): void {
+        super.init(exports, memory);
     }
 
     public loop(): void {
@@ -94,36 +94,39 @@ export default class ArenaBindings extends BaseBindings {
         this.imports['game/pathFinder'] = {
             ...pathFinder,
             searchPath: (origin: number, goalsPtr: number, goalsCnt: number, options?: FindPathOpts) => {
-                const { i32 } = this._memoryManager!.view;
                 let goal:
                     | RoomPosition
                     | { pos: RoomPosition; range: number }
                     | Array<RoomPosition | { pos: RoomPosition; range: number }>;
-                let goalsPtrI32 = goalsPtr >> 2;
-                if (goalsCnt == 1) {
-                    const r = i32[goalsPtrI32 + 2];
-                    if (r === 0) {
-                        goal = { x: i32[goalsPtrI32 + 0], y: i32[goalsPtrI32 + 1] };
-                    } else {
-                        goal = { pos: { x: i32[goalsPtrI32 + 0], y: i32[goalsPtrI32 + 1] }, range: r };
-                    }
-                } else {
-                    goal = [];
-                    goal.length = goalsCnt;
-                    for (let i = 0; i < goalsCnt; ++i) {
-                        const r = i32[goalsPtrI32 + 2];
+                try {
+                    this._memory!.enterConstrainedRange(goalsPtr, goalsCnt * 12);
+                    if (goalsCnt == 1) {
+                        const r = this._memory!.readI32(goalsPtr + 8);
                         if (r === 0) {
-                            goal[i] = { x: i32[goalsPtrI32 + 0], y: i32[goalsPtrI32 + 1] };
+                            goal = { x: this._memory!.readI32(goalsPtr + 0), y: this._memory!.readI32(goalsPtr + 4) };
                         } else {
-                            goal[i] = { pos: { x: i32[goalsPtrI32 + 0], y: i32[goalsPtrI32 + 1] }, range: r };
+                            goal = { pos: { x: this._memory!.readI32(goalsPtr + 0), y: this._memory!.readI32(goalsPtr + 4) }, range: r };
                         }
-                        goalsPtrI32 += 3;
+                    } else {
+                        goal = [];
+                        goal.length = goalsCnt;
+                        for (let i = 0; i < goalsCnt; ++i) {
+                            const r = this._memory!.readI32(goalsPtr + 8);
+                            if (r === 0) {
+                                goal[i] = { x: this._memory!.readI32(goalsPtr + 0), y: this._memory!.readI32(goalsPtr + 4) };
+                            } else {
+                                goal[i] = { pos: { x: this._memory!.readI32(goalsPtr + 0), y: this._memory!.readI32(goalsPtr + 4) }, range: r };
+                            }
+                            goalsPtr += 12;
+                        }
                     }
+                    const originPos: RoomPosition = { x: origin >> 16, y: origin & 0xffff };
+                    return pathFinder.searchPath(originPos, goal, options);
+                } finally {
+                    this._memory!.exitConstrainedRange();
                 }
-                const originPos: RoomPosition = { x: origin >> 16, y: origin & 0xffff };
-                return pathFinder.searchPath(originPos, goal, options);
             },
-            decodePath: (resultObj: FindPathResult, outPtr: number) => this.copyPath(this._memoryManager!.view, resultObj.path, outPtr),
+            decodePath: (resultObj: FindPathResult, outPtr: number) => this.copyPath(resultObj.path, outPtr),
             CostMatrix: {
                 ...this.buildWrappedPrototype(pathFinder.CostMatrix),
                 setRect: (thisObj: typeof pathFinder.CostMatrix, minX: number, minY: number, maxX: number, maxY: number, memoryView: DataView) => {
@@ -154,7 +157,7 @@ export default class ArenaBindings extends BaseBindings {
                 findPathTo: (thisObj: GameObject, pos: RoomPosition, opts: FindPathOpts | undefined, outPtr: number) => {
                     const result = thisObj.findPathTo(pos, opts != null ? opts : undefined);
                     if (!result) { return 0; }
-                    return this.copyPath(this._memoryManager!.view, result, outPtr);
+                    return this.copyPath(result, outPtr);
                 },
             },
             Store: {
@@ -164,37 +167,44 @@ export default class ArenaBindings extends BaseBindings {
             },
             Creep: {
                 ...wrappedPrototypes.Creep,
-                getEncodedBody: (thisObj: Creep, outPtr: number) => this.encodeCreepBody(this._memoryManager!.view, thisObj.body, outPtr),
+                getEncodedBody: (thisObj: Creep, outPtr: number) => this.encodeCreepBody(thisObj.body, outPtr),
             },
         };
     }
 
-    private encodeCreepBody(memoryView: WasmMemoryView, body: readonly BodyPartDefinition[], outPtr: number): number {
-        const { i16 } = memoryView;
-        let ptrI16 = outPtr >> 1;
-        for (let i = 0; i < body.length; ++i) {
-            const { type, hits } = body[i];
-            // Encode each body part to a 16 bit int as 2 bytes
-            // type: 0-8 (4 bits 0-15) b1
-            // hits: 0-100 (7 bits 0-127) b0
-            let encodedBodyPart = 0;
-            encodedBodyPart |= (BODYPART_TO_ENUM_MAP[type] << 8);
-            encodedBodyPart |= hits;
-            i16[ptrI16] = encodedBodyPart;
-            ++ptrI16;
+    private encodeCreepBody(body: readonly BodyPartDefinition[], outPtr: number): number {
+        try {
+            this._memory!.enterConstrainedRange(outPtr, 50 * 2);
+            for (let i = 0; i < body.length; ++i) {
+                const { type, hits } = body[i];
+                // Encode each body part to a 16 bit int as 2 bytes
+                // type: 0-8 (4 bits 0-15) b1
+                // hits: 0-100 (7 bits 0-127) b0
+                let encodedBodyPart = 0;
+                encodedBodyPart |= (BODYPART_TO_ENUM_MAP[type] << 8);
+                encodedBodyPart |= hits;
+                this._memory!.writeU16(outPtr, encodedBodyPart);
+                outPtr += 2;
+            }
+            return body.length;
+        } finally {
+            this._memory!.exitConstrainedRange();
         }
-        return body.length;
     }
 
-    private copyPath(memoryView: WasmMemoryView, path: readonly RoomPosition[], outPtr: number): number {
-        const { i32 } = memoryView;
-        let ptrI32 = outPtr >> 2;
-        for (let i = 0; i < path.length; ++i) {
-            i32[ptrI32 + 0] = path[i].x;
-            i32[ptrI32 + 1] = path[i].y;
-            ptrI32 += 2;
+    private copyPath(path: readonly RoomPosition[], outPtr: number): number {
+        try {
+            this._memory!.enterConstrainedRange(outPtr, path.length * 4);
+            for (let i = 0; i < path.length; ++i) {
+                this._memory!.writeI16(outPtr, path[i].x);
+                outPtr += 2;
+                this._memory!.writeI16(outPtr, path[i].y);
+                outPtr += 2;
+            }
+            return path.length;
+        } finally {
+            this._memory!.exitConstrainedRange();
         }
-        return path.length;
     }
 
     private buildWrappedPrototypes(prototypes: Record<string, _Constructor<unknown>>): Record<string, GamePrototype> {

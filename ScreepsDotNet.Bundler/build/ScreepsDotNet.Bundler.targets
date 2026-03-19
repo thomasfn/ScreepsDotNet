@@ -34,7 +34,7 @@
 	</PropertyGroup>
 
 	<!-- Sets up emscripten if you don't have the EMSDK_PATH env variable set -->
-	<Target Name="ProvisionEmscripten" Condition="'$(ShouldProvisionEmscripten)' == 'true'" BeforeTargets="ValidateEmsdk">
+	<Target Name="ProvisionEmscripten" Condition="'$(ShouldProvisionEmscripten)' == 'true'" BeforeTargets="_InitializeEmsdk">
 		<PropertyGroup>
 			<EmsdkExt Condition="'$(HostOS)' != 'windows'"></EmsdkExt>
 			<EmsdkExt Condition="'$(HostOS)' == 'windows'">.ps1</EmsdkExt>
@@ -66,7 +66,7 @@
 	</Target>
 
 	<!-- Sets up wasi-sdk if you don't have the WASI_SDK_PATH env variable set -->
-	<Target Name="ProvisionWasiSdk" Condition="'$(ShouldProvisionWasiSdk)' == 'true'" BeforeTargets="ValidateWasiSdk">
+	<Target Name="ProvisionWasiSdk" Condition="'$(ShouldProvisionWasiSdk)' == 'true'" BeforeTargets="_InitializeWasiSdk">
 		<PropertyGroup>
 			<WasiSdkArchiveName>wasi-sdk-$(WasiSdkVersion).$(WasiSdkMinorVersion)-$(WasiSdkOsName).tar.gz</WasiSdkArchiveName>
 			<WasiSdkUrl>https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-$(WasiSdkVersion)/$(WasiSdkArchiveName)</WasiSdkUrl>

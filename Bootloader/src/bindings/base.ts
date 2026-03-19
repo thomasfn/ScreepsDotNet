@@ -10,7 +10,7 @@ export default abstract class BaseBindings {
 
     private readonly logFunc: (text: string) => void;
     
-    protected _memoryManager?: WasmMemoryManager;
+    protected _memory?: WasmMemoryManager;
     protected _malloc?: MallocFunction;
 
     constructor(logFunc: (text: string) => void, interop: Interop) {
@@ -20,8 +20,8 @@ export default abstract class BaseBindings {
         this.setupImports();
     }
 
-    public init(exports: ScreepsDotNetExports, memoryManager: WasmMemoryManager): void {
-        this._memoryManager = memoryManager;
+    public init(exports: ScreepsDotNetExports, memory: WasmMemoryManager): void {
+        this._memory = memory;
         this._malloc = exports.malloc;
     }
 

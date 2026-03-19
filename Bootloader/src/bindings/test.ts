@@ -6,23 +6,24 @@ import { WasmMemoryManager } from '../memory.js';
 import BaseBindings from './base.js';
 
 export default class TestBindings extends BaseBindings {
-    private _memory?: string;
+    private _rawMemory?: string;
 
     private _gameObj?: Record<string, unknown>;
     private _memoryObj?: Record<string, unknown>;
     private _rawMemoryObj?: Record<string, unknown>;
     private _prototypes?: Record<string, unknown>;
 
-    public init(exports: ScreepsDotNetExports, memoryManager: WasmMemoryManager): void {
+    public init(exports: ScreepsDotNetExports, memory: WasmMemoryManager): void {
         this._prototypes = {};
         this.resetGlobals();
-        super.init(exports, memoryManager);
+        super.init(exports, memory);
+        console.log(exports);
     }
 
     public loop(): void {
         this.resetGlobals();
         super.loop();
-        this._memory = JSON.stringify(this._memoryObj);
+        this._rawMemory = JSON.stringify(this._memoryObj);
     }
 
     private resetGlobals(): void {
@@ -33,10 +34,22 @@ export default class TestBindings extends BaseBindings {
             rooms: {},
             spawns: {},
             structures: {},
-            cpu: {},
+            cpu: {
+                limit: 500,
+                tickLimit: 500,
+                bucket: 10000,
+                shardLimits: {},
+                unlocked: true,
+                unlockedTime: 0,
+            },
             market: {},
+            shard: {
+                name: "wasmtest",
+                type: "normal",
+                ptr: false,
+            },
         };
-        this._memoryObj = JSON.parse(this._memory ?? '{}');
+        this._memoryObj = JSON.parse(this._rawMemory ?? '{}');
         this._rawMemoryObj = {
 
         };
@@ -66,9 +79,12 @@ export default class TestBindings extends BaseBindings {
                     const heapInfo = getHeapStatistics();
                     return { ...heapInfo, externally_allocated_size: heapInfo.external_memory };
                 },
+                getUsed: () => 0,
             },
+            rawMemory: {
+                setActiveSegments: (segments: number[]) => {},
+            }
         };
-        
     }
 
     private js_renew_object(jsHandle: number): number {
@@ -76,17 +92,22 @@ export default class TestBindings extends BaseBindings {
     }
 
     private js_batch_renew_objects(jsHandleListPtr: number, count: number): number {
-        const { i32 } = this._memoryManager!.view;
-        const baseIdx = jsHandleListPtr >> 2;
-        let numSuccess = 0;
-        for (let i = 0; i < count; ++i) {
-            if (this.js_renew_object(i32[baseIdx + i]) === 0) {
-                ++numSuccess;
-            } else {
-                i32[baseIdx + i] = -1;
+        this._interop.memory!.flush();
+        try {
+            this._memory!.enterConstrainedRange(jsHandleListPtr, count * 4);
+            let numSuccess = 0;
+            for (let i = 0; i < count; ++i) {
+                if (this.js_renew_object(this._memory!.readI32(jsHandleListPtr)) === 0) {
+                    ++numSuccess;
+                } else {
+                    this._memory!.writeI32(jsHandleListPtr, -1);
+                }
+                jsHandleListPtr += 4;
             }
+            return 0;
+        } finally {
+            this._memory!.exitConstrainedRange();
         }
-        return 0;
     }
 
     private js_fetch_object_room_position(jsHandle: number): number {
@@ -94,11 +115,11 @@ export default class TestBindings extends BaseBindings {
     }
 
     private js_batch_fetch_object_room_positions(jsHandleListPtr: number, count: number, outRoomPosListPtr: number): void {
-        const { i32 } = this._memoryManager!.view;
-        const baseJsHandleIdx = jsHandleListPtr >> 2;
-        const baseOutRoomPostListIdx = outRoomPosListPtr >> 2;
+        this._interop.memory!.flush();
         for (let i = 0; i < count; ++i) {
-            i32[baseOutRoomPostListIdx + i] = this.js_fetch_object_room_position(i32[baseJsHandleIdx + i]);
+            this._memory!.writeI32(outRoomPosListPtr, this.js_fetch_object_room_position(this._memory!.readI32(jsHandleListPtr)));
+            jsHandleListPtr += 4;
+            outRoomPosListPtr += 4;
         }
     }
 

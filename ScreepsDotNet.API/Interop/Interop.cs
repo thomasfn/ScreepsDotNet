@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -441,44 +442,83 @@ namespace ScreepsDotNet.Interop
         public const int InvokeImportExceptionArgIndex = 1;
         public const int InvokeImportArgsReserveCount = 2;
 
-        private static readonly Dictionary<IntPtr, GCHandle> trackedJSObjects = [];
-        private static readonly List<IntPtr> releaseQueue = new(128);
+        private const int MaxJSHandles = 1024 * 1024;
+
+        private struct JSObjectSlot
+        {
+            public GCHandle GCHandle;
+            public int Generation;
+            public bool Allocated;
+        }
+
+        private static JSObjectSlot[] jsObjectSlots = new JSObjectSlot[1024];
+        private static readonly List<(IntPtr jsHandle, int generation)> pendingFreeNative = new(1024);
 
         internal static JSObject GetJSObject(IntPtr jsHandle)
         {
-            if (trackedJSObjects.TryGetValue(jsHandle, out var gcHandle))
+            if (jsHandle < 0 || jsHandle >= MaxJSHandles) { throw new ArgumentOutOfRangeException(nameof(jsHandle)); }
+            if (jsHandle >= jsObjectSlots.Length)
             {
-                if (gcHandle.Target is JSObject obj) { return obj; }
-                if (gcHandle.IsAllocated) { gcHandle.Free(); }
+                uint newCapacity = BitOperations.RoundUpToPowerOf2((uint)(jsHandle + 1));
+                Array.Resize(ref jsObjectSlots, (int)newCapacity);
             }
-            var newObj = new JSObject(jsHandle);
-            gcHandle = GCHandle.Alloc(newObj, GCHandleType.Weak);
-            trackedJSObjects[jsHandle] = gcHandle;
+            ref var slot = ref jsObjectSlots[jsHandle];
+            if (slot.Allocated && slot.GCHandle.IsAllocated && slot.GCHandle.Target is JSObject existingObj && existingObj.Generation == slot.Generation) { return existingObj; }
+            if (slot.GCHandle.IsAllocated) { slot.GCHandle.Free(); }
+            ++slot.Generation;
+            var newObj = new JSObject(jsHandle, slot.Generation);
+            slot.GCHandle = GCHandle.Alloc(newObj, GCHandleType.Weak);
+            slot.Allocated = true;
             return newObj;
         }
 
-        internal static void ReleaseJSObject(IntPtr jsHandle)
+        internal static void ReleaseJSObject(IntPtr jsHandle, int generation)
         {
-            releaseQueue.Add(jsHandle);
-            ScreepsDotNet_Interop.ReleaseObjectReference(jsHandle);
+            if (jsHandle < 0 || jsHandle >= jsObjectSlots.Length) { throw new ArgumentOutOfRangeException(nameof(jsHandle)); }
+            ref var slot = ref jsObjectSlots[jsHandle];
+            if (!slot.Allocated || slot.Generation != generation) { return; }
+            if (slot.GCHandle.IsAllocated) { slot.GCHandle.Free(); }
+            slot.Allocated = false;
+            pendingFreeNative.Add((jsHandle, generation));
         }
 
         internal static void ReleasePendingJSObjects()
         {
-            for (int i = 0; i < releaseQueue.Count; ++i)
+            foreach (var (jsHandle, generation) in pendingFreeNative)
             {
-                ReleaseJSObjectInternal(releaseQueue[i]);
+                if (jsHandle < 0 || jsHandle >= jsObjectSlots.Length) { continue; }
+                ref var slot = ref jsObjectSlots[jsHandle];
+                if (generation != slot.Generation) { continue; }
+                ScreepsDotNet_Interop.ReleaseObjectReference(jsHandle);
             }
-            releaseQueue.Clear();
+            pendingFreeNative.Clear();
         }
 
-        internal static void ReleaseJSObjectInternal(IntPtr jsHandle)
+        internal static void PruneJSObjects()
         {
-            if (trackedJSObjects.TryGetValue(jsHandle, out var gcHandle) && (!gcHandle.IsAllocated || gcHandle.Target == null))
+            int numAllocated = 0, numCollected = 0, numUnused = 0;
+            for (int i = 0; i < jsObjectSlots.Length; ++i)
             {
-                trackedJSObjects.Remove(jsHandle);
-                if (gcHandle.IsAllocated) { gcHandle.Free(); }
+                ref var slot = ref jsObjectSlots[i];
+                if (slot.Allocated)
+                {
+                    if (slot.GCHandle.Target is JSObject obj && obj.Generation == slot.Generation)
+                    {
+                        ++numAllocated;
+                        continue;
+                    }
+                    if (slot.GCHandle.IsAllocated) { slot.GCHandle.Free(); }
+                    ScreepsDotNet_Interop.ReleaseObjectReference(i);
+                    slot.Allocated = false;
+                    ++numCollected;
+                    continue;
+                }
+                else if (slot.Generation > 0)
+                {
+                    ++numUnused;
+                }
             }
+            Console.WriteLine($"Interop: pruned {numCollected} js handle slots ({numAllocated} allocated, {numUnused} available, {jsObjectSlots.Length} total)");
         }
 
         public static unsafe int DefineStruct(ReadOnlySpan<StructFieldSpec> fieldSpecs)

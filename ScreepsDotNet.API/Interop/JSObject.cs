@@ -164,19 +164,23 @@ namespace ScreepsDotNet.Interop
         #endregion
 
         private readonly IntPtr jsHandle;
+        private readonly int generation;
         private readonly int hash;
         private bool disposedValue;
 
         internal IntPtr JSHandle => jsHandle;
 
+        internal int Generation => generation;
+
         public bool IsDisposed => disposedValue;
 
         public object? UserData { get; set; }
 
-        internal JSObject(IntPtr jsHandle)
+        internal JSObject(IntPtr jsHandle, int generation)
         {
             this.jsHandle = jsHandle;
-            hash = HashCode.Combine(jsHandle);
+            this.generation = generation;
+            hash = HashCode.Combine(jsHandle, generation);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -317,7 +321,7 @@ namespace ScreepsDotNet.Interop
         public override bool Equals(object? obj) => Equals(obj as JSObject);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Equals(JSObject? other) => other is not null && jsHandle == other.jsHandle;
+        public bool Equals(JSObject? other) => other is not null && jsHandle == other.jsHandle && generation == other.generation;
 
         public override int GetHashCode() => hash;
 
@@ -337,7 +341,7 @@ namespace ScreepsDotNet.Interop
                 {
                     UserData = null;
                 }
-                Native.ReleaseJSObject(jsHandle);
+                Native.ReleaseJSObject(jsHandle, generation);
                 disposedValue = true;
             }
         }

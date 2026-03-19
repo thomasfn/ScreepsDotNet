@@ -34,8 +34,6 @@ namespace ScreepsDotNet.Native.World
 
         T? GetExistingWrapperObject<T>(JSObject proxyObject) where T : NativeObject;
 
-        NativeRoom? GetExistingRoomByCoord(RoomCoord coord);
-
         NativeRoom? GetRoomByCoord(RoomCoord coord);
 
         NativeRoom? GetRoomByProxyObject(JSObject? proxyObject);
@@ -229,6 +227,11 @@ namespace ScreepsDotNet.Native.World
             {
                 PruneRoomsByCoordCache();
             }
+            if (TickIndex % 100 == 0)
+            {
+                Interop.Native.PruneJSObjects();
+            }
+            GC.WaitForPendingFinalizers();
             Interop.Native.ReleasePendingJSObjects();
             Native_CheckIn();
         }
@@ -237,13 +240,13 @@ namespace ScreepsDotNet.Native.World
         {
             foreach (var (coord, objRef) in roomsByCoordCache)
             {
-                if (!objRef.IsAllocated || objRef.Target is not IRoom room || !room.Exists) { roomCoordPendingRemovalList.Add(coord); }
+                if (objRef.Target is not IRoom room || !room.Exists) { roomCoordPendingRemovalList.Add(coord); }
             }
             if (roomCoordPendingRemovalList.Count == 0) { return; }
-            Console.WriteLine($"NativeGame: pruning {roomCoordPendingRemovalList.Count} of {roomsByCoordCache.Count} objects from the rooms-by-coord cache");
+            // Console.WriteLine($"NativeGame: pruning {roomCoordPendingRemovalList.Count} of {roomsByCoordCache.Count} objects from the rooms-by-coord cache");
             foreach (var roomCoord in roomCoordPendingRemovalList)
             {
-                roomsByCoordCache.Remove(roomCoord);
+                if (roomsByCoordCache.Remove(roomCoord, out var gcHandle) && gcHandle.IsAllocated) { gcHandle.Free(); }
             }
             roomCoordPendingRemovalList.Clear();
         }
@@ -333,18 +336,21 @@ namespace ScreepsDotNet.Native.World
         T? INativeRoot.GetExistingWrapperObject<T>(JSObject proxyObject) where T : class
             => proxyObject.UserData as T;
 
-        NativeRoom? INativeRoot.GetExistingRoomByCoord(RoomCoord coord)
-            => (roomsByCoordCache.TryGetValue(coord, out var gcHandle) && gcHandle.Target is NativeRoom room && room.Exists) ? room : null;
-
         NativeRoom? INativeRoot.GetRoomByCoord(RoomCoord coord)
         {
-            var room = (this as INativeRoot).GetExistingRoomByCoord(coord);
-            if (room != null) { return room; }
+            if (roomsByCoordCache.TryGetValue(coord, out var gcHandle))
+            {
+                if (gcHandle.Target is NativeRoom existingRoom)
+                {
+                    return existingRoom.Exists ? existingRoom : null;
+                }
+            }
             var proxyObject = RoomsObj.GetPropertyAsJSObject(coord.ToString());
             if (proxyObject == null) { return null; }
-            room = new NativeRoom(this, proxyObject);
+            if (gcHandle.IsAllocated) { gcHandle.Free(); }
+            var room = new NativeRoom(this, proxyObject);
             proxyObject.UserData = room;
-            roomsByCoordCache[coord] = GCHandle.Alloc(room, GCHandleType.WeakTrackResurrection);
+            roomsByCoordCache[coord] = GCHandle.Alloc(room, GCHandleType.Weak);
             return room;
         }
 
@@ -355,7 +361,9 @@ namespace ScreepsDotNet.Native.World
             var room = (this as INativeRoot).GetExistingWrapperObject<NativeRoom>(proxyObject);
             if (room != null) { return room; }
             room = new NativeRoom(this, proxyObject);
-            roomsByCoordCache[coord] = GCHandle.Alloc(room, GCHandleType.WeakTrackResurrection);
+            proxyObject.UserData = room;
+            if (roomsByCoordCache.TryGetValue(coord, out var gcHandle) && gcHandle.IsAllocated) { gcHandle.Free(); }
+            roomsByCoordCache[coord] = GCHandle.Alloc(room, GCHandleType.Weak);
             return room;
         }
 
