@@ -333,18 +333,16 @@ namespace ScreepsDotNet.Interop
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly unsafe string? AsString(bool freeMem = true)
+        public readonly unsafe string? AsString()
         {
             if (Slot.Type == InteropValueType.Void) { return null; }
             Debug.Assert(Slot.Type == InteropValueType.String || Slot.Type == InteropValueType.Name);
             if (Slot.Type == InteropValueType.Name) { return Name.GetNameValue(Slot.Int32Value); }
-            var str = new string((char*)Slot.IntPtrValue);
-            if (freeMem) { Marshal.FreeHGlobal(Slot.IntPtrValue); }
-            return str;
+            return new string((char*)Slot.IntPtrValue);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly unsafe T[]? AsArray<T>(Func<InteropValue, T> elementMarshaller, bool freeMem = true)
+        public readonly unsafe T[]? AsArray<T>(Func<InteropValue, T> elementMarshaller)
         {
             if (Slot.Type == InteropValueType.Void) { return null; }
             Debug.Assert(Slot.Type == InteropValueType.Array);
@@ -354,18 +352,16 @@ namespace ScreepsDotNet.Interop
             {
                 arr[i] = elementMarshaller(valueArr[i]);
             }
-            if (freeMem) { Marshal.FreeHGlobal(Slot.IntPtrValue); }
             return arr;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly unsafe Name AsName(bool freeMem = true)
+        public readonly unsafe Name AsName()
         {
             Debug.Assert(Slot.Type == InteropValueType.String || Slot.Type == InteropValueType.Name);
             if (Slot.Type == InteropValueType.String)
             {
                 var str = new string((char*)Slot.IntPtrValue);
-                if (freeMem) { Marshal.FreeHGlobal(Slot.IntPtrValue); }
                 var name = Name.Create(str);
                 Name.CopyIfNeeded(name.NameIndex);
                 return name;
@@ -377,7 +373,7 @@ namespace ScreepsDotNet.Interop
         public readonly unsafe Name? AsNameNullable() => Slot.Type == InteropValueType.Void ? null : AsName();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly unsafe string[]? AsStringArray(bool freeMem = true)
+        public readonly unsafe string[]? AsStringArray()
         {
             if (Slot.Type == InteropValueType.Void) { return null; }
             Debug.Assert(Slot.Type == InteropValueType.Array);
@@ -389,12 +385,11 @@ namespace ScreepsDotNet.Interop
                 head += str.Length + 1;
                 arr[i] = str;
             }
-            if (freeMem) { Marshal.FreeHGlobal(Slot.IntPtrValue); }
             return arr;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly unsafe string?[]? AsNullableStringArray(bool freeMem = true)
+        public readonly unsafe string?[]? AsNullableStringArray()
         {
             if (Slot.Type == InteropValueType.Void) { return null; }
             Debug.Assert(Slot.Type == InteropValueType.Array);
@@ -407,14 +402,12 @@ namespace ScreepsDotNet.Interop
                 if (nullCode == 0)
                 {
                     arr[i] = null;
-                    ++head;
                     continue;
                 }
                 var str = new string(head);
                 head += str.Length + 1;
                 arr[i] = str;
             }
-            if (freeMem) { Marshal.FreeHGlobal(Slot.IntPtrValue); }
             return arr;
         }
 

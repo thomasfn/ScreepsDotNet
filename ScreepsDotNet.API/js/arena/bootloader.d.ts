@@ -16,7 +16,7 @@ export declare class Bootloader {
     private readonly _systemImport;
     private _wasmModule?;
     private _wasmInstance?;
-    private _memoryManager?;
+    private _memory?;
     private _compiled;
     private _started;
     private _inTick;
@@ -34,7 +34,7 @@ export declare class Bootloader {
     setImports(moduleName: string, importTable: ImportTable): void;
     log(text: string): void;
     private dispatchLog;
-    compile(wasmBytes: Uint8Array): void;
+    compile(wasmBytes: Uint8Array<ArrayBuffer>): void;
     start(customInitExportNames?: ReadonlyArray<string>): void;
     loop(): void;
     private getWasmImports;

@@ -1,4 +1,4 @@
-const DEFENSIVE_CHECKS = true;
+const DEFENSIVE_CHECKS = false; // Turn this on to debug memory corruption issues
 
 export class WasmMemoryManager {
     private readonly _memory: WebAssembly.Memory;
@@ -277,13 +277,24 @@ export class WasmMemoryManager {
     }
 
     public getDataView(ptr: number, sz: number): DataView {
-        this.checkDetached();
+        if (DEFENSIVE_CHECKS) {
+            this.checkDetached();
+        }
         return new DataView(this._memory.buffer, ptr, sz);
     }
 
     public getArrayView(ptr: number, sz: number): Uint8Array {
-        this.checkDetached();
+        if (DEFENSIVE_CHECKS) {
+            this.checkDetached();
+        }
         return new Uint8Array(this._memory.buffer, ptr, sz);
+    }
+
+    public memcpy(dst: number, src: number, sz: number): void {
+        if (DEFENSIVE_CHECKS) {
+            this.checkDetached();
+        }
+        this._u8.set(this._u8.subarray(src, src + sz), dst);
     }
 
     public enterConstrainedRange(ptr: number, sz: number): void {

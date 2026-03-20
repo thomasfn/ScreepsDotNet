@@ -963,10 +963,14 @@ var bootloader = (function (exports) {
       _defineProperty(this, "_structList", []);
       _defineProperty(this, "_memory", void 0);
       _defineProperty(this, "_malloc", void 0);
+      _defineProperty(this, "_free", void 0);
       _defineProperty(this, "_numBoundImportInvokes", 0);
       _defineProperty(this, "_numImportBinds", 0);
       _defineProperty(this, "_timeInInterop", 0);
       _defineProperty(this, "_timeInJsUserCode", 0);
+      _defineProperty(this, "_transientBufferPtr", 0);
+      _defineProperty(this, "_transientBufferSz", 0);
+      _defineProperty(this, "_transientBufferHead", 0);
       this._profileFn = profileFn;
       this.interopImport = {};
       this.interopImport['bind-import'] = this.js_bind_import.bind(this);
@@ -1008,6 +1012,14 @@ var bootloader = (function (exports) {
         this._malloc = value;
       }
     }, {
+      key: "free",
+      get: function get() {
+        return this._malloc;
+      },
+      set: function set(value) {
+        this._free = value;
+      }
+    }, {
       key: "setImports",
       value: function setImports(moduleName, importTable) {
         this._imports[moduleName] = importTable;
@@ -1020,6 +1032,7 @@ var bootloader = (function (exports) {
         this._timeInInterop = 0;
         this._timeInJsUserCode = 0;
         this._objects.loop();
+        this._transientBufferHead = 0;
       }
     }, {
       key: "buildProfilerString",
@@ -1494,7 +1507,7 @@ var bootloader = (function (exports) {
     }, {
       key: "stringToClr",
       value: function stringToClr(str) {
-        var strPtr = this.allocateWasm((str.length + 1) * 2);
+        var strPtr = this.allocateTransient((str.length + 1) * 2);
         try {
           this._memory.flush();
           this._memory.enterConstrainedRange(strPtr, (str.length + 1) * 2);
@@ -1523,7 +1536,7 @@ var bootloader = (function (exports) {
     }, {
       key: "arrayToClr",
       value: function arrayToClr(value, elementSpec) {
-        var arrPtr = this.allocateWasm(value.length * 16);
+        var arrPtr = this.allocateTransient(value.length * 16);
         try {
           this._memory.enterConstrainedRange(arrPtr, value.length * 16);
           this._memory.flush();
@@ -1551,7 +1564,6 @@ var bootloader = (function (exports) {
               arrayPtr += 2;
               if (code === 0) {
                 result[i] = elementSpec.nullAsUndefined ? undefined : null;
-                arrayPtr += 2; // <-- why are we advancing here? we appear to do it in C# too but I'm not sure why - maybe so we align to 4-byte boundary?
                 break;
               }
             }
@@ -1568,48 +1580,36 @@ var bootloader = (function (exports) {
       key: "stringArrayToClr",
       value: function stringArrayToClr(value, elementSpec) {
         var bufferSize = 0;
-        var _iterator2 = _createForOfIteratorHelper(value),
-          _step2;
-        try {
-          for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
-            var _element = _step2.value;
-            if (elementSpec.nullable) {
-              ++bufferSize;
-              if (_element == null) {
-                ++bufferSize;
-                continue;
-              }
+        var tmp = [];
+        tmp.length = value.length;
+        for (var i = 0; i < value.length; ++i) {
+          var element = value[i];
+          if (elementSpec.nullable) {
+            ++bufferSize;
+            if (element == null) {
+              continue;
             }
-            var _str = typeof _element === 'string' ? _element : "".concat(_element);
-            bufferSize += _str.length + 1;
           }
-        } catch (err) {
-          _iterator2.e(err);
-        } finally {
-          _iterator2.f();
+          var str = typeof element === 'string' ? element : "".concat(element);
+          bufferSize += str.length + 1;
+          tmp[i] = str;
         }
-        var strPtr = this.allocateWasm(bufferSize * 2);
+        var strPtr = this.allocateTransient(bufferSize * 2);
         try {
           this._memory.flush();
           this._memory.enterConstrainedRange(strPtr, bufferSize * 2);
           var charPtr = strPtr;
-          var _iterator3 = _createForOfIteratorHelper(value),
-            _step3;
-          try {
-            for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
-              var element = _step3.value;
-              if (elementSpec.nullable) {
-                this._memory.writeU16(charPtr, element != null ? 1 : 0);
-                charPtr += 2;
+          for (var _i2 = 0; _i2 < value.length; ++_i2) {
+            var _element = tmp[_i2];
+            if (elementSpec.nullable) {
+              this._memory.writeU16(charPtr, _element != null ? 1 : 0);
+              charPtr += 2;
+              if (_element == null) {
+                continue;
               }
-              var str = typeof element === 'string' ? element : "".concat(element);
-              this._memory.writeString(charPtr, str, true);
-              charPtr += (str.length + 1) * 2;
             }
-          } catch (err) {
-            _iterator3.e(err);
-          } finally {
-            _iterator3.f();
+            this._memory.writeString(charPtr, _element, true);
+            charPtr += (_element.length + 1) * 2;
           }
           return strPtr;
         } finally {
@@ -1702,13 +1702,40 @@ var bootloader = (function (exports) {
         return result;
       }
     }, {
-      key: "allocateWasm",
-      value: function allocateWasm(sz) {
-        var ptr = this._malloc(sz);
-        if (ptr === 0) {
-          throw new Error("failed to allocate - malloc returned nullptr");
+      key: "allocateTransient",
+      value: function allocateTransient(sz) {
+        if (sz <= 0) {
+          return 0;
         }
-        return ptr;
+        var alignedHead = this._transientBufferHead + 7 & ~7;
+        var newHead = alignedHead + sz;
+        if (newHead > this._transientBufferSz) {
+          if (this._transientBufferPtr !== 0) {
+            // Grow transient buffer
+            var newSz = Interop.npo2(newHead);
+            var newPtr = this._malloc(newSz);
+            if (newPtr === 0) {
+              throw new Error("failed to allocate ".concat(newSz, "b"));
+            }
+            this._memory.flush();
+            this._memory.memcpy(newPtr, this._transientBufferPtr, this._transientBufferHead);
+            this._free(this._transientBufferPtr);
+            this._transientBufferPtr = newPtr;
+            this._transientBufferSz = newSz;
+            console.log("grew transient buffer to ".concat(newSz, " to fit allocation of ").concat(sz, " (head=").concat(this._transientBufferHead, ", alignedHead=").concat(alignedHead, ")"));
+          } else {
+            // Init transient buffer
+            this._transientBufferSz = Math.max(Interop.npo2(newHead), 4096);
+            this._transientBufferPtr = this._malloc(this._transientBufferSz);
+            if (this._transientBufferPtr === 0) {
+              throw new Error("failed to allocate ".concat(this._transientBufferSz, "b"));
+            }
+            this._memory.flush();
+            console.log("initialized transient buffer to ".concat(this._transientBufferSz, " to fit allocation of ").concat(sz, " (head=").concat(this._transientBufferHead, ", alignedHead=").concat(alignedHead, ")"));
+          }
+        }
+        this._transientBufferHead = newHead;
+        return this._transientBufferPtr + alignedHead;
       }
     }, {
       key: "stringifyValueForDisplay",
@@ -1738,6 +1765,18 @@ var bootloader = (function (exports) {
       value: function stringifyImportBindingForDisplay(importIndex) {
         var boundImportSymbol = this._boundImportSymbolList[importIndex];
         return "".concat(importIndex, ": ").concat(stringifyParamSpec(boundImportSymbol.functionSpec.returnSpec), " ").concat(boundImportSymbol.fullName, "(").concat(boundImportSymbol.functionSpec.paramSpecs.map(stringifyParamSpec).join(', '), ")");
+      }
+    }], [{
+      key: "npo2",
+      value: function npo2(v) {
+        v += v === 0 ? 1 : 0;
+        --v;
+        v |= v >>> 1;
+        v |= v >>> 2;
+        v |= v >>> 4;
+        v |= v >>> 8;
+        v |= v >>> 16;
+        return v + 1;
       }
     }]);
     return Interop;
@@ -1803,111 +1842,56 @@ var bootloader = (function (exports) {
     }, {
       key: "writeU8",
       value: function writeU8(ptr, value) {
-        {
-          this.checkAlignment(ptr, 1);
-          this.checkConstrainedRange(ptr, 1);
-          this.checkDetached();
-        }
         this._u8[ptr] = value;
       }
     }, {
       key: "writeI8",
       value: function writeI8(ptr, value) {
-        {
-          this.checkAlignment(ptr, 1);
-          this.checkConstrainedRange(ptr, 1);
-          this.checkDetached();
-        }
         this._i8[ptr] = value;
       }
     }, {
       key: "writeU16",
       value: function writeU16(ptr, value) {
-        {
-          this.checkAlignment(ptr, 2);
-          this.checkConstrainedRange(ptr, 2);
-          this.checkDetached();
-        }
         this._u16[ptr >> 1] = value;
       }
     }, {
       key: "writeI16",
       value: function writeI16(ptr, value) {
-        {
-          this.checkAlignment(ptr, 2);
-          this.checkConstrainedRange(ptr, 2);
-          this.checkDetached();
-        }
         this._i16[ptr >> 1] = value;
       }
     }, {
       key: "writeU32",
       value: function writeU32(ptr, value) {
-        {
-          this.checkAlignment(ptr, 4);
-          this.checkConstrainedRange(ptr, 4);
-          this.checkDetached();
-        }
         this._u32[ptr >> 2] = value;
       }
     }, {
       key: "writeI32",
       value: function writeI32(ptr, value) {
-        {
-          this.checkAlignment(ptr, 4);
-          this.checkConstrainedRange(ptr, 4);
-          this.checkDetached();
-        }
         this._i32[ptr >> 2] = value;
       }
     }, {
       key: "writeU64",
       value: function writeU64(ptr, value) {
-        {
-          this.checkAlignment(ptr, 8);
-          this.checkConstrainedRange(ptr, 8);
-          this.checkDetached();
-        }
         this._dataView.setBigUint64(ptr, value, true);
       }
     }, {
       key: "writeI64",
       value: function writeI64(ptr, value) {
-        {
-          this.checkAlignment(ptr, 8);
-          this.checkConstrainedRange(ptr, 8);
-          this.checkDetached();
-        }
         this._dataView.setBigInt64(ptr, value, true);
       }
     }, {
       key: "writeF32",
       value: function writeF32(ptr, value) {
-        {
-          this.checkAlignment(ptr, 4);
-          this.checkConstrainedRange(ptr, 4);
-          this.checkDetached();
-        }
         this._f32[ptr >> 2] = value;
       }
     }, {
       key: "writeF64",
       value: function writeF64(ptr, value) {
-        {
-          this.checkAlignment(ptr, 8);
-          this.checkConstrainedRange(ptr, 8);
-          this.checkDetached();
-        }
         this._f64[ptr >> 3] = value;
       }
     }, {
       key: "writeString",
       value: function writeString(ptr, value, nullTerminated) {
-        {
-          this.checkAlignment(ptr, 2);
-          this.checkConstrainedRange(ptr, value.length * 2 + (nullTerminated ? 2 : 0));
-          this.checkDetached();
-        }
         var first = ptr >> 1;
         for (var i = 0; i < value.length; ++i) {
           this._u16[first + i] = value.charCodeAt(i);
@@ -1919,101 +1903,51 @@ var bootloader = (function (exports) {
     }, {
       key: "readU8",
       value: function readU8(ptr) {
-        {
-          this.checkAlignment(ptr, 1);
-          this.checkConstrainedRange(ptr, 1);
-          this.checkDetached();
-        }
         return this._u8[ptr];
       }
     }, {
       key: "readI8",
       value: function readI8(ptr) {
-        {
-          this.checkAlignment(ptr, 1);
-          this.checkConstrainedRange(ptr, 1);
-          this.checkDetached();
-        }
         return this._i8[ptr];
       }
     }, {
       key: "readU16",
       value: function readU16(ptr) {
-        {
-          this.checkAlignment(ptr, 2);
-          this.checkConstrainedRange(ptr, 2);
-          this.checkDetached();
-        }
         return this._u16[ptr >> 1];
       }
     }, {
       key: "readI16",
       value: function readI16(ptr) {
-        {
-          this.checkAlignment(ptr, 2);
-          this.checkConstrainedRange(ptr, 2);
-          this.checkDetached();
-        }
         return this._i16[ptr >> 1];
       }
     }, {
       key: "readU32",
       value: function readU32(ptr) {
-        {
-          this.checkAlignment(ptr, 4);
-          this.checkConstrainedRange(ptr, 4);
-          this.checkDetached();
-        }
         return this._u32[ptr >> 2];
       }
     }, {
       key: "readI32",
       value: function readI32(ptr) {
-        {
-          this.checkAlignment(ptr, 4);
-          this.checkConstrainedRange(ptr, 4);
-          this.checkDetached();
-        }
         return this._i32[ptr >> 2];
       }
     }, {
       key: "readU64",
       value: function readU64(ptr) {
-        {
-          this.checkAlignment(ptr, 8);
-          this.checkConstrainedRange(ptr, 8);
-          this.checkDetached();
-        }
         return this._dataView.getBigUint64(ptr, true);
       }
     }, {
       key: "readI64",
       value: function readI64(ptr) {
-        {
-          this.checkAlignment(ptr, 8);
-          this.checkConstrainedRange(ptr, 8);
-          this.checkDetached();
-        }
         return this._dataView.getBigInt64(ptr, true);
       }
     }, {
       key: "readF32",
       value: function readF32(ptr) {
-        {
-          this.checkAlignment(ptr, 4);
-          this.checkConstrainedRange(ptr, 4);
-          this.checkDetached();
-        }
         return this._f32[ptr >> 2];
       }
     }, {
       key: "readF64",
       value: function readF64(ptr) {
-        {
-          this.checkAlignment(ptr, 8);
-          this.checkConstrainedRange(ptr, 8);
-          this.checkDetached();
-        }
         return this._f64[ptr >> 3];
       }
     }, {
@@ -2031,11 +1965,6 @@ var bootloader = (function (exports) {
     }, {
       key: "readString",
       value: function readString(ptr, length) {
-        {
-          this.checkAlignment(ptr, 2);
-          this.checkConstrainedRange(ptr, length * 2);
-          this.checkDetached();
-        }
         var result = "";
         var first = ptr >> 1;
         var last = first + length;
@@ -2047,30 +1976,31 @@ var bootloader = (function (exports) {
     }, {
       key: "getDataView",
       value: function getDataView(ptr, sz) {
-        this.checkDetached();
         return new DataView(this._memory.buffer, ptr, sz);
       }
     }, {
       key: "getArrayView",
       value: function getArrayView(ptr, sz) {
-        this.checkDetached();
         return new Uint8Array(this._memory.buffer, ptr, sz);
+      }
+    }, {
+      key: "memcpy",
+      value: function memcpy(dst, src, sz) {
+        this._u8.set(this._u8.subarray(src, src + sz), dst);
       }
     }, {
       key: "enterConstrainedRange",
       value: function enterConstrainedRange(ptr, sz) {
-        if (this._rangeMin != null) {
-          this._rangeStack.push(this._rangeMin);
-          this._rangeStack.push(this._rangeMax);
+        {
+          return;
         }
-        this._rangeMin = ptr;
-        this._rangeMax = ptr + sz;
       }
     }, {
       key: "exitConstrainedRange",
       value: function exitConstrainedRange() {
-        this._rangeMax = this._rangeStack.pop();
-        this._rangeMin = this._rangeStack.pop();
+        {
+          return;
+        }
       }
     }, {
       key: "flush",
@@ -2656,6 +2586,7 @@ var bootloader = (function (exports) {
         this._memory = new WasmMemoryManager(this._wasmInstance.exports.memory);
         this._interop.memory = this._memory;
         this._interop.malloc = this._wasmInstance.exports.malloc;
+        this._interop.free = this._wasmInstance.exports.free;
         this._compiled = true;
       }
     }, {

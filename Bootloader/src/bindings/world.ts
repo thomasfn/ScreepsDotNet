@@ -335,16 +335,21 @@ export default class WorldBindings extends BaseBindings {
 
     private js_batch_renew_objects(jsHandleListPtr: number, count: number): number {
         this._memory!.flush();
-        let numSuccess = 0;
-        for (let i = 0; i < count; ++i) {
-            if (this.js_renew_object(this._memory!.readI32(jsHandleListPtr)) === 0) {
-                ++numSuccess;
-            } else {
-                this._memory!.writeI32(jsHandleListPtr, -1);
+        try {
+            this._memory!.enterConstrainedRange(jsHandleListPtr, count * 4);
+            let numSuccess = 0;
+            for (let i = 0; i < count; ++i) {
+                if (this.js_renew_object(this._memory!.readI32(jsHandleListPtr)) === 0) {
+                    ++numSuccess;
+                } else {
+                    this._memory!.writeI32(jsHandleListPtr, -1);
+                }
+                jsHandleListPtr += 4;
             }
-            jsHandleListPtr += 4;
+            return numSuccess;
+        } finally {
+            this._memory!.exitConstrainedRange();
         }
-        return numSuccess;
     }
 
     private js_fetch_object_room_position(jsHandle: number): number {
@@ -385,13 +390,19 @@ export default class WorldBindings extends BaseBindings {
         const id = (obj as { id: unknown }).id;
         if (typeof id !== 'string') { return 0; }
         this._memory!.flush();
-        this.copyRawObjectId(id, outRawObjectIdPtr);
-        return id.length;
+        try {
+            this._memory!.enterConstrainedRange(outRawObjectIdPtr, 24);
+            this.copyRawObjectId(id, outRawObjectIdPtr);
+            return id.length;
+        } finally {
+            this._memory!.exitConstrainedRange();
+        }
     }
     
     private copyRawObjectId(id: string, outPtr: number): void {
         if (id) {
-            const l = id.length;
+            if (id.length > 24) { this.log(`copyRawObjectId: unexpected id length of ${id.length} ('${id}'), only 24 characters were copied`); }
+            const l = Math.min(24, id.length);
             for (let j = 0; j < l; ++j) {
                 this._memory!.writeU8(outPtr + j, id.charCodeAt(j));
             }
@@ -400,7 +411,7 @@ export default class WorldBindings extends BaseBindings {
             }
         } else {
             for (let j = 0; j < 6; ++j) {
-                this._memory!.writeU8(outPtr + j, 0);
+                this._memory!.writeI32(outPtr + j * 4, 0);
             }
         }
     }

@@ -215,6 +215,7 @@ export class Bootloader {
         this._memory = new WasmMemoryManager(this._wasmInstance.exports.memory);
         this._interop.memory = this._memory;
         this._interop.malloc = this._wasmInstance.exports.malloc;
+        this._interop.free = this._wasmInstance.exports.free;
         this._compiled = true;
     }
 

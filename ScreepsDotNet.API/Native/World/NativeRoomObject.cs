@@ -11,7 +11,7 @@ using ScreepsDotNet.API.World;
 
 namespace ScreepsDotNet.Native.World
 {
-    [StructLayout(LayoutKind.Sequential, Pack = 1, Size = 8)]
+    [StructLayout(LayoutKind.Sequential, Pack = 4, Size = 8)]
     internal struct RoomObjectMetadata
     {
         public int TypeId;
