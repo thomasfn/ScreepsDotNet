@@ -114,28 +114,16 @@ export class Interop {
     private readonly _structList: StructSpec[] = [];
 
     private _memory?: WasmMemoryManager;
-    private _malloc?: MallocFunction;
-    private _free?: FreeFunction;
 
     private _numBoundImportInvokes: number = 0;
     private _numImportBinds: number = 0;
     private _timeInInterop: number = 0;
     private _timeInJsUserCode: number = 0;
 
-    private _transientBufferPtr: number = 0;
-    private _transientBufferSz: number = 0;
-    private _transientBufferHead: number = 0;
-
     public get memory(): WasmMemoryManager | undefined { return this._memory; }
     public set memory(value) {
         this._memory = value;
     }
-
-    public get malloc(): MallocFunction | undefined { return this._malloc; }
-    public set malloc(value) { this._malloc = value; }
-
-    public get free(): FreeFunction | undefined { return this._malloc; }
-    public set free(value) { this._free = value; }
 
     constructor(profileFn: () => number) {
         this._profileFn = profileFn;
@@ -169,7 +157,7 @@ export class Interop {
         this._timeInInterop = 0;
         this._timeInJsUserCode = 0;
         this._objects.loop();
-        this._transientBufferHead = 0;
+        this._memory!.freeAllTransient();
     }
 
     public buildProfilerString(): string {
@@ -572,9 +560,8 @@ export class Interop {
     }
 
     private stringToClr(str: string): number {
-        const strPtr = this.allocateTransient((str.length + 1) * 2);
+        const strPtr = this._memory!.allocateTransient((str.length + 1) * 2);
         try {
-            this._memory!.flush();
             this._memory!.enterConstrainedRange(strPtr, (str.length + 1) * 2);
             this._memory!.writeString(strPtr, str, true);
             return strPtr;
@@ -599,10 +586,9 @@ export class Interop {
     }
 
     private arrayToClr(value: unknown[], elementSpec: Readonly<ParamSpec>): number {
-        const arrPtr = this.allocateTransient(value.length * 16);
+        const arrPtr = this._memory!.allocateTransient(value.length * 16);
         try {
             this._memory!.enterConstrainedRange(arrPtr, value.length * 16);
-            this._memory!.flush();
             let elPtr = arrPtr;
             for (let i = 0; i < value.length; ++i) {
                 this.marshalToClr(elPtr, elementSpec, value[i]);
@@ -655,9 +641,8 @@ export class Interop {
             bufferSize += str.length + 1;
             tmp[i] = str;
         }
-        const strPtr = this.allocateTransient(bufferSize * 2);
+        const strPtr = this._memory!.allocateTransient(bufferSize * 2);
         try {
-            this._memory!.flush();
             this._memory!.enterConstrainedRange(strPtr, bufferSize * 2);
             let charPtr = strPtr;
             for (let i = 0; i < value.length; ++i) {
@@ -757,50 +742,6 @@ export class Interop {
             functionSpecPtr += 4;
         }
         return result;
-    }
-
-    private allocateTransient(sz: number): number {
-        if (sz <= 0) { return 0; }
-        const alignedHead = (this._transientBufferHead + 7) & ~7;
-        const newHead = alignedHead + sz;
-        if (newHead > this._transientBufferSz) {
-            if (this._transientBufferPtr !== 0) {
-                // Grow transient buffer
-                const newSz = Interop.npo2(newHead);
-                const newPtr = this._malloc!(newSz);
-                if (newPtr === 0) {
-                    throw new Error(`failed to allocate ${newSz}b`);
-                }
-                this._memory!.flush();
-                this._memory!.memcpy(newPtr, this._transientBufferPtr, this._transientBufferHead);
-                this._free!(this._transientBufferPtr);
-                this._transientBufferPtr = newPtr;
-                this._transientBufferSz = newSz;
-                console.log(`grew transient buffer to ${newSz} to fit allocation of ${sz} (head=${this._transientBufferHead}, alignedHead=${alignedHead})`);
-            } else {
-                // Init transient buffer
-                this._transientBufferSz = Math.max(Interop.npo2(newHead), 4096);
-                this._transientBufferPtr = this._malloc!(this._transientBufferSz);
-                if (this._transientBufferPtr === 0) {
-                    throw new Error(`failed to allocate ${this._transientBufferSz}b`);
-                }
-                this._memory!.flush();
-                console.log(`initialized transient buffer to ${this._transientBufferSz} to fit allocation of ${sz} (head=${this._transientBufferHead}, alignedHead=${alignedHead})`);
-            }
-        }
-        this._transientBufferHead = newHead;
-        return this._transientBufferPtr + alignedHead;
-    }
-
-    private static npo2(v: number): number {
-        v += v === 0 ? 1 : 0;
-        --v;
-        v |= v >>> 1;
-        v |= v >>> 2;
-        v |= v >>> 4;
-        v |= v >>> 8;
-        v |= v >>> 16;
-        return v + 1;
     }
 
     private stringifyValueForDisplay(value: unknown): string {

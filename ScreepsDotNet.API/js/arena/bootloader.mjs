@@ -962,15 +962,10 @@ var bootloader = (function (exports) {
       _defineProperty(this, "_nameTable", {});
       _defineProperty(this, "_structList", []);
       _defineProperty(this, "_memory", void 0);
-      _defineProperty(this, "_malloc", void 0);
-      _defineProperty(this, "_free", void 0);
       _defineProperty(this, "_numBoundImportInvokes", 0);
       _defineProperty(this, "_numImportBinds", 0);
       _defineProperty(this, "_timeInInterop", 0);
       _defineProperty(this, "_timeInJsUserCode", 0);
-      _defineProperty(this, "_transientBufferPtr", 0);
-      _defineProperty(this, "_transientBufferSz", 0);
-      _defineProperty(this, "_transientBufferHead", 0);
       this._profileFn = profileFn;
       this.interopImport = {};
       this.interopImport['bind-import'] = this.js_bind_import.bind(this);
@@ -1004,22 +999,6 @@ var bootloader = (function (exports) {
         this._memory = value;
       }
     }, {
-      key: "malloc",
-      get: function get() {
-        return this._malloc;
-      },
-      set: function set(value) {
-        this._malloc = value;
-      }
-    }, {
-      key: "free",
-      get: function get() {
-        return this._malloc;
-      },
-      set: function set(value) {
-        this._free = value;
-      }
-    }, {
       key: "setImports",
       value: function setImports(moduleName, importTable) {
         this._imports[moduleName] = importTable;
@@ -1032,7 +1011,7 @@ var bootloader = (function (exports) {
         this._timeInInterop = 0;
         this._timeInJsUserCode = 0;
         this._objects.loop();
-        this._transientBufferHead = 0;
+        this._memory.freeAllTransient();
       }
     }, {
       key: "buildProfilerString",
@@ -1507,9 +1486,8 @@ var bootloader = (function (exports) {
     }, {
       key: "stringToClr",
       value: function stringToClr(str) {
-        var strPtr = this.allocateTransient((str.length + 1) * 2);
+        var strPtr = this._memory.allocateTransient((str.length + 1) * 2);
         try {
-          this._memory.flush();
           this._memory.enterConstrainedRange(strPtr, (str.length + 1) * 2);
           this._memory.writeString(strPtr, str, true);
           return strPtr;
@@ -1536,10 +1514,9 @@ var bootloader = (function (exports) {
     }, {
       key: "arrayToClr",
       value: function arrayToClr(value, elementSpec) {
-        var arrPtr = this.allocateTransient(value.length * 16);
+        var arrPtr = this._memory.allocateTransient(value.length * 16);
         try {
           this._memory.enterConstrainedRange(arrPtr, value.length * 16);
-          this._memory.flush();
           var elPtr = arrPtr;
           for (var i = 0; i < value.length; ++i) {
             this.marshalToClr(elPtr, elementSpec, value[i]);
@@ -1594,9 +1571,8 @@ var bootloader = (function (exports) {
           bufferSize += str.length + 1;
           tmp[i] = str;
         }
-        var strPtr = this.allocateTransient(bufferSize * 2);
+        var strPtr = this._memory.allocateTransient(bufferSize * 2);
         try {
-          this._memory.flush();
           this._memory.enterConstrainedRange(strPtr, bufferSize * 2);
           var charPtr = strPtr;
           for (var _i2 = 0; _i2 < value.length; ++_i2) {
@@ -1702,42 +1678,6 @@ var bootloader = (function (exports) {
         return result;
       }
     }, {
-      key: "allocateTransient",
-      value: function allocateTransient(sz) {
-        if (sz <= 0) {
-          return 0;
-        }
-        var alignedHead = this._transientBufferHead + 7 & ~7;
-        var newHead = alignedHead + sz;
-        if (newHead > this._transientBufferSz) {
-          if (this._transientBufferPtr !== 0) {
-            // Grow transient buffer
-            var newSz = Interop.npo2(newHead);
-            var newPtr = this._malloc(newSz);
-            if (newPtr === 0) {
-              throw new Error("failed to allocate ".concat(newSz, "b"));
-            }
-            this._memory.flush();
-            this._memory.memcpy(newPtr, this._transientBufferPtr, this._transientBufferHead);
-            this._free(this._transientBufferPtr);
-            this._transientBufferPtr = newPtr;
-            this._transientBufferSz = newSz;
-            console.log("grew transient buffer to ".concat(newSz, " to fit allocation of ").concat(sz, " (head=").concat(this._transientBufferHead, ", alignedHead=").concat(alignedHead, ")"));
-          } else {
-            // Init transient buffer
-            this._transientBufferSz = Math.max(Interop.npo2(newHead), 4096);
-            this._transientBufferPtr = this._malloc(this._transientBufferSz);
-            if (this._transientBufferPtr === 0) {
-              throw new Error("failed to allocate ".concat(this._transientBufferSz, "b"));
-            }
-            this._memory.flush();
-            console.log("initialized transient buffer to ".concat(this._transientBufferSz, " to fit allocation of ").concat(sz, " (head=").concat(this._transientBufferHead, ", alignedHead=").concat(alignedHead, ")"));
-          }
-        }
-        this._transientBufferHead = newHead;
-        return this._transientBufferPtr + alignedHead;
-      }
-    }, {
       key: "stringifyValueForDisplay",
       value: function stringifyValueForDisplay(value) {
         if (value === undefined) {
@@ -1766,24 +1706,13 @@ var bootloader = (function (exports) {
         var boundImportSymbol = this._boundImportSymbolList[importIndex];
         return "".concat(importIndex, ": ").concat(stringifyParamSpec(boundImportSymbol.functionSpec.returnSpec), " ").concat(boundImportSymbol.fullName, "(").concat(boundImportSymbol.functionSpec.paramSpecs.map(stringifyParamSpec).join(', '), ")");
       }
-    }], [{
-      key: "npo2",
-      value: function npo2(v) {
-        v += v === 0 ? 1 : 0;
-        --v;
-        v |= v >>> 1;
-        v |= v >>> 2;
-        v |= v >>> 4;
-        v |= v >>> 8;
-        v |= v >>> 16;
-        return v + 1;
-      }
     }]);
     return Interop;
   }();
 
+  var INITIAL_TRANSIENT_PAGE_SIZE = 4096;
   var WasmMemoryManager = /*#__PURE__*/function () {
-    function WasmMemoryManager(memory) {
+    function WasmMemoryManager(memory, mallocFunc, freeFunc) {
       _classCallCheck(this, WasmMemoryManager);
       _defineProperty(this, "_memory", void 0);
       _defineProperty(this, "_viewArrayBuffer", void 0);
@@ -1796,6 +1725,9 @@ var bootloader = (function (exports) {
       _defineProperty(this, "_f32", void 0);
       _defineProperty(this, "_f64", void 0);
       _defineProperty(this, "_dataView", void 0);
+      _defineProperty(this, "_malloc", void 0);
+      _defineProperty(this, "_free", void 0);
+      _defineProperty(this, "_transientPages", []);
       _defineProperty(this, "_rangeMin", void 0);
       _defineProperty(this, "_rangeMax", void 0);
       _defineProperty(this, "_rangeStack", []);
@@ -1810,6 +1742,8 @@ var bootloader = (function (exports) {
       this._f32 = new Float32Array(memory.buffer);
       this._f64 = new Float64Array(memory.buffer);
       this._dataView = new DataView(memory.buffer);
+      this._malloc = mallocFunc;
+      this._free = freeFunc;
     }
     _createClass(WasmMemoryManager, [{
       key: "checkAlignment",
@@ -1986,7 +1920,8 @@ var bootloader = (function (exports) {
     }, {
       key: "memcpy",
       value: function memcpy(dst, src, sz) {
-        this._u8.set(this._u8.subarray(src, src + sz), dst);
+        //this._u8.set(this._u8.subarray(src, src + sz), dst);
+        this._u8.copyWithin(dst, src, src + sz);
       }
     }, {
       key: "enterConstrainedRange",
@@ -2018,6 +1953,87 @@ var bootloader = (function (exports) {
         this._f32 = new Float32Array(this._memory.buffer);
         this._f64 = new Float64Array(this._memory.buffer);
         this._dataView = new DataView(this._memory.buffer);
+      }
+    }, {
+      key: "allocateTransient",
+      value: function allocateTransient(sz) {
+        var _iterator = _createForOfIteratorHelper(this._transientPages),
+          _step;
+        try {
+          for (_iterator.s(); !(_step = _iterator.n()).done;) {
+            var _page = _step.value;
+            var _ptr = this.allocateTransientPage(_page, sz);
+            if (_ptr === 0) {
+              continue;
+            }
+            return _ptr;
+          }
+          // No space in any pages, allocate new
+        } catch (err) {
+          _iterator.e(err);
+        } finally {
+          _iterator.f();
+        }
+        var nextSize = Math.max(WasmMemoryManager.npo2(sz), this._transientPages.length === 0 ? INITIAL_TRANSIENT_PAGE_SIZE : this._transientPages[this._transientPages.length - 1].size * 2);
+        var page;
+        this._transientPages.push(page = {
+          ptr: this._malloc(nextSize),
+          head: 0,
+          size: nextSize
+        });
+        this.flush();
+        if (page.ptr === 0) {
+          throw new Error("failed to allocate new transient page (".concat(nextSize, "b)"));
+        }
+        var ptr = this.allocateTransientPage(page, sz);
+        if (ptr === 0) {
+          throw new Error("failed to allocate within transient page (pageHead=".concat(page.head, ", pageSize=").concat(page.size, ", sz=").concat(sz, ")"));
+        }
+        return ptr;
+      }
+    }, {
+      key: "allocateTransientPage",
+      value: function allocateTransientPage(page, sz) {
+        var alignedHead = WasmMemoryManager.align8(page.head);
+        var newHead = alignedHead + sz;
+        if (newHead > page.size) {
+          return 0;
+        }
+        page.head = newHead;
+        return page.ptr + alignedHead;
+      }
+    }, {
+      key: "freeAllTransient",
+      value: function freeAllTransient() {
+        var _iterator2 = _createForOfIteratorHelper(this._transientPages),
+          _step2;
+        try {
+          for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
+            var page = _step2.value;
+            page.head = 0;
+          }
+        } catch (err) {
+          _iterator2.e(err);
+        } finally {
+          _iterator2.f();
+        }
+      }
+    }], [{
+      key: "npo2",
+      value: function npo2(v) {
+        v += v === 0 ? 1 : 0;
+        --v;
+        v |= v >>> 1;
+        v |= v >>> 2;
+        v |= v >>> 4;
+        v |= v >>> 8;
+        v |= v >>> 16;
+        return v + 1;
+      }
+    }, {
+      key: "align8",
+      value: function align8(v) {
+        return v + 7 & ~7;
       }
     }]);
     return WasmMemoryManager;
@@ -2583,10 +2599,8 @@ var bootloader = (function (exports) {
           this.log("Instantiated wasm module in ".concat(_t2 - _t, " ms"));
         }
         // Wire things up
-        this._memory = new WasmMemoryManager(this._wasmInstance.exports.memory);
+        this._memory = new WasmMemoryManager(this._wasmInstance.exports.memory, this._wasmInstance.exports.malloc, this._wasmInstance.exports.free);
         this._interop.memory = this._memory;
-        this._interop.malloc = this._wasmInstance.exports.malloc;
-        this._interop.free = this._wasmInstance.exports.free;
         this._compiled = true;
       }
     }, {

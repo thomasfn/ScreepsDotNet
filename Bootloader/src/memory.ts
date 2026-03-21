@@ -1,4 +1,14 @@
+import { FreeFunction, MallocFunction } from "./interop.js";
+
 const DEFENSIVE_CHECKS = false; // Turn this on to debug memory corruption issues
+
+const INITIAL_TRANSIENT_PAGE_SIZE = 4096;
+
+interface TransientPage {
+    ptr: number;
+    size: number;
+    head: number;
+}
 
 export class WasmMemoryManager {
     private readonly _memory: WebAssembly.Memory;
@@ -14,13 +24,19 @@ export class WasmMemoryManager {
     private _f64: Float64Array;
     private _dataView: DataView;
 
+    private readonly _malloc: MallocFunction;
+    private readonly _free: FreeFunction;
+
+    private readonly _transientPages: TransientPage[] = [];
+
     private _rangeMin?: number;
     private _rangeMax?: number;
     private readonly _rangeStack: number[] = [];
 
-    constructor(memory: WebAssembly.Memory) {
+    constructor(memory: WebAssembly.Memory, mallocFunc: MallocFunction, freeFunc: FreeFunction) {
         this._memory = memory;
         this._viewArrayBuffer = memory.buffer;
+
         this._u8 = new Uint8Array(memory.buffer);
         this._i8 = new Int8Array(memory.buffer);
         this._u16 = new Uint16Array(memory.buffer);
@@ -30,6 +46,9 @@ export class WasmMemoryManager {
         this._f32 = new Float32Array(memory.buffer);
         this._f64 = new Float64Array(memory.buffer);
         this._dataView = new DataView(memory.buffer);
+
+        this._malloc = mallocFunc;
+        this._free = freeFunc;
     }
 
     private checkAlignment(ptr: number, alignment: number): void {
@@ -294,7 +313,8 @@ export class WasmMemoryManager {
         if (DEFENSIVE_CHECKS) {
             this.checkDetached();
         }
-        this._u8.set(this._u8.subarray(src, src + sz), dst);
+        //this._u8.set(this._u8.subarray(src, src + sz), dst);
+        this._u8.copyWithin(dst, src, src + sz);
     }
 
     public enterConstrainedRange(ptr: number, sz: number): void {
@@ -325,5 +345,57 @@ export class WasmMemoryManager {
         this._f32 = new Float32Array(this._memory.buffer);
         this._f64 = new Float64Array(this._memory.buffer);
         this._dataView = new DataView(this._memory.buffer);
+    }
+
+    public allocateTransient(sz: number): number {
+        for (const page of this._transientPages) {
+            const ptr = this.allocateTransientPage(page, sz);
+            if (ptr === 0) { continue; }
+            return ptr;
+        }
+
+        // No space in any pages, allocate new
+        let nextSize = Math.max(WasmMemoryManager.npo2(sz), this._transientPages.length === 0 ? INITIAL_TRANSIENT_PAGE_SIZE : this._transientPages[this._transientPages.length - 1].size * 2);
+        let page: TransientPage;
+        this._transientPages.push(page = {
+            ptr: this._malloc(nextSize),
+            head: 0,
+            size: nextSize,
+        });
+        this.flush();
+        if (page.ptr === 0) { throw new Error(`failed to allocate new transient page (${nextSize}b)`); }
+
+        const ptr = this.allocateTransientPage(page, sz);
+        if (ptr === 0) { throw new Error(`failed to allocate within transient page (pageHead=${page.head}, pageSize=${page.size}, sz=${sz})`); }
+        return ptr;
+    }
+
+    private allocateTransientPage(page: TransientPage, sz: number): number {
+        const alignedHead = WasmMemoryManager.align8(page.head);
+        const newHead = alignedHead + sz;
+        if (newHead > page.size) { return 0; }
+        page.head = newHead;
+        return page.ptr + alignedHead;
+    }
+
+    public freeAllTransient(): void {
+        for (const page of this._transientPages) {
+            page.head = 0;
+        }
+    }
+
+    private static npo2(v: number): number {
+        v += v === 0 ? 1 : 0;
+        --v;
+        v |= v >>> 1;
+        v |= v >>> 2;
+        v |= v >>> 4;
+        v |= v >>> 8;
+        v |= v >>> 16;
+        return v + 1;
+    }
+
+    private static align8(v: number): number {
+        return (v + 7) & ~7;
     }
 }

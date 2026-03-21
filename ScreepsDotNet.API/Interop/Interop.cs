@@ -511,7 +511,7 @@ namespace ScreepsDotNet.Interop
                     ++numUnused;
                 }
             }
-            Console.WriteLine($"Interop: pruned {numCollected} js handle slots ({numAllocated} allocated, {numUnused} available, {jsObjectSlots.Length} total)");
+            // Console.WriteLine($"Interop: pruned {numCollected} js handle slots ({numAllocated} allocated, {numUnused} available, {jsObjectSlots.Length} total)");
         }
 
         public static unsafe int DefineStruct(ReadOnlySpan<StructFieldSpec> fieldSpecs)
