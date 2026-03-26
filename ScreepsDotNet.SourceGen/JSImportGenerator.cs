@@ -20,6 +20,8 @@ namespace ScreepsDotNet.SourceGen
         private static readonly ImmutableArray<BaseMarshaller> allMarshallers;
         private static readonly ImmutableArray<FastImportGenerator> allFastImportGenerators;
 
+        private const bool UseCorruptionCanary = false;
+
         static JSImportGenerator()
         {
             var primitiveMarshallers = new BaseMarshaller[] { new VoidMarshaller(), new NumericMarshaller(), new StringMarshaller(), new JSObjectMarshaller(), new NameMarshaller() };
@@ -67,6 +69,11 @@ namespace ScreepsDotNet.SourceGen
             var sourceEmitter = new SourceEmitter();
             sourceEmitter.WriteLine("using System;");
             sourceEmitter.WriteLine("using System.Collections.Immutable;");
+            if (UseCorruptionCanary)
+            {
+                sourceEmitter.WriteLine("using System.Runtime.InteropServices;");
+                sourceEmitter.WriteLine("using System.Diagnostics;");
+            }
             sourceEmitter.WriteLine("using ScreepsDotNet.Interop;");
 
             int uniqueImportIndex = 0;
@@ -193,7 +200,22 @@ namespace ScreepsDotNet.SourceGen
                 sourceEmitter.WriteLine($"unsafe");
                 sourceEmitter.OpenScope();
             }
-            sourceEmitter.WriteLine($"Span<InteropValue> args = stackalloc InteropValue[Interop.Native.InvokeImportArgsReserveCount + {methodSymbol.Parameters.Length}];");
+            if (UseCorruptionCanary)
+            {
+                sourceEmitter.WriteLine($"int argByteSize = (Interop.Native.InvokeImportArgsReserveCount + {methodSymbol.Parameters.Length}) * 16;");
+                sourceEmitter.WriteLine($"Span<byte> rawArgs = stackalloc byte[1024 + argByteSize];");
+                sourceEmitter.WriteLine($"Span<uint> rawArgsCanaryLeft = MemoryMarshal.Cast<byte, uint>(rawArgs[..512]);");
+                sourceEmitter.WriteLine($"rawArgsCanaryLeft.Fill(0xDEADBEEFu);");
+                sourceEmitter.WriteLine($"Span<uint> rawArgsCanaryRight = MemoryMarshal.Cast<byte, uint>(rawArgs[(512+argByteSize)..]);");
+                sourceEmitter.WriteLine($"rawArgsCanaryRight.Fill(0xDEADBEEFu);");
+                sourceEmitter.WriteLine($"Span<InteropValue> args = MemoryMarshal.Cast<byte, InteropValue>(rawArgs[512..(512+argByteSize)]);");
+                sourceEmitter.WriteLine($"try");
+                sourceEmitter.OpenScope();
+            }
+            else
+            {
+                sourceEmitter.WriteLine($"Span<InteropValue> args = stackalloc InteropValue[Interop.Native.InvokeImportArgsReserveCount + {methodSymbol.Parameters.Length}];");
+            }
             for (int i = 0; i < methodSymbol.Parameters.Length; ++i)
             {
                 marshallers[i].BeginMarshalToJS(methodSymbol.Parameters[i].Type, methodSymbol.Parameters[i].Name, $"args[Interop.Native.InvokeImportArgsReserveCount + {i}]", sourceEmitter);
@@ -212,6 +234,18 @@ namespace ScreepsDotNet.SourceGen
             for (int i = methodSymbol.Parameters.Length - 1; i >= 0; --i)
             {
                 marshallers[i].EndMarshalToJS(methodSymbol.Parameters[i].Type, methodSymbol.Parameters[i].Name, $"args[{i}]", sourceEmitter);
+            }
+            if (UseCorruptionCanary)
+            {
+                sourceEmitter.CloseScope();
+                sourceEmitter.WriteLine($"finally");
+                sourceEmitter.OpenScope();
+                sourceEmitter.WriteLine($"for (int i = 0; i < 128; ++i)");
+                sourceEmitter.OpenScope();
+                sourceEmitter.WriteLine($"Debug.Assert(rawArgsCanaryLeft[i] == 0xDEADBEEFu);");
+                sourceEmitter.WriteLine($"Debug.Assert(rawArgsCanaryRight[i] == 0xDEADBEEFu);");
+                sourceEmitter.CloseScope();
+                sourceEmitter.CloseScope();
             }
             if (isUnsafe)
             {

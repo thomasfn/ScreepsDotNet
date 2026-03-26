@@ -181,10 +181,7 @@ namespace ScreepsDotNet.Interop
         public InteropValue(IntPtr value) => Slot = new InteropValueImpl { IntPtrValue = value, Type = InteropValueType.Pointer };
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe InteropValue(char* value) => Slot = new InteropValueImpl { IntPtrValue = (IntPtr)value, Type = InteropValueType.String };
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe InteropValue(char* value, int arrayLength) => Slot = new InteropValueImpl { IntPtrValue = (IntPtr)value, Type = InteropValueType.Array, Length = arrayLength };
+        public unsafe InteropValue(char* value, int length, bool isArray) => Slot = new InteropValueImpl { IntPtrValue = (IntPtr)value, Type = isArray ? InteropValueType.Array : InteropValueType.String, Length = length, ElementType = isArray ? InteropValueType.String : InteropValueType.U16 };
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public InteropValue(JSObject value) => Slot = new InteropValueImpl { JSHandle = value.JSHandle, Type = InteropValueType.Object };
@@ -338,7 +335,7 @@ namespace ScreepsDotNet.Interop
             if (Slot.Type == InteropValueType.Void) { return null; }
             Debug.Assert(Slot.Type == InteropValueType.String || Slot.Type == InteropValueType.Name);
             if (Slot.Type == InteropValueType.Name) { return Name.GetNameValue(Slot.Int32Value); }
-            return new string((char*)Slot.IntPtrValue);
+            return new string((char*)Slot.IntPtrValue, 0, Slot.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -361,7 +358,7 @@ namespace ScreepsDotNet.Interop
             Debug.Assert(Slot.Type == InteropValueType.String || Slot.Type == InteropValueType.Name);
             if (Slot.Type == InteropValueType.String)
             {
-                var str = new string((char*)Slot.IntPtrValue);
+                var str = new string((char*)Slot.IntPtrValue, 0, Slot.Length);
                 var name = Name.Create(str);
                 Name.CopyIfNeeded(name.NameIndex);
                 return name;
@@ -377,6 +374,7 @@ namespace ScreepsDotNet.Interop
         {
             if (Slot.Type == InteropValueType.Void) { return null; }
             Debug.Assert(Slot.Type == InteropValueType.Array);
+            Debug.Assert(Slot.ElementType == InteropValueType.String);
             string[] arr = new string[Slot.Length];
             char* head = (char*)Slot.IntPtrValue;
             for (int i = 0; i < Slot.Length; ++i)
@@ -393,6 +391,7 @@ namespace ScreepsDotNet.Interop
         {
             if (Slot.Type == InteropValueType.Void) { return null; }
             Debug.Assert(Slot.Type == InteropValueType.Array);
+            Debug.Assert(Slot.ElementType == InteropValueType.String);
             string?[] arr = new string[Slot.Length];
             char* head = (char*)Slot.IntPtrValue;
             for (int i = 0; i < Slot.Length; ++i)

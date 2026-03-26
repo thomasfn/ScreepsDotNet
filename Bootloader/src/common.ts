@@ -8,4 +8,9 @@ export interface ScreepsDotNetExports extends WebAssembly.Exports {
     ['screeps:screepsdotnet/botapi#invoke-room-callback'](roomCoordX: number, roomCoordY: number): number;
     ['screeps:screepsdotnet/botapi#invoke-cost-callback'](roomCoordX: number, roomCoordY: number, costMatrixJsHandle: number): number;
     ['screeps:screepsdotnet/botapi#invoke-route-callback'](roomCoordX: number, roomCoordY: number, fromRoomCoordX: number, fromRoomCoordY: number): number;
+    __stack_pointer: WebAssembly.Global;
+    __heap_base: WebAssembly.Global;
+    __heap_end: WebAssembly.Global;
+    __stack_high: WebAssembly.Global;
+    __stack_low: WebAssembly.Global;
 }

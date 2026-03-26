@@ -481,7 +481,9 @@ export class Interop {
                 throw new Error(`failed to marshal non-numeric as '${stringifyParamSpec(paramSpec)}'`);
             // case InteropValueType.Ptr: return;
             case InteropValueType.String:
-                this._memory!.writeI32(valuePtr, this.stringToClr(typeof value === 'string' ? value : `${value}`));
+                const str = typeof value === 'string' ? value : `${value}`;
+                this._memory!.writeI32(valuePtr, this.stringToClr(str));
+                this._memory!.writeI32(valuePtr + 8, str.length);
                 this._memory!.writeU8(valuePtr + 12, InteropValueType.String);
                 break;
             case InteropValueType.Object:
@@ -560,10 +562,10 @@ export class Interop {
     }
 
     private stringToClr(str: string): number {
-        const strPtr = this._memory!.allocateTransient((str.length + 1) * 2);
+        const strPtr = this._memory!.allocateTransient(str.length * 2);
         try {
-            this._memory!.enterConstrainedRange(strPtr, (str.length + 1) * 2);
-            this._memory!.writeString(strPtr, str, true);
+            this._memory!.enterConstrainedRange(strPtr, str.length * 2);
+            this._memory!.writeString(strPtr, str, false);
             return strPtr;
         } finally {
             this._memory!.exitConstrainedRange();

@@ -1,6 +1,9 @@
+import { ScreepsDotNetExports } from "./common.js";
 import { FreeFunction, MallocFunction } from "./interop.js";
 
 const DEFENSIVE_CHECKS = false; // Turn this on to debug memory corruption issues
+const SIMPLE_TRANSIENT_ALLOCATOR = true;
+const CANARY_SIZE = 4;
 
 const INITIAL_TRANSIENT_PAGE_SIZE = 4096;
 
@@ -26,29 +29,38 @@ export class WasmMemoryManager {
 
     private readonly _malloc: MallocFunction;
     private readonly _free: FreeFunction;
+    private readonly _stackPointer: WebAssembly.Global;
+    private readonly _heapBase: number;
+    private readonly _stackHigh: number;
+    private readonly _stackLow: number;
 
     private readonly _transientPages: TransientPage[] = [];
+    private readonly _freeList: [ptr: number, sz: number][] = [];
 
     private _rangeMin?: number;
     private _rangeMax?: number;
     private readonly _rangeStack: number[] = [];
 
-    constructor(memory: WebAssembly.Memory, mallocFunc: MallocFunction, freeFunc: FreeFunction) {
-        this._memory = memory;
-        this._viewArrayBuffer = memory.buffer;
+    constructor(exports: ScreepsDotNetExports) {
+        this._memory = exports.memory;
+        this._viewArrayBuffer = this._memory.buffer;
 
-        this._u8 = new Uint8Array(memory.buffer);
-        this._i8 = new Int8Array(memory.buffer);
-        this._u16 = new Uint16Array(memory.buffer);
-        this._i16 = new Int16Array(memory.buffer);
-        this._u32 = new Uint32Array(memory.buffer);
-        this._i32 = new Int32Array(memory.buffer);
-        this._f32 = new Float32Array(memory.buffer);
-        this._f64 = new Float64Array(memory.buffer);
-        this._dataView = new DataView(memory.buffer);
+        this._u8 = new Uint8Array(this._memory.buffer);
+        this._i8 = new Int8Array(this._memory.buffer);
+        this._u16 = new Uint16Array(this._memory.buffer);
+        this._i16 = new Int16Array(this._memory.buffer);
+        this._u32 = new Uint32Array(this._memory.buffer);
+        this._i32 = new Int32Array(this._memory.buffer);
+        this._f32 = new Float32Array(this._memory.buffer);
+        this._f64 = new Float64Array(this._memory.buffer);
+        this._dataView = new DataView(this._memory.buffer);
 
-        this._malloc = mallocFunc;
-        this._free = freeFunc;
+        this._malloc = exports.malloc;
+        this._free = exports.free;
+        this._stackPointer = exports.__stack_pointer;
+        this._heapBase = exports.__heap_base.value;
+        this._stackHigh = exports.__stack_high.value;
+        this._stackLow = exports.__stack_low.value;
     }
 
     private checkAlignment(ptr: number, alignment: number): void {
@@ -72,6 +84,12 @@ export class WasmMemoryManager {
         if (this._viewArrayBuffer?.detached) {
             throw new Error(`view array buffer is detached`);
         }
+    }
+
+    private checkStack(): void {
+        const stackPtr: number = this._stackPointer.value;
+        if (stackPtr < this._stackLow) { throw new Error(`stack pointer is too low (${stackPtr} < ${this._stackLow})`); }
+        if (stackPtr > this._stackHigh) { throw new Error(`stack pointer is too high (${stackPtr} > ${this._stackHigh})`); }
     }
 
     public writeU8(ptr: number, value: number): void {
@@ -348,6 +366,36 @@ export class WasmMemoryManager {
     }
 
     public allocateTransient(sz: number): number {
+        if (SIMPLE_TRANSIENT_ALLOCATOR) {
+            if (DEFENSIVE_CHECKS) {
+                const ptr = this._malloc(sz + CANARY_SIZE * 2);
+                this.flush();
+                if (ptr === 0) { throw new Error(`failed to allocate transient (${sz}b)`); }
+                if (ptr < this._heapBase) { throw new Error(`malloc overlapping stack (${sz}b, ${ptr} < ${this._heapBase})`); }
+                this.checkAlignment(ptr, 4);
+                const leftCanary = ptr;
+                const returnPtr = ptr + CANARY_SIZE;
+                const rightCanary = returnPtr + sz;
+                try {
+                    this.enterConstrainedRange(ptr, ptr + sz + CANARY_SIZE * 2);
+                    for (let i = 0; i < CANARY_SIZE; ++i) {
+                        this.writeU8(leftCanary + i, 0xCC);
+                        this.writeU8(rightCanary + i, 0xCC);
+                    }
+                } finally {
+                    this.exitConstrainedRange();
+                }
+                this._freeList.push([ptr, sz]);
+                return returnPtr;
+            } else {
+                const ptr = this._malloc(sz);
+                this.flush();
+                if (ptr === 0) { throw new Error(`failed to allocate transient (${sz}b)`); }
+                if (ptr < this._heapBase) { throw new Error(`malloc overlapping stack (${sz}b, ${ptr} < ${this._heapBase})`); }
+                this._freeList.push([ptr, sz]);
+                return ptr;
+            }
+        }
         for (const page of this._transientPages) {
             const ptr = this.allocateTransientPage(page, sz);
             if (ptr === 0) { continue; }
@@ -379,6 +427,27 @@ export class WasmMemoryManager {
     }
 
     public freeAllTransient(): void {
+        if (SIMPLE_TRANSIENT_ALLOCATOR) {
+            for (const [ptr, sz] of this._freeList) {
+                if (DEFENSIVE_CHECKS) {
+                    const leftCanary = ptr;
+                    const returnPtr = ptr + CANARY_SIZE;
+                    const rightCanary = returnPtr + sz;
+                    for (let i = 0; i < CANARY_SIZE; ++i) {
+                        let c: number;
+                        if ((c = this.readU8(leftCanary + i)) !== 0xCC) {
+                            console.log(`freeAllTransient left canary corrupted (ptr=${ptr}, sz=${sz}, testPtr=${leftCanary + i}, expected=${0xCC}, actual=${c})`);
+                        }
+                        if ((c = this.readU8(rightCanary + i)) !== 0xCC) {
+                            console.log(`freeAllTransient right canary corrupted (ptr=${ptr}, sz=${sz}, testPtr=${rightCanary + i}, expected=${0xCC}, actual=${c})`);
+                        }
+                    }
+                }
+                this._free(ptr);
+            }
+            this._freeList.length = 0;
+            return;
+        }
         for (const page of this._transientPages) {
             page.head = 0;
         }

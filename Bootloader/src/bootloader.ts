@@ -91,6 +91,8 @@ export class Bootloader {
     private _memory?: WasmMemoryManager;
     private _compiled: boolean = false;
     private _started: boolean = false;
+    private _monoTime: number = 0;
+    private _monoTickTime: number = 0;
 
     private _inTick: boolean = false;
     private _profilingEnabled: boolean = false;
@@ -131,42 +133,37 @@ export class Bootloader {
         }
 
         this._systemImport = {
-            ["get-time"]: this.sys_get_time.bind(this),
-            ["get-random"]: this.sys_get_random.bind(this),
+            ["get-mono-time"]: this.sys_get_mono_time.bind(this),
+            ["get-wall-time"]: this.sys_get_wall_time.bind(this),
             ["write-stderr"]: this.sys_write_stderr.bind(this),
             ["write-stdout"]: this.sys_write_stdout.bind(this),
         };
     }
 
-    private sys_get_time(time_ptr: number): void {
+    // (import "screeps:screepsdotnet/system-bindings" "get-mono-time" (func (param i32)))
+    private sys_get_mono_time(time_ptr: number /* int64_t* */): void {
+        const t = Math.max(0, this._profileFn());
+        this._monoTime += (t - this._monoTickTime);
+        this._monoTickTime = t;
         this._memory!.flush();
-        this._memory!.writeU64(time_ptr, BigInt(new Date().getTime()) * 1000000n);
+        this._memory!.writeU64(time_ptr, BigInt(this._monoTime * 1000));
     }
 
-    private sys_get_random(buf: number, buf_len: number): void {
-        try {
-            this._memory!.flush();
-            this._memory!.enterConstrainedRange(buf, buf_len);
-            while (buf_len >= 4) {
-                this._memory!.writeU32(buf, Math.random() * 0xffffffff);
-                buf += 4;
-                buf_len -= 4;
-            }
-            while (buf_len > 0) {
-                this._memory!.writeU8(buf, Math.random() * 0xff);
-                ++buf;
-                --buf_len;
-            }
-        } finally {
-            this._memory!.exitConstrainedRange();
-        }
+    // (import "screeps:screepsdotnet/system-bindings" "get-wall-time" (func (param i32 i32)))
+    private sys_get_wall_time(seconds_ptr: number /* uint64_t* */, nanoseconds_ptr: number /* uint32_t* */): void {
+        const ms = new Date().getTime();
+        this._memory!.flush();
+        this._memory!.writeU64(seconds_ptr, BigInt(ms / 1000));
+        this._memory!.writeU32(nanoseconds_ptr, (ms * 1000000) % 1000000);
     }
 
+    // (import "screeps:screepsdotnet/system-bindings" "write-stderr" (func (param i32 i32)))
     private sys_write_stderr(buf: number, buf_len: number): void {
         this._memory!.flush();
         this._stderr.write(this._memory!, buf, buf_len);
     }
 
+    // (import "screeps:screepsdotnet/system-bindings" "write-stdout" (func (param i32 i32)))
     private sys_write_stdout(buf: number, buf_len: number): void {
         this._memory!.flush();
         this._stdout.write(this._memory!, buf, buf_len);
@@ -212,7 +209,7 @@ export class Bootloader {
         }
 
         // Wire things up
-        this._memory = new WasmMemoryManager(this._wasmInstance.exports.memory, this._wasmInstance.exports.malloc, this._wasmInstance.exports.free);
+        this._memory = new WasmMemoryManager(this._wasmInstance.exports);
         this._interop.memory = this._memory;
         this._compiled = true;
     }
@@ -256,6 +253,9 @@ export class Bootloader {
 
     public loop(): void {
         if (!this._wasmInstance || !this._started) { return; }
+
+        // Reset local monotonic clock
+        this._monoTickTime = 0;
 
         // Run bindings loop
         this._interop.loop();

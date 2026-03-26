@@ -120,11 +120,11 @@ namespace ScreepsDotNet.SourceGen.Marshalling
             emitter.OpenScope();
             if (marshallingData.WrapperTypeNullable)
             {
-                emitter.WriteLine($"{jsParamName} = {clrParamName} == null ? InteropValue.Void : new({packedStringArrayBufferName}Ptr, {clrParamName}.Length);");
+                emitter.WriteLine($"{jsParamName} = {clrParamName} == null ? InteropValue.Void : new({packedStringArrayBufferName}Ptr, {clrParamName}.Length, isArray: true);");
             }
             else
             {
-                emitter.WriteLine($"{jsParamName} = new({packedStringArrayBufferName}Ptr, {clrParamName}.Length);");
+                emitter.WriteLine($"{jsParamName} = new({packedStringArrayBufferName}Ptr, {clrParamName}.Length, isArray: true);");
             }
         }
 

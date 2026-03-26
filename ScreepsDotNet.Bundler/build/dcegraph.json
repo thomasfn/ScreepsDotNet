@@ -11,7 +11,12 @@
             "screeps:screepsdotnet/botapi#init",
             "screeps:screepsdotnet/botapi#loop",
             "malloc",
-            "free"
+            "free",
+            "__stack_pointer",
+            "__heap_base",
+            "__heap_end",
+            "__stack_high",
+            "__stack_low"
         ],
         "root": true
     },
@@ -54,5 +59,25 @@
     {
         "name": "free",
         "export": "free"
+    },
+    {
+        "name": "__stack_pointer",
+        "export": "__stack_pointer"
+    },
+    {
+        "name": "__heap_base",
+        "export": "__heap_base"
+    },
+    {
+        "name": "__heap_end",
+        "export": "__heap_end"
+    },
+    {
+        "name": "__stack_high",
+        "export": "__stack_high"
+    },
+    {
+        "name": "__stack_low",
+        "export": "__stack_low"
     }
 ]

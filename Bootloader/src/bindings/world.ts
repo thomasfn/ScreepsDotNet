@@ -447,7 +447,7 @@ export default class WorldBindings extends BaseBindings {
     private encodeCreepBody(body: readonly BodyPartDefinition[], outPtr: number): number {
         try {
             this._memory!.enterConstrainedRange(outPtr, 50 * 4);
-            for (let i = 0; i < body.length; ++i) {
+            for (let i = 0; i < Math.min(body.length, 50); ++i) {
                 const { type, hits, boost } = body[i];
                 // Encode each body part to a 32 bit int as 4 bytes
                 // unused: b3

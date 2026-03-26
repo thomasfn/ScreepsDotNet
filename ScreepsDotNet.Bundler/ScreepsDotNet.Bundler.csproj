@@ -43,12 +43,25 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<Content Include="build\polyfills\wasi_cli_environment.wasm" PackagePath="build\polyfills\" />
+		<Content Include="build\polyfills\wasi_cli_exit.wasm" PackagePath="build\polyfills\" />
+		<Content Include="build\polyfills\wasi_cli_stderr.wasm" PackagePath="build\polyfills\" />
+		<Content Include="build\polyfills\wasi_cli_stdin.wasm" PackagePath="build\polyfills\" />
+		<Content Include="build\polyfills\wasi_cli_stdout.wasm" PackagePath="build\polyfills\" />
+		<Content Include="build\polyfills\wasi_cli_terminal_input.wasm" PackagePath="build\polyfills\" />
+		<Content Include="build\polyfills\wasi_cli_terminal_output.wasm" PackagePath="build\polyfills\" />
+		<Content Include="build\polyfills\wasi_cli_terminal_stderr.wasm" PackagePath="build\polyfills\" />
+		<Content Include="build\polyfills\wasi_cli_terminal_stdin.wasm" PackagePath="build\polyfills\" />
+		<Content Include="build\polyfills\wasi_cli_terminal_stdout.wasm" PackagePath="build\polyfills\" />
 		<Content Include="build\polyfills\wasi_clocks_monotonic_clock.wasm" PackagePath="build\polyfills\" />
+		<Content Include="build\polyfills\wasi_clocks_wall_clock.wasm" PackagePath="build\polyfills\" />
+		<Content Include="build\polyfills\wasi_filesystem_preopens.wasm" PackagePath="build\polyfills\" />
+		<Content Include="build\polyfills\wasi_filesystem_types.wasm" PackagePath="build\polyfills\" />
+		<Content Include="build\polyfills\wasi_io_error.wasm" PackagePath="build\polyfills\" />
 		<Content Include="build\polyfills\wasi_io_poll.wasm" PackagePath="build\polyfills\" />
 		<Content Include="build\polyfills\wasi_io_streams.wasm" PackagePath="build\polyfills\" />
-		<Content Include="build\polyfills\wasi_snapshot_preview1.wasm" PackagePath="build\polyfills\" />
-		<Content Include="build\polyfills\wasi_sockets_tcp.wasm" PackagePath="build\polyfills\" />
-		<Content Include="build\polyfills\wasi_sockets_udp.wasm" PackagePath="build\polyfills\" />
+		<Content Include="build\polyfills\wasi_random.wasm" PackagePath="build\polyfills\" />
+				 
 		<Content Include="build\Binaryen.Defaults.props" PackagePath="build\" />
 		<Content Include="build\dcegraph.json" PackagePath="build\" />
 		<Content Include="build\EmSdkRepo.Defaults.props" PackagePath="build\" />

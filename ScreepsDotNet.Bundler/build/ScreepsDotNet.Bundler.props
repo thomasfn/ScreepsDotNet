@@ -15,8 +15,12 @@
 	<PropertyGroup>
 		<ScreepsCompressWasm>false</ScreepsCompressWasm>
 		<ScreepsEncoding>b64</ScreepsEncoding>
+		<ScreepsEnv>legacy</ScreepsEnv>
+	</PropertyGroup>
+	
+	<PropertyGroup>
 		<WasmEnableNonTrappingFloatToIntConversions>false</WasmEnableNonTrappingFloatToIntConversions>
-		<WasiSdkVersion>27</WasiSdkVersion>
+		<WasiSdkVersion>29</WasiSdkVersion>
 		<WasiSdkMinorVersion>0</WasiSdkMinorVersion>
 		<BinaryenVersion>123</BinaryenVersion>
 	</PropertyGroup>
@@ -27,28 +31,52 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<LinkerArg Include="-Wl,--export=__stack_pointer" />
+		<LinkerArg Include="-Wl,--export=__heap_base" />
+		<LinkerArg Include="-Wl,--export=__heap_end" />
+		<LinkerArg Include="-Wl,--export=__stack_high" />
+		<LinkerArg Include="-Wl,--export=__stack_low" />
+		
 		<WasmMergeConfigurationFlags Include="-q" />
-		<WasmMergeConfigurationFlags Include="-sec" />
+		<WasmMergeConfigurationFlags Include="-rec" />
 		<WasmMergeConfigurationFlags Include="--enable-bulk-memory-opt" />
 		<WasmMergeConfigurationFlags Include="--enable-multimemory" />
+		<WasmMergeConfigurationFlags Include="--enable-multimemory" />
 		
+		<WasmMergeModules Include="&quot;$(ScreepsWasmPolyfillBaseDir)wasi_cli_environment.wasm&quot; wasi:cli/environment@0.2.0" />
+		<WasmMergeModules Include="&quot;$(ScreepsWasmPolyfillBaseDir)wasi_cli_exit.wasm&quot; wasi:cli/exit@0.2.0" />
+		<WasmMergeModules Include="&quot;$(ScreepsWasmPolyfillBaseDir)wasi_cli_stderr.wasm&quot; wasi:cli/stderr@0.2.0" />
+		<WasmMergeModules Include="&quot;$(ScreepsWasmPolyfillBaseDir)wasi_cli_stdin.wasm&quot; wasi:cli/stdin@0.2.0" />
+		<WasmMergeModules Include="&quot;$(ScreepsWasmPolyfillBaseDir)wasi_cli_stdout.wasm&quot; wasi:cli/stdout@0.2.0" />
+		<WasmMergeModules Include="&quot;$(ScreepsWasmPolyfillBaseDir)wasi_cli_terminal_input.wasm&quot; wasi:cli/terminal-input@0.2.0" />
+		<WasmMergeModules Include="&quot;$(ScreepsWasmPolyfillBaseDir)wasi_cli_terminal_output.wasm&quot; wasi:cli/terminal-output@0.2.0" />
+		<WasmMergeModules Include="&quot;$(ScreepsWasmPolyfillBaseDir)wasi_cli_terminal_stderr.wasm&quot; wasi:cli/terminal-stderr@0.2.0" />
+		<WasmMergeModules Include="&quot;$(ScreepsWasmPolyfillBaseDir)wasi_cli_terminal_stdin.wasm&quot; wasi:cli/terminal-stdin@0.2.0" />
+		<WasmMergeModules Include="&quot;$(ScreepsWasmPolyfillBaseDir)wasi_cli_terminal_stdout.wasm&quot; wasi:cli/terminal-stdout@0.2.0" />
 		<WasmMergeModules Include="&quot;$(ScreepsWasmPolyfillBaseDir)wasi_clocks_monotonic_clock.wasm&quot; wasi:clocks/monotonic-clock@0.2.0" />
+		<WasmMergeModules Include="&quot;$(ScreepsWasmPolyfillBaseDir)wasi_clocks_wall_clock.wasm&quot; wasi:clocks/wall-clock@0.2.0" />
+		<WasmMergeModules Include="&quot;$(ScreepsWasmPolyfillBaseDir)wasi_filesystem_preopens.wasm&quot; wasi:filesystem/preopens@0.2.0" />
+		<WasmMergeModules Include="&quot;$(ScreepsWasmPolyfillBaseDir)wasi_filesystem_types.wasm&quot; wasi:filesystem/types@0.2.0" />
+		<WasmMergeModules Include="&quot;$(ScreepsWasmPolyfillBaseDir)wasi_io_error.wasm&quot; wasi:io/error@0.2.0" />
 		<WasmMergeModules Include="&quot;$(ScreepsWasmPolyfillBaseDir)wasi_io_poll.wasm&quot; wasi:io/poll@0.2.0" />
 		<WasmMergeModules Include="&quot;$(ScreepsWasmPolyfillBaseDir)wasi_io_streams.wasm&quot; wasi:io/streams@0.2.0" />
-		<WasmMergeModules Include="&quot;$(ScreepsWasmPolyfillBaseDir)wasi_snapshot_preview1.wasm&quot; wasi_snapshot_preview1" />
-		<WasmMergeModules Include="&quot;$(ScreepsWasmPolyfillBaseDir)wasi_sockets_tcp.wasm&quot; wasi:sockets/tcp@0.2.0" />
-		<WasmMergeModules Include="&quot;$(ScreepsWasmPolyfillBaseDir)wasi_sockets_udp.wasm&quot; wasi:sockets/udp@0.2.0" />
+		<WasmMergeModules Include="&quot;$(ScreepsWasmPolyfillBaseDir)wasi_random.wasm&quot; wasi:random/random@0.2.0" />
 
 		<WasmMetadceConfigurationFlags Include="-f &quot;$(ScreepsDceGraph)&quot;" />
 		<WasmMetadceConfigurationFlags Include="--enable-bulk-memory-opt" />
 		<WasmMetadceConfigurationFlags Include="--enable-multimemory" />
-
+	</ItemGroup>
+	
+	<ItemGroup Condition="'$(ScreepsEnv)' == 'legacy'">
 		<WasmOptConfigurationFlags Include="-mvp" />
 		<WasmOptConfigurationFlags Include="--multi-memory-lowering" />
 		<WasmOptConfigurationFlags Include="--memory64-lowering" />
-		<WasmOptConfigurationFlags Include="--llvm-memory-copy-fill-lowering " />
+		<WasmOptConfigurationFlags Include="--llvm-memory-copy-fill-lowering" />
 		<WasmOptConfigurationFlags Include="--llvm-nontrapping-fptoint-lowering" />
 		<WasmOptConfigurationFlags Include="--signext-lowering" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<WasmOptConfigurationFlags Include="--strip-debug" />
 		<WasmOptConfigurationFlags Include="-Oz" />
 	</ItemGroup>
