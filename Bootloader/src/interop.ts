@@ -432,7 +432,7 @@ export class Interop {
             case InteropValueType.F32: return this._memory!.readF32(valuePtr);
             case InteropValueType.F64: return this._memory!.readF64(valuePtr);
             case InteropValueType.Pointer: return this._memory!.getDataView(this._memory!.readI32(valuePtr), this._memory!.readI32(valuePtr + 8));
-            case InteropValueType.String: return this.stringToJs(this._memory!.readI32(valuePtr));
+            case InteropValueType.String: return this.stringToJs(this._memory!.readI32(valuePtr), this._memory!.readI32(valuePtr + 8));
             case InteropValueType.Object: return this._objects.getObjectByHandle(this._memory!.readI32(valuePtr + 4));
             case InteropValueType.Array:
                 if (paramSpec.elementSpec == null) {
@@ -504,6 +504,7 @@ export class Interop {
                 }
                 if (paramSpec.elementSpec.type === InteropValueType.String) {
                     this._memory!.writeI32(valuePtr, this.stringArrayToClr(value, paramSpec.elementSpec));
+                    this._memory!.writeU8(valuePtr + 13, InteropValueType.String);
                 } else {
                     this._memory!.writeI32(valuePtr, this.arrayToClr(value, paramSpec.elementSpec));
                 }
@@ -515,6 +516,7 @@ export class Interop {
                 const nameIndex = this._nameTable[valueAsStr];
                 if (nameIndex == null) {
                     this._memory!.writeI32(valuePtr, this.stringToClr(valueAsStr));
+                    this._memory!.writeU8(valuePtr + 8, valueAsStr.length);
                     this._memory!.writeU8(valuePtr + 12, InteropValueType.String);
                 } else {
                     this._memory!.writeI32(valuePtr, nameIndex);
@@ -552,10 +554,10 @@ export class Interop {
         this._memory!.writeU8(valuePtr + 12, paramSpec.type);
     }
 
-    private stringToJs(stringPtr: number): string {
+    private stringToJs(stringPtr: number, stringLen?: number): string {
         try {
             this._memory!.enterConstrainedRange(stringPtr, 2 * 2 * 1024 * 1024); // assuming they will never try and copy a string larger than 2m characters to JS
-            return this._memory!.readNullTerminatedString(stringPtr);
+            return stringLen != null ? this._memory!.readString(stringPtr, stringLen) : this._memory!.readNullTerminatedString(stringPtr);
         } finally {
             this._memory!.exitConstrainedRange();
         }

@@ -18,6 +18,10 @@ typedef int int32_t;
 typedef unsigned long long uint64_t;
 typedef long long int64_t;
 
+typedef int size_t;
+
+#define UINT32_MAX ((uint32_t)-1)
+
 #define STDFD_BUFFER_SIZE (1024)
 #define STDFD_CNT (3)
 
@@ -29,3 +33,10 @@ typedef struct {
 typedef struct {
     uint8_t tag; /* 0 = none, 1 = some */
 } OptionTag_t;
+
+
+__attribute__((import_module("env"), import_name("malloc")))
+extern void* _malloc(size_t sz);
+
+__attribute__((import_module("env"), import_name("free")))
+extern void _free(void* ptr);

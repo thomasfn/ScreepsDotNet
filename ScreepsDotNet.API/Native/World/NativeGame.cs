@@ -384,7 +384,7 @@ namespace ScreepsDotNet.Native.World
             var wrapperObject = NativeRoomObjectTypes.CreateWrapperForRoomObject(this, proxyObject, metadata, NativeRoomObjectTypes.TypeOf<T>());
             if (wrapperObject is not T newWrapperObject)
             {
-                Console.WriteLine($"Failed to create wrapper object for {proxyObject} (wrong type - expecting {typeof(T)}, got {wrapperObject?.GetType()})");
+                // Expected case when use Find on a derived type, e.g. Find<IStructureSpawn> which will return all structures due to the find constant not being specific
                 return null;
             }
             proxyObject.UserData = newWrapperObject;

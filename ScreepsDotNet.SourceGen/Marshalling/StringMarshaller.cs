@@ -18,7 +18,14 @@ namespace ScreepsDotNet.SourceGen.Marshalling
         {
             emitter.WriteLine($"fixed (char* {clrParamName}Ptr = {clrParamName})");
             emitter.OpenScope();
-            emitter.WriteLine($"{jsParamName} = new({clrParamName}Ptr, {clrParamName}.Length, isArray: false);");
+            if (paramTypeSymbol.NullableAnnotation == NullableAnnotation.NotAnnotated)
+            {
+                emitter.WriteLine($"{jsParamName} = new({clrParamName}Ptr, {clrParamName}.Length, isArray: false);");
+            }
+            else
+            {
+                emitter.WriteLine($"{jsParamName} = {clrParamName} == null ? InteropValue.Void : new({clrParamName}Ptr, {clrParamName}.Length, isArray: false);");
+            }
         }
 
         public override void EndMarshalToJS(ITypeSymbol paramTypeSymbol, string clrParamName, string jsParamName, SourceEmitter emitter)

@@ -137,6 +137,7 @@ export class Bootloader {
             ["get-wall-time"]: this.sys_get_wall_time.bind(this),
             ["write-stderr"]: this.sys_write_stderr.bind(this),
             ["write-stdout"]: this.sys_write_stdout.bind(this),
+            ["get-random-bytes"]: this.sys_get_random_bytes.bind(this),
         };
     }
 
@@ -146,15 +147,15 @@ export class Bootloader {
         this._monoTime += (t - this._monoTickTime);
         this._monoTickTime = t;
         this._memory!.flush();
-        this._memory!.writeU64(time_ptr, BigInt(this._monoTime * 1000));
+        this._memory!.writeU64(time_ptr, BigInt((this._monoTime * 1000)|0));
     }
 
     // (import "screeps:screepsdotnet/system-bindings" "get-wall-time" (func (param i32 i32)))
     private sys_get_wall_time(seconds_ptr: number /* uint64_t* */, nanoseconds_ptr: number /* uint32_t* */): void {
         const ms = new Date().getTime();
         this._memory!.flush();
-        this._memory!.writeU64(seconds_ptr, BigInt(ms / 1000));
-        this._memory!.writeU32(nanoseconds_ptr, (ms * 1000000) % 1000000);
+        this._memory!.writeU64(seconds_ptr, BigInt((ms / 1000)|0));
+        this._memory!.writeU32(nanoseconds_ptr, ((ms * 1000000) % 1000000)|0);
     }
 
     // (import "screeps:screepsdotnet/system-bindings" "write-stderr" (func (param i32 i32)))
@@ -167,6 +168,33 @@ export class Bootloader {
     private sys_write_stdout(buf: number, buf_len: number): void {
         this._memory!.flush();
         this._stdout.write(this._memory!, buf, buf_len);
+    }
+
+    // (import "screeps:screepsdotnet/system-bindings" "get-random-bytes" (func (param i32 i32)))
+    private sys_get_random_bytes(buf: number, buf_len: number): void {
+        this._memory!.flush();
+        try {
+            this._memory!.enterConstrainedRange(buf, buf_len);
+            let ptr = buf;
+            let remaining = buf_len;
+            while (remaining >= 4) {
+                this._memory!.writeU32(ptr, (Math.random() * 0xffffffff)|0);
+                ptr += 4;
+                remaining -= 4;
+            }
+            while (remaining >= 2) {
+                this._memory!.writeU16(ptr, (Math.random() * 0xffff)|0);
+                ptr += 2;
+                remaining -= 2;
+            }
+            while (remaining >= 1) {
+                this._memory!.writeU8(ptr, (Math.random() * 0xff)|0);
+                ptr += 1;
+                remaining -= 1;
+            }
+        } finally {
+            this._memory!.exitConstrainedRange();
+        }
     }
 
     public setImports(moduleName: string, importTable: ImportTable): void {

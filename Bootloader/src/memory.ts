@@ -1,11 +1,11 @@
 import { ScreepsDotNetExports } from "./common.js";
 import { FreeFunction, MallocFunction } from "./interop.js";
 
-const DEFENSIVE_CHECKS = false; // Turn this on to debug memory corruption issues
-const SIMPLE_TRANSIENT_ALLOCATOR = true;
+const DEFENSIVE_CHECKS = true; // Turn this on to debug memory corruption issues
+const SIMPLE_TRANSIENT_ALLOCATOR = false;
 const CANARY_SIZE = 4;
 
-const INITIAL_TRANSIENT_PAGE_SIZE = 4096;
+const INITIAL_TRANSIENT_PAGE_SIZE = 128 * 1024;
 
 interface TransientPage {
     ptr: number;
@@ -34,7 +34,7 @@ export class WasmMemoryManager {
     private readonly _stackHigh: number;
     private readonly _stackLow: number;
 
-    private readonly _transientPages: TransientPage[] = [];
+    private _transientPage: TransientPage;
     private readonly _freeList: [ptr: number, sz: number][] = [];
 
     private _rangeMin?: number;
@@ -61,6 +61,16 @@ export class WasmMemoryManager {
         this._heapBase = exports.__heap_base.value;
         this._stackHigh = exports.__stack_high.value;
         this._stackLow = exports.__stack_low.value;
+
+        this._transientPage = {
+            ptr: this._malloc(INITIAL_TRANSIENT_PAGE_SIZE),
+            head: 0,
+            size: INITIAL_TRANSIENT_PAGE_SIZE,
+        };
+        if (this._transientPage.ptr === 0) { throw new Error(`failed to allocate initial transient page (${INITIAL_TRANSIENT_PAGE_SIZE}b)`); }
+        if (this._transientPage.ptr < this._heapBase) { throw new Error(`initial transient page was < heap base (${this._transientPage.ptr} < ${this._heapBase})`); }
+        this.flush();
+        console.log(`allocated initial transient page (${this._transientPage.size}b @ ${this._transientPage.ptr})`);
     }
 
     private checkAlignment(ptr: number, alignment: number): void {
@@ -396,61 +406,55 @@ export class WasmMemoryManager {
                 return ptr;
             }
         }
-        for (const page of this._transientPages) {
-            const ptr = this.allocateTransientPage(page, sz);
-            if (ptr === 0) { continue; }
-            return ptr;
-        }
+        
+        let pagePtr = this.allocateTransientPage(sz);
+        if (pagePtr !== 0) { return pagePtr; }
 
         // No space in any pages, allocate new
-        let nextSize = Math.max(WasmMemoryManager.npo2(sz), this._transientPages.length === 0 ? INITIAL_TRANSIENT_PAGE_SIZE : this._transientPages[this._transientPages.length - 1].size * 2);
-        let page: TransientPage;
-        this._transientPages.push(page = {
+        let nextSize = Math.max(WasmMemoryManager.npo2(sz), this._transientPage.size * 2);
+        this._freeList.push([this._transientPage.ptr, this._transientPage.size]);
+        this._transientPage = {
             ptr: this._malloc(nextSize),
             head: 0,
             size: nextSize,
-        });
+        };
         this.flush();
-        if (page.ptr === 0) { throw new Error(`failed to allocate new transient page (${nextSize}b)`); }
+        if (this._transientPage.ptr === 0) { throw new Error(`failed to allocate new transient page (${nextSize}b)`); }
+        if (this._transientPage.ptr < this._heapBase) { throw new Error(`new transient page was < heap base (${this._transientPage.ptr} < ${this._heapBase})`); }
+        console.log(`allocated new transient page (${this._transientPage.size}b @ ${this._transientPage.ptr})`);
 
-        const ptr = this.allocateTransientPage(page, sz);
-        if (ptr === 0) { throw new Error(`failed to allocate within transient page (pageHead=${page.head}, pageSize=${page.size}, sz=${sz})`); }
-        return ptr;
+        pagePtr = this.allocateTransientPage(sz);
+        if (pagePtr === 0) { throw new Error(`failed to allocate within transient page (pageHead=${this._transientPage.head}, pageSize=${this._transientPage.size}, sz=${sz})`); }
+        return pagePtr;
     }
 
-    private allocateTransientPage(page: TransientPage, sz: number): number {
-        const alignedHead = WasmMemoryManager.align8(page.head);
+    private allocateTransientPage(sz: number): number {
+        const alignedHead = WasmMemoryManager.align8(this._transientPage.head);
         const newHead = alignedHead + sz;
-        if (newHead > page.size) { return 0; }
-        page.head = newHead;
-        return page.ptr + alignedHead;
+        if (newHead > this._transientPage.size) { return 0; }
+        this._transientPage.head = newHead;
+        return this._transientPage.ptr + alignedHead;
     }
 
     public freeAllTransient(): void {
-        if (SIMPLE_TRANSIENT_ALLOCATOR) {
-            for (const [ptr, sz] of this._freeList) {
-                if (DEFENSIVE_CHECKS) {
-                    const leftCanary = ptr;
-                    const returnPtr = ptr + CANARY_SIZE;
-                    const rightCanary = returnPtr + sz;
-                    for (let i = 0; i < CANARY_SIZE; ++i) {
-                        let c: number;
-                        if ((c = this.readU8(leftCanary + i)) !== 0xCC) {
-                            console.log(`freeAllTransient left canary corrupted (ptr=${ptr}, sz=${sz}, testPtr=${leftCanary + i}, expected=${0xCC}, actual=${c})`);
-                        }
-                        if ((c = this.readU8(rightCanary + i)) !== 0xCC) {
-                            console.log(`freeAllTransient right canary corrupted (ptr=${ptr}, sz=${sz}, testPtr=${rightCanary + i}, expected=${0xCC}, actual=${c})`);
-                        }
+        for (const [ptr, sz] of this._freeList) {
+            if (SIMPLE_TRANSIENT_ALLOCATOR && DEFENSIVE_CHECKS) {
+                const leftCanary = ptr;
+                const returnPtr = ptr + CANARY_SIZE;
+                const rightCanary = returnPtr + sz;
+                for (let i = 0; i < CANARY_SIZE; ++i) {
+                    let c: number;
+                    if ((c = this.readU8(leftCanary + i)) !== 0xCC) {
+                        console.log(`freeAllTransient left canary corrupted (ptr=${ptr}, sz=${sz}, testPtr=${leftCanary + i}, expected=${0xCC}, actual=${c})`);
+                    }
+                    if ((c = this.readU8(rightCanary + i)) !== 0xCC) {
+                        console.log(`freeAllTransient right canary corrupted (ptr=${ptr}, sz=${sz}, testPtr=${rightCanary + i}, expected=${0xCC}, actual=${c})`);
                     }
                 }
-                this._free(ptr);
             }
-            this._freeList.length = 0;
-            return;
+            this._free(ptr);
         }
-        for (const page of this._transientPages) {
-            page.head = 0;
-        }
+        this._transientPage.head = 0;
     }
 
     private static npo2(v: number): number {
