@@ -92,8 +92,125 @@ export interface ImportTable {
 
 export type Importable = ((...args: any[]) => unknown) | ImportTable;
 
+const INTEROP_VALUE_DEFENSIVE_CHECKS = true;
+
+class InteropValueView {
+    public ptr: number = 0;
+
+    public get booleanValue() { return this.byteValue !== 0; }
+    public set booleanValue(value) { this.byteValue = value ? 1 : 0; }
+
+    public get byteValue() { if (INTEROP_VALUE_DEFENSIVE_CHECKS) { this.checkPtr(); } return this._memory.readU8(this.ptr); }
+    public set byteValue(value) { if (INTEROP_VALUE_DEFENSIVE_CHECKS) { this.checkPtr(); } this._memory.writeU8(this.ptr, value); }
+
+    public get sbyteValue() { if (INTEROP_VALUE_DEFENSIVE_CHECKS) { this.checkPtr(); } return this._memory.readI8(this.ptr); }
+    public set sbyteValue(value) { if (INTEROP_VALUE_DEFENSIVE_CHECKS) { this.checkPtr(); } this._memory.writeI8(this.ptr, value); }
+
+    public get uint16Value() { if (INTEROP_VALUE_DEFENSIVE_CHECKS) { this.checkPtr(); } return this._memory.readU16(this.ptr); }
+    public set uint16Value(value) { if (INTEROP_VALUE_DEFENSIVE_CHECKS) { this.checkPtr(); } this._memory.writeU16(this.ptr, value); }
+
+    public get int16Value() { if (INTEROP_VALUE_DEFENSIVE_CHECKS) { this.checkPtr(); } return this._memory.readI16(this.ptr); }
+    public set int16Value(value) { if (INTEROP_VALUE_DEFENSIVE_CHECKS) { this.checkPtr(); } this._memory.writeI16(this.ptr, value); }
+
+    public get uint32Value() { if (INTEROP_VALUE_DEFENSIVE_CHECKS) { this.checkPtr(); } return this._memory.readU32(this.ptr); }
+    public set uint32Value(value) { if (INTEROP_VALUE_DEFENSIVE_CHECKS) { this.checkPtr(); } this._memory.writeU32(this.ptr, value); }
+
+    public get int32Value() { if (INTEROP_VALUE_DEFENSIVE_CHECKS) { this.checkPtr(); } return this._memory.readI32(this.ptr); }
+    public set int32Value(value) { if (INTEROP_VALUE_DEFENSIVE_CHECKS) { this.checkPtr(); } this._memory.writeI32(this.ptr, value); }
+
+    public get uint64Value() { if (INTEROP_VALUE_DEFENSIVE_CHECKS) { this.checkPtr(); } return this._memory.readU64(this.ptr); }
+    public set uint64Value(value) { if (INTEROP_VALUE_DEFENSIVE_CHECKS) { this.checkPtr(); } this._memory.writeU64(this.ptr, value); }
+
+    public get int64Value() { if (INTEROP_VALUE_DEFENSIVE_CHECKS) { this.checkPtr(); } return this._memory.readI64(this.ptr); }
+    public set int64Value(value) { if (INTEROP_VALUE_DEFENSIVE_CHECKS) { this.checkPtr(); } this._memory.writeI64(this.ptr, value); }
+
+    public get singleValue() { if (INTEROP_VALUE_DEFENSIVE_CHECKS) { this.checkPtr(); } return this._memory.readF32(this.ptr); }
+    public set singleValue(value) { if (INTEROP_VALUE_DEFENSIVE_CHECKS) { this.checkPtr(); } this._memory.writeF32(this.ptr, value); }
+
+    public get doubleValue() { if (INTEROP_VALUE_DEFENSIVE_CHECKS) { this.checkPtr(); } return this._memory.readF64(this.ptr); }
+    public set doubleValue(value) { if (INTEROP_VALUE_DEFENSIVE_CHECKS) { this.checkPtr(); } this._memory.writeF64(this.ptr, value); }
+
+    public get intPtrValue() { if (INTEROP_VALUE_DEFENSIVE_CHECKS) { this.checkPtr(); } return this._memory.readU32(this.ptr); }
+    public set intPtrValue(value) { if (INTEROP_VALUE_DEFENSIVE_CHECKS) { this.checkPtr(); } this._memory.writeU32(this.ptr, value); }
+
+    public get jsHandle() { if (INTEROP_VALUE_DEFENSIVE_CHECKS) { this.checkPtr(); } return this._memory.readU32(this.ptr + 4); }
+    public set jsHandle(value) { if (INTEROP_VALUE_DEFENSIVE_CHECKS) { this.checkPtr(); } this._memory.writeU32(this.ptr + 4, value); }
+
+    public get gcHandle() { if (INTEROP_VALUE_DEFENSIVE_CHECKS) { this.checkPtr(); } return this._memory.readU32(this.ptr + 4); }
+    public set gcHandle(value) { if (INTEROP_VALUE_DEFENSIVE_CHECKS) { this.checkPtr(); } this._memory.writeU32(this.ptr + 4, value); }
+
+    public get structIndex() { if (INTEROP_VALUE_DEFENSIVE_CHECKS) { this.checkPtr(); } return this._memory.readI32(this.ptr + 4); }
+    public set structIndex(value) { if (INTEROP_VALUE_DEFENSIVE_CHECKS) { this.checkPtr(); } this._memory.writeI32(this.ptr + 4, value); }
+
+    public get length() { if (INTEROP_VALUE_DEFENSIVE_CHECKS) { this.checkPtr(); } return this._memory.readI32(this.ptr + 8); }
+    public set length(value) { if (INTEROP_VALUE_DEFENSIVE_CHECKS) { this.checkPtr(); } this._memory.writeI32(this.ptr + 8, value); }
+
+    public get type() { if (INTEROP_VALUE_DEFENSIVE_CHECKS) { this.checkPtr(); } return this._memory.readU8(this.ptr + 12); }
+    public set type(value: InteropValueType) { if (INTEROP_VALUE_DEFENSIVE_CHECKS) { this.checkPtr(); } this._memory.writeU8(this.ptr + 12, value); }
+
+    public get elementType() { if (INTEROP_VALUE_DEFENSIVE_CHECKS) { this.checkPtr(); } return this._memory.readU8(this.ptr + 13); }
+    public set elementType(value: InteropValueType) { if (INTEROP_VALUE_DEFENSIVE_CHECKS) { this.checkPtr(); } this._memory.writeU8(this.ptr + 13, value); }
+
+    public get fieldKey() { if (INTEROP_VALUE_DEFENSIVE_CHECKS) { this.checkPtr(); } return this._memory.readU16(this.ptr + 14); }
+    public set fieldKey(value) { if (INTEROP_VALUE_DEFENSIVE_CHECKS) { this.checkPtr(); } this._memory.writeU16(this.ptr + 14, value); }
+
+    constructor(private readonly _memory: WasmMemoryManager) { }
+
+    public clear(): void {
+        if (INTEROP_VALUE_DEFENSIVE_CHECKS) { this.checkPtr(); }
+        this._memory.writeU32(this.ptr, 0);
+        this._memory.writeU32(this.ptr + 4, 0);
+        this._memory.writeU32(this.ptr + 8, 0);
+        this._memory.writeU32(this.ptr + 12, 0);
+    }
+
+    public poison(): void {
+        if (INTEROP_VALUE_DEFENSIVE_CHECKS) { this.checkPtr(); }
+        this._memory.writeU32(this.ptr, 0xCCCCCCCC);
+        this._memory.writeU32(this.ptr + 4, 0xCCCCCCCC);
+        this._memory.writeU32(this.ptr + 8, 0xCCCCCCCC);
+        this._memory.writeU32(this.ptr + 12, 0xCCCCCCCC);
+    }
+
+    private checkPtr(): void {
+        if (this.ptr === 0) { throw new Error(`null ptr`); }
+        if ((this.ptr % 8) !== 0) { throw new Error(`misaligned ptr`); }
+    }
+
+    public validate(): void {
+        const type = this.type;
+        if (type > 17) { throw new Error(`invalid type (${type})`); }
+        // const length = this.length;
+        // if (length < 0 || length > 200 * 1024) { throw new Error(`invalid length (${length})`); }
+    }
+
+    public toString(): string {
+        switch (this.type) {
+            case InteropValueType.Void: return `InteropValue[Void]`;
+            case InteropValueType.U1: return `InteropValue[U1, value=${this.booleanValue}]`;
+            case InteropValueType.U8: return `InteropValue[U8, value=${this.byteValue}]`;
+            case InteropValueType.I8: return `InteropValue[I8, value=${this.sbyteValue}]`;
+            case InteropValueType.U16: return `InteropValue[U16, value=${this.uint16Value}]`;
+            case InteropValueType.I16: return `InteropValue[I16, value=${this.int16Value}]`;
+            case InteropValueType.U32: return `InteropValue[U32, value=${this.uint32Value}]`;
+            case InteropValueType.I32: return `InteropValue[I32, value=${this.int32Value}]`;
+            case InteropValueType.U64: return `InteropValue[U64, value=${this.uint64Value}]`;
+            case InteropValueType.I64: return `InteropValue[I64, value=${this.int64Value}]`;
+            case InteropValueType.F32: return `InteropValue[F32, value=${this.singleValue}]`;
+            case InteropValueType.F64: return `InteropValue[F64, value=${this.doubleValue}]`;
+            case InteropValueType.Pointer: return `InteropValue[Pointer, ptr=${this.intPtrValue}, length=${this.length}]`;
+            case InteropValueType.String: return `InteropValue[String, ptr=${this.intPtrValue}, length=${this.length}]`;
+            case InteropValueType.Object: return `InteropValue[Object, jsHandle=${this.jsHandle}]`;
+            case InteropValueType.Array: return `InteropValue[Array, ptr=${this.intPtrValue}, length=${this.length}, elementType=${INTEROP_VALUE_TYPE_NAMES[this.elementType] ?? "unknown"}]`;
+            case InteropValueType.Name: return `InteropValue[Name, nameIndex=${this.intPtrValue}]`;
+            case InteropValueType.Struct: return `InteropValue[Struct, fieldPtr=${this.intPtrValue}, structIndex=${this.structIndex}, fieldCount=${this.length}]`;
+        }
+    }
+}
+
 const IMPORT_BINDING_SCOPE = {
     EXCEPTION_PARAM_SPEC,
+    InteropValueView,
 };
 
 export class Interop {
@@ -204,7 +321,7 @@ export class Interop {
         this._boundImportList.push(boundImportFunction);
         this._boundImportSymbolList.push({ fullName: `${moduleName}::${importName}`, functionSpec });
         ++this._numImportBinds;
-        // console.log(this.stringifyImportBindingForDisplay(importIndex));
+        //console.log(this.stringifyImportBindingForDisplay(importIndex));
         return importIndex;
     }
 
@@ -364,6 +481,7 @@ export class Interop {
         lines.push(`var t0 = this._profileFn();`);
         lines.push(`this._memory.flush();`);
         lines.push(`this._memory.enterConstrainedRange(paramsBufferPtr, ${(functionSpec.paramSpecs.length + 2) * 16});`);
+        lines.push(`var argView = new scope.InteropValueView(this._memory);`);
         lines.push(`var returnValPtr = paramsBufferPtr;`);
         lines.push(`var exceptionValPtr = paramsBufferPtr + 16;`);
         lines.push(`var argsPtr = exceptionValPtr + 16;`);
@@ -376,9 +494,10 @@ export class Interop {
             }
             paramList = paramListArr.join(', ');
             lines.push(`try {`);
+            lines.push(`  argView.ptr = argsPtr;`);
             for (let i = 0; i < functionSpec.paramSpecs.length; ++i) {
-                lines.push(`  arg${i} = this.marshalToJs(argsPtr, functionSpec.paramSpecs[${i}]);`)
-                lines.push(`  argsPtr += 16;`);
+                lines.push(`  arg${i} = this.marshalToJs(argView, functionSpec.paramSpecs[${i}]);`)
+                lines.push(`  argView.ptr += 16;`);
             }
             lines.push(`} catch (err) {`);
             lines.push(`  this._memory.exitConstrainedRange();`);
@@ -391,10 +510,13 @@ export class Interop {
         lines.push(`try {`);
         lines.push(`  returnVal = importFunction(${paramList});`);
         lines.push(`  this._memory.flush();`);
-        lines.push(`  this.marshalToClr(returnValPtr, functionSpec.returnSpec, returnVal);`);
+        lines.push(`  argView.ptr = returnValPtr;`);
+        lines.push(`  this.marshalToClr(argView, functionSpec.returnSpec, returnVal);`);
+        lines.push(`  console.log(this.stringifyImportBindingForDisplay(${importIndex}) + " -> " + argView.toString());`);
         lines.push(`  return 1;`);
         lines.push(`} catch (err) {`);
-        lines.push(`  this.marshalToClr(exceptionValPtr, scope.EXCEPTION_PARAM_SPEC, err.stack);`);
+        lines.push(`  argView.ptr = exceptionValPtr;`);
+        lines.push(`  this.marshalToClr(argView, scope.EXCEPTION_PARAM_SPEC, err.stack);`);
         lines.push(`} finally {`);
         lines.push(`  var t2 = this._profileFn();`);
         lines.push(`  this._timeInJsUserCode += (t2 - t1);`);
@@ -404,62 +526,65 @@ export class Interop {
         return compiler().bind(this, IMPORT_BINDING_SCOPE, importFunction, functionSpec);
     }
 
-    private marshalToJs(valuePtr: number, paramSpec: Readonly<ParamSpec>): unknown {
-        const valueType: InteropValueType = this._memory!.readU8(valuePtr + 12);
+    private marshalToJs(interopValue: Readonly<InteropValueView>, paramSpec: Readonly<ParamSpec>): unknown {
+        if (INTEROP_VALUE_DEFENSIVE_CHECKS) {
+            interopValue.validate();
+        }
+        const valueType = interopValue.type;
         if (valueType === InteropValueType.Void && paramSpec.nullable) {
             return paramSpec.nullAsUndefined ? undefined : null;
         }
         if (paramSpec.type === InteropValueType.Array && paramSpec.elementSpec?.type === InteropValueType.String && valueType === InteropValueType.Array) {
-            return this.stringArrayToJs(this._memory!.readI32(valuePtr), this._memory!.readI32(valuePtr + 8), paramSpec.elementSpec);
+            return this.stringArrayToJs(interopValue.intPtrValue, interopValue.length, paramSpec.elementSpec);
         }
         if (paramSpec.type === InteropValueType.I32 && valueType === InteropValueType.Pointer) {
-            return this._memory!.readI32(valuePtr);
+            return interopValue.intPtrValue;
         }
         if (valueType !== paramSpec.type) {
             throw new Error(`failed to marshal ${stringifyParamSpec(paramSpec)} from '${INTEROP_VALUE_TYPE_NAMES[valueType] ?? 'unknown'}'`);
         }
         switch (paramSpec.type) {
             case InteropValueType.Void: return undefined;
-            case InteropValueType.U1: return this._memory!.readU8(valuePtr) !== 0;
-            case InteropValueType.U8: return this._memory!.readU8(valuePtr);
-            case InteropValueType.I8: return this._memory!.readI8(valuePtr);
-            case InteropValueType.U16: return this._memory!.readU16(valuePtr);
-            case InteropValueType.I16: return this._memory!.readI16(valuePtr);
-            case InteropValueType.U32: return this._memory!.readU32(valuePtr);
-            case InteropValueType.I32: return this._memory!.readI32(valuePtr);
-            case InteropValueType.U64: return this._memory!.readU64(valuePtr);
-            case InteropValueType.I64: return this._memory!.readI64(valuePtr);
-            case InteropValueType.F32: return this._memory!.readF32(valuePtr);
-            case InteropValueType.F64: return this._memory!.readF64(valuePtr);
-            case InteropValueType.Pointer: return this._memory!.getDataView(this._memory!.readI32(valuePtr), this._memory!.readI32(valuePtr + 8));
-            case InteropValueType.String: return this.stringToJs(this._memory!.readI32(valuePtr), this._memory!.readI32(valuePtr + 8));
-            case InteropValueType.Object: return this._objects.getObjectByHandle(this._memory!.readI32(valuePtr + 4));
+            case InteropValueType.U1: return interopValue.booleanValue;
+            case InteropValueType.U8: return interopValue.byteValue;
+            case InteropValueType.I8: return interopValue.sbyteValue;
+            case InteropValueType.U16: return interopValue.uint16Value;
+            case InteropValueType.I16: return interopValue.int16Value;
+            case InteropValueType.U32: return interopValue.uint32Value;
+            case InteropValueType.I32: return interopValue.int32Value;
+            case InteropValueType.U64: return interopValue.uint64Value;
+            case InteropValueType.I64: return interopValue.int64Value;
+            case InteropValueType.F32: return interopValue.singleValue;
+            case InteropValueType.F64: return interopValue.doubleValue;
+            case InteropValueType.Pointer: return this._memory!.getDataView(interopValue.intPtrValue, interopValue.length);
+            case InteropValueType.String: return this.stringToJs(interopValue.intPtrValue, interopValue.length);
+            case InteropValueType.Object: return this._objects.getObjectByHandle(interopValue.jsHandle);
             case InteropValueType.Array:
                 if (paramSpec.elementSpec == null) {
                     throw new Error(`malformed param spec (array with no element spec)`);
                 }
-                return this.arrayToJs(this._memory!.readI32(valuePtr), this._memory!.readI32(valuePtr + 8), paramSpec.elementSpec);
-            case InteropValueType.Name: return this._nameList[this._memory!.readI32(valuePtr)];
-            case InteropValueType.Struct: return this.structToJs(this._memory!.readI32(valuePtr), this._memory!.readI32((valuePtr + 4)), this._memory!.readI32(valuePtr + 8));
+                return this.arrayToJs(interopValue.intPtrValue, interopValue.length, paramSpec.elementSpec);
+            case InteropValueType.Name: return this._nameList[interopValue.int32Value];
+            case InteropValueType.Struct: return this.structToJs(interopValue.structIndex, interopValue.intPtrValue, interopValue.length);
             default: throw new Error(`failed to marshal ${stringifyParamSpec(paramSpec)} from '${INTEROP_VALUE_TYPE_NAMES[valueType] ?? 'unknown'}'`);
         }
     }
 
-    private marshalToClr(valuePtr: number, paramSpec: Readonly<ParamSpec>, value: unknown): void {
+    private marshalToClr(interopValue: InteropValueView, paramSpec: Readonly<ParamSpec>, value: unknown): void {
         if (value == null) {
             if (paramSpec.nullable || paramSpec.type === InteropValueType.Void) {
-                this._memory!.writeU8(valuePtr, InteropValueType.Void);
+                interopValue.type = InteropValueType.Void;
                 return;
             }
             throw new Error(`failed to marshal null as '${stringifyParamSpec(paramSpec)}'`);
         }
         switch (paramSpec.type) {
             case InteropValueType.Void:
-                this._memory!.writeU8(valuePtr + 12, InteropValueType.Void);
+                interopValue.type = InteropValueType.Void;
                 break;
             case InteropValueType.U1:
-                this._memory!.writeU8(valuePtr, value ? 1 : 0);
-                this._memory!.writeU8(valuePtr + 12, InteropValueType.U1);
+                interopValue.booleanValue = !!value;
+                interopValue.type = InteropValueType.U1;
                 break;
             case InteropValueType.U8:
             case InteropValueType.I8:
@@ -472,7 +597,7 @@ export class Interop {
             case InteropValueType.F32:
             case InteropValueType.F64:
                 if (typeof value === 'number') {
-                    this.marshalNumericToClr(valuePtr, paramSpec, value);
+                    this.marshalNumericToClr(interopValue, paramSpec, value);
                     break;
                 }
                 if (value instanceof BigInt) {
@@ -482,16 +607,16 @@ export class Interop {
             // case InteropValueType.Ptr: return;
             case InteropValueType.String:
                 const str = typeof value === 'string' ? value : `${value}`;
-                this._memory!.writeI32(valuePtr, this.stringToClr(str));
-                this._memory!.writeI32(valuePtr + 8, str.length);
-                this._memory!.writeU8(valuePtr + 12, InteropValueType.String);
+                interopValue.intPtrValue = this.stringToClr(str);
+                interopValue.length = str.length;
+                interopValue.type = InteropValueType.String;
                 break;
             case InteropValueType.Object:
                 if (typeof value !== 'object' && typeof value !== 'function') {
                     throw new Error(`failed to marshal ${typeof value} as '${stringifyParamSpec(paramSpec)}' (not an object)`);
                 }
-                this._memory!.writeI32(valuePtr + 4, this._objects.getOrAssignObjectHandle(value));
-                this._memory!.writeU8(valuePtr + 12, InteropValueType.Object);
+                interopValue.jsHandle = this._objects.getOrAssignObjectHandle(value);
+                interopValue.type = InteropValueType.Object;
                 break;
             case InteropValueType.Array:
                 if (paramSpec.elementSpec == null) {
@@ -503,55 +628,56 @@ export class Interop {
                     throw new Error(`failed to marshal ${typeof value} as '${stringifyParamSpec(paramSpec)}' (not an array)`);
                 }
                 if (paramSpec.elementSpec.type === InteropValueType.String) {
-                    this._memory!.writeI32(valuePtr, this.stringArrayToClr(value, paramSpec.elementSpec));
-                    this._memory!.writeU8(valuePtr + 13, InteropValueType.String);
+                    interopValue.intPtrValue = this.stringArrayToClr(value, paramSpec.elementSpec);
+                    interopValue.elementType = InteropValueType.String;
                 } else {
-                    this._memory!.writeI32(valuePtr, this.arrayToClr(value, paramSpec.elementSpec));
+                    interopValue.intPtrValue = this.arrayToClr(value, paramSpec.elementSpec);
+                    interopValue.elementType = paramSpec.elementSpec.type;
                 }
-                this._memory!.writeI32(valuePtr + 8, value.length);
-                this._memory!.writeU8(valuePtr + 12, InteropValueType.Array);
+                interopValue.length = value.length;
+                interopValue.type = InteropValueType.Array;
                 break;
             case InteropValueType.Name:
                 const valueAsStr = typeof value === 'string' ? value : `${value}`;
                 const nameIndex = this._nameTable[valueAsStr];
                 if (nameIndex == null) {
-                    this._memory!.writeI32(valuePtr, this.stringToClr(valueAsStr));
-                    this._memory!.writeU8(valuePtr + 8, valueAsStr.length);
-                    this._memory!.writeU8(valuePtr + 12, InteropValueType.String);
+                    interopValue.intPtrValue = this.stringToClr(valueAsStr);
+                    interopValue.length = valueAsStr.length;
+                    interopValue.type = InteropValueType.String;
                 } else {
-                    this._memory!.writeI32(valuePtr, nameIndex);
-                    this._memory!.writeU8(valuePtr + 12, InteropValueType.Name);
+                    interopValue.intPtrValue = nameIndex;
+                    interopValue.type = InteropValueType.Name;
                 }
                 break;
             case InteropValueType.Struct:
                 if (typeof value !== 'object' && typeof value !== 'function') {
                     throw new Error(`failed to marshal ${typeof value} as '${stringifyParamSpec(paramSpec)}' (not an object)`);
                 }
-                if (this._memory!.readU8(valuePtr + 12) !== InteropValueType.Struct) {
+                if (interopValue.type !== InteropValueType.Struct) {
                     throw new Error(`failed to marshal ${typeof value} as '${stringifyParamSpec(paramSpec)}' (return InteropValue was not initialised correctly))`);
                 }
-                this.structToClr(this._memory!.readI32(valuePtr + 4), this._memory!.readI32(valuePtr), this._memory!.readI32(valuePtr + 8), value as Record<string, unknown>);
+                this.structToClr(interopValue.structIndex, interopValue.intPtrValue, interopValue.length, value as Record<string, unknown>);
                 break;
             default:
                 throw new Error(`failed to marshal '${typeof value}' as '${stringifyParamSpec(paramSpec)}' (not yet implemented)`);
         }
     }
 
-    private marshalNumericToClr(valuePtr: number, paramSpec: Readonly<ParamSpec>, value: number): void {
+    private marshalNumericToClr(interopValue: InteropValueView, paramSpec: Readonly<ParamSpec>, value: number): void {
         switch (paramSpec.type) {
-            case InteropValueType.U8: this._memory!.writeU8(valuePtr, value); break;
-            case InteropValueType.I8: this._memory!.writeI8(valuePtr, value); break;
-            case InteropValueType.U16: this._memory!.writeU16(valuePtr, value); break;
-            case InteropValueType.I16: this._memory!.writeI16(valuePtr, value); break;
-            case InteropValueType.U32: this._memory!.writeU32(valuePtr, value); break;
-            case InteropValueType.I32: this._memory!.writeI32(valuePtr, value); break;
-            // case InteropValueType.U64: break;
-            // case InteropValueType.I64: break;
-            case InteropValueType.F32: this._memory!.writeF32(valuePtr, value); break;
-            case InteropValueType.F64: this._memory!.writeF64(valuePtr, value); break;
+            case InteropValueType.U8: interopValue.byteValue = value; break;
+            case InteropValueType.I8: interopValue.sbyteValue = value; break;
+            case InteropValueType.U16: interopValue.uint16Value = value; break;
+            case InteropValueType.I16: interopValue.int16Value = value; break;
+            case InteropValueType.U32: interopValue.uint32Value = value; break;
+            case InteropValueType.I32: interopValue.int32Value = value; break;
+            case InteropValueType.U64: interopValue.uint64Value = BigInt(value); break;
+            case InteropValueType.I64: interopValue.int64Value = BigInt(value); break;
+            case InteropValueType.F32: interopValue.singleValue = value; break;
+            case InteropValueType.F64: interopValue.doubleValue = value; break;
             default: throw new Error(`failed to marshal numeric as '${stringifyParamSpec(paramSpec)}' (not yet implemented)`);
         }
-        this._memory!.writeU8(valuePtr + 12, paramSpec.type);
+        interopValue.type = paramSpec.type;
     }
 
     private stringToJs(stringPtr: number, stringLen?: number): string {
@@ -564,7 +690,7 @@ export class Interop {
     }
 
     private stringToClr(str: string): number {
-        const strPtr = this._memory!.allocateTransient(str.length * 2);
+        const strPtr = this._memory!.allocateTransient(str.length * 2, 2);
         try {
             this._memory!.enterConstrainedRange(strPtr, str.length * 2);
             this._memory!.writeString(strPtr, str, false);
@@ -579,9 +705,14 @@ export class Interop {
             this._memory!.enterConstrainedRange(arrayPtr, arrayLen * 16);
             const result: unknown[] = [];
             result.length = arrayLen;
-            for (let i = 0; i < arrayLen; ++i) {
-                result[i] = this.marshalToJs(arrayPtr, elementSpec);
-                arrayPtr += 16;
+            if (arrayLen > 0) {
+                const elementView = new InteropValueView(this._memory!);
+                elementView.ptr = arrayPtr;
+                for (let i = 0; i < arrayLen; ++i) {
+                    elementView.validate();
+                    result[i] = this.marshalToJs(elementView, elementSpec);
+                    elementView.ptr += 16;
+                }
             }
             return result;
         } finally {
@@ -590,13 +721,16 @@ export class Interop {
     }
 
     private arrayToClr(value: unknown[], elementSpec: Readonly<ParamSpec>): number {
-        const arrPtr = this._memory!.allocateTransient(value.length * 16);
+        if (value.length === 0) { return 0; }
+        const arrPtr = this._memory!.allocateTransient(value.length * 16, 16);
         try {
             this._memory!.enterConstrainedRange(arrPtr, value.length * 16);
-            let elPtr = arrPtr;
+            const elementView = new InteropValueView(this._memory!);
+            elementView.ptr = arrPtr;
             for (let i = 0; i < value.length; ++i) {
-                this.marshalToClr(elPtr, elementSpec, value[i]);
-                elPtr += 16;
+                elementView.poison();
+                this.marshalToClr(elementView, elementSpec, value[i]);
+                elementView.ptr += 16;
             }
             return arrPtr;
         } finally {
@@ -645,7 +779,7 @@ export class Interop {
             bufferSize += str.length + 1;
             tmp[i] = str;
         }
-        const strPtr = this._memory!.allocateTransient(bufferSize * 2);
+        const strPtr = this._memory!.allocateTransient(bufferSize * 2, 2);
         try {
             this._memory!.enterConstrainedRange(strPtr, bufferSize * 2);
             let charPtr = strPtr;
@@ -674,18 +808,19 @@ export class Interop {
             throw new Error(`failed to marshal struct ${structIndex} (invalid struct index)`);
         }
         const useFieldKeys = fieldCount !== structSpec.fieldSpecs.length;
-        const baseFieldPtr = fieldPtr;
         try {
             this._memory!.enterConstrainedRange(fieldPtr, fieldCount * 16);
+            const fieldView = new InteropValueView(this._memory!);
+            fieldView.ptr = fieldPtr;
             for (let i = 0; i < fieldCount; ++i) {
-                const fieldKey = useFieldKeys ? this._memory!.readI16(fieldPtr + 14) : i;
+                const fieldKey = useFieldKeys ? fieldView.fieldKey : i;
                 const fieldSpec = structSpec.fieldSpecs[fieldKey];
                 if (!fieldSpec) {
                     throw new Error(`failed to marshal struct ${structIndex} field ${i} to clr (field key ${fieldKey} did not refer to a field)`);
                 }
                 const value = obj != null ? obj[fieldSpec.fieldName] : null;
-                this.marshalToClr(fieldPtr, fieldSpec.paramSpec, value);
-                fieldPtr += 16;
+                this.marshalToClr(fieldView, fieldSpec.paramSpec, value);
+                fieldView.ptr += 16;
             }
         } finally {
             this._memory!.exitConstrainedRange();
@@ -701,14 +836,17 @@ export class Interop {
         const useFieldKeys = fieldCount !== structSpec.fieldSpecs.length;
         try {
             this._memory!.enterConstrainedRange(fieldPtr, fieldCount * 16);
+            const fieldInteropValue = new InteropValueView(this._memory!);
+            fieldInteropValue.ptr = fieldPtr;
             for (let i = 0; i < fieldCount; ++i) {
-                const fieldKey = useFieldKeys ? this._memory!.readI16(fieldPtr + 14) : i;
+                fieldInteropValue.validate();
+                const fieldKey = useFieldKeys ? fieldInteropValue.fieldKey : i;
                 const fieldSpec = structSpec.fieldSpecs[fieldKey];
                 if (!fieldSpec) {
                     throw new Error(`failed to marshal struct ${structIndex} field ${i} from clr (field key ${fieldKey} did not refer to a field)`);
                 }
-                result[fieldSpec.fieldName] = this.marshalToJs(fieldPtr, fieldSpec.paramSpec);
-                fieldPtr += 16;
+                result[fieldSpec.fieldName] = this.marshalToJs(fieldInteropValue, fieldSpec.paramSpec);
+                fieldInteropValue.ptr += 16;
             }
             return result;
         } finally {
