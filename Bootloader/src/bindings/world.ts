@@ -305,7 +305,16 @@ export default class WorldBindings extends BaseBindings {
             },
             RoomTerrain: {
                 get: (thisObj: RoomTerrain, x: number, y: number) => thisObj.get(x, y),
-                getRawBuffer: (thisObj: RoomTerrain, dataView: DataView) => (thisObj as unknown as { getRawBuffer(destination: Uint8Array): void }).getRawBuffer(new Uint8Array(dataView.buffer, dataView.byteOffset, dataView.byteLength)),
+                getRawBuffer: (thisObj: RoomTerrain, dataView: DataView) => {
+                    const rawBuffer = (thisObj as RoomTerrain & { getRawBuffer(destination?: Uint8Array): Uint8Array }).getRawBuffer();
+                    if (rawBuffer.length !== 2500) { throw new Error(`RoomTerrain.getRawBuffer returned a non-2500-length array (${rawBuffer.length})`); }
+                    this._memory!.enterConstrainedRange(dataView.byteOffset, dataView.byteLength);
+                    try {
+                        this._memory!.writeBytes(dataView, rawBuffer);
+                    } finally {
+                        this._memory!.exitConstrainedRange();
+                    }
+                },
             },
         };
     }

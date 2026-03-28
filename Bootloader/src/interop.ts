@@ -512,7 +512,6 @@ export class Interop {
         lines.push(`  this._memory.flush();`);
         lines.push(`  argView.ptr = returnValPtr;`);
         lines.push(`  this.marshalToClr(argView, functionSpec.returnSpec, returnVal);`);
-        lines.push(`  console.log(this.stringifyImportBindingForDisplay(${importIndex}) + " -> " + argView.toString());`);
         lines.push(`  return 1;`);
         lines.push(`} catch (err) {`);
         lines.push(`  argView.ptr = exceptionValPtr;`);

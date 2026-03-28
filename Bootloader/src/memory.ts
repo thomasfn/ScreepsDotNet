@@ -63,7 +63,13 @@ export class WasmMemoryManager {
         this._stackHigh = exports.__stack_high.value;
         this._stackLow = exports.__stack_low.value;
 
+        this.reportGrowth();
+
         this._transientPage = this.createTransientPage(INITIAL_TRANSIENT_PAGE_SIZE);
+    }
+
+    private reportGrowth(): void {
+        console.log(`WASM linear memory growth to ${this._memory.buffer.byteLength}b (sp=${this._stackPointer.value}, heapBase=${this._heapBase}, stackHigh=${this._stackHigh}, stackLow=${this._stackLow})`);
     }
 
     private checkAlignment(ptr: number, alignment: number): void {
@@ -198,6 +204,23 @@ export class WasmMemoryManager {
         if (nullTerminated) {
             this._u16[first + value.length] = 0;
         }
+    }
+
+    public writeBytes(ptr: number, bytes: Uint8Array): void;
+
+    public writeBytes(dataView: DataView, bytes: Uint8Array): void;
+
+    public writeBytes(ptrOrDataView: number | DataView, bytes: Uint8Array): void {
+        const ptr = typeof ptrOrDataView === "number" ? ptrOrDataView : ptrOrDataView.byteOffset;
+        if (DEFENSIVE_CHECKS) {
+            this.checkDetached();
+            this.checkConstrainedRange(ptr, bytes.length);
+            if (typeof ptrOrDataView !== "number") {
+                if (ptrOrDataView.buffer !== this._memory.buffer) { throw new Error(`DataView stale`); }
+                if (ptrOrDataView.byteLength < bytes.length) { throw new Error(`DataView too small to accept bytes`); }
+            }
+        }
+        this._u8.set(bytes, ptr);
     }
 
     public readU8(ptr: number): number {
@@ -366,6 +389,7 @@ export class WasmMemoryManager {
         this._f32 = new Float32Array(this._memory.buffer);
         this._f64 = new Float64Array(this._memory.buffer);
         this._dataView = new DataView(this._memory.buffer);
+        this.reportGrowth();
     }
 
     public allocateTransient(sz: number, alignment: number): number {
