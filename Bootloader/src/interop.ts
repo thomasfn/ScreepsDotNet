@@ -1,4 +1,4 @@
-import { WasmMemoryManager } from './memory.js';
+import { MemoryArea, WasmMemoryManager } from './memory.js';
 import { ObjectInterop } from './object-interop.js';
 
 const enum InteropValueType {
@@ -352,7 +352,7 @@ export class Interop {
         };
         spec.fieldSpecs.length = numFields;
         try {
-            this._memory!.enterConstrainedRange(fieldsPtr, numFields * 8);
+            this._memory!.enterConstrainedRange(fieldsPtr, numFields * 8, MemoryArea.Stack);
             for (let i = 0; i < numFields; ++i) {
                 const fieldName = this.stringToJs(this._memory!.readI32(fieldsPtr));
                 fieldsPtr += 4;
@@ -681,7 +681,7 @@ export class Interop {
 
     private stringToJs(stringPtr: number, stringLen?: number): string {
         try {
-            this._memory!.enterConstrainedRange(stringPtr, 2 * 2 * 1024 * 1024); // assuming they will never try and copy a string larger than 2m characters to JS
+            this._memory!.enterConstrainedRange(stringPtr, stringLen != null ? stringLen * 2 : 2 * 2 * 1024 * 1024, MemoryArea.Any); // assuming they will never try and copy a string larger than 2m characters to JS
             return stringLen != null ? this._memory!.readString(stringPtr, stringLen) : this._memory!.readNullTerminatedString(stringPtr);
         } finally {
             this._memory!.exitConstrainedRange();
@@ -691,7 +691,7 @@ export class Interop {
     private stringToClr(str: string): number {
         const strPtr = this._memory!.allocateTransient(str.length * 2, 2);
         try {
-            this._memory!.enterConstrainedRange(strPtr, str.length * 2);
+            this._memory!.enterConstrainedRange(strPtr, str.length * 2, MemoryArea.TransientPage);
             this._memory!.writeString(strPtr, str, false);
             return strPtr;
         } finally {
@@ -701,7 +701,7 @@ export class Interop {
 
     private arrayToJs(arrayPtr: number, arrayLen: number, elementSpec: Readonly<ParamSpec>): unknown[] {
         try {
-            this._memory!.enterConstrainedRange(arrayPtr, arrayLen * 16);
+            this._memory!.enterConstrainedRange(arrayPtr, arrayLen * 16, MemoryArea.AnyNonData);
             const result: unknown[] = [];
             result.length = arrayLen;
             if (arrayLen > 0) {
@@ -723,7 +723,7 @@ export class Interop {
         if (value.length === 0) { return 0; }
         const arrPtr = this._memory!.allocateTransient(value.length * 16, 16);
         try {
-            this._memory!.enterConstrainedRange(arrPtr, value.length * 16);
+            this._memory!.enterConstrainedRange(arrPtr, value.length * 16, MemoryArea.TransientPage);
             const elementView = new InteropValueView(this._memory!);
             elementView.ptr = arrPtr;
             for (let i = 0; i < value.length; ++i) {
@@ -739,7 +739,7 @@ export class Interop {
 
     private stringArrayToJs(arrayPtr: number, arrayLen: number, elementSpec: Readonly<ParamSpec>): (string | null | undefined)[] {
         try {
-            this._memory!.enterConstrainedRange(arrayPtr, 2 * 2 * 1024 * 1024);
+            this._memory!.enterConstrainedRange(arrayPtr, 2 * 2 * 1024 * 1024, MemoryArea.AnyNonData);
             const result: (string | null | undefined)[] = [];
             result.length = arrayLen;
             for (let i = 0; i < arrayLen; ++i) {
@@ -780,7 +780,7 @@ export class Interop {
         }
         const strPtr = this._memory!.allocateTransient(bufferSize * 2, 2);
         try {
-            this._memory!.enterConstrainedRange(strPtr, bufferSize * 2);
+            this._memory!.enterConstrainedRange(strPtr, bufferSize * 2, MemoryArea.TransientPage);
             let charPtr = strPtr;
             for (let i = 0; i < value.length; ++i) {
                 const element = tmp[i];
@@ -808,7 +808,7 @@ export class Interop {
         }
         const useFieldKeys = fieldCount !== structSpec.fieldSpecs.length;
         try {
-            this._memory!.enterConstrainedRange(fieldPtr, fieldCount * 16);
+            this._memory!.enterConstrainedRange(fieldPtr, fieldCount * 16, MemoryArea.Stack);
             const fieldView = new InteropValueView(this._memory!);
             fieldView.ptr = fieldPtr;
             for (let i = 0; i < fieldCount; ++i) {
@@ -834,7 +834,7 @@ export class Interop {
         const result: Record<string, unknown> = {};
         const useFieldKeys = fieldCount !== structSpec.fieldSpecs.length;
         try {
-            this._memory!.enterConstrainedRange(fieldPtr, fieldCount * 16);
+            this._memory!.enterConstrainedRange(fieldPtr, fieldCount * 16, MemoryArea.Stack);
             const fieldInteropValue = new InteropValueView(this._memory!);
             fieldInteropValue.ptr = fieldPtr;
             for (let i = 0; i < fieldCount; ++i) {

@@ -13,6 +13,15 @@ interface TransientPage {
     head: number;
 }
 
+export const enum MemoryArea {
+    Data,
+    Stack,
+    Heap,
+    TransientPage,
+    AnyNonData,
+    Any,
+}
+
 export class WasmMemoryManager {
     private readonly _memory: WebAssembly.Memory;
     private _viewArrayBuffer?: ArrayBuffer;
@@ -93,6 +102,52 @@ export class WasmMemoryManager {
         if (this._viewArrayBuffer?.detached) {
             throw new Error(`view array buffer is detached`);
         }
+    }
+
+    private checkMemoryArea(ptr: number, sz: number, expected: MemoryArea): void {
+        if (ptr < 0 || sz < 0 || ptr + sz > this._memory.buffer.byteLength) {
+            throw new Error(`pointer out of bounds (expected 0-${this._memory.buffer.byteLength}, got ${ptr}-${ptr+sz})`);
+        }
+        if (expected === MemoryArea.Any) { return; }
+        if (expected === MemoryArea.Data) {
+            if (!WasmMemoryManager.fullyContainedInArea(ptr, sz, this._stackHigh, this._heapBase)) {
+                throw new Error(`pointer out of bounds (expected data area ${this._stackHigh}-${this._heapBase}, got ${ptr}-${ptr+sz})`);
+            }
+            return;
+        }
+        if (WasmMemoryManager.intersectsArea(ptr, sz, this._stackHigh, this._heapBase)) {
+            throw new Error(`pointer out of bounds (expected not data area ${this._stackHigh}-${this._heapBase}, got ${ptr}-${ptr+sz})`);
+        }
+        if (expected === MemoryArea.AnyNonData) { return; }
+        if (expected === MemoryArea.Stack) {
+            if (!WasmMemoryManager.fullyContainedInArea(ptr, sz, this._stackLow, this._stackHigh)) {
+                throw new Error(`pointer out of bounds (expected stack area ${this._stackLow}-${this._stackHigh}, got ${ptr}-${ptr+sz})`);
+            }
+            return;
+        }
+        if (expected === MemoryArea.Heap) {
+            if (!WasmMemoryManager.fullyContainedInArea(ptr, sz, this._heapBase, this._memory.buffer.byteLength)) {
+                throw new Error(`pointer out of bounds (expected heap area ${this._heapBase}-${this._memory.buffer.byteLength}, got ${ptr}-${ptr+sz})`);
+            }
+            if (WasmMemoryManager.intersectsArea(ptr, sz, this._transientPage.ptr, this._transientPage.ptr + this._transientPage.size)) {
+                throw new Error(`pointer out of bounds (expected not transient page area ${this._transientPage.ptr}-${this._transientPage.ptr + this._transientPage.size}, got ${ptr}-${ptr+sz})`);
+            }
+            return;
+        }
+        if (expected === MemoryArea.TransientPage) {
+            if (!WasmMemoryManager.fullyContainedInArea(ptr, sz, this._transientPage.ptr, this._transientPage.ptr + this._transientPage.size)) {
+                throw new Error(`pointer out of bounds (expected transient page area ${this._transientPage.ptr}-${this._transientPage.ptr + this._transientPage.size}, got ${ptr}-${ptr+sz})`);
+            }
+            return;
+        }
+    }
+
+    private static intersectsArea(ptr: number, sz: number, areaStart: number, areaEnd: number): boolean {
+        return !(ptr + sz <= areaStart || ptr >= areaEnd);
+    }
+
+    private static fullyContainedInArea(ptr: number, sz: number, areaStart: number, areaEnd: number): boolean {
+        return ptr >= areaStart && ptr + sz <= areaEnd;
     }
 
     private checkStack(): void {
@@ -361,8 +416,9 @@ export class WasmMemoryManager {
         this._u8.copyWithin(dst, src, src + sz);
     }
 
-    public enterConstrainedRange(ptr: number, sz: number): void {
+    public enterConstrainedRange(ptr: number, sz: number, expectedMemoryArea: MemoryArea): void {
         if (!DEFENSIVE_CHECKS) { return; }
+        this.checkMemoryArea(ptr, sz, expectedMemoryArea);
         if (this._rangeMin != null) {
             this._rangeStack.push(this._rangeMin);
             this._rangeStack.push(this._rangeMax!);
@@ -404,7 +460,7 @@ export class WasmMemoryManager {
                 const returnPtr = ptr + CANARY_SIZE;
                 const rightCanary = returnPtr + sz;
                 try {
-                    this.enterConstrainedRange(ptr, ptr + sz + CANARY_SIZE * 2);
+                    this.enterConstrainedRange(ptr, ptr + sz + CANARY_SIZE * 2, MemoryArea.TransientPage);
                     for (let i = 0; i < CANARY_SIZE; ++i) {
                         this.writeU8(leftCanary + i, 0xCC);
                         this.writeU8(rightCanary + i, 0xCC);

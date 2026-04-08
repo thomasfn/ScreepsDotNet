@@ -2,7 +2,7 @@
 
 import { getHeapStatistics } from 'node:v8';
 import { ScreepsDotNetExports } from '../common.js';
-import { WasmMemoryManager } from '../memory.js';
+import { MemoryArea, WasmMemoryManager } from '../memory.js';
 import BaseBindings from './base.js';
 
 export default class TestBindings extends BaseBindings {
@@ -94,7 +94,7 @@ export default class TestBindings extends BaseBindings {
     private js_batch_renew_objects(jsHandleListPtr: number, count: number): number {
         this._interop.memory!.flush();
         try {
-            this._memory!.enterConstrainedRange(jsHandleListPtr, count * 4);
+            this._memory!.enterConstrainedRange(jsHandleListPtr, count * 4, MemoryArea.Stack);
             let numSuccess = 0;
             for (let i = 0; i < count; ++i) {
                 if (this.js_renew_object(this._memory!.readI32(jsHandleListPtr)) === 0) {

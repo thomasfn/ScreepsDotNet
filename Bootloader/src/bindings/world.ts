@@ -2,7 +2,7 @@
 
 import { ScreepsDotNetExports } from '../common.js';
 import type { Importable } from '../interop.js';
-import { WasmMemoryManager } from '../memory.js';
+import { MemoryArea, WasmMemoryManager } from '../memory.js';
 import BaseBindings from './base.js';
 
 declare const global: typeof globalThis;
@@ -308,7 +308,7 @@ export default class WorldBindings extends BaseBindings {
                 getRawBuffer: (thisObj: RoomTerrain, dataView: DataView) => {
                     const rawBuffer = (thisObj as RoomTerrain & { getRawBuffer(destination?: Uint8Array): Uint8Array }).getRawBuffer();
                     if (rawBuffer.length !== 2500) { throw new Error(`RoomTerrain.getRawBuffer returned a non-2500-length array (${rawBuffer.length})`); }
-                    this._memory!.enterConstrainedRange(dataView.byteOffset, dataView.byteLength);
+                    this._memory!.enterConstrainedRange(dataView.byteOffset, dataView.byteLength, MemoryArea.Heap);
                     try {
                         this._memory!.writeBytes(dataView, rawBuffer);
                     } finally {
@@ -345,7 +345,7 @@ export default class WorldBindings extends BaseBindings {
     private js_batch_renew_objects(jsHandleListPtr: number, count: number): number {
         this._memory!.flush();
         try {
-            this._memory!.enterConstrainedRange(jsHandleListPtr, count * 4);
+            this._memory!.enterConstrainedRange(jsHandleListPtr, count * 4, MemoryArea.Heap);
             let numSuccess = 0;
             for (let i = 0; i < count; ++i) {
                 if (this.js_renew_object(this._memory!.readI32(jsHandleListPtr)) === 0) {
@@ -400,7 +400,7 @@ export default class WorldBindings extends BaseBindings {
         if (typeof id !== 'string') { return 0; }
         this._memory!.flush();
         try {
-            this._memory!.enterConstrainedRange(outRawObjectIdPtr, 24);
+            this._memory!.enterConstrainedRange(outRawObjectIdPtr, 24, MemoryArea.Stack);
             this.copyRawObjectId(id, outRawObjectIdPtr);
             return id.length;
         } finally {
@@ -428,7 +428,7 @@ export default class WorldBindings extends BaseBindings {
     private encodeRoomObjectArray(arr: readonly Record<string, unknown>[], key: string | undefined, outRoomObjectArrayPtr: number, maxObjectCount: number): number {
         let numEncoded = 0;
         try {
-            this._memory!.enterConstrainedRange(outRoomObjectArrayPtr, maxObjectCount * 8);
+            this._memory!.enterConstrainedRange(outRoomObjectArrayPtr, maxObjectCount * 8, MemoryArea.Data);
             for (let i = 0; i < Math.min(maxObjectCount, arr.length); ++i) {
                 // Lookup object
                 let obj = arr[i];
@@ -455,7 +455,7 @@ export default class WorldBindings extends BaseBindings {
 
     private encodeCreepBody(body: readonly BodyPartDefinition[], outPtr: number): number {
         try {
-            this._memory!.enterConstrainedRange(outPtr, 50 * 4);
+            this._memory!.enterConstrainedRange(outPtr, 50 * 4, MemoryArea.Stack);
             for (let i = 0; i < Math.min(body.length, 50); ++i) {
                 const { type, hits, boost } = body[i];
                 // Encode each body part to a 32 bit int as 4 bytes

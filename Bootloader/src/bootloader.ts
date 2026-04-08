@@ -5,7 +5,7 @@ import * as fflate from 'fflate';
 
 import { ImportTable, Interop } from './interop.js';
 import { ScreepsDotNetExports } from './common.js';
-import { WasmMemoryManager } from './memory.js';
+import { MemoryArea, WasmMemoryManager } from './memory.js';
 import BaseBindings from './bindings/base.js';
 import { getBindings } from './bindings/index.js';
 
@@ -174,7 +174,7 @@ export class Bootloader {
     private sys_get_random_bytes(buf: number, buf_len: number): void {
         this._memory!.flush();
         try {
-            this._memory!.enterConstrainedRange(buf, buf_len);
+            this._memory!.enterConstrainedRange(buf, buf_len, MemoryArea.Heap);
             let ptr = buf;
             let remaining = buf_len;
             while (remaining >= 4) {

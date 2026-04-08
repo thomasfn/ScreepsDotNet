@@ -2,7 +2,7 @@
 
 import { ScreepsDotNetExports } from '../common.js';
 import type { ImportTable } from '../interop.js';
-import { WasmMemoryManager } from '../memory.js';
+import { MemoryArea, WasmMemoryManager } from '../memory.js';
 import BaseBindings from './base.js';
 
 import type { RoomPosition, GameObject, Store } from 'game/prototypes';
@@ -99,7 +99,7 @@ export default class ArenaBindings extends BaseBindings {
                     | { pos: RoomPosition; range: number }
                     | Array<RoomPosition | { pos: RoomPosition; range: number }>;
                 try {
-                    this._memory!.enterConstrainedRange(goalsPtr, goalsCnt * 12);
+                    this._memory!.enterConstrainedRange(goalsPtr, goalsCnt * 12, MemoryArea.Stack);
                     if (goalsCnt == 1) {
                         const r = this._memory!.readI32(goalsPtr + 8);
                         if (r === 0) {
@@ -174,7 +174,7 @@ export default class ArenaBindings extends BaseBindings {
 
     private encodeCreepBody(body: readonly BodyPartDefinition[], outPtr: number): number {
         try {
-            this._memory!.enterConstrainedRange(outPtr, 50 * 2);
+            this._memory!.enterConstrainedRange(outPtr, 50 * 2, MemoryArea.Stack);
             for (let i = 0; i < body.length; ++i) {
                 const { type, hits } = body[i];
                 // Encode each body part to a 16 bit int as 2 bytes
@@ -194,7 +194,7 @@ export default class ArenaBindings extends BaseBindings {
 
     private copyPath(path: readonly RoomPosition[], outPtr: number): number {
         try {
-            this._memory!.enterConstrainedRange(outPtr, path.length * 4);
+            this._memory!.enterConstrainedRange(outPtr, path.length * 4, MemoryArea.Stack);
             for (let i = 0; i < path.length; ++i) {
                 this._memory!.writeI16(outPtr, path[i].x);
                 outPtr += 2;
