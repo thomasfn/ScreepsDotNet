@@ -5,7 +5,6 @@ using System.Runtime.InteropServices;
 
 namespace ScreepsDotNet.API
 {
-    [StructLayout(LayoutKind.Sequential, Pack = 1, Size = 8)]
     public readonly struct Position : IEquatable<Position>
     {
         public readonly int X;

@@ -11,7 +11,6 @@ namespace ScreepsDotNet.API.World
     /// S15E5 would be (5, 15) and N5W10 would be (-11, -6)
     /// If running in the simulator, the sim room is represented as (-128, -128).
     /// </summary>
-    [StructLayout(LayoutKind.Sequential, Pack = 1, Size = 8)]
     public readonly struct RoomCoord : IEquatable<RoomCoord>
     {
         internal const int kMaxWorldSize = 256;
@@ -242,7 +241,6 @@ namespace ScreepsDotNet.API.World
         }
     }
 
-    [StructLayout(LayoutKind.Sequential, Pack = 1, Size = 16)]
     public readonly struct RoomPosition : IEquatable<RoomPosition>
     {
         /// <summary>

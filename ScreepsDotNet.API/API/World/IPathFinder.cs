@@ -251,16 +251,10 @@ namespace ScreepsDotNet.API.World
         }
     }
 
-    public readonly struct Goal : IEquatable<Goal>
+    public readonly struct Goal(RoomPosition position, int range) : IEquatable<Goal>
     {
-        public readonly RoomPosition Position;
-        public readonly int Range;
-
-        public Goal(RoomPosition position, int range)
-        {
-            Position = position;
-            Range = range;
-        }
+        public readonly RoomPosition Position = position;
+        public readonly int Range = range;
 
         public override bool Equals(object? obj) => obj is Goal goal && Equals(goal);
 

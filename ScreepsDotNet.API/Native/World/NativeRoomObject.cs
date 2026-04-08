@@ -11,11 +11,11 @@ using ScreepsDotNet.API.World;
 
 namespace ScreepsDotNet.Native.World
 {
-    [StructLayout(LayoutKind.Sequential, Pack = 4, Size = 8)]
+    [StructLayout(LayoutKind.Explicit, Size = 8)]
     internal struct RoomObjectMetadata
     {
-        public int TypeId;
-        public IntPtr JSHandle;
+        [FieldOffset(0)] public int TypeId;
+        [FieldOffset(4)] public IntPtr JSHandle;
     }
 
     [System.Runtime.Versioning.SupportedOSPlatform("wasi")]

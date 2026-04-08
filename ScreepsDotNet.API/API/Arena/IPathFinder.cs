@@ -126,13 +126,24 @@ namespace ScreepsDotNet.API.Arena
         public static bool operator !=(SearchPathResult left, SearchPathResult right) => !(left == right);
     }
 
-    [StructLayout(LayoutKind.Sequential, Pack = 4, Size = 12)]
-    public readonly record struct Goal
-    (
-        Position Position,
-        int Range = 0
-    )
+    public readonly struct Goal(Position position, int range = 0) : IEquatable<Goal>
     {
+        public readonly Position Position = position;
+        public readonly int Range = range;
+
+        public override bool Equals(object? obj) => obj is Goal goal && Equals(goal);
+
+        public bool Equals(Goal other) => Position.Equals(other.Position) && Range == other.Range;
+
+        public override int GetHashCode() => HashCode.Combine(Position, Range);
+
+        public override string ToString()
+            => $"Goal[<= {Range} of {Position}]";
+
+        public static bool operator ==(Goal left, Goal right) => left.Equals(right);
+
+        public static bool operator !=(Goal left, Goal right) => !(left == right);
+    
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Goal(Position pos) => new(pos);
     }

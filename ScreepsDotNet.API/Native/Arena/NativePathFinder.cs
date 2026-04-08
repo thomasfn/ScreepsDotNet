@@ -73,27 +73,7 @@ namespace ScreepsDotNet.Native.Arena
             => new NativeCostMatrix();
 
         public SearchPathResult SearchPath(Position origin, Goal goal, SearchPathOptions? options = null)
-        {
-            using var optionsJs = options?.ToJS();
-            JSObject? resultObj = null;
-            int pathLength;
-            try
-            {
-                unsafe
-                {
-                    resultObj = Native_SearchPath((origin.X << 16) | origin.Y, (IntPtr)(&goal), 1, optionsJs);
-                    fixed (Position* pathPositionBufferPtr = pathPositionBuffer)
-                    {
-                        pathLength = Native_DecodePath(resultObj, (IntPtr)pathPositionBufferPtr);
-                    }
-                }
-                return resultObj.ToSearchPathResult(pathPositionBuffer.AsSpan()[..pathLength]);
-            }
-            finally
-            {
-                resultObj?.Dispose();
-            }
-        }
+            => SearchPath(origin, [goal], options);
 
         public SearchPathResult SearchPath(Position origin, ReadOnlySpan<Goal> goals, SearchPathOptions? options = null)
         {
@@ -104,9 +84,16 @@ namespace ScreepsDotNet.Native.Arena
             {
                 unsafe
                 {
-                    fixed (Goal* goalsPtr = goals)
+                    Span<int> packedGoals = stackalloc int[goals.Length * 3];
+                    for (int i = 0; i < goals.Length; ++i)
                     {
-                        resultObj = Native_SearchPath((origin.X << 16) | origin.Y, (IntPtr)goalsPtr, goals.Length, optionsJs);
+                        packedGoals[i * 3 + 0] = goals[i].Position.X;
+                        packedGoals[i * 3 + 1] = goals[i].Position.Y;
+                        packedGoals[i * 3 + 2] = goals[i].Range;
+                    }
+                    fixed (int* packedGoalsPtr = packedGoals)
+                    {
+                        resultObj = Native_SearchPath((origin.X << 16) | origin.Y, (IntPtr)packedGoalsPtr, goals.Length, optionsJs);
                     }
                     fixed (Position* pathPositionBufferPtr = pathPositionBuffer)
                     {
