@@ -8,7 +8,7 @@ using System.Runtime.InteropServices;
 internal static class ScreepsDotNet_Interop
 {
     [WasmImportLinkage, DllImport("screeps:screepsdotnet/js-bindings", EntryPoint = "bind-import")]
-    public static unsafe extern int BindImport(char* moduleNamePtr, char* importNamePtr, ScreepsDotNet.Interop.FunctionSpec* importSpecPtr);
+    public static unsafe extern int BindImport(char* moduleNamePtr, char* importNamePtr, uint returnParamSpec, uint* paramSpecsPtr, int paramSpecsCount);
 
     [WasmImportLinkage, DllImport("screeps:screepsdotnet/js-bindings", EntryPoint = "invoke-import")]
     public static unsafe extern int InvokeImport(int importIndex, ScreepsDotNet.Interop.InteropValue* paramsBufferPtr);
@@ -20,7 +20,7 @@ internal static class ScreepsDotNet_Interop
     public static unsafe extern void SetName(int nameIndex, char* namePtr);
 
     [WasmImportLinkage, DllImport("screeps:screepsdotnet/js-bindings", EntryPoint = "define-struct")]
-    public static unsafe extern int DefineStruct(int numFields, ScreepsDotNet.Interop.StructFieldSpec* fieldsPtr);
+    public static unsafe extern int DefineStruct(int numFields, uint* encodedFieldsPtr);
 
     [WasmImportLinkage, DllImport("screeps:screepsdotnet/js-bindings", EntryPoint = "invoke-i-i")]
     public static extern int InvokeImport_i_i(int importIndex, int paramA);
@@ -66,20 +66,29 @@ namespace ScreepsDotNet.Interop
         public JSException(string message, Exception inner) : base(message, inner) { }
     }
 
-    [InlineArray(8)]
-    public struct FunctionParamsSpec
+    public readonly struct FunctionSpec
     {
-        private ParamSpec P0;
-        public Span<ParamSpec> Params => MemoryMarshal.CreateSpan(ref P0, 8);
-    }
+        public const int MaxParams = 8;
 
-    [StructLayout(LayoutKind.Explicit, Size = 36)]
-    public struct FunctionSpec
-    {
-        [FieldOffset(0)]
-        public ParamSpec ReturnParamSpec;
-        [FieldOffset(4)]
-        public FunctionParamsSpec ParamSpecs;
+        [InlineArray(MaxParams)]
+        private struct ParamsData
+        {
+            private ParamSpec firstElement;
+
+            public Span<ParamSpec> AsSpan => MemoryMarshal.CreateSpan(ref firstElement, MaxParams);
+        }
+
+        public readonly ParamSpec ReturnParam;
+        private readonly ParamsData @params;
+
+        public readonly ReadOnlySpan<ParamSpec> Params => @params.AsSpan;
+
+        public FunctionSpec(ParamSpec returnParam, ReadOnlySpan<ParamSpec> @params)
+        {
+            ReturnParam = returnParam;
+            @params.CopyTo(this.@params.AsSpan);
+            this.@params[@params.Length..].Fill(new ParamSpec(InteropValueType.Void, InteropValueFlags.None));
+        }
     }
 
     [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
@@ -515,20 +524,34 @@ namespace ScreepsDotNet.Interop
 
         public static unsafe int DefineStruct(ReadOnlySpan<StructFieldSpec> fieldSpecs)
         {
-            fixed (StructFieldSpec* fieldsPtr = fieldSpecs)
+            Span<uint> encodedFieldSpecs = stackalloc uint[fieldSpecs.Length * 2];
+            for (int i = 0; i < fieldSpecs.Length; ++i)
             {
-                return ScreepsDotNet_Interop.DefineStruct(fieldSpecs.Length, fieldsPtr);
+                encodedFieldSpecs[i * 2 + 0] = (uint)fieldSpecs[i].NamePtr;
+                encodedFieldSpecs[i * 2 + 1] = fieldSpecs[i].ParamSpec.Encoded;
+            }
+            fixed (uint* encodedFieldSpecsPtr = encodedFieldSpecs)
+            {
+                return ScreepsDotNet_Interop.DefineStruct(fieldSpecs.Length, encodedFieldSpecsPtr);
             }
         }
 
-        public static unsafe int BindImport(string importName, string moduleName, FunctionSpec functionSpec)
+        public static unsafe int BindImport(string importName, string moduleName, in FunctionSpec functionSpec)
         {
             int result;
             fixed (char* importNamePtr = importName)
             {
                 fixed (char* moduleNamePtr = moduleName)
                 {
-                    result = ScreepsDotNet_Interop.BindImport(moduleNamePtr, importNamePtr, &functionSpec);
+                    Span<uint> encodedParamSpecs = stackalloc uint[FunctionSpec.MaxParams];
+                    for (int i = 0; i < FunctionSpec.MaxParams; ++i)
+                    {
+                        encodedParamSpecs[i] = functionSpec.Params[i].Encoded;
+                    }
+                    fixed (uint* encodedParamSpecsPtr = encodedParamSpecs)
+                    {
+                        result = ScreepsDotNet_Interop.BindImport(moduleNamePtr, importNamePtr, functionSpec.ReturnParam.Encoded, encodedParamSpecsPtr, FunctionSpec.MaxParams);
+                    }
                 }
             }
             if (result < 0) { throw new InvalidOperationException($"Failed to bind import"); }
@@ -558,7 +581,27 @@ namespace ScreepsDotNet.Interop
             {
                 return args[InvokeImportReturnValArgIndex];
             }
+        }
 
+        public static unsafe IntPtr StringToJs(string value)
+        {
+            fixed (char* valuePtr = value)
+            {
+                return ScreepsDotNet_Interop.StringToJs(valuePtr, value.Length);
+            }
+        }
+
+        public static unsafe string StringFromJs(IntPtr handle, int length)
+        {
+            if (length == 0) { return ""; }
+            var buffer = length <= 1024 ? stackalloc char[length] : new char[length];
+            int actualLength;
+            fixed (char* bufferPtr = buffer)
+            {
+                actualLength = ScreepsDotNet_Interop.StringFromJs(handle, bufferPtr);
+                if (actualLength > length) { throw new InvalidOperationException($"StringFromJs returned length larger than buffer size, heap corruption likely"); }
+            }
+            return new string(buffer[..actualLength]);
         }
     }
 }

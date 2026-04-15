@@ -10,7 +10,7 @@ interface botapi {
 }
 
 interface js-bindings {
-  bind-import: func(modulenameptr: u32, importnameptr: u32, importspecptr: u32) -> s32;
+  bind-import: func(modulenameptr: u32, importnameptr: u32, returnparamspecptr: u32, paramspecptr: u32, paramspeccount: s32) -> s32;
   invoke-import: func(importindex: u32, paramsbufferptr: u32) -> u32;
   release-object-reference: func(jshandle: u32);
   set-name: func(nameindex: u32, valueptr: u32);

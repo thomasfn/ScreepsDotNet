@@ -1,19 +1,10 @@
 ﻿using System;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 using ScreepsDotNet.API.World;
 
 internal static class ScreepsDotNet_Native
 {
-    [InlineArray(24)]
-    public struct RawObjectId
-    {
-        private byte firstChar;
-
-        public Span<byte> AsSpan => MemoryMarshal.CreateSpan(ref firstChar, 24);
-    }
-
     [WasmImportLinkage, DllImport("screeps:screepsdotnet/world-bindings", EntryPoint = "renew-object")]
     internal static unsafe extern int RenewObject(IntPtr jsHandle);
 
@@ -27,8 +18,8 @@ internal static class ScreepsDotNet_Native
     internal static unsafe extern void BatchFetchObjectRoomPositions(IntPtr* jsHandleList, int count, RoomPosition* outRoomPosList);
 
     [WasmImportLinkage, DllImport("screeps:screepsdotnet/world-bindings", EntryPoint = "get-object-by-id")]
-    internal static unsafe extern IntPtr GetObjectById(RawObjectId* objectId);
+    internal static unsafe extern IntPtr GetObjectById(byte* rawObjectId);
 
     [WasmImportLinkage, DllImport("screeps:screepsdotnet/world-bindings", EntryPoint = "get-object-id")]
-    internal static unsafe extern int GetObjectId(IntPtr jsHandle, RawObjectId* outObjectId);
+    internal static unsafe extern int GetObjectId(IntPtr jsHandle, byte* outRawObjectId);
 }

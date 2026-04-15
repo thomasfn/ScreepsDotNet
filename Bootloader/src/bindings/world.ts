@@ -106,12 +106,12 @@ export default class WorldBindings extends BaseBindings {
 
     protected setupImports(): void {
         super.setupImports();
-        this.bindingsImport['renew-object'] = this.js_renew_object.bind(this);
-        this.bindingsImport['batch-renew-objects'] = this.js_batch_renew_objects.bind(this);
-        this.bindingsImport['fetch-object-room-position'] = this.js_fetch_object_room_position.bind(this);
-        this.bindingsImport['batch-fetch-object-room-positions'] = this.js_batch_fetch_object_room_positions.bind(this);
-        this.bindingsImport['get-object-by-id'] = this.js_get_object_by_id.bind(this);
-        this.bindingsImport['get-object-id'] = this.js_get_object_id.bind(this);
+        this.bindingsImport['renew-object'] = this.impRenewObject.bind(this);
+        this.bindingsImport['batch-renew-objects'] = this.impBatchRenewObjects.bind(this);
+        this.bindingsImport['fetch-object-room-position'] = this.impFetchObjectRoomPosition.bind(this);
+        this.bindingsImport['batch-fetch-object-room-positions'] = this.impBatchFetchObjectRoomPositions.bind(this);
+        this.bindingsImport['get-object-by-id'] = this.impGetObjectById.bind(this);
+        this.bindingsImport['get-object-id'] = this.impGetObjectId.bind(this);
         const _global = global as unknown as { ScoreCollector?: GameConstructor, ScoreContainer?: GameConstructor };
         const gameConstructors: Record<string, GameConstructor> = {
             StructureContainer,
@@ -276,16 +276,16 @@ export default class WorldBindings extends BaseBindings {
                         return { code: result };
                     }
                 },
-                findFast: (thisObj: Room, type: FindConstant, outRoomObjectArrayPtr: number, maxObjectCount: number) =>
-                    this.encodeRoomObjectArray(thisObj.find(type) as unknown as Record<string, unknown>[], undefined, outRoomObjectArrayPtr, maxObjectCount),
-                lookAtFast: (thisObj: Room, x: number, y: number, outRoomObjectArrayPtr: number, maxObjectCount: number) =>
-                    this.encodeRoomObjectArray(thisObj.lookAt(x, y), undefined, outRoomObjectArrayPtr, maxObjectCount),
-                lookAtAreaFast: (thisObj: Room, top: number, left: number, bottom: number, right: number, outRoomObjectArrayPtr: number, maxObjectCount: number) =>
-                    this.encodeRoomObjectArray(thisObj.lookAtArea(top, left, bottom, right, true), undefined, outRoomObjectArrayPtr, maxObjectCount),
-                lookForAtFast: (thisObj: Room, type: LookConstant, x: number, y: number, outRoomObjectArrayPtr: number, maxObjectCount: number) =>
-                    this.encodeRoomObjectArray(thisObj.lookForAt(type, x, y) as unknown as Record<string, unknown>[], undefined, outRoomObjectArrayPtr, maxObjectCount),
-                lookForAtAreaFast: (thisObj: Room, type: LookConstant, top: number, left: number, bottom: number, right: number, outRoomObjectArrayPtr: number, maxObjectCount: number) =>
-                    this.encodeRoomObjectArray(thisObj.lookForAtArea(type, top, left, bottom, right, true), type, outRoomObjectArrayPtr, maxObjectCount),
+                findFast: (thisObj: Room, type: FindConstant, outRoomObjectArrayPtr: number) =>
+                    this.encodeRoomObjectArray(thisObj.find(type) as unknown as Record<string, unknown>[], undefined, outRoomObjectArrayPtr),
+                lookAtFast: (thisObj: Room, x: number, y: number, outRoomObjectArrayPtr: number) =>
+                    this.encodeRoomObjectArray(thisObj.lookAt(x, y), undefined, outRoomObjectArrayPtr),
+                lookAtAreaFast: (thisObj: Room, top: number, left: number, bottom: number, right: number, outRoomObjectArrayPtr: number) =>
+                    this.encodeRoomObjectArray(thisObj.lookAtArea(top, left, bottom, right, true), undefined, outRoomObjectArrayPtr),
+                lookForAtFast: (thisObj: Room, type: LookConstant, x: number, y: number, outRoomObjectArrayPtr: number) =>
+                    this.encodeRoomObjectArray(thisObj.lookForAt(type, x, y) as unknown as Record<string, unknown>[], undefined, outRoomObjectArrayPtr),
+                lookForAtAreaFast: (thisObj: Room, type: LookConstant, top: number, left: number, bottom: number, right: number, outRoomObjectArrayPtr: number) =>
+                    this.encodeRoomObjectArray(thisObj.lookForAtArea(type, top, left, bottom, right, true), type, outRoomObjectArrayPtr),
             },
             Creep: {
                 ...wrappedPrototypes.Creep,
@@ -319,7 +319,7 @@ export default class WorldBindings extends BaseBindings {
         };
     }
 
-    private js_renew_object(jsHandle: number): number {
+    private impRenewObject(jsHandle: number): number {
         const oldObject = this._interop.objects.getObjectByHandle(jsHandle);
         if (oldObject == null) { return 1; } // clr tracked object not found (clr object disposed?)
         if (oldObject instanceof Room) {
@@ -342,13 +342,13 @@ export default class WorldBindings extends BaseBindings {
         return 0;
     }
 
-    private js_batch_renew_objects(jsHandleListPtr: number, count: number): number {
+    private impBatchRenewObjects(jsHandleListPtr: number, count: number): number {
         this._memory!.flush();
         try {
             this._memory!.enterConstrainedRange(jsHandleListPtr, count * 4, MemoryArea.Heap);
             let numSuccess = 0;
             for (let i = 0; i < count; ++i) {
-                if (this.js_renew_object(this._memory!.readI32(jsHandleListPtr)) === 0) {
+                if (this.impRenewObject(this._memory!.readI32(jsHandleListPtr)) === 0) {
                     ++numSuccess;
                 } else {
                     this._memory!.writeI32(jsHandleListPtr, -1);
@@ -361,23 +361,23 @@ export default class WorldBindings extends BaseBindings {
         }
     }
 
-    private js_fetch_object_room_position(jsHandle: number): number {
+    private impFetchObjectRoomPosition(jsHandle: number): number {
         const roomObject = this._interop.objects.getObjectByHandle(jsHandle);
         const pos = (roomObject as { pos: RoomPosition | undefined }).pos;
         if (pos == null) { return 0; }
         return (pos as unknown as { __packedPos: number }).__packedPos;
     }
 
-    private js_batch_fetch_object_room_positions(jsHandleListPtr: number, count: number, outRoomPosListPtr: number): void {
+    private impBatchFetchObjectRoomPositions(jsHandleListPtr: number, count: number, outRoomPosListPtr: number): void {
         this._memory!.flush();
         for (let i = 0; i < count; ++i) {
-            this._memory!.writeI32(outRoomPosListPtr, this.js_fetch_object_room_position(this._memory!.readI32(jsHandleListPtr)));
+            this._memory!.writeI32(outRoomPosListPtr, this.impFetchObjectRoomPosition(this._memory!.readI32(jsHandleListPtr)));
             jsHandleListPtr += 4;
             outRoomPosListPtr += 4;
         }
     }
 
-    private js_get_object_by_id(objectIdPtr: number): number {
+    private impGetObjectById(objectIdPtr: number): number {
         this._memory!.flush();
         let id = '';
         for (let i = 0; i < 24; ++i) {
@@ -393,7 +393,7 @@ export default class WorldBindings extends BaseBindings {
         return this._interop.objects.getOrAssignObjectHandle(obj);
     }
 
-    private js_get_object_id(jsHandle: number, outRawObjectIdPtr: number): number {
+    private impGetObjectId(jsHandle: number, outRawObjectIdPtr: number): number {
         const obj = this._interop.objects.getObjectByHandle(jsHandle);
         if (obj == null) { return 0; }
         const id = (obj as { id: unknown }).id;
@@ -425,29 +425,35 @@ export default class WorldBindings extends BaseBindings {
         }
     }
 
-    private encodeRoomObjectArray(arr: readonly Record<string, unknown>[], key: string | undefined, outRoomObjectArrayPtr: number, maxObjectCount: number): number {
-        let numEncoded = 0;
-        try {
-            this._memory!.enterConstrainedRange(outRoomObjectArrayPtr, maxObjectCount * 8, MemoryArea.Data);
-            for (let i = 0; i < Math.min(maxObjectCount, arr.length); ++i) {
-                // Lookup object
-                let obj = arr[i];
-                if (key) {
-                    obj = obj[key] as Record<string, unknown>;
-                }
-                if (!(obj instanceof RoomObject) && obj.type) {
-                    obj = obj[obj.type as string] as Record<string, unknown>;
-                }
-                if (!(obj instanceof RoomObject)) { continue; }
-                
-                // Copy metadata
-                this._memory!.writeI32(outRoomObjectArrayPtr, Object.getPrototypeOf(obj).constructor.__dotnet_typeId || 0);
-                this._memory!.writeI32(outRoomObjectArrayPtr + 4, this._interop.objects.getOrAssignObjectHandle(obj));
-                outRoomObjectArrayPtr += 8;
-
-                ++numEncoded;
+    private encodeRoomObjectArray(arr: readonly Record<string, unknown>[], key: string | undefined, outRoomObjectArrayPtr: number): number {
+        const objList: RoomObject[] = [];
+        for (let obj of arr) {
+            if (key) {
+                obj = obj[key] as Record<string, unknown>;
             }
-            return numEncoded;
+            if (!(obj instanceof RoomObject) && obj.type) {
+                obj = obj[obj.type as string] as Record<string, unknown>;
+            }
+            if (!(obj instanceof RoomObject)) { continue; }
+            objList.push(obj);
+        }
+        if (objList.length === 0) { return 0; }
+        let ptr = this._memory!.allocateTransient(objList.length * 8, 4);
+        try {
+            this._memory!.enterConstrainedRange(outRoomObjectArrayPtr, 4, MemoryArea.Stack);
+            this._memory!.writeI32(outRoomObjectArrayPtr, ptr);
+        } finally {
+            this._memory!.exitConstrainedRange();
+        }
+        try {
+            this._memory!.enterConstrainedRange(ptr, objList.length * 8, MemoryArea.TransientPage);
+            for (const obj of objList) {
+                this._memory!.writeI32(ptr, Object.getPrototypeOf(obj).constructor.__dotnet_typeId || 0);
+                ptr += 4;
+                this._memory!.writeI32(ptr, this._interop.objects.getOrAssignObjectHandle(obj));
+                ptr += 4;
+            }
+            return objList.length;
         } finally {
             this._memory!.exitConstrainedRange();
         }

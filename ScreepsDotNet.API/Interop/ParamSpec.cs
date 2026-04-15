@@ -33,17 +33,14 @@ namespace ScreepsDotNet.Interop
         NullAsUndefined = 1 << 1,
     }
 
-    [StructLayout(LayoutKind.Explicit, Size = 4)]
-    public struct ParamSpec
+    public readonly struct ParamSpec
     {
-        [FieldOffset(0)]
-        public InteropValueType Type;
-        [FieldOffset(1)]
-        public InteropValueFlags Flags;
-        [FieldOffset(2)]
-        public InteropValueType ElementType;
-        [FieldOffset(3)]
-        public InteropValueFlags ElementFlags;
+        public readonly InteropValueType Type;
+        public readonly InteropValueFlags Flags;
+        public readonly InteropValueType ElementType;
+        public readonly InteropValueFlags ElementFlags;
+
+        public readonly uint Encoded => ((uint)Type << 24) | ((uint)Flags << 16) | ((uint)ElementType << 8) | ((uint)ElementFlags);
 
         public ParamSpec(InteropValueType type, InteropValueFlags flags)
         {
@@ -62,12 +59,18 @@ namespace ScreepsDotNet.Interop
         }
     }
 
-    [StructLayout(LayoutKind.Explicit, Size = 8)]
-    public struct StructFieldSpec
+    public readonly struct StructFieldSpec
     {
-        [FieldOffset(0)]
-        public IntPtr NamePtr;
-        [FieldOffset(4)]
-        public ParamSpec ParamSpec;
+        public readonly IntPtr NamePtr;
+        public readonly ParamSpec ParamSpec;
+
+        public readonly ulong Encoded => ((ulong)NamePtr << 32) | ParamSpec.Encoded;
+
+        public StructFieldSpec(IntPtr namePtr, ParamSpec paramSpec)
+        {
+            NamePtr = namePtr;
+            ParamSpec = paramSpec;
+        }
+
     }
 }

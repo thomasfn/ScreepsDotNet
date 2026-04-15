@@ -320,11 +320,14 @@ namespace ScreepsDotNet.Native.World
         JSObject? INativeRoot.GetProxyObjectById(ObjectId id)
         {
             IntPtr jsHandle;
-            ScreepsDotNet_Native.RawObjectId rawId = new();
-            id.ToBytes(rawId.AsSpan);
+            Span<byte> rawId = stackalloc byte[24];
+            id.ToBytes(rawId);
             unsafe
             {
-                jsHandle = ScreepsDotNet_Native.GetObjectById(&rawId);
+                fixed (byte* rawIdPtr = rawId)
+                {
+                    jsHandle = ScreepsDotNet_Native.GetObjectById(rawIdPtr);
+                }
             }
             if (jsHandle == -1) { return null; }
             return Interop.Native.GetJSObject(jsHandle);

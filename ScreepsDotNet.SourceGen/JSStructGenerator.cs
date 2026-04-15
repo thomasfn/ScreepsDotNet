@@ -84,8 +84,7 @@ namespace ScreepsDotNet.SourceGen
                                     int stringOffset = 0;
                                     foreach (var (field, attr, marshaller) in jsStructFields)
                                     {
-                                        sourceEmitter.WriteLine($"fields[{i}].NamePtr = (IntPtr)(fieldNamesPtr + {stringOffset});");
-                                        sourceEmitter.WriteLine($"fields[{i}].ParamSpec = {JSImportGenerator.ParamSpecToCs(marshaller!.GenerateParamSpec(field.Type))};");
+                                        sourceEmitter.WriteLine($"fields[{i}] = new StructFieldSpec((IntPtr)(fieldNamesPtr + {stringOffset}), {JSImportGenerator.ParamSpecToCs(marshaller!.GenerateParamSpec(field.Type))});");
                                         stringOffset += attr!.ConstructorArguments[0].Value!.ToString().Length + 1;
                                         ++i;
                                     }

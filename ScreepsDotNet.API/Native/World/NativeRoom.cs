@@ -26,7 +26,7 @@ namespace ScreepsDotNet.Native.World
         internal static partial JSObject[] Native_Find(JSObject proxyObject, int type);
 
         [JSImport("Room.findFast", "game/prototypes/wrapped")]
-        internal static partial int Native_FindFast(JSObject proxyObject, int type, IntPtr outRoomObjectMetadataPtr, int maxObjectCount);
+        internal static partial int Native_FindFast(JSObject proxyObject, int type, IntPtr outRoomObjectMetadataPtr);
 
         [JSImport("Room.findExitTo", "game/prototypes/wrapped")]
         internal static partial int Native_FindExitTo(JSObject proxyObject, string room);
@@ -44,30 +44,27 @@ namespace ScreepsDotNet.Native.World
         internal static partial JSObject[] Native_LookAt(JSObject proxyObject, int x, int y);
 
         [JSImport("Room.lookAtFast", "game/prototypes/wrapped")]
-        internal static partial int Native_LookAtFast(JSObject proxyObject, int x, int y, IntPtr outRoomObjectMetadataPtr, int maxObjectCount);
+        internal static partial int Native_LookAtFast(JSObject proxyObject, int x, int y, IntPtr outRoomObjectMetadataPtr);
 
         [JSImport("Room.lookAtArea", "game/prototypes/wrapped")]
         internal static partial JSObject[] Native_LookAtArea(JSObject proxyObject, int top, int left, int bottom, int right, bool asArray);
 
         [JSImport("Room.lookAtAreaFast", "game/prototypes/wrapped")]
-        internal static partial int Native_LookAtAreaFast(JSObject proxyObject, int top, int left, int bottom, int right, IntPtr outRoomObjectMetadataPtr, int maxObjectCount);
+        internal static partial int Native_LookAtAreaFast(JSObject proxyObject, int top, int left, int bottom, int right, IntPtr outRoomObjectMetadataPtr);
 
         [JSImport("Room.lookForAt", "game/prototypes/wrapped")]
         internal static partial JSObject[] Native_LookForAt(JSObject proxyObject, Name type, int x, int y);
 
         [JSImport("Room.lookForAtFast", "game/prototypes/wrapped")]
-        internal static partial int Native_LookForAtFast(JSObject proxyObject, Name type, int x, int y, IntPtr outRoomObjectMetadataPtr, int maxObjectCount);
+        internal static partial int Native_LookForAtFast(JSObject proxyObject, Name type, int x, int y, IntPtr outRoomObjectMetadataPtr);
 
         [JSImport("Room.lookForAtArea", "game/prototypes/wrapped")]
         internal static partial JSObject[] Native_LookForAtArea(JSObject proxyObject, Name type, int top, int left, int bottom, int right, bool asArray);
 
         [JSImport("Room.lookForAtAreaFast", "game/prototypes/wrapped")]
-        internal static partial int Native_LookForAtAreaFast(JSObject proxyObject, Name type, int top, int left, int bottom, int right, IntPtr outRoomObjectMetadataPtr, int maxObjectCount);
+        internal static partial int Native_LookForAtAreaFast(JSObject proxyObject, Name type, int top, int left, int bottom, int right, IntPtr outRoomObjectMetadataPtr);
 
         #endregion
-
-        private const int objectCountBufferSize = 4096; // Assumption: room.Find, room.LookFor etc won't return more than this many objects at once
-        private static readonly RoomObjectMetadata[] roomObjectMetadataBuffer = new RoomObjectMetadata[objectCountBufferSize];
 
         private UserDataStorage userDataStorage;
 
@@ -171,19 +168,14 @@ namespace ScreepsDotNet.Native.World
             if (findConstant == null) { return []; }
             if (typeof(T).IsAssignableTo(typeof(IWithId)))
             {
-                int cnt;
                 unsafe
                 {
-                    fixed (RoomObjectMetadata* roomObjectMetadataBufferPtr = roomObjectMetadataBuffer)
-                    {
-                        cnt = Native_FindFast(ProxyObject, (int)findConstant, (IntPtr)roomObjectMetadataBufferPtr, objectCountBufferSize);
-                    }
+                    int* encodedRoomObjectMetadataPtr = null;
+                    int cnt = Native_FindFast(ProxyObject, (int)findConstant, (IntPtr)(&encodedRoomObjectMetadataPtr));
+                    if (cnt == 0 || encodedRoomObjectMetadataPtr == null) { return []; }
+                    ReadOnlySpan<int> encodedRoomObjectMetadatas = new(encodedRoomObjectMetadataPtr, cnt * 2);
+                    return DecodeRoomObjects<T>(encodedRoomObjectMetadatas);
                 }
-                if (cnt >= objectCountBufferSize)
-                {
-                    Console.WriteLine($"WARNING: IRoom.Find object buffer potential overflow (got {cnt} from native call, objectCountBufferSize={objectCountBufferSize}) - may need to increase buffer size");
-                }
-                return nativeRoot.GetWrapperObjectsFromBuffer<T>(roomObjectMetadataBuffer.AsSpan()[..cnt]);
             }
             return Native_Find(ProxyObject, (int)findConstant)
                 .Select(nativeRoot.GetOrCreateWrapperObject<T>)
@@ -248,74 +240,66 @@ namespace ScreepsDotNet.Native.World
 
         public IEnumerable<IRoomObject> LookAt(Position position)
         {
-            int cnt;
             unsafe
             {
-                fixed (RoomObjectMetadata* roomObjectMetadataBufferPtr = roomObjectMetadataBuffer)
-                {
-                    cnt = Native_LookAtFast(ProxyObject, position.X, position.Y, (IntPtr)roomObjectMetadataBufferPtr, objectCountBufferSize);
-                }
+                int* encodedRoomObjectMetadataPtr = null;
+                int cnt = Native_LookAtFast(ProxyObject, position.X, position.Y, (IntPtr)(&encodedRoomObjectMetadataPtr));
+                if (cnt == 0 || encodedRoomObjectMetadataPtr == null) { return []; }
+                ReadOnlySpan<int> encodedRoomObjectMetadatas = new(encodedRoomObjectMetadataPtr, cnt * 2);
+                return DecodeRoomObjects<IRoomObject>(encodedRoomObjectMetadatas);
             }
-            if (cnt >= objectCountBufferSize)
-            {
-                Console.WriteLine($"WARNING: IRoom.LookAt object buffer potential overflow (got {cnt} from native call, objectCountBufferSize={objectCountBufferSize}) - may need to increase buffer size");
-            }
-            return nativeRoot.GetWrapperObjectsFromBuffer<IRoomObject>(roomObjectMetadataBuffer.AsSpan()[..cnt]);
         }
 
         public IEnumerable<IRoomObject> LookAtArea(Position min, Position max)
         {
-            int cnt;
             unsafe
             {
-                fixed (RoomObjectMetadata* roomObjectMetadataBufferPtr = roomObjectMetadataBuffer)
-                {
-                    cnt = Native_LookAtAreaFast(ProxyObject, min.Y, min.X, max.Y, max.X, (IntPtr)roomObjectMetadataBufferPtr, objectCountBufferSize);
-                }
+                int* encodedRoomObjectMetadataPtr = null;
+                int cnt = Native_LookAtAreaFast(ProxyObject, min.Y, min.X, max.Y, max.X, (IntPtr)(&encodedRoomObjectMetadataPtr));
+                if (cnt == 0 || encodedRoomObjectMetadataPtr == null) { return []; }
+                ReadOnlySpan<int> encodedRoomObjectMetadatas = new(encodedRoomObjectMetadataPtr, cnt * 2);
+                return DecodeRoomObjects<IRoomObject>(encodedRoomObjectMetadatas);
             }
-            if (cnt >= objectCountBufferSize)
-            {
-                Console.WriteLine($"WARNING: IRoom.LookAt object buffer potential overflow (got {cnt} from native call, objectCountBufferSize={objectCountBufferSize}) - may need to increase buffer size");
-            }
-            return nativeRoot.GetWrapperObjectsFromBuffer<IRoomObject>(roomObjectMetadataBuffer.AsSpan()[..cnt]);
         }
 
         public IEnumerable<T> LookForAt<T>(Position position) where T : class, IRoomObject
         {
             var lookConstant = NativeRoomObjectTypes.TypeOf<T>().LookConstant;
             if (lookConstant == null) { return []; }
-            int cnt;
             unsafe
             {
-                fixed (RoomObjectMetadata* roomObjectMetadataBufferPtr = roomObjectMetadataBuffer)
-                {
-                    cnt = Native_LookForAtFast(ProxyObject, lookConstant.Value, position.X, position.Y, (IntPtr)roomObjectMetadataBufferPtr, objectCountBufferSize);
-                }
+                int* encodedRoomObjectMetadataPtr = null;
+                int cnt = Native_LookForAtFast(ProxyObject, lookConstant.Value, position.X, position.Y, (IntPtr)(&encodedRoomObjectMetadataPtr));
+                if (cnt == 0 || encodedRoomObjectMetadataPtr == null) { return []; }
+                ReadOnlySpan<int> encodedRoomObjectMetadatas = new(encodedRoomObjectMetadataPtr, cnt * 2);
+                return DecodeRoomObjects<T>(encodedRoomObjectMetadatas);
             }
-            return nativeRoot.GetWrapperObjectsFromBuffer<T>(roomObjectMetadataBuffer.AsSpan()[..cnt]);
         }
 
         public IEnumerable<T> LookForAtArea<T>(Position min, Position max) where T : class, IRoomObject
         {
             var lookConstant = NativeRoomObjectTypes.TypeOf<T>().LookConstant;
             if (lookConstant == null) { return []; }
-            int cnt;
             unsafe
             {
-                fixed (RoomObjectMetadata* roomObjectMetadataBufferPtr = roomObjectMetadataBuffer)
-                {
-                    cnt = Native_LookForAtAreaFast(ProxyObject, lookConstant.Value, min.Y, min.X, max.Y, max.X, (IntPtr)roomObjectMetadataBufferPtr, objectCountBufferSize);
-                }
+                int* encodedRoomObjectMetadataPtr = null;
+                int cnt = Native_LookForAtAreaFast(ProxyObject, lookConstant.Value, min.Y, min.X, max.Y, max.X, (IntPtr)(&encodedRoomObjectMetadataPtr));
+                if (cnt == 0 || encodedRoomObjectMetadataPtr == null) { return []; }
+                ReadOnlySpan<int> encodedRoomObjectMetadatas = new(encodedRoomObjectMetadataPtr, cnt * 2);
+                return DecodeRoomObjects<T>(encodedRoomObjectMetadatas);
             }
-            return nativeRoot.GetWrapperObjectsFromBuffer<T>(roomObjectMetadataBuffer.AsSpan()[..cnt]);
         }
 
-        private JSObject? InterpretLookElement(JSObject lookElement)
+        private IEnumerable<T> DecodeRoomObjects<T>(ReadOnlySpan<int> encodedRoomObjectMetadatas) where T : class, IRoomObject
         {
-            var typeStr = lookElement.GetPropertyAsString(Names.Type)!;
-            if (lookElement.GetTypeOfProperty(typeStr) != JSPropertyType.Object) { return null; }
-            return lookElement.GetPropertyAsJSObject(typeStr);
+            Span<RoomObjectMetadata> roomObjectMetadata = stackalloc RoomObjectMetadata[encodedRoomObjectMetadatas.Length / 2];
+            for (int i = 0; i < roomObjectMetadata.Length; ++i)
+            {
+                roomObjectMetadata[i] = new(encodedRoomObjectMetadatas[i * 2 + 0], encodedRoomObjectMetadatas[i * 2 + 1]);
+            }
+            return nativeRoot.GetWrapperObjectsFromBuffer<T>(roomObjectMetadata);
         }
+
 
         public override string ToString()
             => $"Room['{Name}']";

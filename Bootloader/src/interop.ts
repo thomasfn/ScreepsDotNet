@@ -245,23 +245,23 @@ export class Interop {
     constructor(profileFn: () => number) {
         this._profileFn = profileFn;
         this.interopImport = {};
-        this.interopImport['bind-import'] = this.js_bind_import.bind(this);
-        this.interopImport['invoke-import'] = this.js_invoke_import.bind(this);
-        this.interopImport['release-object-reference'] = this.js_release_object_reference.bind(this);
-        this.interopImport['set-name'] = this.js_set_name.bind(this);
-        this.interopImport['define-struct'] = this.js_define_struct.bind(this);
+        this.interopImport['bind-import'] = this.impBindImport.bind(this);
+        this.interopImport['invoke-import'] = this.impInvokeImport.bind(this);
+        this.interopImport['release-object-reference'] = this.impReleaseObjectReference.bind(this);
+        this.interopImport['set-name'] = this.impSetName.bind(this);
+        this.interopImport['define-struct'] = this.impDefineStruct.bind(this);
 
-        this.interopImport['invoke-i-i'] = this.js_invoke_i_i.bind(this);
-        this.interopImport['invoke-i-ii'] = this.js_invoke_i_ii.bind(this);
-        this.interopImport['invoke-i-iii'] = this.js_invoke_i_iii.bind(this);
-        this.interopImport['invoke-i-o'] = this.js_invoke_i_o.bind(this);
-        this.interopImport['invoke-i-oi'] = this.js_invoke_i_oi.bind(this);
-        this.interopImport['invoke-i-on'] = this.js_invoke_i_on.bind(this);
-        this.interopImport['invoke-i-oii'] = this.js_invoke_i_oii.bind(this);
-        this.interopImport['invoke-i-oo'] = this.js_invoke_i_oo.bind(this);
-        this.interopImport['invoke-i-ooi'] = this.js_invoke_i_ooi.bind(this);
-        this.interopImport['invoke-i-ooii'] = this.js_invoke_i_ooii.bind(this);
-        this.interopImport['invoke-d-v'] = this.js_invoke_d_v.bind(this);
+        this.interopImport['invoke-i-i'] = this.impInvoke_i_i.bind(this);
+        this.interopImport['invoke-i-ii'] = this.impInvoke_i_ii.bind(this);
+        this.interopImport['invoke-i-iii'] = this.impInvoke_i_iii.bind(this);
+        this.interopImport['invoke-i-o'] = this.impInvoke_i_o.bind(this);
+        this.interopImport['invoke-i-oi'] = this.impInvoke_i_oi.bind(this);
+        this.interopImport['invoke-i-on'] = this.impInvoke_i_on.bind(this);
+        this.interopImport['invoke-i-oii'] = this.impInvoke_i_oii.bind(this);
+        this.interopImport['invoke-i-oo'] = this.impInvoke_i_oo.bind(this);
+        this.interopImport['invoke-i-ooi'] = this.impInvoke_i_ooi.bind(this);
+        this.interopImport['invoke-i-ooii'] = this.impInvoke_i_ooii.bind(this);
+        this.interopImport['invoke-d-v'] = this.impInvoke_d_v.bind(this);
     }
 
     public setImports(moduleName: string, importTable: ImportTable): void {
@@ -305,7 +305,7 @@ export class Interop {
         return currentValue;
     }
 
-    private js_bind_import(moduleNamePtr: number, importNamePtr: number, functionSpecPtr: number): number {
+    private impBindImport(moduleNamePtr: number, importNamePtr: number, returnParamSpec: number, paramSpecsPtr: number, paramSpecsCount: number): number {
         this.memory!.flush();
         const moduleName = this.stringToJs(moduleNamePtr);
         const importTable = this._imports[moduleName];
@@ -315,7 +315,7 @@ export class Interop {
         const importName = this.stringToJs(importNamePtr);
         const importFunction = this.resolveImport(moduleName, importTable, importName);
         this._boundRawImportList.push(importFunction);
-        const functionSpec = this.functionSpecToJs(functionSpecPtr);
+        const functionSpec = this.functionSpecToJs(returnParamSpec, paramSpecsPtr, paramSpecsCount);
         const importIndex = this._boundImportList.length;
         const boundImportFunction = this.createImportBinding(importFunction, functionSpec, importIndex);
         this._boundImportList.push(boundImportFunction);
@@ -325,7 +325,7 @@ export class Interop {
         return importIndex;
     }
 
-    private js_invoke_import(importIndex: number, paramsBufferPtr: number): number {
+    private impInvokeImport(importIndex: number, paramsBufferPtr: number): number {
         const boundImportFunction = this._boundImportList[importIndex];
         if (!boundImportFunction) {
             throw new Error(`attempt to invoke invalid import index ${importIndex}`);
@@ -334,30 +334,30 @@ export class Interop {
         return boundImportFunction(paramsBufferPtr);
     }
 
-    private js_release_object_reference(objectHandle: number): void {
+    private impReleaseObjectReference(objectHandle: number): void {
         this._objects.releaseObjectHandle(objectHandle);
     }
 
-    private js_set_name(nameIndex: number, valuePtr: number): void {
+    private impSetName(nameIndex: number, valuePtr: number): void {
         this.memory!.flush();
         const value = this.stringToJs(valuePtr);
         this._nameList[nameIndex] = value;
         this._nameTable[value] = nameIndex;
     }
 
-    private js_define_struct(numFields: number, fieldsPtr: number): number {
+    private impDefineStruct(numFields: number, encodedFieldsPtr: number): number {
         this.memory!.flush();
         const spec: StructSpec = {
             fieldSpecs: [],
         };
         spec.fieldSpecs.length = numFields;
         try {
-            this._memory!.enterConstrainedRange(fieldsPtr, numFields * 8, MemoryArea.Stack);
+            this._memory!.enterConstrainedRange(encodedFieldsPtr, numFields * 8, MemoryArea.Stack);
             for (let i = 0; i < numFields; ++i) {
-                const fieldName = this.stringToJs(this._memory!.readI32(fieldsPtr));
-                fieldsPtr += 4;
-                const paramSpec = this.paramSpecToJs(fieldsPtr);
-                fieldsPtr += 4;
+                const fieldName = this.stringToJs(this._memory!.readI32(encodedFieldsPtr));
+                encodedFieldsPtr += 4;
+                const paramSpec = this.paramSpecToJs(this._memory!.readU32(encodedFieldsPtr));
+                encodedFieldsPtr += 4;
                 spec.fieldSpecs[i] = { fieldName, paramSpec };
             }
             return this._structList.push(spec) - 1;
@@ -366,7 +366,7 @@ export class Interop {
         }
     }
 
-    private js_invoke_i_i(importIndex: number, p0: number): number {
+    private impInvoke_i_i(importIndex: number, p0: number): number {
         const boundImportFunction = this._boundRawImportList[importIndex];
         if (!boundImportFunction) {
             throw new Error(`attempt to invoke invalid import index ${importIndex}`);
@@ -376,7 +376,7 @@ export class Interop {
         return boundImportFunction(p0) as number;
     }
 
-    private js_invoke_i_ii(importIndex: number, p0: number, p1: number): number {
+    private impInvoke_i_ii(importIndex: number, p0: number, p1: number): number {
         const boundImportFunction = this._boundRawImportList[importIndex];
         if (!boundImportFunction) {
             throw new Error(`attempt to invoke invalid import index ${importIndex}`);
@@ -386,7 +386,7 @@ export class Interop {
         return boundImportFunction(p0, p1) as number;
     }
 
-    private js_invoke_i_iii(importIndex: number, p0: number, p1: number, p2: number): number {
+    private impInvoke_i_iii(importIndex: number, p0: number, p1: number, p2: number): number {
         const boundImportFunction = this._boundRawImportList[importIndex];
         if (!boundImportFunction) {
             throw new Error(`attempt to invoke invalid import index ${importIndex}`);
@@ -396,7 +396,7 @@ export class Interop {
         return boundImportFunction(p0, p1, p2) as number;
     }
 
-    private js_invoke_i_o(importIndex: number, p0: number): number {
+    private impInvoke_i_o(importIndex: number, p0: number): number {
         const boundImportFunction = this._boundRawImportList[importIndex];
         if (!boundImportFunction) {
             throw new Error(`attempt to invoke invalid import index ${importIndex}`);
@@ -406,7 +406,7 @@ export class Interop {
         return boundImportFunction(this._objects.getObjectByHandle(p0)) as number;
     }
 
-    private js_invoke_i_oi(importIndex: number, p0: number, p1: number): number {
+    private impInvoke_i_oi(importIndex: number, p0: number, p1: number): number {
         const boundImportFunction = this._boundRawImportList[importIndex];
         if (!boundImportFunction) {
             throw new Error(`attempt to invoke invalid import index ${importIndex}`);
@@ -416,7 +416,7 @@ export class Interop {
         return boundImportFunction(this._objects.getObjectByHandle(p0), p1) as number;
     }
 
-    private js_invoke_i_on(importIndex: number, p0: number, p1: number): number {
+    private impInvoke_i_on(importIndex: number, p0: number, p1: number): number {
         const boundImportFunction = this._boundRawImportList[importIndex];
         if (!boundImportFunction) {
             throw new Error(`attempt to invoke invalid import index ${importIndex}`);
@@ -426,7 +426,7 @@ export class Interop {
         return boundImportFunction(this._objects.getObjectByHandle(p0), this._nameList[p1]) as number;
     }
 
-    private js_invoke_i_oii(importIndex: number, p0: number, p1: number, p2: number): number {
+    private impInvoke_i_oii(importIndex: number, p0: number, p1: number, p2: number): number {
         const boundImportFunction = this._boundRawImportList[importIndex];
         if (!boundImportFunction) {
             throw new Error(`attempt to invoke invalid import index ${importIndex}`);
@@ -436,7 +436,7 @@ export class Interop {
         return boundImportFunction(this._objects.getObjectByHandle(p0), p1, p2) as number;
     }
 
-    private js_invoke_i_oo(importIndex: number, p0: number, p1: number): number {
+    private impInvoke_i_oo(importIndex: number, p0: number, p1: number): number {
         const boundImportFunction = this._boundRawImportList[importIndex];
         if (!boundImportFunction) {
             throw new Error(`attempt to invoke invalid import index ${importIndex}`);
@@ -446,7 +446,7 @@ export class Interop {
         return boundImportFunction(this._objects.getObjectByHandle(p0), this._objects.getObjectByHandle(p1)) as number;
     }
 
-    private js_invoke_i_ooi(importIndex: number, p0: number, p1: number, p2: number): number {
+    private impInvoke_i_ooi(importIndex: number, p0: number, p1: number, p2: number): number {
         const boundImportFunction = this._boundRawImportList[importIndex];
         if (!boundImportFunction) {
             throw new Error(`attempt to invoke invalid import index ${importIndex}`);
@@ -456,7 +456,7 @@ export class Interop {
         return boundImportFunction(this._objects.getObjectByHandle(p0), this._objects.getObjectByHandle(p1), p2) as number;
     }
 
-    private js_invoke_i_ooii(importIndex: number, p0: number, p1: number, p2: number, p3: number): number {
+    private impInvoke_i_ooii(importIndex: number, p0: number, p1: number, p2: number, p3: number): number {
         const boundImportFunction = this._boundRawImportList[importIndex];
         if (!boundImportFunction) {
             throw new Error(`attempt to invoke invalid import index ${importIndex}`);
@@ -466,7 +466,7 @@ export class Interop {
         return boundImportFunction(this._objects.getObjectByHandle(p0), this._objects.getObjectByHandle(p1), p2, p3) as number;
     }
 
-    private js_invoke_d_v(importIndex: number): number {
+    private impInvoke_d_v(importIndex: number): number {
         const boundImportFunction = this._boundRawImportList[importIndex];
         if (!boundImportFunction) {
             throw new Error(`attempt to invoke invalid import index ${importIndex}`);
@@ -853,11 +853,11 @@ export class Interop {
         }
     }
 
-    private paramSpecToJs(paramSpecPtr: number): ParamSpec {
-        const type = this._memory!.readU8(paramSpecPtr);
-        const flags = this._memory!.readU8(paramSpecPtr + 1);
-        const elementType = this._memory!.readU8(paramSpecPtr + 2);
-        const elementFlags = this._memory!.readU8(paramSpecPtr + 3);
+    private paramSpecToJs(encodedParamSpec: number): ParamSpec {
+        const type = encodedParamSpec >> 24;
+        const flags = (encodedParamSpec >> 16) & 0xff;
+        const elementType = (encodedParamSpec >> 8) & 0xff;
+        const elementFlags = encodedParamSpec & 0xff;
         return {
             type: type,
             nullable: (flags & 1) === 1,
@@ -870,17 +870,16 @@ export class Interop {
         };
     }
 
-    private functionSpecToJs(functionSpecPtr: number): FunctionSpec {
+    private functionSpecToJs(returnParamSpec: number, paramSpecsPtr: number, paramSpecsCount: number): FunctionSpec {
         const result: FunctionSpec = {
-            returnSpec: this.paramSpecToJs(functionSpecPtr),
+            returnSpec: this.paramSpecToJs(returnParamSpec),
             paramSpecs: []
         };
-        functionSpecPtr += 4;
-        for (let i = 0; i < 8; ++i) {
-            const paramSpec = this.paramSpecToJs(functionSpecPtr);
+        for (let i = 0; i < paramSpecsCount; ++i) {
+            const paramSpec = this.paramSpecToJs(this._memory!.readU32(paramSpecsPtr));
             if (paramSpec.type === InteropValueType.Void) { break; }
             result.paramSpecs.push(paramSpec);
-            functionSpecPtr += 4;
+            paramSpecsPtr += 4;
         }
         return result;
     }

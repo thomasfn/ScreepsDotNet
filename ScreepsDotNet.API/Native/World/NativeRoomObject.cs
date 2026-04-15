@@ -11,11 +11,13 @@ using ScreepsDotNet.API.World;
 
 namespace ScreepsDotNet.Native.World
 {
-    [StructLayout(LayoutKind.Explicit, Size = 8)]
-    internal struct RoomObjectMetadata
+    internal readonly record struct RoomObjectMetadata(int TypeId, IntPtr JSHandle)
     {
-        [FieldOffset(0)] public int TypeId;
-        [FieldOffset(4)] public IntPtr JSHandle;
+        public ulong Encoded => ((ulong)TypeId << 32) | (ulong)JSHandle;
+
+        public RoomObjectMetadata(ulong encoded)
+            : this((int)(encoded >> 32), (IntPtr)(encoded & 0xffffffff))
+        { }
     }
 
     [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
@@ -147,15 +149,18 @@ namespace ScreepsDotNet.Native.World
 
         private static ObjectId FetchId(JSObject from)
         {
-            ScreepsDotNet_Native.RawObjectId rawObjectId = default;
+            Span<byte> rawObjectId = stackalloc byte[24];
             unsafe
             {
-                if (ScreepsDotNet_Native.GetObjectId(from.JSHandle, &rawObjectId) == 0)
+                fixed (byte* rawObjectIdPtr = rawObjectId)
                 {
-                    throw new InvalidOperationException($"Failed to fetch object id for {from} (native call returned null)");
+                    if (ScreepsDotNet_Native.GetObjectId(from.JSHandle, rawObjectIdPtr) == 0)
+                    {
+                        throw new InvalidOperationException($"Failed to fetch object id for {from} (native call returned null)");
+                    }
                 }
             }
-            return new(rawObjectId.AsSpan);
+            return new(rawObjectId);
         }
 
         public override bool Equals(object? obj) => Equals(obj as NativeRoomObjectWithId);

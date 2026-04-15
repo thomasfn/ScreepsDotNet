@@ -17,7 +17,6 @@ export default class TestBindings extends BaseBindings {
         this._prototypes = {};
         this.resetGlobals();
         super.init(exports, memory);
-        console.log(exports);
     }
 
     public loop(): void {

@@ -176,13 +176,15 @@ namespace ScreepsDotNet.SourceGen
             // Emit import code
             sourceEmitter.EnterScope($"if ({importIndexFieldName} == -1)", () =>
             {
-                sourceEmitter.WriteLine($"var functionSpec = new FunctionSpec();");
+                sourceEmitter.WriteLine($"var functionSpec = new FunctionSpec({ParamSpecToCs(retMarshaller.GenerateReturnParamSpec(methodSymbol.ReturnType))}, [");
+                sourceEmitter.IncrementIndent();
                 for (int i = 0; i < methodSymbol.Parameters.Length; ++i)
                 {
                     var marshaller = marshallers[i];
-                    sourceEmitter.WriteLine($"functionSpec.ParamSpecs.Params[{i}] = {ParamSpecToCs(marshaller.GenerateParamSpec(methodSymbol.Parameters[i]))};");
+                    sourceEmitter.WriteLine($"{ParamSpecToCs(marshaller.GenerateParamSpec(methodSymbol.Parameters[i]))},");
                 }
-                sourceEmitter.WriteLine($"functionSpec.ReturnParamSpec = {ParamSpecToCs(retMarshaller.GenerateReturnParamSpec(methodSymbol.ReturnType))};");
+                sourceEmitter.DecrementIndent();
+                sourceEmitter.WriteLine($"]);");
                 sourceEmitter.WriteLine($"{importIndexFieldName} = Interop.Native.BindImport(\"{moduleName}\", \"{importName}\", functionSpec);");
             });
 
