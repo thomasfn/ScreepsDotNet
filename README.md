@@ -71,6 +71,19 @@ dotnet add (MyProjectName) package ScreepsDotNet.API
 dotnet add (MyProjectName) package ScreepsDotNet.Bundler
 ```
 
+Create a `global.json` file and place it next to your sln file. Populate it with the following:
+```JSON
+{
+    "sdk":
+    {
+        "version": "8.0.301",
+        "rollForward": "latestPatch"
+    }
+}
+```
+
+This will pin the dotnet sdk version to one that the bundler uses. You may need to install this version of the sdk on your system.
+
 ### Entrypoint (Arena)
 
 Replace your `Program.cs` with the following code:
