@@ -118,23 +118,20 @@ namespace ScreepsDotNet.SourceGen.Marshalling
         {
             if (!CanMarshalAsArray(returnTypeSymbol, out var marshallingData)) { return; }
             var elementMarshaller = elementMarshallers.First(x => x.CanMarshalToJS(marshallingData.ElementType) == MarshalMode.Trivial);
-            emitter.WriteLine($"Func<InteropValue, {marshallingData.ElementType.ToDisplayString()}> elementMarshaller = (interopValue) =>");
-            emitter.OpenScope();
-            elementMarshaller.EndMarshalFromJS(marshallingData.ElementType, "var elementRetVal", "interopValue", emitter);
-            emitter.WriteLine($"return elementRetVal;");
-            emitter.DecrementIndent();
-            emitter.WriteLine($"}};");
-            string retVarName;
+            const string retVarName = "retArr";
             if (returnTypeSymbol.NullableAnnotation == NullableAnnotation.NotAnnotated)
             {
-                emitter.WriteLine($"var retArr = {jsParamName}.AsArray(elementMarshaller);");
-                emitter.WriteLine($"if (retArr == null) {{ throw new NullReferenceException($\"Expecting array, got null\"); }}");
-                retVarName = "retArr";
+                emitter.WriteLine($"if (!{jsParamName}.AsArray(out var {retVarName}Data)) {{ throw new NullReferenceException($\"Expecting array, got null\"); }}");
             }
             else
             {
-                retVarName = $"{jsParamName}.AsArray(elementMarshaller)";
+                emitter.WriteLine($"if (!{jsParamName}.AsArray(out var {retVarName}Data)) {{ return null; }}");
             }
+            emitter.WriteLine($"var {retVarName} = new {marshallingData.ElementType.ToDisplayString()}[{retVarName}Data.Length];");
+            emitter.WriteLine($"for (int i = 0; i < {retVarName}.Length; ++i)");
+            emitter.OpenScope();
+            elementMarshaller.EndMarshalFromJS(marshallingData.ElementType, $"{retVarName}[i]", $"{retVarName}Data[i]", emitter);
+            emitter.CloseScope();
             switch (marshallingData.WrapperType)
             {
                 case WrapperType.Array:

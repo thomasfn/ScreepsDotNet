@@ -348,17 +348,16 @@ namespace ScreepsDotNet.Interop
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly unsafe T[]? AsArray<T>(Func<InteropValue, T> elementMarshaller)
+        public readonly unsafe bool AsArray(out ReadOnlySpan<InteropValue> arrayData)
         {
-            if (Slot.Type == InteropValueType.Void) { return null; }
-            Debug.Assert(Slot.Type == InteropValueType.Array);
-            ReadOnlySpan<InteropValue> valueArr = new((void*)Slot.IntPtrValue, Slot.Length);
-            T[] arr = new T[Slot.Length];
-            for (int i = 0; i < Slot.Length; ++i)
+            if (Slot.Type == InteropValueType.Void)
             {
-                arr[i] = elementMarshaller(valueArr[i]);
+                arrayData = default;
+                return false;
             }
-            return arr;
+            Debug.Assert(Slot.Type == InteropValueType.Array);
+            arrayData = new((void*)Slot.IntPtrValue, Slot.Length);
+            return true;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
