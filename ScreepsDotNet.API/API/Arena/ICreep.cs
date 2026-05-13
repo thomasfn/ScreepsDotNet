@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace ScreepsDotNet.API.Arena
@@ -12,6 +13,19 @@ namespace ScreepsDotNet.API.Arena
         RangedAttack,
         Heal,
         Tough
+    }
+
+    public static class BodyPartTypes
+    {
+        private static readonly BodyPartType[] all = [BodyPartType.Move, BodyPartType.Work, BodyPartType.Carry, BodyPartType.Attack, BodyPartType.RangedAttack, BodyPartType.Tough, BodyPartType.Heal];
+
+        public static ReadOnlySpan<BodyPartType> All => all;
+
+        private static readonly string[] names = [nameof(BodyPartType.Move), nameof(BodyPartType.Work), nameof(BodyPartType.Carry), nameof(BodyPartType.Attack), nameof(BodyPartType.RangedAttack), nameof(BodyPartType.Tough), nameof(BodyPartType.Heal)];
+
+        public static ReadOnlySpan<string> Names => names;
+
+        public const int Count = 7;
     }
 
     public static class BodyPartTypeExtensions
@@ -32,6 +46,15 @@ namespace ScreepsDotNet.API.Arena
             return totalCost;
         }
     }
+
+    /// <summary>
+    /// Describes the state of a single body part belonging to a creep.
+    /// </summary>
+    public readonly record struct BodyPart
+    (
+        BodyPartType Type,
+        int Hits
+    );
 
     public enum CreepAttackResult
     {
@@ -128,9 +151,9 @@ namespace ScreepsDotNet.API.Arena
     public interface ICreep : IGameObject
     {
         /// <summary>
-        /// An array describing the creep’s body
+        /// An array describing the creep’s body.
         /// </summary>
-        IEnumerable<BodyPart<BodyPartType>> Body { get; }
+        ReadOnlySpan<BodyPart> Body { get; }
 
         /// <summary>
         /// Gets the creep's body type.

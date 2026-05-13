@@ -6,17 +6,6 @@ using System.Text;
 namespace ScreepsDotNet.API
 {
     /// <summary>
-    /// Describes the state of a single body part belonging to a creep.
-    /// </summary>
-    /// <typeparam name="TBodyPartType"></typeparam>
-    public readonly record struct BodyPart<TBodyPartType>
-    (
-        TBodyPartType Type,
-        int Hits,
-        World.ResourceType? Boost
-    ) where TBodyPartType : unmanaged, Enum;
-
-    /// <summary>
     /// Describes the body structure of a creep.
     /// </summary>
     public readonly struct BodyType<TBodyPartType> : IEquatable<BodyType<TBodyPartType>> where TBodyPartType : unmanaged, Enum

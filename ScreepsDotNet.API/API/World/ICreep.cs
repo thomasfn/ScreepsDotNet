@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace ScreepsDotNet.API.World
 {
@@ -27,6 +29,16 @@ namespace ScreepsDotNet.API.World
 
         public const int Count = 8;
     }
+
+    /// <summary>
+    /// Describes the state of a single body part belonging to a creep.
+    /// </summary>
+    public readonly record struct BodyPart
+    (
+        BodyPartType Type,
+        int Hits,
+        ResourceType? Boost
+    );
 
     public enum CreepAttackResult
     {
@@ -741,7 +753,7 @@ namespace ScreepsDotNet.API.World
         /// <summary>
         /// An array describing the creep’s body.
         /// </summary>
-        IEnumerable<BodyPart<BodyPartType>> Body { get; }
+        ReadOnlySpan<BodyPart> Body { get; }
 
         /// <summary>
         /// Gets the creep's body type.

@@ -174,8 +174,8 @@ namespace ScreepsDotNet.Native.World
 
         private readonly NativeStore store;
 
-        private BodyPart<BodyPartType>[]? bodyMemoryCache;
-        private BodyPart<BodyPartType>[]? bodyCache;
+        private BodyPart[]? bodyMemoryCache;
+        private BodyPart[]? bodyCache;
         private BodyType<BodyPartType>? bodyTypeCache;
         private int? fatigueCache;
         private int? hitsCache;
@@ -188,9 +188,9 @@ namespace ScreepsDotNet.Native.World
 
         protected override bool CanMove => true;
 
-        public IEnumerable<BodyPart<BodyPartType>> Body => CachePerTick(ref bodyCache) ??= FetchBody();
+        public ReadOnlySpan<BodyPart> Body => CachePerTick(ref bodyCache) ??= FetchBody();
 
-        public BodyType<BodyPartType> BodyType => CacheLifetime(ref bodyTypeCache) ??= new(Body.Select(x => x.Type));
+        public BodyType<BodyPartType> BodyType => CacheLifetime(ref bodyTypeCache) ??= new((CachePerTick(ref bodyCache) ??= FetchBody()).Select(x => x.Type));
 
         public int Fatigue => CachePerTick(ref fatigueCache) ??= ProxyObject.GetPropertyAsInt32(Names.Fatigue);
 
@@ -401,7 +401,7 @@ namespace ScreepsDotNet.Native.World
         public CreepWithdrawResult Withdraw(IScoreContainer target, ResourceType resourceType, int? amount = null)
             => (CreepWithdrawResult)Native_Withdraw(ProxyObject, target.ToJS(), resourceType.ToJS(), amount);
 
-        private BodyPart<BodyPartType>[] FetchBody()
+        private BodyPart[] FetchBody()
         {
             Span<int> encodedBodyParts = stackalloc int[50];
             int num;
@@ -414,7 +414,7 @@ namespace ScreepsDotNet.Native.World
             }
             if (bodyMemoryCache == null || bodyMemoryCache.Length != num)
             {
-                bodyMemoryCache = new BodyPart<BodyPartType>[num];
+                bodyMemoryCache = new BodyPart[num];
             }
             for (int i = 0; i < num; ++i)
             {

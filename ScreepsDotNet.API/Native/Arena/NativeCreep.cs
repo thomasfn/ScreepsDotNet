@@ -94,8 +94,8 @@ namespace ScreepsDotNet.Native.Arena
 
         #endregion
 
-        private BodyPart<BodyPartType>[]? bodyMemoryCache;
-        private BodyPart<BodyPartType>[]? bodyCache;
+        private BodyPart[]? bodyMemoryCache;
+        private BodyPart[]? bodyCache;
         private BodyType<BodyPartType>? bodyTypeCache;
         private int? fatigueCache;
         private int? hitsCache;
@@ -104,9 +104,9 @@ namespace ScreepsDotNet.Native.Arena
         private NativeStore? storeCache;
         private bool? spawningCache;
 
-        public IEnumerable<BodyPart<BodyPartType>> Body => CachePerTick(ref bodyCache) ??= FetchBody();
+        public ReadOnlySpan<BodyPart> Body => CachePerTick(ref bodyCache) ??= FetchBody();
 
-        public BodyType<BodyPartType> BodyType => CacheLifetime(ref bodyTypeCache) ??= new(Body.Select(x => x.Type));
+        public BodyType<BodyPartType> BodyType => CacheLifetime(ref bodyTypeCache) ??= new(FetchBody().Select(x => x.Type));
 
         public int Fatigue => CachePerTick(ref fatigueCache) ??= proxyObject.GetPropertyAsInt32(Names.Fatigue);
 
@@ -186,7 +186,7 @@ namespace ScreepsDotNet.Native.Arena
         public CreepTransferResult Withdraw(IStructure target, ResourceType resourceType, int? amount)
             => (CreepTransferResult)Native_Withdraw(proxyObject, target.ToJS(), resourceType.ToJS(), amount);
 
-        private BodyPart<BodyPartType>[] FetchBody()
+        private BodyPart[] FetchBody()
         {
             Span<short> encodedBodyParts = stackalloc short[50];
             int num;
@@ -199,7 +199,7 @@ namespace ScreepsDotNet.Native.Arena
             }
             if (bodyMemoryCache == null || bodyMemoryCache.Length != num)
             {
-                bodyMemoryCache = new BodyPart<BodyPartType>[num];
+                bodyMemoryCache = new BodyPart[num];
             }
             for (int i = 0; i < num; ++i)
             {
@@ -209,7 +209,7 @@ namespace ScreepsDotNet.Native.Arena
                 int encodedBodyPart = encodedBodyParts[i];
                 int type = encodedBodyPart >> 8;
                 int hits = encodedBodyPart & 127;
-                bodyMemoryCache[i] = new((BodyPartType)type, hits, null);
+                bodyMemoryCache[i] = new((BodyPartType)type, hits);
             }
             return bodyMemoryCache;
         }
