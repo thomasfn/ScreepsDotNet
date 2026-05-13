@@ -105,7 +105,6 @@ namespace ScreepsDotNet.Native.World
 
         private readonly List<NativeObject> batchRenewList = [];
         private readonly List<RoomCoord> roomCoordPendingRemovalList = [];
-        private IntPtr[] batchRenewJSHandleList = new IntPtr[32];
 
         private long? timeCache;
         private ShardInfo? shardInfoCache;
@@ -277,7 +276,7 @@ namespace ScreepsDotNet.Native.World
 
         public void BatchRenewObjects(IEnumerable<IRoomObject> roomObjects)
         {
-            int cnt = 0;
+            batchRenewList.Clear();
             foreach (var roomObject in roomObjects)
             {
                 var nativeObject = (roomObject as NativeObject)!;
@@ -285,22 +284,21 @@ namespace ScreepsDotNet.Native.World
                 if (jsHandle == null) { continue; }
                 if (!nativeObject.Stale) { continue; }
                 batchRenewList.Add(nativeObject);
-                if (cnt >= batchRenewJSHandleList.Length - 1)
-                {
-                    Array.Resize(ref batchRenewJSHandleList, batchRenewJSHandleList.Length * 2);
-                }
-                batchRenewJSHandleList[cnt] = jsHandle.Value;
-                ++cnt;
             }
-            if (cnt == 0) { return; }
+            if (batchRenewList.Count == 0) { return; }
+            Span<IntPtr> batchRenewJSHandleList = stackalloc IntPtr[batchRenewList.Count];
+            for (int i = 0; i < batchRenewList.Count; ++i)
+            {
+                batchRenewJSHandleList[i] = batchRenewList[i].ProxyObjectJSHandle!.Value;
+            }
             unsafe
             {
                 fixed (IntPtr* batchRenewJSHandleListPtr = batchRenewJSHandleList)
                 {
-                    ScreepsDotNet_Native.BatchRenewObjects(batchRenewJSHandleListPtr, cnt);
+                    ScreepsDotNet_Native.BatchRenewObjects(batchRenewJSHandleListPtr, batchRenewJSHandleList.Length);
                 }
             }
-            for (int i = 0; i < cnt; ++i)
+            for (int i = 0; i < batchRenewJSHandleList.Length; ++i)
             {
                 if (batchRenewJSHandleList[i] == -1)
                 {
