@@ -19,6 +19,8 @@ export declare class Bootloader {
     private _memorySize;
     private _compiled;
     private _started;
+    private _monotonicClock;
+    private _monotonicClockTick;
     private _inTick;
     private _profilingEnabled;
     get compiled(): boolean;
@@ -30,7 +32,7 @@ export declare class Bootloader {
     setImports(moduleName: string, importTable: ImportTable): void;
     log(text: string): void;
     private dispatchLog;
-    compile(wasmBytes: Uint8Array): void;
+    compile(wasmBytes: Uint8Array<ArrayBuffer>): void;
     start(customInitExportNames?: ReadonlyArray<string>): void;
     loop(): void;
     private getWasmImports;

@@ -3547,6 +3547,8 @@ var bootloader = (function (exports) {
       _defineProperty(this, "_memorySize", 0);
       _defineProperty(this, "_compiled", false);
       _defineProperty(this, "_started", false);
+      _defineProperty(this, "_monotonicClock", 0);
+      _defineProperty(this, "_monotonicClockTick", 0);
       _defineProperty(this, "_inTick", false);
       _defineProperty(this, "_profilingEnabled", false);
       this._deferLogsToTick = env === 'arena';
@@ -3718,6 +3720,7 @@ var bootloader = (function (exports) {
           return;
         }
         // Run bindings loop
+        this._monotonicClockTick = this._profileFn();
         this._interop.loop();
         (_this$_bindings2 = this._bindings) === null || _this$_bindings2 === void 0 || _this$_bindings2.loop();
         // Dispatch log messages
@@ -3752,7 +3755,7 @@ var bootloader = (function (exports) {
       value: function clock_res_get(id, res_ptr) {
         // We only support the realtime clock
         // The monotonic clock's implementation in the wasi shim uses performance.now which isn't available in screeps
-        if (id === 0 /* WASI_CLOCKID.REALTIME */) {
+        if (id === 0 /* WASI_CLOCKID.REALTIME */ && "Date" in globalThis || id === 1 /* WASI_CLOCKID.MONOTONIC */) {
           var dataView = this._memoryManager.view.dataView;
           dataView.setBigUint64(res_ptr, BigInt(1), true);
           return 0;
@@ -3764,9 +3767,17 @@ var bootloader = (function (exports) {
       value: function clock_time_get(id, precision, time_ptr) {
         // We only support the realtime clock
         // The monotonic clock's implementation in the wasi shim uses performance.now which isn't available in screeps
+        var dataView = this._memoryManager.view.dataView;
         if (id === 0 /* WASI_CLOCKID.REALTIME */) {
-          var dataView = this._memoryManager.view.dataView;
-          dataView.setBigUint64(time_ptr, BigInt(new Date().getTime()) * 1000000n, true);
+          if ("Date" in globalThis) {
+            dataView.setBigUint64(time_ptr, BigInt(new Date().getTime()) * 1000000n, true);
+            return 0;
+          }
+        } else if (id === 1 /* WASI_CLOCKID.MONOTONIC */) {
+          var t = this._profileFn();
+          this._monotonicClock += t - this._monotonicClockTick;
+          this._monotonicClockTick = t;
+          dataView.setBigUint64(time_ptr, BigInt(this._monotonicClock * 1000.0 | 0), true);
           return 0;
         }
         return 28 /* WASI_ERRNO.INVAL */;
@@ -3790,5 +3801,3 @@ var bootloader = (function (exports) {
   return exports;
 
 })({});
-
-module.exports = bootloader;

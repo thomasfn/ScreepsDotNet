@@ -110,6 +110,8 @@ export class Bootloader {
     private _memorySize: number = 0;
     private _compiled: boolean = false;
     private _started: boolean = false;
+    private _monotonicClock: number = 0;
+    private _monotonicClockTick: number = 0;
 
     private _inTick: boolean = false;
     private _profilingEnabled: boolean = false;
@@ -239,6 +241,7 @@ export class Bootloader {
         if (!this._wasmInstance || !this._started) { return; }
 
         // Run bindings loop
+        this._monotonicClockTick = this._profileFn();
         this._interop.loop();
         this._bindings?.loop();
 
@@ -275,9 +278,7 @@ export class Bootloader {
     }
 
     private clock_res_get(id: number, res_ptr: number): number {
-        // We only support the realtime clock
-        // The monotonic clock's implementation in the wasi shim uses performance.now which isn't available in screeps
-        if (id === WASI_CLOCKID.REALTIME) {
+        if ((id === WASI_CLOCKID.REALTIME && "Date" in globalThis) || id === WASI_CLOCKID.MONOTONIC) {
             const dataView = this._memoryManager!.view.dataView;
             dataView.setBigUint64(res_ptr, BigInt(1), true);
             return 0;
@@ -286,11 +287,17 @@ export class Bootloader {
     }
 
     private clock_time_get(id: number, precision: number, time_ptr: number): number {
-        // We only support the realtime clock
-        // The monotonic clock's implementation in the wasi shim uses performance.now which isn't available in screeps
+        const dataView = this._memoryManager!.view.dataView;
         if (id === WASI_CLOCKID.REALTIME) {
-            const dataView = this._memoryManager!.view.dataView;
-            dataView.setBigUint64(time_ptr, BigInt(new Date().getTime()) * 1000000n, true);
+            if ("Date" in globalThis) {
+                dataView.setBigUint64(time_ptr, BigInt(new Date().getTime()) * 1000000n, true);
+                return 0;
+            }
+        } else if (id === WASI_CLOCKID.MONOTONIC) {
+            const t = this._profileFn();
+            this._monotonicClock += (t - this._monotonicClockTick);
+            this._monotonicClockTick = t;
+            dataView.setBigUint64(time_ptr, BigInt((this._monotonicClock*1000.0)|0), true);
             return 0;
         }
         return WASI_ERRNO.INVAL;
