@@ -15,7 +15,7 @@ A toolset and API to build bots for [Screeps Arena](https://store.steampowered.c
 
 ## What is Screeps DotNet?
 
-Screeps DotNet allows you to write bots for Screeps in any language that targets .Net 7.0, for example C#, and provides tooling to compile your bot to wasm ready to be deployed to the Screeps environment.
+Screeps DotNet allows you to write bots for Screeps in any language that targets .Net 8.0, for example C#, and provides tooling to compile your bot to wasm ready to be deployed to the Screeps environment.
 
 - [Screeps Arena](https://store.steampowered.com/app/1137320/Screeps_Arena/) - :heavy_check_mark: full support
 - [Screeps World](https://store.steampowered.com/app/464350/Screeps_World/) - :heavy_check_mark: full support
@@ -25,6 +25,14 @@ A managed API is provided that handles the interop with the Screeps javascript A
 ## Quickstart
 
 To get started making your first bot for Screeps in C#, follow these steps. You'll need a working dotnet environment as we're using terminal commands here. If you're using Visual Studio, you can use the Package Manager Console to run them.
+
+### Prerequisites
+
+Building projects using ScreepsDotNet requires .Net SDK 8.0.101 or a higher patch version. .Net SDK 9 or 10 can't be used, although there's no problem with having them installed alongside.
+
+In order to provision emsdk the bundler will need the following tools installed on your machine:
+- python 3.8 or above (if you're using Windows, the version from Microsoft Store will work fine)
+- git (needs to be available on the command line)
 
 ### Workload
 Install the experimental wasi workload if you haven't done already.
