@@ -581,26 +581,5 @@ namespace ScreepsDotNet.Interop
                 return args[InvokeImportReturnValArgIndex];
             }
         }
-
-        public static unsafe IntPtr StringToJs(string value)
-        {
-            fixed (char* valuePtr = value)
-            {
-                return ScreepsDotNet_Interop.StringToJs(valuePtr, value.Length);
-            }
-        }
-
-        public static unsafe string StringFromJs(IntPtr handle, int length)
-        {
-            if (length == 0) { return ""; }
-            var buffer = length <= 1024 ? stackalloc char[length] : new char[length];
-            int actualLength;
-            fixed (char* bufferPtr = buffer)
-            {
-                actualLength = ScreepsDotNet_Interop.StringFromJs(handle, bufferPtr);
-                if (actualLength > length) { throw new InvalidOperationException($"StringFromJs returned length larger than buffer size, heap corruption likely"); }
-            }
-            return new string(buffer[..actualLength]);
-        }
     }
 }
