@@ -39,6 +39,7 @@ namespace ScreepsDotNet.Native.World
         Ruins = 123,
         ScoreContainers = 10011,
         ScoreCollectors = 10012,
+        Scores = 10031,
     }
 
     [System.Runtime.Versioning.SupportedOSPlatform("wasi")]
@@ -229,6 +230,7 @@ namespace ScreepsDotNet.Native.World
                 var ruinType = RegisterType<IRuin, NativeRuin>("Ruin", FindConstant.Ruins, null, null, "ruin", null, static (x, y) => new NativeRuin(x, y));
                 var scoreCollectorType = RegisterType<IScoreCollector, NativeScoreCollector>("ScoreCollector", FindConstant.ScoreCollectors, null, null, "scoreCollector", null, static (x, y) => new NativeScoreCollector(x, y));
                 var scoreContainerType = RegisterType<IScoreContainer, NativeScoreContainer>("ScoreContainer", FindConstant.ScoreContainers, null, null, "scoreContainer", null, static (x, y) => new NativeScoreContainer(x, y));
+                var scoreType = RegisterType<IScore, NativeScore>("Score", FindConstant.Scores, null, null, "score", null, static (x, y) => new NativeScore(x, y));
                 var roomObjectType = RegisterType<IRoomObject, NativeRoomObject>("RoomObject", null, null, null, null, null, null);
 
                 structureSpawnType.BaseType = ownedStructureType;
@@ -269,6 +271,7 @@ namespace ScreepsDotNet.Native.World
                 ruinType.BaseType = roomObjectType;
                 scoreCollectorType.BaseType = roomObjectType;
                 scoreContainerType.BaseType = roomObjectType;
+                scoreType.BaseType = roomObjectType;
             }
             catch (Exception ex)
             {
