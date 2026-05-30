@@ -92,7 +92,7 @@ export interface ImportTable {
 
 export type Importable = ((...args: any[]) => unknown) | ImportTable;
 
-const INTEROP_VALUE_DEFENSIVE_CHECKS = true;
+const INTEROP_VALUE_DEFENSIVE_CHECKS = false;
 
 class InteropValueView {
     public ptr: number = 0;

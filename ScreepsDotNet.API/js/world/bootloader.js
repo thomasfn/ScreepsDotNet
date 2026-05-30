@@ -939,8 +939,250 @@ var bootloader = (function (exports) {
     nullable: false,
     nullAsUndefined: false
   };
+  var InteropValueView = /*#__PURE__*/function () {
+    function InteropValueView(_memory) {
+      _classCallCheck(this, InteropValueView);
+      _defineProperty(this, "_memory", void 0);
+      _defineProperty(this, "ptr", 0);
+      this._memory = _memory;
+    }
+    _createClass(InteropValueView, [{
+      key: "booleanValue",
+      get: function get() {
+        return this.byteValue !== 0;
+      },
+      set: function set(value) {
+        this.byteValue = value ? 1 : 0;
+      }
+    }, {
+      key: "byteValue",
+      get: function get() {
+        return this._memory.readU8(this.ptr);
+      },
+      set: function set(value) {
+        this._memory.writeU8(this.ptr, value);
+      }
+    }, {
+      key: "sbyteValue",
+      get: function get() {
+        return this._memory.readI8(this.ptr);
+      },
+      set: function set(value) {
+        this._memory.writeI8(this.ptr, value);
+      }
+    }, {
+      key: "uint16Value",
+      get: function get() {
+        return this._memory.readU16(this.ptr);
+      },
+      set: function set(value) {
+        this._memory.writeU16(this.ptr, value);
+      }
+    }, {
+      key: "int16Value",
+      get: function get() {
+        return this._memory.readI16(this.ptr);
+      },
+      set: function set(value) {
+        this._memory.writeI16(this.ptr, value);
+      }
+    }, {
+      key: "uint32Value",
+      get: function get() {
+        return this._memory.readU32(this.ptr);
+      },
+      set: function set(value) {
+        this._memory.writeU32(this.ptr, value);
+      }
+    }, {
+      key: "int32Value",
+      get: function get() {
+        return this._memory.readI32(this.ptr);
+      },
+      set: function set(value) {
+        this._memory.writeI32(this.ptr, value);
+      }
+    }, {
+      key: "uint64Value",
+      get: function get() {
+        return this._memory.readU64(this.ptr);
+      },
+      set: function set(value) {
+        this._memory.writeU64(this.ptr, value);
+      }
+    }, {
+      key: "int64Value",
+      get: function get() {
+        return this._memory.readI64(this.ptr);
+      },
+      set: function set(value) {
+        this._memory.writeI64(this.ptr, value);
+      }
+    }, {
+      key: "singleValue",
+      get: function get() {
+        return this._memory.readF32(this.ptr);
+      },
+      set: function set(value) {
+        this._memory.writeF32(this.ptr, value);
+      }
+    }, {
+      key: "doubleValue",
+      get: function get() {
+        return this._memory.readF64(this.ptr);
+      },
+      set: function set(value) {
+        this._memory.writeF64(this.ptr, value);
+      }
+    }, {
+      key: "intPtrValue",
+      get: function get() {
+        return this._memory.readU32(this.ptr);
+      },
+      set: function set(value) {
+        this._memory.writeU32(this.ptr, value);
+      }
+    }, {
+      key: "jsHandle",
+      get: function get() {
+        return this._memory.readU32(this.ptr + 4);
+      },
+      set: function set(value) {
+        this._memory.writeU32(this.ptr + 4, value);
+      }
+    }, {
+      key: "gcHandle",
+      get: function get() {
+        return this._memory.readU32(this.ptr + 4);
+      },
+      set: function set(value) {
+        this._memory.writeU32(this.ptr + 4, value);
+      }
+    }, {
+      key: "structIndex",
+      get: function get() {
+        return this._memory.readI32(this.ptr + 4);
+      },
+      set: function set(value) {
+        this._memory.writeI32(this.ptr + 4, value);
+      }
+    }, {
+      key: "length",
+      get: function get() {
+        return this._memory.readI32(this.ptr + 8);
+      },
+      set: function set(value) {
+        this._memory.writeI32(this.ptr + 8, value);
+      }
+    }, {
+      key: "type",
+      get: function get() {
+        return this._memory.readU8(this.ptr + 12);
+      },
+      set: function set(value) {
+        this._memory.writeU8(this.ptr + 12, value);
+      }
+    }, {
+      key: "elementType",
+      get: function get() {
+        return this._memory.readU8(this.ptr + 13);
+      },
+      set: function set(value) {
+        this._memory.writeU8(this.ptr + 13, value);
+      }
+    }, {
+      key: "fieldKey",
+      get: function get() {
+        return this._memory.readU16(this.ptr + 14);
+      },
+      set: function set(value) {
+        this._memory.writeU16(this.ptr + 14, value);
+      }
+    }, {
+      key: "clear",
+      value: function clear() {
+        this._memory.writeU32(this.ptr, 0);
+        this._memory.writeU32(this.ptr + 4, 0);
+        this._memory.writeU32(this.ptr + 8, 0);
+        this._memory.writeU32(this.ptr + 12, 0);
+      }
+    }, {
+      key: "poison",
+      value: function poison() {
+        this._memory.writeU32(this.ptr, 0xCCCCCCCC);
+        this._memory.writeU32(this.ptr + 4, 0xCCCCCCCC);
+        this._memory.writeU32(this.ptr + 8, 0xCCCCCCCC);
+        this._memory.writeU32(this.ptr + 12, 0xCCCCCCCC);
+      }
+    }, {
+      key: "checkPtr",
+      value: function checkPtr() {
+        if (this.ptr === 0) {
+          throw new Error("null ptr");
+        }
+        if (this.ptr % 8 !== 0) {
+          throw new Error("misaligned ptr");
+        }
+      }
+    }, {
+      key: "validate",
+      value: function validate() {
+        var type = this.type;
+        if (type > 17) {
+          throw new Error("invalid type (".concat(type, ")"));
+        }
+        // const length = this.length;
+        // if (length < 0 || length > 200 * 1024) { throw new Error(`invalid length (${length})`); }
+      }
+    }, {
+      key: "toString",
+      value: function toString() {
+        var _INTEROP_VALUE_TYPE_N;
+        switch (this.type) {
+          case 0 /* InteropValueType.Void */:
+            return "InteropValue[Void]";
+          case 1 /* InteropValueType.U1 */:
+            return "InteropValue[U1, value=".concat(this.booleanValue, "]");
+          case 2 /* InteropValueType.U8 */:
+            return "InteropValue[U8, value=".concat(this.byteValue, "]");
+          case 3 /* InteropValueType.I8 */:
+            return "InteropValue[I8, value=".concat(this.sbyteValue, "]");
+          case 4 /* InteropValueType.U16 */:
+            return "InteropValue[U16, value=".concat(this.uint16Value, "]");
+          case 5 /* InteropValueType.I16 */:
+            return "InteropValue[I16, value=".concat(this.int16Value, "]");
+          case 6 /* InteropValueType.U32 */:
+            return "InteropValue[U32, value=".concat(this.uint32Value, "]");
+          case 7 /* InteropValueType.I32 */:
+            return "InteropValue[I32, value=".concat(this.int32Value, "]");
+          case 8 /* InteropValueType.U64 */:
+            return "InteropValue[U64, value=".concat(this.uint64Value, "]");
+          case 9 /* InteropValueType.I64 */:
+            return "InteropValue[I64, value=".concat(this.int64Value, "]");
+          case 10 /* InteropValueType.F32 */:
+            return "InteropValue[F32, value=".concat(this.singleValue, "]");
+          case 11 /* InteropValueType.F64 */:
+            return "InteropValue[F64, value=".concat(this.doubleValue, "]");
+          case 12 /* InteropValueType.Pointer */:
+            return "InteropValue[Pointer, ptr=".concat(this.intPtrValue, ", length=").concat(this.length, "]");
+          case 13 /* InteropValueType.String */:
+            return "InteropValue[String, ptr=".concat(this.intPtrValue, ", length=").concat(this.length, "]");
+          case 14 /* InteropValueType.Object */:
+            return "InteropValue[Object, jsHandle=".concat(this.jsHandle, "]");
+          case 15 /* InteropValueType.Array */:
+            return "InteropValue[Array, ptr=".concat(this.intPtrValue, ", length=").concat(this.length, ", elementType=").concat((_INTEROP_VALUE_TYPE_N = INTEROP_VALUE_TYPE_NAMES[this.elementType]) !== null && _INTEROP_VALUE_TYPE_N !== void 0 ? _INTEROP_VALUE_TYPE_N : "unknown", "]");
+          case 16 /* InteropValueType.Name */:
+            return "InteropValue[Name, nameIndex=".concat(this.intPtrValue, "]");
+          case 17 /* InteropValueType.Struct */:
+            return "InteropValue[Struct, fieldPtr=".concat(this.intPtrValue, ", structIndex=").concat(this.structIndex, ", fieldCount=").concat(this.length, "]");
+        }
+      }
+    }]);
+    return InteropValueView;
+  }();
   var IMPORT_BINDING_SCOPE = {
-    EXCEPTION_PARAM_SPEC: EXCEPTION_PARAM_SPEC
+    EXCEPTION_PARAM_SPEC: EXCEPTION_PARAM_SPEC,
+    InteropValueView: InteropValueView
   };
   var Interop = /*#__PURE__*/function () {
     function Interop(profileFn) {
@@ -962,22 +1204,22 @@ var bootloader = (function (exports) {
       _defineProperty(this, "_timeInJsUserCode", 0);
       this._profileFn = profileFn;
       this.interopImport = {};
-      this.interopImport['bind-import'] = this.js_bind_import.bind(this);
-      this.interopImport['invoke-import'] = this.js_invoke_import.bind(this);
-      this.interopImport['release-object-reference'] = this.js_release_object_reference.bind(this);
-      this.interopImport['set-name'] = this.js_set_name.bind(this);
-      this.interopImport['define-struct'] = this.js_define_struct.bind(this);
-      this.interopImport['invoke-i-i'] = this.js_invoke_i_i.bind(this);
-      this.interopImport['invoke-i-ii'] = this.js_invoke_i_ii.bind(this);
-      this.interopImport['invoke-i-iii'] = this.js_invoke_i_iii.bind(this);
-      this.interopImport['invoke-i-o'] = this.js_invoke_i_o.bind(this);
-      this.interopImport['invoke-i-oi'] = this.js_invoke_i_oi.bind(this);
-      this.interopImport['invoke-i-on'] = this.js_invoke_i_on.bind(this);
-      this.interopImport['invoke-i-oii'] = this.js_invoke_i_oii.bind(this);
-      this.interopImport['invoke-i-oo'] = this.js_invoke_i_oo.bind(this);
-      this.interopImport['invoke-i-ooi'] = this.js_invoke_i_ooi.bind(this);
-      this.interopImport['invoke-i-ooii'] = this.js_invoke_i_ooii.bind(this);
-      this.interopImport['invoke-d-v'] = this.js_invoke_d_v.bind(this);
+      this.interopImport['bind-import'] = this.impBindImport.bind(this);
+      this.interopImport['invoke-import'] = this.impInvokeImport.bind(this);
+      this.interopImport['release-object-reference'] = this.impReleaseObjectReference.bind(this);
+      this.interopImport['set-name'] = this.impSetName.bind(this);
+      this.interopImport['define-struct'] = this.impDefineStruct.bind(this);
+      this.interopImport['invoke-i-i'] = this.impInvoke_i_i.bind(this);
+      this.interopImport['invoke-i-ii'] = this.impInvoke_i_ii.bind(this);
+      this.interopImport['invoke-i-iii'] = this.impInvoke_i_iii.bind(this);
+      this.interopImport['invoke-i-o'] = this.impInvoke_i_o.bind(this);
+      this.interopImport['invoke-i-oi'] = this.impInvoke_i_oi.bind(this);
+      this.interopImport['invoke-i-on'] = this.impInvoke_i_on.bind(this);
+      this.interopImport['invoke-i-oii'] = this.impInvoke_i_oii.bind(this);
+      this.interopImport['invoke-i-oo'] = this.impInvoke_i_oo.bind(this);
+      this.interopImport['invoke-i-ooi'] = this.impInvoke_i_ooi.bind(this);
+      this.interopImport['invoke-i-ooii'] = this.impInvoke_i_ooii.bind(this);
+      this.interopImport['invoke-d-v'] = this.impInvoke_d_v.bind(this);
     }
     _createClass(Interop, [{
       key: "objects",
@@ -1042,8 +1284,8 @@ var bootloader = (function (exports) {
         return currentValue;
       }
     }, {
-      key: "js_bind_import",
-      value: function js_bind_import(moduleNamePtr, importNamePtr, functionSpecPtr) {
+      key: "impBindImport",
+      value: function impBindImport(moduleNamePtr, importNamePtr, returnParamSpec, paramSpecsPtr, paramSpecsCount) {
         this.memory.flush();
         var moduleName = this.stringToJs(moduleNamePtr);
         var importTable = this._imports[moduleName];
@@ -1053,7 +1295,7 @@ var bootloader = (function (exports) {
         var importName = this.stringToJs(importNamePtr);
         var importFunction = this.resolveImport(moduleName, importTable, importName);
         this._boundRawImportList.push(importFunction);
-        var functionSpec = this.functionSpecToJs(functionSpecPtr);
+        var functionSpec = this.functionSpecToJs(returnParamSpec, paramSpecsPtr, paramSpecsCount);
         var importIndex = this._boundImportList.length;
         var boundImportFunction = this.createImportBinding(importFunction, functionSpec, importIndex);
         this._boundImportList.push(boundImportFunction);
@@ -1062,12 +1304,12 @@ var bootloader = (function (exports) {
           functionSpec: functionSpec
         });
         ++this._numImportBinds;
-        // console.log(this.stringifyImportBindingForDisplay(importIndex));
+        //console.log(this.stringifyImportBindingForDisplay(importIndex));
         return importIndex;
       }
     }, {
-      key: "js_invoke_import",
-      value: function js_invoke_import(importIndex, paramsBufferPtr) {
+      key: "impInvokeImport",
+      value: function impInvokeImport(importIndex, paramsBufferPtr) {
         var boundImportFunction = this._boundImportList[importIndex];
         if (!boundImportFunction) {
           throw new Error("attempt to invoke invalid import index ".concat(importIndex));
@@ -1076,33 +1318,33 @@ var bootloader = (function (exports) {
         return boundImportFunction(paramsBufferPtr);
       }
     }, {
-      key: "js_release_object_reference",
-      value: function js_release_object_reference(objectHandle) {
+      key: "impReleaseObjectReference",
+      value: function impReleaseObjectReference(objectHandle) {
         this._objects.releaseObjectHandle(objectHandle);
       }
     }, {
-      key: "js_set_name",
-      value: function js_set_name(nameIndex, valuePtr) {
+      key: "impSetName",
+      value: function impSetName(nameIndex, valuePtr) {
         this.memory.flush();
         var value = this.stringToJs(valuePtr);
         this._nameList[nameIndex] = value;
         this._nameTable[value] = nameIndex;
       }
     }, {
-      key: "js_define_struct",
-      value: function js_define_struct(numFields, fieldsPtr) {
+      key: "impDefineStruct",
+      value: function impDefineStruct(numFields, encodedFieldsPtr) {
         this.memory.flush();
         var spec = {
           fieldSpecs: []
         };
         spec.fieldSpecs.length = numFields;
         try {
-          this._memory.enterConstrainedRange(fieldsPtr, numFields * 8);
+          this._memory.enterConstrainedRange(encodedFieldsPtr, numFields * 8, 1 /* MemoryArea.Stack */);
           for (var i = 0; i < numFields; ++i) {
-            var fieldName = this.stringToJs(this._memory.readI32(fieldsPtr));
-            fieldsPtr += 4;
-            var paramSpec = this.paramSpecToJs(fieldsPtr);
-            fieldsPtr += 4;
+            var fieldName = this.stringToJs(this._memory.readI32(encodedFieldsPtr));
+            encodedFieldsPtr += 4;
+            var paramSpec = this.paramSpecToJs(this._memory.readU32(encodedFieldsPtr));
+            encodedFieldsPtr += 4;
             spec.fieldSpecs[i] = {
               fieldName: fieldName,
               paramSpec: paramSpec
@@ -1114,8 +1356,8 @@ var bootloader = (function (exports) {
         }
       }
     }, {
-      key: "js_invoke_i_i",
-      value: function js_invoke_i_i(importIndex, p0) {
+      key: "impInvoke_i_i",
+      value: function impInvoke_i_i(importIndex, p0) {
         var boundImportFunction = this._boundRawImportList[importIndex];
         if (!boundImportFunction) {
           throw new Error("attempt to invoke invalid import index ".concat(importIndex));
@@ -1125,8 +1367,8 @@ var bootloader = (function (exports) {
         return boundImportFunction(p0);
       }
     }, {
-      key: "js_invoke_i_ii",
-      value: function js_invoke_i_ii(importIndex, p0, p1) {
+      key: "impInvoke_i_ii",
+      value: function impInvoke_i_ii(importIndex, p0, p1) {
         var boundImportFunction = this._boundRawImportList[importIndex];
         if (!boundImportFunction) {
           throw new Error("attempt to invoke invalid import index ".concat(importIndex));
@@ -1136,8 +1378,8 @@ var bootloader = (function (exports) {
         return boundImportFunction(p0, p1);
       }
     }, {
-      key: "js_invoke_i_iii",
-      value: function js_invoke_i_iii(importIndex, p0, p1, p2) {
+      key: "impInvoke_i_iii",
+      value: function impInvoke_i_iii(importIndex, p0, p1, p2) {
         var boundImportFunction = this._boundRawImportList[importIndex];
         if (!boundImportFunction) {
           throw new Error("attempt to invoke invalid import index ".concat(importIndex));
@@ -1147,8 +1389,8 @@ var bootloader = (function (exports) {
         return boundImportFunction(p0, p1, p2);
       }
     }, {
-      key: "js_invoke_i_o",
-      value: function js_invoke_i_o(importIndex, p0) {
+      key: "impInvoke_i_o",
+      value: function impInvoke_i_o(importIndex, p0) {
         var boundImportFunction = this._boundRawImportList[importIndex];
         if (!boundImportFunction) {
           throw new Error("attempt to invoke invalid import index ".concat(importIndex));
@@ -1158,8 +1400,8 @@ var bootloader = (function (exports) {
         return boundImportFunction(this._objects.getObjectByHandle(p0));
       }
     }, {
-      key: "js_invoke_i_oi",
-      value: function js_invoke_i_oi(importIndex, p0, p1) {
+      key: "impInvoke_i_oi",
+      value: function impInvoke_i_oi(importIndex, p0, p1) {
         var boundImportFunction = this._boundRawImportList[importIndex];
         if (!boundImportFunction) {
           throw new Error("attempt to invoke invalid import index ".concat(importIndex));
@@ -1169,8 +1411,8 @@ var bootloader = (function (exports) {
         return boundImportFunction(this._objects.getObjectByHandle(p0), p1);
       }
     }, {
-      key: "js_invoke_i_on",
-      value: function js_invoke_i_on(importIndex, p0, p1) {
+      key: "impInvoke_i_on",
+      value: function impInvoke_i_on(importIndex, p0, p1) {
         var boundImportFunction = this._boundRawImportList[importIndex];
         if (!boundImportFunction) {
           throw new Error("attempt to invoke invalid import index ".concat(importIndex));
@@ -1180,8 +1422,8 @@ var bootloader = (function (exports) {
         return boundImportFunction(this._objects.getObjectByHandle(p0), this._nameList[p1]);
       }
     }, {
-      key: "js_invoke_i_oii",
-      value: function js_invoke_i_oii(importIndex, p0, p1, p2) {
+      key: "impInvoke_i_oii",
+      value: function impInvoke_i_oii(importIndex, p0, p1, p2) {
         var boundImportFunction = this._boundRawImportList[importIndex];
         if (!boundImportFunction) {
           throw new Error("attempt to invoke invalid import index ".concat(importIndex));
@@ -1191,8 +1433,8 @@ var bootloader = (function (exports) {
         return boundImportFunction(this._objects.getObjectByHandle(p0), p1, p2);
       }
     }, {
-      key: "js_invoke_i_oo",
-      value: function js_invoke_i_oo(importIndex, p0, p1) {
+      key: "impInvoke_i_oo",
+      value: function impInvoke_i_oo(importIndex, p0, p1) {
         var boundImportFunction = this._boundRawImportList[importIndex];
         if (!boundImportFunction) {
           throw new Error("attempt to invoke invalid import index ".concat(importIndex));
@@ -1202,8 +1444,8 @@ var bootloader = (function (exports) {
         return boundImportFunction(this._objects.getObjectByHandle(p0), this._objects.getObjectByHandle(p1));
       }
     }, {
-      key: "js_invoke_i_ooi",
-      value: function js_invoke_i_ooi(importIndex, p0, p1, p2) {
+      key: "impInvoke_i_ooi",
+      value: function impInvoke_i_ooi(importIndex, p0, p1, p2) {
         var boundImportFunction = this._boundRawImportList[importIndex];
         if (!boundImportFunction) {
           throw new Error("attempt to invoke invalid import index ".concat(importIndex));
@@ -1213,8 +1455,8 @@ var bootloader = (function (exports) {
         return boundImportFunction(this._objects.getObjectByHandle(p0), this._objects.getObjectByHandle(p1), p2);
       }
     }, {
-      key: "js_invoke_i_ooii",
-      value: function js_invoke_i_ooii(importIndex, p0, p1, p2, p3) {
+      key: "impInvoke_i_ooii",
+      value: function impInvoke_i_ooii(importIndex, p0, p1, p2, p3) {
         var boundImportFunction = this._boundRawImportList[importIndex];
         if (!boundImportFunction) {
           throw new Error("attempt to invoke invalid import index ".concat(importIndex));
@@ -1224,8 +1466,8 @@ var bootloader = (function (exports) {
         return boundImportFunction(this._objects.getObjectByHandle(p0), this._objects.getObjectByHandle(p1), p2, p3);
       }
     }, {
-      key: "js_invoke_d_v",
-      value: function js_invoke_d_v(importIndex) {
+      key: "impInvoke_d_v",
+      value: function impInvoke_d_v(importIndex) {
         var boundImportFunction = this._boundRawImportList[importIndex];
         if (!boundImportFunction) {
           throw new Error("attempt to invoke invalid import index ".concat(importIndex));
@@ -1241,6 +1483,7 @@ var bootloader = (function (exports) {
         lines.push("var t0 = this._profileFn();");
         lines.push("this._memory.flush();");
         lines.push("this._memory.enterConstrainedRange(paramsBufferPtr, ".concat((functionSpec.paramSpecs.length + 2) * 16, ");"));
+        lines.push("var argView = new scope.InteropValueView(this._memory);");
         lines.push("var returnValPtr = paramsBufferPtr;");
         lines.push("var exceptionValPtr = paramsBufferPtr + 16;");
         lines.push("var argsPtr = exceptionValPtr + 16;");
@@ -1253,9 +1496,10 @@ var bootloader = (function (exports) {
           }
           paramList = paramListArr.join(', ');
           lines.push("try {");
+          lines.push("  argView.ptr = argsPtr;");
           for (var _i = 0; _i < functionSpec.paramSpecs.length; ++_i) {
-            lines.push("  arg".concat(_i, " = this.marshalToJs(argsPtr, functionSpec.paramSpecs[").concat(_i, "]);"));
-            lines.push("  argsPtr += 16;");
+            lines.push("  arg".concat(_i, " = this.marshalToJs(argView, functionSpec.paramSpecs[").concat(_i, "]);"));
+            lines.push("  argView.ptr += 16;");
           }
           lines.push("} catch (err) {");
           lines.push("  this._memory.exitConstrainedRange();");
@@ -1268,10 +1512,12 @@ var bootloader = (function (exports) {
         lines.push("try {");
         lines.push("  returnVal = importFunction(".concat(paramList, ");"));
         lines.push("  this._memory.flush();");
-        lines.push("  this.marshalToClr(returnValPtr, functionSpec.returnSpec, returnVal);");
+        lines.push("  argView.ptr = returnValPtr;");
+        lines.push("  this.marshalToClr(argView, functionSpec.returnSpec, returnVal);");
         lines.push("  return 1;");
         lines.push("} catch (err) {");
-        lines.push("  this.marshalToClr(exceptionValPtr, scope.EXCEPTION_PARAM_SPEC, err.stack);");
+        lines.push("  argView.ptr = exceptionValPtr;");
+        lines.push("  this.marshalToClr(argView, scope.EXCEPTION_PARAM_SPEC, err.stack);");
         lines.push("} finally {");
         lines.push("  var t2 = this._profileFn();");
         lines.push("  this._timeInJsUserCode += (t2 - t1);");
@@ -1282,83 +1528,83 @@ var bootloader = (function (exports) {
       }
     }, {
       key: "marshalToJs",
-      value: function marshalToJs(valuePtr, paramSpec) {
-        var _paramSpec$elementSpe, _INTEROP_VALUE_TYPE_N2;
-        var valueType = this._memory.readU8(valuePtr + 12);
+      value: function marshalToJs(interopValue, paramSpec) {
+        var _paramSpec$elementSpe, _INTEROP_VALUE_TYPE_N3;
+        var valueType = interopValue.type;
         if (valueType === 0 /* InteropValueType.Void */ && paramSpec.nullable) {
           return paramSpec.nullAsUndefined ? undefined : null;
         }
         if (paramSpec.type === 15 /* InteropValueType.Array */ && ((_paramSpec$elementSpe = paramSpec.elementSpec) === null || _paramSpec$elementSpe === void 0 ? void 0 : _paramSpec$elementSpe.type) === 13 /* InteropValueType.String */ && valueType === 15 /* InteropValueType.Array */) {
-          return this.stringArrayToJs(this._memory.readI32(valuePtr), this._memory.readI32(valuePtr + 8), paramSpec.elementSpec);
+          return this.stringArrayToJs(interopValue.intPtrValue, interopValue.length, paramSpec.elementSpec);
         }
         if (paramSpec.type === 7 /* InteropValueType.I32 */ && valueType === 12 /* InteropValueType.Pointer */) {
-          return this._memory.readI32(valuePtr);
+          return interopValue.intPtrValue;
         }
         if (valueType !== paramSpec.type) {
-          var _INTEROP_VALUE_TYPE_N;
-          throw new Error("failed to marshal ".concat(stringifyParamSpec(paramSpec), " from '").concat((_INTEROP_VALUE_TYPE_N = INTEROP_VALUE_TYPE_NAMES[valueType]) !== null && _INTEROP_VALUE_TYPE_N !== void 0 ? _INTEROP_VALUE_TYPE_N : 'unknown', "'"));
+          var _INTEROP_VALUE_TYPE_N2;
+          throw new Error("failed to marshal ".concat(stringifyParamSpec(paramSpec), " from '").concat((_INTEROP_VALUE_TYPE_N2 = INTEROP_VALUE_TYPE_NAMES[valueType]) !== null && _INTEROP_VALUE_TYPE_N2 !== void 0 ? _INTEROP_VALUE_TYPE_N2 : 'unknown', "'"));
         }
         switch (paramSpec.type) {
           case 0 /* InteropValueType.Void */:
             return undefined;
           case 1 /* InteropValueType.U1 */:
-            return this._memory.readU8(valuePtr) !== 0;
+            return interopValue.booleanValue;
           case 2 /* InteropValueType.U8 */:
-            return this._memory.readU8(valuePtr);
+            return interopValue.byteValue;
           case 3 /* InteropValueType.I8 */:
-            return this._memory.readI8(valuePtr);
+            return interopValue.sbyteValue;
           case 4 /* InteropValueType.U16 */:
-            return this._memory.readU16(valuePtr);
+            return interopValue.uint16Value;
           case 5 /* InteropValueType.I16 */:
-            return this._memory.readI16(valuePtr);
+            return interopValue.int16Value;
           case 6 /* InteropValueType.U32 */:
-            return this._memory.readU32(valuePtr);
+            return interopValue.uint32Value;
           case 7 /* InteropValueType.I32 */:
-            return this._memory.readI32(valuePtr);
+            return interopValue.int32Value;
           case 8 /* InteropValueType.U64 */:
-            return this._memory.readU64(valuePtr);
+            return interopValue.uint64Value;
           case 9 /* InteropValueType.I64 */:
-            return this._memory.readI64(valuePtr);
+            return interopValue.int64Value;
           case 10 /* InteropValueType.F32 */:
-            return this._memory.readF32(valuePtr);
+            return interopValue.singleValue;
           case 11 /* InteropValueType.F64 */:
-            return this._memory.readF64(valuePtr);
+            return interopValue.doubleValue;
           case 12 /* InteropValueType.Pointer */:
-            return this._memory.getDataView(this._memory.readI32(valuePtr), this._memory.readI32(valuePtr + 8));
+            return this._memory.getDataView(interopValue.intPtrValue, interopValue.length);
           case 13 /* InteropValueType.String */:
-            return this.stringToJs(this._memory.readI32(valuePtr));
+            return this.stringToJs(interopValue.intPtrValue, interopValue.length);
           case 14 /* InteropValueType.Object */:
-            return this._objects.getObjectByHandle(this._memory.readI32(valuePtr + 4));
+            return this._objects.getObjectByHandle(interopValue.jsHandle);
           case 15 /* InteropValueType.Array */:
             if (paramSpec.elementSpec == null) {
               throw new Error("malformed param spec (array with no element spec)");
             }
-            return this.arrayToJs(this._memory.readI32(valuePtr), this._memory.readI32(valuePtr + 8), paramSpec.elementSpec);
+            return this.arrayToJs(interopValue.intPtrValue, interopValue.length, paramSpec.elementSpec);
           case 16 /* InteropValueType.Name */:
-            return this._nameList[this._memory.readI32(valuePtr)];
+            return this._nameList[interopValue.int32Value];
           case 17 /* InteropValueType.Struct */:
-            return this.structToJs(this._memory.readI32(valuePtr), this._memory.readI32(valuePtr + 4), this._memory.readI32(valuePtr + 8));
+            return this.structToJs(interopValue.structIndex, interopValue.intPtrValue, interopValue.length);
           default:
-            throw new Error("failed to marshal ".concat(stringifyParamSpec(paramSpec), " from '").concat((_INTEROP_VALUE_TYPE_N2 = INTEROP_VALUE_TYPE_NAMES[valueType]) !== null && _INTEROP_VALUE_TYPE_N2 !== void 0 ? _INTEROP_VALUE_TYPE_N2 : 'unknown', "'"));
+            throw new Error("failed to marshal ".concat(stringifyParamSpec(paramSpec), " from '").concat((_INTEROP_VALUE_TYPE_N3 = INTEROP_VALUE_TYPE_NAMES[valueType]) !== null && _INTEROP_VALUE_TYPE_N3 !== void 0 ? _INTEROP_VALUE_TYPE_N3 : 'unknown', "'"));
         }
       }
     }, {
       key: "marshalToClr",
-      value: function marshalToClr(valuePtr, paramSpec, value) {
+      value: function marshalToClr(interopValue, paramSpec, value) {
         if (value == null) {
           if (paramSpec.nullable || paramSpec.type === 0 /* InteropValueType.Void */) {
-            this._memory.writeU8(valuePtr, 0 /* InteropValueType.Void */);
+            interopValue.type = 0 /* InteropValueType.Void */;
             return;
           }
           throw new Error("failed to marshal null as '".concat(stringifyParamSpec(paramSpec), "'"));
         }
         switch (paramSpec.type) {
           case 0 /* InteropValueType.Void */:
-            this._memory.writeU8(valuePtr + 12, 0 /* InteropValueType.Void */);
+            interopValue.type = 0 /* InteropValueType.Void */;
             break;
           case 1 /* InteropValueType.U1 */:
-            this._memory.writeU8(valuePtr, value ? 1 : 0);
-            this._memory.writeU8(valuePtr + 12, 1 /* InteropValueType.U1 */);
+            interopValue.booleanValue = !!value;
+            interopValue.type = 1 /* InteropValueType.U1 */;
             break;
           case 2 /* InteropValueType.U8 */:
           case 3 /* InteropValueType.I8 */:
@@ -1371,7 +1617,7 @@ var bootloader = (function (exports) {
           case 10 /* InteropValueType.F32 */:
           case 11 /* InteropValueType.F64 */:
             if (typeof value === 'number') {
-              this.marshalNumericToClr(valuePtr, paramSpec, value);
+              this.marshalNumericToClr(interopValue, paramSpec, value);
               break;
             }
             if (value instanceof BigInt) {
@@ -1380,15 +1626,17 @@ var bootloader = (function (exports) {
             throw new Error("failed to marshal non-numeric as '".concat(stringifyParamSpec(paramSpec), "'"));
           // case InteropValueType.Ptr: return;
           case 13 /* InteropValueType.String */:
-            this._memory.writeI32(valuePtr, this.stringToClr(typeof value === 'string' ? value : "".concat(value)));
-            this._memory.writeU8(valuePtr + 12, 13 /* InteropValueType.String */);
+            var str = typeof value === 'string' ? value : "".concat(value);
+            interopValue.intPtrValue = this.stringToClr(str);
+            interopValue.length = str.length;
+            interopValue.type = 13 /* InteropValueType.String */;
             break;
           case 14 /* InteropValueType.Object */:
             if (_typeof(value) !== 'object' && typeof value !== 'function') {
               throw new Error("failed to marshal ".concat(_typeof(value), " as '").concat(stringifyParamSpec(paramSpec), "' (not an object)"));
             }
-            this._memory.writeI32(valuePtr + 4, this._objects.getOrAssignObjectHandle(value));
-            this._memory.writeU8(valuePtr + 12, 14 /* InteropValueType.Object */);
+            interopValue.jsHandle = this._objects.getOrAssignObjectHandle(value);
+            interopValue.type = 14 /* InteropValueType.Object */;
             break;
           case 15 /* InteropValueType.Array */:
             if (paramSpec.elementSpec == null) {
@@ -1400,22 +1648,25 @@ var bootloader = (function (exports) {
               throw new Error("failed to marshal ".concat(_typeof(value), " as '").concat(stringifyParamSpec(paramSpec), "' (not an array)"));
             }
             if (paramSpec.elementSpec.type === 13 /* InteropValueType.String */) {
-              this._memory.writeI32(valuePtr, this.stringArrayToClr(value, paramSpec.elementSpec));
+              interopValue.intPtrValue = this.stringArrayToClr(value, paramSpec.elementSpec);
+              interopValue.elementType = 13 /* InteropValueType.String */;
             } else {
-              this._memory.writeI32(valuePtr, this.arrayToClr(value, paramSpec.elementSpec));
+              interopValue.intPtrValue = this.arrayToClr(value, paramSpec.elementSpec);
+              interopValue.elementType = paramSpec.elementSpec.type;
             }
-            this._memory.writeI32(valuePtr + 8, value.length);
-            this._memory.writeU8(valuePtr + 12, 15 /* InteropValueType.Array */);
+            interopValue.length = value.length;
+            interopValue.type = 15 /* InteropValueType.Array */;
             break;
           case 16 /* InteropValueType.Name */:
             var valueAsStr = typeof value === 'string' ? value : "".concat(value);
             var nameIndex = this._nameTable[valueAsStr];
             if (nameIndex == null) {
-              this._memory.writeI32(valuePtr, this.stringToClr(valueAsStr));
-              this._memory.writeU8(valuePtr + 12, 13 /* InteropValueType.String */);
+              interopValue.intPtrValue = this.stringToClr(valueAsStr);
+              interopValue.length = valueAsStr.length;
+              interopValue.type = 13 /* InteropValueType.String */;
             } else {
-              this._memory.writeI32(valuePtr, nameIndex);
-              this._memory.writeU8(valuePtr + 12, 16 /* InteropValueType.Name */);
+              interopValue.intPtrValue = nameIndex;
+              interopValue.type = 16 /* InteropValueType.Name */;
             }
 
             break;
@@ -1423,10 +1674,10 @@ var bootloader = (function (exports) {
             if (_typeof(value) !== 'object' && typeof value !== 'function') {
               throw new Error("failed to marshal ".concat(_typeof(value), " as '").concat(stringifyParamSpec(paramSpec), "' (not an object)"));
             }
-            if (this._memory.readU8(valuePtr + 12) !== 17 /* InteropValueType.Struct */) {
+            if (interopValue.type !== 17 /* InteropValueType.Struct */) {
               throw new Error("failed to marshal ".concat(_typeof(value), " as '").concat(stringifyParamSpec(paramSpec), "' (return InteropValue was not initialised correctly))"));
             }
-            this.structToClr(this._memory.readI32(valuePtr + 4), this._memory.readI32(valuePtr), this._memory.readI32(valuePtr + 8), value);
+            this.structToClr(interopValue.structIndex, interopValue.intPtrValue, interopValue.length, value);
             break;
           default:
             throw new Error("failed to marshal '".concat(_typeof(value), "' as '").concat(stringifyParamSpec(paramSpec), "' (not yet implemented)"));
@@ -1434,45 +1685,49 @@ var bootloader = (function (exports) {
       }
     }, {
       key: "marshalNumericToClr",
-      value: function marshalNumericToClr(valuePtr, paramSpec, value) {
+      value: function marshalNumericToClr(interopValue, paramSpec, value) {
         switch (paramSpec.type) {
           case 2 /* InteropValueType.U8 */:
-            this._memory.writeU8(valuePtr, value);
+            interopValue.byteValue = value;
             break;
           case 3 /* InteropValueType.I8 */:
-            this._memory.writeI8(valuePtr, value);
+            interopValue.sbyteValue = value;
             break;
           case 4 /* InteropValueType.U16 */:
-            this._memory.writeU16(valuePtr, value);
+            interopValue.uint16Value = value;
             break;
           case 5 /* InteropValueType.I16 */:
-            this._memory.writeI16(valuePtr, value);
+            interopValue.int16Value = value;
             break;
           case 6 /* InteropValueType.U32 */:
-            this._memory.writeU32(valuePtr, value);
+            interopValue.uint32Value = value;
             break;
           case 7 /* InteropValueType.I32 */:
-            this._memory.writeI32(valuePtr, value);
+            interopValue.int32Value = value;
             break;
-          // case InteropValueType.U64: break;
-          // case InteropValueType.I64: break;
+          case 8 /* InteropValueType.U64 */:
+            interopValue.uint64Value = BigInt(value);
+            break;
+          case 9 /* InteropValueType.I64 */:
+            interopValue.int64Value = BigInt(value);
+            break;
           case 10 /* InteropValueType.F32 */:
-            this._memory.writeF32(valuePtr, value);
+            interopValue.singleValue = value;
             break;
           case 11 /* InteropValueType.F64 */:
-            this._memory.writeF64(valuePtr, value);
+            interopValue.doubleValue = value;
             break;
           default:
             throw new Error("failed to marshal numeric as '".concat(stringifyParamSpec(paramSpec), "' (not yet implemented)"));
         }
-        this._memory.writeU8(valuePtr + 12, paramSpec.type);
+        interopValue.type = paramSpec.type;
       }
     }, {
       key: "stringToJs",
-      value: function stringToJs(stringPtr) {
+      value: function stringToJs(stringPtr, stringLen) {
         try {
-          this._memory.enterConstrainedRange(stringPtr, 2 * 2 * 1024 * 1024); // assuming they will never try and copy a string larger than 2m characters to JS
-          return this._memory.readNullTerminatedString(stringPtr);
+          this._memory.enterConstrainedRange(stringPtr, stringLen != null ? stringLen * 2 : 2 * 2 * 1024 * 1024, 5 /* MemoryArea.Any */); // assuming they will never try and copy a string larger than 2m characters to JS
+          return stringLen != null ? this._memory.readString(stringPtr, stringLen) : this._memory.readNullTerminatedString(stringPtr);
         } finally {
           this._memory.exitConstrainedRange();
         }
@@ -1480,10 +1735,10 @@ var bootloader = (function (exports) {
     }, {
       key: "stringToClr",
       value: function stringToClr(str) {
-        var strPtr = this._memory.allocateTransient((str.length + 1) * 2);
+        var strPtr = this._memory.allocateTransient(str.length * 2, 2);
         try {
-          this._memory.enterConstrainedRange(strPtr, (str.length + 1) * 2);
-          this._memory.writeString(strPtr, str, true);
+          this._memory.enterConstrainedRange(strPtr, str.length * 2, 3 /* MemoryArea.TransientPage */);
+          this._memory.writeString(strPtr, str, false);
           return strPtr;
         } finally {
           this._memory.exitConstrainedRange();
@@ -1493,12 +1748,17 @@ var bootloader = (function (exports) {
       key: "arrayToJs",
       value: function arrayToJs(arrayPtr, arrayLen, elementSpec) {
         try {
-          this._memory.enterConstrainedRange(arrayPtr, arrayLen * 16);
+          this._memory.enterConstrainedRange(arrayPtr, arrayLen * 16, 4 /* MemoryArea.AnyNonData */);
           var result = [];
           result.length = arrayLen;
-          for (var i = 0; i < arrayLen; ++i) {
-            result[i] = this.marshalToJs(arrayPtr, elementSpec);
-            arrayPtr += 16;
+          if (arrayLen > 0) {
+            var elementView = new InteropValueView(this._memory);
+            elementView.ptr = arrayPtr;
+            for (var i = 0; i < arrayLen; ++i) {
+              elementView.validate();
+              result[i] = this.marshalToJs(elementView, elementSpec);
+              elementView.ptr += 16;
+            }
           }
           return result;
         } finally {
@@ -1508,13 +1768,18 @@ var bootloader = (function (exports) {
     }, {
       key: "arrayToClr",
       value: function arrayToClr(value, elementSpec) {
-        var arrPtr = this._memory.allocateTransient(value.length * 16);
+        if (value.length === 0) {
+          return 0;
+        }
+        var arrPtr = this._memory.allocateTransient(value.length * 16, 16);
         try {
-          this._memory.enterConstrainedRange(arrPtr, value.length * 16);
-          var elPtr = arrPtr;
+          this._memory.enterConstrainedRange(arrPtr, value.length * 16, 3 /* MemoryArea.TransientPage */);
+          var elementView = new InteropValueView(this._memory);
+          elementView.ptr = arrPtr;
           for (var i = 0; i < value.length; ++i) {
-            this.marshalToClr(elPtr, elementSpec, value[i]);
-            elPtr += 16;
+            elementView.poison();
+            this.marshalToClr(elementView, elementSpec, value[i]);
+            elementView.ptr += 16;
           }
           return arrPtr;
         } finally {
@@ -1525,7 +1790,7 @@ var bootloader = (function (exports) {
       key: "stringArrayToJs",
       value: function stringArrayToJs(arrayPtr, arrayLen, elementSpec) {
         try {
-          this._memory.enterConstrainedRange(arrayPtr, 2 * 2 * 1024 * 1024);
+          this._memory.enterConstrainedRange(arrayPtr, 2 * 2 * 1024 * 1024, 4 /* MemoryArea.AnyNonData */);
           var result = [];
           result.length = arrayLen;
           for (var i = 0; i < arrayLen; ++i) {
@@ -1565,9 +1830,9 @@ var bootloader = (function (exports) {
           bufferSize += str.length + 1;
           tmp[i] = str;
         }
-        var strPtr = this._memory.allocateTransient(bufferSize * 2);
+        var strPtr = this._memory.allocateTransient(bufferSize * 2, 2);
         try {
-          this._memory.enterConstrainedRange(strPtr, bufferSize * 2);
+          this._memory.enterConstrainedRange(strPtr, bufferSize * 2, 3 /* MemoryArea.TransientPage */);
           var charPtr = strPtr;
           for (var _i2 = 0; _i2 < value.length; ++_i2) {
             var _element = tmp[_i2];
@@ -1595,16 +1860,18 @@ var bootloader = (function (exports) {
         }
         var useFieldKeys = fieldCount !== structSpec.fieldSpecs.length;
         try {
-          this._memory.enterConstrainedRange(fieldPtr, fieldCount * 16);
+          this._memory.enterConstrainedRange(fieldPtr, fieldCount * 16, 1 /* MemoryArea.Stack */);
+          var fieldView = new InteropValueView(this._memory);
+          fieldView.ptr = fieldPtr;
           for (var i = 0; i < fieldCount; ++i) {
-            var fieldKey = useFieldKeys ? this._memory.readI16(fieldPtr + 14) : i;
+            var fieldKey = useFieldKeys ? fieldView.fieldKey : i;
             var fieldSpec = structSpec.fieldSpecs[fieldKey];
             if (!fieldSpec) {
               throw new Error("failed to marshal struct ".concat(structIndex, " field ").concat(i, " to clr (field key ").concat(fieldKey, " did not refer to a field)"));
             }
             var value = obj != null ? obj[fieldSpec.fieldName] : null;
-            this.marshalToClr(fieldPtr, fieldSpec.paramSpec, value);
-            fieldPtr += 16;
+            this.marshalToClr(fieldView, fieldSpec.paramSpec, value);
+            fieldView.ptr += 16;
           }
         } finally {
           this._memory.exitConstrainedRange();
@@ -1620,15 +1887,18 @@ var bootloader = (function (exports) {
         var result = {};
         var useFieldKeys = fieldCount !== structSpec.fieldSpecs.length;
         try {
-          this._memory.enterConstrainedRange(fieldPtr, fieldCount * 16);
+          this._memory.enterConstrainedRange(fieldPtr, fieldCount * 16, 1 /* MemoryArea.Stack */);
+          var fieldInteropValue = new InteropValueView(this._memory);
+          fieldInteropValue.ptr = fieldPtr;
           for (var i = 0; i < fieldCount; ++i) {
-            var fieldKey = useFieldKeys ? this._memory.readI16(fieldPtr + 14) : i;
+            fieldInteropValue.validate();
+            var fieldKey = useFieldKeys ? fieldInteropValue.fieldKey : i;
             var fieldSpec = structSpec.fieldSpecs[fieldKey];
             if (!fieldSpec) {
               throw new Error("failed to marshal struct ".concat(structIndex, " field ").concat(i, " from clr (field key ").concat(fieldKey, " did not refer to a field)"));
             }
-            result[fieldSpec.fieldName] = this.marshalToJs(fieldPtr, fieldSpec.paramSpec);
-            fieldPtr += 16;
+            result[fieldSpec.fieldName] = this.marshalToJs(fieldInteropValue, fieldSpec.paramSpec);
+            fieldInteropValue.ptr += 16;
           }
           return result;
         } finally {
@@ -1637,11 +1907,11 @@ var bootloader = (function (exports) {
       }
     }, {
       key: "paramSpecToJs",
-      value: function paramSpecToJs(paramSpecPtr) {
-        var type = this._memory.readU8(paramSpecPtr);
-        var flags = this._memory.readU8(paramSpecPtr + 1);
-        var elementType = this._memory.readU8(paramSpecPtr + 2);
-        var elementFlags = this._memory.readU8(paramSpecPtr + 3);
+      value: function paramSpecToJs(encodedParamSpec) {
+        var type = encodedParamSpec >> 24;
+        var flags = encodedParamSpec >> 16 & 0xff;
+        var elementType = encodedParamSpec >> 8 & 0xff;
+        var elementFlags = encodedParamSpec & 0xff;
         return {
           type: type,
           nullable: (flags & 1) === 1,
@@ -1655,19 +1925,18 @@ var bootloader = (function (exports) {
       }
     }, {
       key: "functionSpecToJs",
-      value: function functionSpecToJs(functionSpecPtr) {
+      value: function functionSpecToJs(returnParamSpec, paramSpecsPtr, paramSpecsCount) {
         var result = {
-          returnSpec: this.paramSpecToJs(functionSpecPtr),
+          returnSpec: this.paramSpecToJs(returnParamSpec),
           paramSpecs: []
         };
-        functionSpecPtr += 4;
-        for (var i = 0; i < 8; ++i) {
-          var paramSpec = this.paramSpecToJs(functionSpecPtr);
+        for (var i = 0; i < paramSpecsCount; ++i) {
+          var paramSpec = this.paramSpecToJs(this._memory.readU32(paramSpecsPtr));
           if (paramSpec.type === 0 /* InteropValueType.Void */) {
             break;
           }
           result.paramSpecs.push(paramSpec);
-          functionSpecPtr += 4;
+          paramSpecsPtr += 4;
         }
         return result;
       }
@@ -1704,9 +1973,9 @@ var bootloader = (function (exports) {
     return Interop;
   }();
 
-  var INITIAL_TRANSIENT_PAGE_SIZE = 4096;
+  var INITIAL_TRANSIENT_PAGE_SIZE = 128 * 1024;
   var WasmMemoryManager = /*#__PURE__*/function () {
-    function WasmMemoryManager(memory, mallocFunc, freeFunc) {
+    function WasmMemoryManager(exports) {
       _classCallCheck(this, WasmMemoryManager);
       _defineProperty(this, "_memory", void 0);
       _defineProperty(this, "_viewArrayBuffer", void 0);
@@ -1721,25 +1990,42 @@ var bootloader = (function (exports) {
       _defineProperty(this, "_dataView", void 0);
       _defineProperty(this, "_malloc", void 0);
       _defineProperty(this, "_free", void 0);
-      _defineProperty(this, "_transientPages", []);
+      _defineProperty(this, "_stackPointer", void 0);
+      _defineProperty(this, "_heapBase", void 0);
+      _defineProperty(this, "_stackHigh", void 0);
+      _defineProperty(this, "_stackLow", void 0);
+      _defineProperty(this, "_transientPage", void 0);
+      _defineProperty(this, "_freeList", []);
+      _defineProperty(this, "_stalePageList", []);
       _defineProperty(this, "_rangeMin", void 0);
       _defineProperty(this, "_rangeMax", void 0);
       _defineProperty(this, "_rangeStack", []);
-      this._memory = memory;
-      this._viewArrayBuffer = memory.buffer;
-      this._u8 = new Uint8Array(memory.buffer);
-      this._i8 = new Int8Array(memory.buffer);
-      this._u16 = new Uint16Array(memory.buffer);
-      this._i16 = new Int16Array(memory.buffer);
-      this._u32 = new Uint32Array(memory.buffer);
-      this._i32 = new Int32Array(memory.buffer);
-      this._f32 = new Float32Array(memory.buffer);
-      this._f64 = new Float64Array(memory.buffer);
-      this._dataView = new DataView(memory.buffer);
-      this._malloc = mallocFunc;
-      this._free = freeFunc;
+      this._memory = exports.memory;
+      this._viewArrayBuffer = this._memory.buffer;
+      this._u8 = new Uint8Array(this._memory.buffer);
+      this._i8 = new Int8Array(this._memory.buffer);
+      this._u16 = new Uint16Array(this._memory.buffer);
+      this._i16 = new Int16Array(this._memory.buffer);
+      this._u32 = new Uint32Array(this._memory.buffer);
+      this._i32 = new Int32Array(this._memory.buffer);
+      this._f32 = new Float32Array(this._memory.buffer);
+      this._f64 = new Float64Array(this._memory.buffer);
+      this._dataView = new DataView(this._memory.buffer);
+      this._malloc = exports.malloc;
+      this._free = exports.free;
+      this._stackPointer = exports.__stack_pointer;
+      this._heapBase = exports.__heap_base.value;
+      this._stackHigh = exports.__stack_high.value;
+      this._stackLow = exports.__stack_low.value;
+      this.reportGrowth();
+      this._transientPage = this.createTransientPage(INITIAL_TRANSIENT_PAGE_SIZE);
     }
     _createClass(WasmMemoryManager, [{
+      key: "reportGrowth",
+      value: function reportGrowth() {
+        console.log("WASM linear memory growth to ".concat(this._memory.buffer.byteLength, "b (sp=").concat(this._stackPointer.value, ", heapBase=").concat(this._heapBase, ", stackHigh=").concat(this._stackHigh, ", stackLow=").concat(this._stackLow, ")"));
+      }
+    }, {
       key: "checkAlignment",
       value: function checkAlignment(ptr, alignment) {
         if (ptr % alignment !== 0) {
@@ -1765,6 +2051,60 @@ var bootloader = (function (exports) {
         }
         if ((_this$_viewArrayBuffe = this._viewArrayBuffer) !== null && _this$_viewArrayBuffe !== void 0 && _this$_viewArrayBuffe.detached) {
           throw new Error("view array buffer is detached");
+        }
+      }
+    }, {
+      key: "checkMemoryArea",
+      value: function checkMemoryArea(ptr, sz, expected) {
+        if (ptr < 0 || sz < 0 || ptr + sz > this._memory.buffer.byteLength) {
+          throw new Error("pointer out of bounds (expected 0-".concat(this._memory.buffer.byteLength, ", got ").concat(ptr, "-").concat(ptr + sz, ")"));
+        }
+        if (expected === 5 /* MemoryArea.Any */) {
+          return;
+        }
+        if (expected === 0 /* MemoryArea.Data */) {
+          if (!WasmMemoryManager.fullyContainedInArea(ptr, sz, this._stackHigh, this._heapBase)) {
+            throw new Error("pointer out of bounds (expected data area ".concat(this._stackHigh, "-").concat(this._heapBase, ", got ").concat(ptr, "-").concat(ptr + sz, ")"));
+          }
+          return;
+        }
+        if (WasmMemoryManager.intersectsArea(ptr, sz, this._stackHigh, this._heapBase)) {
+          throw new Error("pointer out of bounds (expected not data area ".concat(this._stackHigh, "-").concat(this._heapBase, ", got ").concat(ptr, "-").concat(ptr + sz, ")"));
+        }
+        if (expected === 4 /* MemoryArea.AnyNonData */) {
+          return;
+        }
+        if (expected === 1 /* MemoryArea.Stack */) {
+          if (!WasmMemoryManager.fullyContainedInArea(ptr, sz, this._stackLow, this._stackHigh)) {
+            throw new Error("pointer out of bounds (expected stack area ".concat(this._stackLow, "-").concat(this._stackHigh, ", got ").concat(ptr, "-").concat(ptr + sz, ")"));
+          }
+          return;
+        }
+        if (expected === 2 /* MemoryArea.Heap */) {
+          if (!WasmMemoryManager.fullyContainedInArea(ptr, sz, this._heapBase, this._memory.buffer.byteLength)) {
+            throw new Error("pointer out of bounds (expected heap area ".concat(this._heapBase, "-").concat(this._memory.buffer.byteLength, ", got ").concat(ptr, "-").concat(ptr + sz, ")"));
+          }
+          if (WasmMemoryManager.intersectsArea(ptr, sz, this._transientPage.ptr, this._transientPage.ptr + this._transientPage.size)) {
+            throw new Error("pointer out of bounds (expected not transient page area ".concat(this._transientPage.ptr, "-").concat(this._transientPage.ptr + this._transientPage.size, ", got ").concat(ptr, "-").concat(ptr + sz, ")"));
+          }
+          return;
+        }
+        if (expected === 3 /* MemoryArea.TransientPage */) {
+          if (!WasmMemoryManager.fullyContainedInArea(ptr, sz, this._transientPage.ptr, this._transientPage.ptr + this._transientPage.size)) {
+            throw new Error("pointer out of bounds (expected transient page area ".concat(this._transientPage.ptr, "-").concat(this._transientPage.ptr + this._transientPage.size, ", got ").concat(ptr, "-").concat(ptr + sz, ")"));
+          }
+          return;
+        }
+      }
+    }, {
+      key: "checkStack",
+      value: function checkStack() {
+        var stackPtr = this._stackPointer.value;
+        if (stackPtr < this._stackLow) {
+          throw new Error("stack pointer is too low (".concat(stackPtr, " < ").concat(this._stackLow, ")"));
+        }
+        if (stackPtr > this._stackHigh) {
+          throw new Error("stack pointer is too high (".concat(stackPtr, " > ").concat(this._stackHigh, ")"));
         }
       }
     }, {
@@ -1827,6 +2167,12 @@ var bootloader = (function (exports) {
         if (nullTerminated) {
           this._u16[first + value.length] = 0;
         }
+      }
+    }, {
+      key: "writeBytes",
+      value: function writeBytes(ptrOrDataView, bytes) {
+        var ptr = typeof ptrOrDataView === "number" ? ptrOrDataView : ptrOrDataView.byteOffset;
+        this._u8.set(bytes, ptr);
       }
     }, {
       key: "readU8",
@@ -1919,7 +2265,7 @@ var bootloader = (function (exports) {
       }
     }, {
       key: "enterConstrainedRange",
-      value: function enterConstrainedRange(ptr, sz) {
+      value: function enterConstrainedRange(ptr, sz, expectedMemoryArea) {
         {
           return;
         }
@@ -1947,72 +2293,92 @@ var bootloader = (function (exports) {
         this._f32 = new Float32Array(this._memory.buffer);
         this._f64 = new Float64Array(this._memory.buffer);
         this._dataView = new DataView(this._memory.buffer);
+        this.reportGrowth();
       }
     }, {
       key: "allocateTransient",
-      value: function allocateTransient(sz) {
-        var _iterator = _createForOfIteratorHelper(this._transientPages),
-          _step;
-        try {
-          for (_iterator.s(); !(_step = _iterator.n()).done;) {
-            var _page = _step.value;
-            var _ptr = this.allocateTransientPage(_page, sz);
-            if (_ptr === 0) {
-              continue;
-            }
-            return _ptr;
-          }
-          // No space in any pages, allocate new
-        } catch (err) {
-          _iterator.e(err);
-        } finally {
-          _iterator.f();
+      value: function allocateTransient(sz, alignment) {
+        var pagePtr = this.allocateWithinTransientPage(sz, alignment);
+        if (pagePtr !== 0) {
+          return pagePtr;
         }
-        var nextSize = Math.max(WasmMemoryManager.npo2(sz), this._transientPages.length === 0 ? INITIAL_TRANSIENT_PAGE_SIZE : this._transientPages[this._transientPages.length - 1].size * 2);
-        var page;
-        this._transientPages.push(page = {
-          ptr: this._malloc(nextSize),
-          head: 0,
-          size: nextSize
-        });
-        this.flush();
-        if (page.ptr === 0) {
-          throw new Error("failed to allocate new transient page (".concat(nextSize, "b)"));
+        // No space in any pages, allocate new
+        var nextSize = Math.max(WasmMemoryManager.npo2(sz), this._transientPage.size * 2);
+        this._freeList.push([this._transientPage.ptr, this._transientPage.size]);
+        this._transientPage = this.createTransientPage(nextSize);
+        pagePtr = this.allocateWithinTransientPage(sz, alignment);
+        if (pagePtr === 0) {
+          throw new Error("failed to allocate within transient page (pageHead=".concat(this._transientPage.head, ", pageSize=").concat(this._transientPage.size, ", sz=").concat(sz, ")"));
         }
-        var ptr = this.allocateTransientPage(page, sz);
-        if (ptr === 0) {
-          throw new Error("failed to allocate within transient page (pageHead=".concat(page.head, ", pageSize=").concat(page.size, ", sz=").concat(sz, ")"));
-        }
-        return ptr;
+        return pagePtr;
       }
     }, {
-      key: "allocateTransientPage",
-      value: function allocateTransientPage(page, sz) {
-        var alignedHead = WasmMemoryManager.align8(page.head);
-        var newHead = alignedHead + sz;
-        if (newHead > page.size) {
+      key: "allocateWithinTransientPage",
+      value: function allocateWithinTransientPage(sz, alignment) {
+        var alignedHeadPtr = WasmMemoryManager.align(this._transientPage.ptr + this._transientPage.head, alignment);
+        var newHead = alignedHeadPtr + sz - this._transientPage.ptr;
+        if (newHead > this._transientPage.size) {
           return 0;
         }
-        page.head = newHead;
-        return page.ptr + alignedHead;
+        this._transientPage.head = newHead;
+        return alignedHeadPtr;
+      }
+    }, {
+      key: "createTransientPage",
+      value: function createTransientPage(sz) {
+        var page = {
+          ptr: this._malloc(sz),
+          head: 0,
+          size: sz
+        };
+        this.flush();
+        console.log("allocated transient page (".concat(page.size, "b @ ").concat(page.ptr, ")"));
+        return page;
+      }
+    }, {
+      key: "resetTransientPage",
+      value: function resetTransientPage(page) {
+        page.head = 0;
+      }
+    }, {
+      key: "destroyTransientPage",
+      value: function destroyTransientPage(page) {
+        this.resetTransientPage(page);
+        this._free(page.ptr);
+        page.ptr = 0;
+        page.size = 0;
       }
     }, {
       key: "freeAllTransient",
       value: function freeAllTransient() {
-        var _iterator2 = _createForOfIteratorHelper(this._transientPages),
-          _step2;
-        try {
-          for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
-            var page = _step2.value;
-            page.head = 0;
+        {
+          var _iterator2 = _createForOfIteratorHelper(this._stalePageList),
+            _step2;
+          try {
+            for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
+              var page = _step2.value;
+              this.destroyTransientPage(page);
+            }
+          } catch (err) {
+            _iterator2.e(err);
+          } finally {
+            _iterator2.f();
           }
-        } catch (err) {
-          _iterator2.e(err);
-        } finally {
-          _iterator2.f();
+          this._stalePageList.length = 0;
         }
+        this._transientPage.head = 0;
       }
     }], [{
+      key: "intersectsArea",
+      value: function intersectsArea(ptr, sz, areaStart, areaEnd) {
+        return !(ptr + sz <= areaStart || ptr >= areaEnd);
+      }
+    }, {
+      key: "fullyContainedInArea",
+      value: function fullyContainedInArea(ptr, sz, areaStart, areaEnd) {
+        return ptr >= areaStart && ptr + sz <= areaEnd;
+      }
+    }, {
       key: "npo2",
       value: function npo2(v) {
         v += v === 0 ? 1 : 0;
@@ -2023,6 +2389,12 @@ var bootloader = (function (exports) {
         v |= v >>> 8;
         v |= v >>> 16;
         return v + 1;
+      }
+    }, {
+      key: "align",
+      value: function align(v, alignment) {
+        --alignment;
+        return v + alignment & ~alignment;
       }
     }, {
       key: "align8",
@@ -2139,14 +2511,15 @@ var bootloader = (function (exports) {
       value: function setupImports() {
         var _global$ScoreCollecto,
           _global$ScoreContaine,
+          _global$Score,
           _this2 = this;
         _get(_getPrototypeOf(WorldBindings.prototype), "setupImports", this).call(this);
-        this.bindingsImport['renew-object'] = this.js_renew_object.bind(this);
-        this.bindingsImport['batch-renew-objects'] = this.js_batch_renew_objects.bind(this);
-        this.bindingsImport['fetch-object-room-position'] = this.js_fetch_object_room_position.bind(this);
-        this.bindingsImport['batch-fetch-object-room-positions'] = this.js_batch_fetch_object_room_positions.bind(this);
-        this.bindingsImport['get-object-by-id'] = this.js_get_object_by_id.bind(this);
-        this.bindingsImport['get-object-id'] = this.js_get_object_id.bind(this);
+        this.bindingsImport['renew-object'] = this.impRenewObject.bind(this);
+        this.bindingsImport['batch-renew-objects'] = this.impBatchRenewObjects.bind(this);
+        this.bindingsImport['fetch-object-room-position'] = this.impFetchObjectRoomPosition.bind(this);
+        this.bindingsImport['batch-fetch-object-room-positions'] = this.impBatchFetchObjectRoomPositions.bind(this);
+        this.bindingsImport['get-object-by-id'] = this.impGetObjectById.bind(this);
+        this.bindingsImport['get-object-id'] = this.impGetObjectId.bind(this);
         var _global = global;
         var gameConstructors = {
           StructureContainer: StructureContainer,
@@ -2187,7 +2560,8 @@ var bootloader = (function (exports) {
           RoomVisual: RoomVisual,
           Nuke: Nuke,
           ScoreCollector: (_global$ScoreCollecto = _global.ScoreCollector) !== null && _global$ScoreCollecto !== void 0 ? _global$ScoreCollecto : function () {},
-          ScoreContainer: (_global$ScoreContaine = _global.ScoreContainer) !== null && _global$ScoreContaine !== void 0 ? _global$ScoreContaine : function () {}
+          ScoreContainer: (_global$ScoreContaine = _global.ScoreContainer) !== null && _global$ScoreContaine !== void 0 ? _global$ScoreContaine : function () {},
+          Score: (_global$Score = _global.Score) !== null && _global$Score !== void 0 ? _global$Score : function () {}
         };
         this.imports['object'] = {
           getConstructorOf: function getConstructorOf(x) {
@@ -2420,20 +2794,20 @@ var bootloader = (function (exports) {
                 };
               }
             },
-            findFast: function findFast(thisObj, type, outRoomObjectArrayPtr, maxObjectCount) {
-              return _this2.encodeRoomObjectArray(thisObj.find(type), undefined, outRoomObjectArrayPtr, maxObjectCount);
+            findFast: function findFast(thisObj, type, outRoomObjectArrayPtr) {
+              return _this2.encodeRoomObjectArray(thisObj.find(type), undefined, outRoomObjectArrayPtr);
             },
-            lookAtFast: function lookAtFast(thisObj, x, y, outRoomObjectArrayPtr, maxObjectCount) {
-              return _this2.encodeRoomObjectArray(thisObj.lookAt(x, y), undefined, outRoomObjectArrayPtr, maxObjectCount);
+            lookAtFast: function lookAtFast(thisObj, x, y, outRoomObjectArrayPtr) {
+              return _this2.encodeRoomObjectArray(thisObj.lookAt(x, y), undefined, outRoomObjectArrayPtr);
             },
-            lookAtAreaFast: function lookAtAreaFast(thisObj, top, left, bottom, right, outRoomObjectArrayPtr, maxObjectCount) {
-              return _this2.encodeRoomObjectArray(thisObj.lookAtArea(top, left, bottom, right, true), undefined, outRoomObjectArrayPtr, maxObjectCount);
+            lookAtAreaFast: function lookAtAreaFast(thisObj, top, left, bottom, right, outRoomObjectArrayPtr) {
+              return _this2.encodeRoomObjectArray(thisObj.lookAtArea(top, left, bottom, right, true), undefined, outRoomObjectArrayPtr);
             },
-            lookForAtFast: function lookForAtFast(thisObj, type, x, y, outRoomObjectArrayPtr, maxObjectCount) {
-              return _this2.encodeRoomObjectArray(thisObj.lookForAt(type, x, y), undefined, outRoomObjectArrayPtr, maxObjectCount);
+            lookForAtFast: function lookForAtFast(thisObj, type, x, y, outRoomObjectArrayPtr) {
+              return _this2.encodeRoomObjectArray(thisObj.lookForAt(type, x, y), undefined, outRoomObjectArrayPtr);
             },
-            lookForAtAreaFast: function lookForAtAreaFast(thisObj, type, top, left, bottom, right, outRoomObjectArrayPtr, maxObjectCount) {
-              return _this2.encodeRoomObjectArray(thisObj.lookForAtArea(type, top, left, bottom, right, true), type, outRoomObjectArrayPtr, maxObjectCount);
+            lookForAtAreaFast: function lookForAtAreaFast(thisObj, type, top, left, bottom, right, outRoomObjectArrayPtr) {
+              return _this2.encodeRoomObjectArray(thisObj.lookForAtArea(type, top, left, bottom, right, true), type, outRoomObjectArrayPtr);
             }
           }),
           Creep: _objectSpread2(_objectSpread2({}, wrappedPrototypes.Creep), {}, {
@@ -2457,14 +2831,23 @@ var bootloader = (function (exports) {
               return thisObj.get(x, y);
             },
             getRawBuffer: function getRawBuffer(thisObj, dataView) {
-              return thisObj.getRawBuffer(new Uint8Array(dataView.buffer, dataView.byteOffset, dataView.byteLength));
+              var rawBuffer = thisObj.getRawBuffer();
+              if (rawBuffer.length !== 2500) {
+                throw new Error("RoomTerrain.getRawBuffer returned a non-2500-length array (".concat(rawBuffer.length, ")"));
+              }
+              _this2._memory.enterConstrainedRange(dataView.byteOffset, dataView.byteLength, 2 /* MemoryArea.Heap */);
+              try {
+                _this2._memory.writeBytes(dataView, rawBuffer);
+              } finally {
+                _this2._memory.exitConstrainedRange();
+              }
             }
           }
         });
       }
     }, {
-      key: "js_renew_object",
-      value: function js_renew_object(jsHandle) {
+      key: "impRenewObject",
+      value: function impRenewObject(jsHandle) {
         var oldObject = this._interop.objects.getObjectByHandle(jsHandle);
         if (oldObject == null) {
           return 1;
@@ -2499,14 +2882,14 @@ var bootloader = (function (exports) {
         return 0;
       }
     }, {
-      key: "js_batch_renew_objects",
-      value: function js_batch_renew_objects(jsHandleListPtr, count) {
+      key: "impBatchRenewObjects",
+      value: function impBatchRenewObjects(jsHandleListPtr, count) {
         this._memory.flush();
         try {
-          this._memory.enterConstrainedRange(jsHandleListPtr, count * 4);
+          this._memory.enterConstrainedRange(jsHandleListPtr, count * 4, 2 /* MemoryArea.Heap */);
           var numSuccess = 0;
           for (var _i4 = 0; _i4 < count; ++_i4) {
-            if (this.js_renew_object(this._memory.readI32(jsHandleListPtr)) === 0) {
+            if (this.impRenewObject(this._memory.readI32(jsHandleListPtr)) === 0) {
               ++numSuccess;
             } else {
               this._memory.writeI32(jsHandleListPtr, -1);
@@ -2519,8 +2902,8 @@ var bootloader = (function (exports) {
         }
       }
     }, {
-      key: "js_fetch_object_room_position",
-      value: function js_fetch_object_room_position(jsHandle) {
+      key: "impFetchObjectRoomPosition",
+      value: function impFetchObjectRoomPosition(jsHandle) {
         var roomObject = this._interop.objects.getObjectByHandle(jsHandle);
         var pos = roomObject.pos;
         if (pos == null) {
@@ -2529,18 +2912,18 @@ var bootloader = (function (exports) {
         return pos.__packedPos;
       }
     }, {
-      key: "js_batch_fetch_object_room_positions",
-      value: function js_batch_fetch_object_room_positions(jsHandleListPtr, count, outRoomPosListPtr) {
+      key: "impBatchFetchObjectRoomPositions",
+      value: function impBatchFetchObjectRoomPositions(jsHandleListPtr, count, outRoomPosListPtr) {
         this._memory.flush();
         for (var _i5 = 0; _i5 < count; ++_i5) {
-          this._memory.writeI32(outRoomPosListPtr, this.js_fetch_object_room_position(this._memory.readI32(jsHandleListPtr)));
+          this._memory.writeI32(outRoomPosListPtr, this.impFetchObjectRoomPosition(this._memory.readI32(jsHandleListPtr)));
           jsHandleListPtr += 4;
           outRoomPosListPtr += 4;
         }
       }
     }, {
-      key: "js_get_object_by_id",
-      value: function js_get_object_by_id(objectIdPtr) {
+      key: "impGetObjectById",
+      value: function impGetObjectById(objectIdPtr) {
         this._memory.flush();
         var id = '';
         for (var _i6 = 0; _i6 < 24; ++_i6) {
@@ -2558,8 +2941,8 @@ var bootloader = (function (exports) {
         return this._interop.objects.getOrAssignObjectHandle(obj);
       }
     }, {
-      key: "js_get_object_id",
-      value: function js_get_object_id(jsHandle, outRawObjectIdPtr) {
+      key: "impGetObjectId",
+      value: function impGetObjectId(jsHandle, outRawObjectIdPtr) {
         var obj = this._interop.objects.getObjectByHandle(jsHandle);
         if (obj == null) {
           return 0;
@@ -2570,7 +2953,7 @@ var bootloader = (function (exports) {
         }
         this._memory.flush();
         try {
-          this._memory.enterConstrainedRange(outRawObjectIdPtr, 24);
+          this._memory.enterConstrainedRange(outRawObjectIdPtr, 24, 1 /* MemoryArea.Stack */);
           this.copyRawObjectId(id, outRawObjectIdPtr);
           return id.length;
         } finally {
@@ -2599,29 +2982,49 @@ var bootloader = (function (exports) {
       }
     }, {
       key: "encodeRoomObjectArray",
-      value: function encodeRoomObjectArray(arr, key, outRoomObjectArrayPtr, maxObjectCount) {
-        var numEncoded = 0;
+      value: function encodeRoomObjectArray(arr, key, outRoomObjectArrayPtr) {
+        var objList = [];
+        var _iterator = _createForOfIteratorHelper(arr),
+          _step;
         try {
-          this._memory.enterConstrainedRange(outRoomObjectArrayPtr, maxObjectCount * 8);
-          for (var _i7 = 0; _i7 < Math.min(maxObjectCount, arr.length); ++_i7) {
-            // Lookup object
-            var obj = arr[_i7];
+          for (_iterator.s(); !(_step = _iterator.n()).done;) {
+            var _obj = _step.value;
             if (key) {
-              obj = obj[key];
+              _obj = _obj[key];
             }
-            if (!(obj instanceof RoomObject) && obj.type) {
-              obj = obj[obj.type];
+            if (!(_obj instanceof RoomObject) && _obj.type) {
+              _obj = _obj[_obj.type];
             }
-            if (!(obj instanceof RoomObject)) {
+            if (!(_obj instanceof RoomObject)) {
               continue;
             }
-            // Copy metadata
-            this._memory.writeI32(outRoomObjectArrayPtr, Object.getPrototypeOf(obj).constructor.__dotnet_typeId || 0);
-            this._memory.writeI32(outRoomObjectArrayPtr + 4, this._interop.objects.getOrAssignObjectHandle(obj));
-            outRoomObjectArrayPtr += 8;
-            ++numEncoded;
+            objList.push(_obj);
           }
-          return numEncoded;
+        } catch (err) {
+          _iterator.e(err);
+        } finally {
+          _iterator.f();
+        }
+        if (objList.length === 0) {
+          return 0;
+        }
+        var ptr = this._memory.allocateTransient(objList.length * 8, 4);
+        try {
+          this._memory.enterConstrainedRange(outRoomObjectArrayPtr, 4, 1 /* MemoryArea.Stack */);
+          this._memory.writeI32(outRoomObjectArrayPtr, ptr);
+        } finally {
+          this._memory.exitConstrainedRange();
+        }
+        try {
+          this._memory.enterConstrainedRange(ptr, objList.length * 8, 3 /* MemoryArea.TransientPage */);
+          for (var _i7 = 0, _objList = objList; _i7 < _objList.length; _i7++) {
+            var obj = _objList[_i7];
+            this._memory.writeI32(ptr, Object.getPrototypeOf(obj).constructor.__dotnet_typeId || 0);
+            ptr += 4;
+            this._memory.writeI32(ptr, this._interop.objects.getOrAssignObjectHandle(obj));
+            ptr += 4;
+          }
+          return objList.length;
         } finally {
           this._memory.exitConstrainedRange();
         }
@@ -2630,8 +3033,8 @@ var bootloader = (function (exports) {
       key: "encodeCreepBody",
       value: function encodeCreepBody(body, outPtr) {
         try {
-          this._memory.enterConstrainedRange(outPtr, 50 * 4);
-          for (var _i8 = 0; _i8 < body.length; ++_i8) {
+          this._memory.enterConstrainedRange(outPtr, 50 * 4, 1 /* MemoryArea.Stack */);
+          for (var _i8 = 0; _i8 < Math.min(body.length, 50); ++_i8) {
             var _body$_i = body[_i8],
               type = _body$_i.type,
               hits = _body$_i.hits,
@@ -2669,12 +3072,12 @@ var bootloader = (function (exports) {
         var wrappedPrototype = {};
         var prototype = constructor.prototype;
         var keys = Object.getOwnPropertyNames(prototype);
-        var _iterator = _createForOfIteratorHelper(keys),
-          _step;
+        var _iterator2 = _createForOfIteratorHelper(keys),
+          _step2;
         try {
           var _loop = function _loop() {
               var _Object$getOwnPropert;
-              var key = _step.value;
+              var key = _step2.value;
               if (key === 'constructor') {
                 return 0; // continue
               }
@@ -2690,14 +3093,14 @@ var bootloader = (function (exports) {
               };
             },
             _ret;
-          for (_iterator.s(); !(_step = _iterator.n()).done;) {
+          for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
             _ret = _loop();
             if (_ret === 0) continue;
           }
         } catch (err) {
-          _iterator.e(err);
+          _iterator2.e(err);
         } finally {
-          _iterator.f();
+          _iterator2.f();
         }
         return wrappedPrototype;
       }
@@ -2921,6 +3324,8 @@ var bootloader = (function (exports) {
       _defineProperty(this, "_memory", void 0);
       _defineProperty(this, "_compiled", false);
       _defineProperty(this, "_started", false);
+      _defineProperty(this, "_monoTime", 0);
+      _defineProperty(this, "_monoTickTime", 0);
       _defineProperty(this, "_inTick", false);
       _defineProperty(this, "_profilingEnabled", false);
       this._env = env;
@@ -2959,8 +3364,9 @@ var bootloader = (function (exports) {
           this.setImports(moduleName, this._bindings.imports[moduleName]);
         }
       }
-      this._systemImport = _defineProperty(_defineProperty(_defineProperty(_defineProperty({}, "get-time", this.sys_get_time.bind(this)), "get-random", this.sys_get_random.bind(this)), "write-stderr", this.sys_write_stderr.bind(this)), "write-stdout", this.sys_write_stdout.bind(this));
+      this._systemImport = _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty({}, "get-mono-time", this.sys_get_mono_time.bind(this)), "get-wall-time", this.sys_get_wall_time.bind(this)), "write-stderr", this.sys_write_stderr.bind(this)), "write-stdout", this.sys_write_stdout.bind(this)), "get-random-bytes", this.sys_get_random_bytes.bind(this));
     }
+    // (import "screeps:screepsdotnet/system-bindings" "get-mono-time" (func (param i32)))
     _createClass(Bootloader, [{
       key: "compiled",
       get: function get() {
@@ -2985,42 +3391,64 @@ var bootloader = (function (exports) {
         return this._wasmInstance.exports;
       }
     }, {
-      key: "sys_get_time",
-      value: function sys_get_time(time_ptr) {
+      key: "sys_get_mono_time",
+      value: function sys_get_mono_time(time_ptr /* int64_t* */) {
+        var t = Math.max(0, this._profileFn());
+        this._monoTime += t - this._monoTickTime;
+        this._monoTickTime = t;
         this._memory.flush();
-        this._memory.writeU64(time_ptr, BigInt(new Date().getTime()) * 1000000n);
+        this._memory.writeU64(time_ptr, BigInt(this._monoTime * 1000 | 0));
       }
+      // (import "screeps:screepsdotnet/system-bindings" "get-wall-time" (func (param i32 i32)))
     }, {
-      key: "sys_get_random",
-      value: function sys_get_random(buf, buf_len) {
-        try {
-          this._memory.flush();
-          this._memory.enterConstrainedRange(buf, buf_len);
-          while (buf_len >= 4) {
-            this._memory.writeU32(buf, Math.random() * 0xffffffff);
-            buf += 4;
-            buf_len -= 4;
-          }
-          while (buf_len > 0) {
-            this._memory.writeU8(buf, Math.random() * 0xff);
-            ++buf;
-            --buf_len;
-          }
-        } finally {
-          this._memory.exitConstrainedRange();
-        }
+      key: "sys_get_wall_time",
+      value: function sys_get_wall_time(seconds_ptr /* uint64_t* */, nanoseconds_ptr /* uint32_t* */) {
+        var ms = new Date().getTime();
+        this._memory.flush();
+        this._memory.writeU64(seconds_ptr, BigInt(ms / 1000 | 0));
+        this._memory.writeU32(nanoseconds_ptr, ms * 1000000 % 1000000 | 0);
       }
+      // (import "screeps:screepsdotnet/system-bindings" "write-stderr" (func (param i32 i32)))
     }, {
       key: "sys_write_stderr",
       value: function sys_write_stderr(buf, buf_len) {
         this._memory.flush();
         this._stderr.write(this._memory, buf, buf_len);
       }
+      // (import "screeps:screepsdotnet/system-bindings" "write-stdout" (func (param i32 i32)))
     }, {
       key: "sys_write_stdout",
       value: function sys_write_stdout(buf, buf_len) {
         this._memory.flush();
         this._stdout.write(this._memory, buf, buf_len);
+      }
+      // (import "screeps:screepsdotnet/system-bindings" "get-random-bytes" (func (param i32 i32)))
+    }, {
+      key: "sys_get_random_bytes",
+      value: function sys_get_random_bytes(buf, buf_len) {
+        this._memory.flush();
+        try {
+          this._memory.enterConstrainedRange(buf, buf_len, 2 /* MemoryArea.Heap */);
+          var ptr = buf;
+          var remaining = buf_len;
+          while (remaining >= 4) {
+            this._memory.writeU32(ptr, Math.random() * 0xffffffff | 0);
+            ptr += 4;
+            remaining -= 4;
+          }
+          while (remaining >= 2) {
+            this._memory.writeU16(ptr, Math.random() * 0xffff | 0);
+            ptr += 2;
+            remaining -= 2;
+          }
+          while (remaining >= 1) {
+            this._memory.writeU8(ptr, Math.random() * 0xff | 0);
+            ptr += 1;
+            remaining -= 1;
+          }
+        } finally {
+          this._memory.exitConstrainedRange();
+        }
       }
     }, {
       key: "setImports",
@@ -3066,7 +3494,7 @@ var bootloader = (function (exports) {
           this.log("Instantiated wasm module in ".concat(_t2 - _t, " ms"));
         }
         // Wire things up
-        this._memory = new WasmMemoryManager(this._wasmInstance.exports.memory, this._wasmInstance.exports.malloc, this._wasmInstance.exports.free);
+        this._memory = new WasmMemoryManager(this._wasmInstance.exports);
         this._interop.memory = this._memory;
         this._compiled = true;
       }
@@ -3125,6 +3553,8 @@ var bootloader = (function (exports) {
         if (!this._wasmInstance || !this._started) {
           return;
         }
+        // Reset local monotonic clock
+        this._monoTickTime = 0;
         // Run bindings loop
         this._interop.loop();
         (_this$_bindings2 = this._bindings) === null || _this$_bindings2 === void 0 || _this$_bindings2.loop();

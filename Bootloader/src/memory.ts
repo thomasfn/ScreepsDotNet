@@ -1,7 +1,7 @@
 import { ScreepsDotNetExports } from "./common.js";
 import { FreeFunction, MallocFunction } from "./interop.js";
 
-const DEFENSIVE_CHECKS = true; // Turn this on to debug memory corruption issues
+const DEFENSIVE_CHECKS = false; // Turn this on to debug memory corruption issues
 const SIMPLE_TRANSIENT_ALLOCATOR = false;
 const CANARY_SIZE = 4;
 
