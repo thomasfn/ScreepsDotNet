@@ -67,7 +67,7 @@ namespace ScreepsDotNet.Native.Arena
         internal static partial int Native_Move(JSObject proxyObject, int direction);
 
         [JSImport("Creep.moveTo", "game/prototypes/wrapped")]
-        internal static partial int Native_MoveTo(JSObject proxyObject, JSObject targetProxyObject);
+        internal static partial int Native_MoveTo(JSObject proxyObject, JSObject targetProxyObject, JSObject? options);
 
         [JSImport("Creep.pickup", "game/prototypes/wrapped")]
         internal static partial int Native_Pickup(JSObject proxyObject, JSObject targetProxyObject);
@@ -157,8 +157,8 @@ namespace ScreepsDotNet.Native.Arena
         public CreepMoveResult Move(Direction direction)
             => (CreepMoveResult)Native_Move(proxyObject, (int)direction);
 
-        public CreepMoveResult MoveTo(IPosition target)
-            => (CreepMoveResult)Native_MoveTo(proxyObject, target.ToJS());
+        public CreepMoveResult MoveTo(IPosition target, FindPathOptions? options = null)
+            => (CreepMoveResult)Native_MoveTo(proxyObject, target.ToJS(), options?.ToJS());
 
         public CreepPickupResult Pickup(IResource target)
             => (CreepPickupResult)Native_Pickup(proxyObject, target.ToJS());

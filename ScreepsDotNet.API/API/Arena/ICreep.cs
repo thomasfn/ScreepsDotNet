@@ -207,7 +207,7 @@ namespace ScreepsDotNet.API.Arena
         /// <summary>
         /// Find the optimal path to the target and move to it. Requires the MOVE body part
         /// </summary>
-        CreepMoveResult MoveTo(IPosition target/*, FindPathOptions? options = null*/);
+        CreepMoveResult MoveTo(IPosition target, FindPathOptions? options = null);
 
         /// <summary>
         /// Pick up an item (a dropped piece of resource). Requires the CARRY body part.
