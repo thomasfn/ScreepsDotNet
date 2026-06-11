@@ -358,13 +358,12 @@ namespace ScreepsDotNet.Native.World
         NativeRoom? INativeRoot.GetRoomByProxyObject(JSObject? proxyObject)
         {
             if (proxyObject == null) { return null; }
-            var coord = new RoomCoord(proxyObject.GetPropertyAsString(Names.Name)!);
             var room = (this as INativeRoot).GetExistingWrapperObject<NativeRoom>(proxyObject);
             if (room != null) { return room; }
             room = new NativeRoom(this, proxyObject);
             proxyObject.UserData = room;
-            if (roomsByCoordCache.TryGetValue(coord, out var gcHandle) && gcHandle.IsAllocated) { gcHandle.Free(); }
-            roomsByCoordCache[coord] = GCHandle.Alloc(room, GCHandleType.Weak);
+            if (roomsByCoordCache.TryGetValue(room.Coord, out var gcHandle) && gcHandle.IsAllocated) { gcHandle.Free(); }
+            roomsByCoordCache[room.Coord] = GCHandle.Alloc(room, GCHandleType.Weak);
             return room;
         }
 

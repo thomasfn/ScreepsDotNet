@@ -36,9 +36,9 @@ namespace ScreepsDotNet.Native.World
 
         public int Level => CachePerTick(ref levelCache) ??= ProxyObject.GetPropertyAsInt32(Names.Level);
 
-        public int Progress => CachePerTick(ref progressCache) ??= ProxyObject.GetPropertyAsInt32(Names.Progress);
+        public int? Progress => CachePerTick(ref progressCache) ??= ProxyObject.TryGetPropertyAsInt32(Names.Progress);
 
-        public int ProgressTotal => CachePerTick(ref progressTotalCache) ??= ProxyObject.GetPropertyAsInt32(Names.ProgressTotal);
+        public int? ProgressTotal => CachePerTick(ref progressTotalCache) ??= ProxyObject.TryGetPropertyAsInt32(Names.ProgressTotal);
 
         public ControllerReservation? Reservation => CachePerTick(ref reservationCache) ??= FetchReservation();
 
@@ -50,9 +50,9 @@ namespace ScreepsDotNet.Native.World
 
         public ControllerSign? Sign => CachePerTick(ref signCache) ?? FetchSign();
 
-        public int TicksToDowngrade => CachePerTick(ref ticksToDowngradeCache) ??= ProxyObject.GetPropertyAsInt32(Names.TicksToDowngrade);
+        public int? TicksToDowngrade => CachePerTick(ref ticksToDowngradeCache) ??= ProxyObject.TryGetPropertyAsInt32(Names.TicksToDowngrade);
 
-        public int UpgradeBlocked => CachePerTick(ref upgradeBlockedCache) ??= ProxyObject.GetPropertyAsInt32(Names.UpgradeBlocked);
+        public int? UpgradeBlocked => CachePerTick(ref upgradeBlockedCache) ??= ProxyObject.TryGetPropertyAsInt32(Names.UpgradeBlocked);
 
         public NativeStructureController(INativeRoot nativeRoot, JSObject proxyObject)
             : base(nativeRoot, proxyObject, ownershipCanChange: true)

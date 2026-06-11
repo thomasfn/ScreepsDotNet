@@ -102,12 +102,12 @@ namespace ScreepsDotNet.API.World
         /// <summary>
         /// The current progress of upgrading the controller to the next level.
         /// </summary>
-        int Progress { get; }
+        int? Progress { get; }
 
         /// <summary>
         /// The progress needed to reach the next level.
         /// </summary>
-        int ProgressTotal { get; }
+        int? ProgressTotal { get; }
 
         /// <summary>
         /// An object with the controller reservation info if present.
@@ -139,12 +139,12 @@ namespace ScreepsDotNet.API.World
         /// This timer is set to 50% on level upgrade or downgrade, and it can be increased by using Creep.upgradeController.
         /// Must be full to upgrade the controller to the next level.
         /// </summary>
-        int TicksToDowngrade { get; }
+        int? TicksToDowngrade { get; }
 
         /// <summary>
         /// The amount of game ticks while this controller cannot be upgraded due to attack. Safe mode is also unavailable during this period.
         /// </summary>
-        int UpgradeBlocked { get; }
+        int? UpgradeBlocked { get; }
 
         /// <summary>
         /// Activate safe mode if available.
