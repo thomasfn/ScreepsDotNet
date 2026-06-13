@@ -146,6 +146,11 @@ namespace ScreepsDotNet.API.World
         Season,
         Score,
 
+        SubscriptionToken,
+        CpuUnlock,
+        Pixel,
+        AccessKey,
+
         Unknown
     }
 

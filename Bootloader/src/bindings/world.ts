@@ -13,7 +13,7 @@ type GamePrototype = {};
 
 type GameConstructor = { readonly prototype: GamePrototype };
 
-type ResourceConstantEx = ResourceConstant | "season" | "score";
+type ResourceConstantEx = ResourceConstant | "season" | "score" | "token" | "cpuUnlock" | "pixel" | "accessKey";
 
 const RESOURCE_LIST: readonly ResourceConstantEx[] = [
     "energy", "power",
@@ -30,7 +30,8 @@ const RESOURCE_LIST: readonly ResourceConstantEx[] = [
     "alloy", "tube", "fixtures", "frame", "hydraulics", "machine",
     "condensate", "concentrate", "extract", "spirit", "emanation", "essence",
     "season", "score",
-]; // 85 total
+    "token", "cpuUnlock", "pixel", "accessKey",
+]; // 89 total
 
 const RESOURCE_TO_ENUM_MAP: Record<ResourceConstantEx, number> = {} as Record<ResourceConstantEx, number>;
 {
