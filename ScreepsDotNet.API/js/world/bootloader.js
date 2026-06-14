@@ -2396,11 +2396,6 @@ var bootloader = (function (exports) {
         --alignment;
         return v + alignment & ~alignment;
       }
-    }, {
-      key: "align8",
-      value: function align8(v) {
-        return v + 7 & ~7;
-      }
     }]);
     return WasmMemoryManager;
   }();
@@ -2441,7 +2436,7 @@ var bootloader = (function (exports) {
   }();
 
   var CPU_HALT_WHEN_NO_CHECKIN_FOR = 10;
-    var RESOURCE_LIST = ["energy", "power", "H", "O", "U", "L", "K", "Z", "X", "G", "silicon", "metal", "biomass", "mist", "OH", "ZK", "UL", "UH", "UO", "KH", "KO", "LH", "LO", "ZH", "ZO", "GH", "GO", "UH2O", "UHO2", "KH2O", "KHO2", "LH2O", "LHO2", "ZH2O", "ZHO2", "GH2O", "GHO2", "XUH2O", "XUHO2", "XKH2O", "XKHO2", "XLH2O", "XLHO2", "XZH2O", "XZHO2", "XGH2O", "XGHO2", "ops", "utrium_bar", "lemergium_bar", "zynthium_bar", "keanium_bar", "ghodium_melt", "oxidant", "reductant", "purifier", "battery", "composite", "crystal", "liquid", "wire", "switch", "transistor", "microchip", "circuit", "device", "cell", "phlegm", "tissue", "muscle", "organoid", "organism", "alloy", "tube", "fixtures", "frame", "hydraulics", "machine", "condensate", "concentrate", "extract", "spirit", "emanation", "essence", "season", "score", "token", "cpuUnlock", "pixel", "accessKey"]; // 89 total
+  var RESOURCE_LIST = ["energy", "power", "H", "O", "U", "L", "K", "Z", "X", "G", "silicon", "metal", "biomass", "mist", "OH", "ZK", "UL", "UH", "UO", "KH", "KO", "LH", "LO", "ZH", "ZO", "GH", "GO", "UH2O", "UHO2", "KH2O", "KHO2", "LH2O", "LHO2", "ZH2O", "ZHO2", "GH2O", "GHO2", "XUH2O", "XUHO2", "XKH2O", "XKHO2", "XLH2O", "XLHO2", "XZH2O", "XZHO2", "XGH2O", "XGHO2", "ops", "utrium_bar", "lemergium_bar", "zynthium_bar", "keanium_bar", "ghodium_melt", "oxidant", "reductant", "purifier", "battery", "composite", "crystal", "liquid", "wire", "switch", "transistor", "microchip", "circuit", "device", "cell", "phlegm", "tissue", "muscle", "organoid", "organism", "alloy", "tube", "fixtures", "frame", "hydraulics", "machine", "condensate", "concentrate", "extract", "spirit", "emanation", "essence", "season", "score", "token", "cpuUnlock", "pixel", "accessKey"]; // 89 total
   var RESOURCE_TO_ENUM_MAP = {};
   {
     var i = 0;
@@ -3247,6 +3242,7 @@ var bootloader = (function (exports) {
     return new bindingsCtor(logFunc, interop);
   }
 
+  var utf8Encoder = new TextEncoder();
   var utf8Decoder = new TextDecoder();
   var Stdio = /*#__PURE__*/function () {
     function Stdio(outFunc) {
@@ -3311,6 +3307,7 @@ var bootloader = (function (exports) {
     function Bootloader(env, profileFn) {
       _classCallCheck(this, Bootloader);
       _defineProperty(this, "_env", void 0);
+      _defineProperty(this, "_envArgs", {});
       _defineProperty(this, "_pendingLogs", []);
       _defineProperty(this, "_deferLogsToTick", void 0);
       _defineProperty(this, "_profileFn", void 0);
@@ -3364,7 +3361,7 @@ var bootloader = (function (exports) {
           this.setImports(moduleName, this._bindings.imports[moduleName]);
         }
       }
-      this._systemImport = _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty({}, "get-mono-time", this.sys_get_mono_time.bind(this)), "get-wall-time", this.sys_get_wall_time.bind(this)), "write-stderr", this.sys_write_stderr.bind(this)), "write-stdout", this.sys_write_stdout.bind(this)), "get-random-bytes", this.sys_get_random_bytes.bind(this));
+      this._systemImport = _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty({}, "get-mono-time", this.sys_get_mono_time.bind(this)), "get-wall-time", this.sys_get_wall_time.bind(this)), "write-stderr", this.sys_write_stderr.bind(this)), "write-stdout", this.sys_write_stdout.bind(this)), "get-random-bytes", this.sys_get_random_bytes.bind(this)), "get-env-args", this.sys_get_env_args.bind(this));
     }
     // (import "screeps:screepsdotnet/system-bindings" "get-mono-time" (func (param i32)))
     _createClass(Bootloader, [{
@@ -3389,6 +3386,11 @@ var bootloader = (function (exports) {
       key: "exports",
       get: function get() {
         return this._wasmInstance.exports;
+      }
+    }, {
+      key: "envArgs",
+      get: function get() {
+        return this._envArgs;
       }
     }, {
       key: "sys_get_mono_time",
@@ -3446,6 +3448,76 @@ var bootloader = (function (exports) {
             ptr += 1;
             remaining -= 1;
           }
+        } finally {
+          this._memory.exitConstrainedRange();
+        }
+      }
+      // (import "screeps:screepsdotnet/system-bindings" "get-env-args" (func (param i32)))
+    }, {
+      key: "sys_get_env_args",
+      value: function sys_get_env_args(outListPtr) {
+        this._memory.flush();
+        try {
+          this._memory.enterConstrainedRange(outListPtr, 8, 1 /* MemoryArea.Stack */);
+          var tuples = Object.entries(this._envArgs);
+          if (tuples.length === 0) {
+            this._memory.writeU32(outListPtr, 0);
+            this._memory.writeU32(outListPtr + 4, 0);
+            return;
+          }
+          var strings = [];
+          for (var _i = 0, _tuples = tuples; _i < _tuples.length; _i++) {
+            var _tuples$_i = _slicedToArray(_tuples[_i], 2),
+              key = _tuples$_i[0],
+              value = _tuples$_i[1];
+            // Allocate key
+            if (key.length > 0) {
+              var bytes = utf8Encoder.encode(key);
+              var ptr = this._wasmInstance.exports.malloc(bytes.length);
+              this._memory.flush();
+              try {
+                this._memory.enterConstrainedRange(ptr, bytes.length, 2 /* MemoryArea.Heap */);
+                this._memory.writeBytes(ptr, bytes);
+              } finally {
+                this._memory.exitConstrainedRange();
+              }
+              strings.push([ptr, bytes.length]);
+            } else {
+              strings.push([0, 0]);
+            }
+            // Allocate value
+            if (value.length > 0) {
+              var _bytes = utf8Encoder.encode(value);
+              var _ptr = this._wasmInstance.exports.malloc(_bytes.length);
+              this._memory.flush();
+              try {
+                this._memory.enterConstrainedRange(_ptr, _bytes.length, 2 /* MemoryArea.Heap */);
+                this._memory.writeBytes(_ptr, _bytes);
+              } finally {
+                this._memory.exitConstrainedRange();
+              }
+              strings.push([_ptr, _bytes.length]);
+            } else {
+              strings.push([0, 0]);
+            }
+          }
+          var listPtr = this._wasmInstance.exports.malloc(tuples.length * 16);
+          try {
+            this._memory.enterConstrainedRange(listPtr, tuples.length * 16, 2 /* MemoryArea.Heap */);
+            var listHead = listPtr;
+            for (var _i2 = 0, _strings = strings; _i2 < _strings.length; _i2++) {
+              var _strings$_i = _slicedToArray(_strings[_i2], 2),
+                strPtr = _strings$_i[0],
+                strSz = _strings$_i[1];
+              this._memory.writeU32(listHead, strPtr);
+              this._memory.writeU32(listHead + 4, strSz);
+              listHead += 8;
+            }
+          } finally {
+            this._memory.exitConstrainedRange();
+          }
+          this._memory.writeU32(outListPtr, listPtr);
+          this._memory.writeU32(outListPtr + 4, tuples.length);
         } finally {
           this._memory.exitConstrainedRange();
         }

@@ -6,6 +6,7 @@ export declare function decodeWasm(encodedWasm: string, originalSize: number, en
 type Env = 'world' | 'arena' | 'test';
 export declare class Bootloader {
     private readonly _env;
+    private readonly _envArgs;
     private readonly _pendingLogs;
     private readonly _deferLogsToTick;
     private readonly _profileFn;
@@ -19,6 +20,8 @@ export declare class Bootloader {
     private _memory?;
     private _compiled;
     private _started;
+    private _monoTime;
+    private _monoTickTime;
     private _inTick;
     private _profilingEnabled;
     get compiled(): boolean;
@@ -26,11 +29,14 @@ export declare class Bootloader {
     get profilingEnabled(): boolean;
     set profilingEnabled(value: boolean);
     get exports(): WebAssembly.Exports & ScreepsDotNetExports;
+    get envArgs(): Record<string, string>;
     constructor(env: Env, profileFn: () => number);
-    private sys_get_time;
-    private sys_get_random;
+    private sys_get_mono_time;
+    private sys_get_wall_time;
     private sys_write_stderr;
     private sys_write_stdout;
+    private sys_get_random_bytes;
+    private sys_get_env_args;
     setImports(moduleName: string, importTable: ImportTable): void;
     log(text: string): void;
     private dispatchLog;

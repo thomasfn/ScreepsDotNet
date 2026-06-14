@@ -585,12 +585,8 @@ export class WasmMemoryManager {
         return v + 1;
     }
 
-    private static align(v: number, alignment: number): number {
+    public static align(v: number, alignment: number): number {
         --alignment;
         return (v + alignment) & ~alignment;
-    }
-
-    private static align8(v: number): number {
-        return (v + 7) & ~7;
     }
 }

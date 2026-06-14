@@ -9,6 +9,7 @@ import { MemoryArea, WasmMemoryManager } from './memory.js';
 import BaseBindings from './bindings/base.js';
 import { getBindings } from './bindings/index.js';
 
+const utf8Encoder = new TextEncoder();
 const utf8Decoder = new TextDecoder();
 
 class Stdio {
@@ -73,8 +74,18 @@ const EMPTY_ARR: unknown[] = [];
 
 type Env = 'world'|'arena'|'test';
 
+interface WebAssemblyModuleCompileOptions {
+    builtins?: string[];
+    importedStringConstants?: string[];
+}
+
+interface WebAssemblyModuleEx {
+    new(bytes: BufferSource, compileOptions?: WebAssemblyModuleCompileOptions): WebAssembly.Module; 
+}
+
 export class Bootloader {
     private readonly _env: Env;
+    private readonly _envArgs: Record<string, string> = {};
     private readonly _pendingLogs: string[] = [];
     private readonly _deferLogsToTick: boolean;
     private readonly _profileFn: () => number;
@@ -104,6 +115,8 @@ export class Bootloader {
     public set profilingEnabled(value) { this._profilingEnabled = value; }
 
     public get exports() { return this._wasmInstance!.exports; }
+
+    public get envArgs() { return this._envArgs; }
 
     constructor(env: Env, profileFn: () => number) {
         this._env = env;
@@ -138,6 +151,7 @@ export class Bootloader {
             ["write-stderr"]: this.sys_write_stderr.bind(this),
             ["write-stdout"]: this.sys_write_stdout.bind(this),
             ["get-random-bytes"]: this.sys_get_random_bytes.bind(this),
+            ["get-env-args"]: this.sys_get_env_args.bind(this),
         };
     }
 
@@ -192,6 +206,70 @@ export class Bootloader {
                 ptr += 1;
                 remaining -= 1;
             }
+        } finally {
+            this._memory!.exitConstrainedRange();
+        }
+    }
+
+    // (import "screeps:screepsdotnet/system-bindings" "get-env-args" (func (param i32)))
+    private sys_get_env_args(outListPtr: number): void {
+        this._memory!.flush();
+        try {
+            this._memory!.enterConstrainedRange(outListPtr, 8, MemoryArea.Stack);
+            const tuples = Object.entries(this._envArgs);
+            if (tuples.length === 0) {
+                this._memory!.writeU32(outListPtr, 0);
+                this._memory!.writeU32(outListPtr + 4, 0);
+                return;
+            }
+            const strings: [ptr: number, sz: number][] = [];
+            for (const [key, value] of tuples) {
+                // Allocate key
+                if (key.length > 0) {
+                    const bytes = utf8Encoder.encode(key);
+                    const ptr = this._wasmInstance!.exports.malloc(bytes.length);
+                    this._memory!.flush();
+                    try {
+                        this._memory!.enterConstrainedRange(ptr, bytes.length, MemoryArea.Heap);
+                        this._memory!.writeBytes(ptr, bytes);
+                    } finally {
+                        this._memory!.exitConstrainedRange();
+                    }
+                    strings.push([ptr, bytes.length]);
+                } else {
+                    strings.push([0, 0]);
+                }
+                
+                // Allocate value
+                if (value.length > 0) {
+                    const bytes = utf8Encoder.encode(value);
+                    const ptr = this._wasmInstance!.exports.malloc(bytes.length);
+                    this._memory!.flush();
+                    try {
+                        this._memory!.enterConstrainedRange(ptr, bytes.length, MemoryArea.Heap);
+                        this._memory!.writeBytes(ptr, bytes);
+                    } finally {
+                        this._memory!.exitConstrainedRange();
+                    }
+                    strings.push([ptr, bytes.length]);
+                } else {
+                    strings.push([0, 0]);
+                }
+            }
+            const listPtr = this._wasmInstance!.exports.malloc(tuples.length * 16);
+            try {
+                this._memory!.enterConstrainedRange(listPtr, tuples.length * 16, MemoryArea.Heap);
+                let listHead = listPtr;
+                for (const [strPtr, strSz] of strings) {
+                    this._memory!.writeU32(listHead, strPtr);
+                    this._memory!.writeU32(listHead + 4, strSz);
+                    listHead += 8;
+                }
+            } finally {
+                this._memory!.exitConstrainedRange();
+            }
+            this._memory!.writeU32(outListPtr, listPtr);
+            this._memory!.writeU32(outListPtr + 4, tuples.length);
         } finally {
             this._memory!.exitConstrainedRange();
         }

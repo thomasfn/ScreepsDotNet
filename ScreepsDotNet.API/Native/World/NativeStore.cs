@@ -99,6 +99,10 @@ namespace ScreepsDotNet.Native.World
             Name.Create("essence"),
             Name.Create("season"),
             Name.Create("score"),
+            Name.Create("token"),
+            Name.Create("cpuUnlock"),
+            Name.Create("pixel"),
+            Name.Create("accessKey"),
             Name.Create("unknown")
         ];
 
