@@ -7,7 +7,7 @@ import BaseBindings from './base.js';
 
 declare const global: typeof globalThis;
 
-const CPU_HALT_WHEN_NO_CHECKIN_FOR = 10;
+const CPU_HALT_WHEN_NO_CHECKIN_FOR = 2;
 
 type GamePrototype = {};
 
@@ -94,9 +94,9 @@ export default class WorldBindings extends BaseBindings {
 
         // Checkin
         const ticksSinceLestCheckIn = Game.time - this._lastCheckIn;
-        if (ticksSinceLestCheckIn >= CPU_HALT_WHEN_NO_CHECKIN_FOR) {
+        if (ticksSinceLestCheckIn >= CPU_HALT_WHEN_NO_CHECKIN_FOR + 1) {
             Game.cpu.halt && Game.cpu.halt();
-        } else if (ticksSinceLestCheckIn >= CPU_HALT_WHEN_NO_CHECKIN_FOR - 1) {
+        } else if (ticksSinceLestCheckIn >= CPU_HALT_WHEN_NO_CHECKIN_FOR) {
             this.log(`no checkin for ${ticksSinceLestCheckIn} ticks, halting cpu next tick...`);
         }
     }

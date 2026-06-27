@@ -11,7 +11,7 @@ namespace ScreepsDotNet.Native.World
         private readonly bool ownershipCanChange;
 
         private bool? myCache;
-        private OwnerInfo? ownerInfoCache;
+        private string? ownerUsernameCache;
 
         public bool My
         {
@@ -34,12 +34,13 @@ namespace ScreepsDotNet.Native.World
             {
                 if (ownershipCanChange)
                 {
-                    return CachePerTick(ref ownerInfoCache) ??= GetOwnerInfo();
+                    CachePerTick(ref ownerUsernameCache) ??= GetOwnerUsername();
                 }
                 else
                 {
-                    return CacheLifetime(ref ownerInfoCache) ??= GetOwnerInfo();
+                    CacheLifetime(ref ownerUsernameCache) ??= GetOwnerUsername();
                 }
+                return ownerUsernameCache != null ? new OwnerInfo(ownerUsernameCache) : null;
             }
         }
 
@@ -59,15 +60,15 @@ namespace ScreepsDotNet.Native.World
             if (ownershipCanChange)
             {
                 myCache = null;
-                ownerInfoCache = null;
+                ownerUsernameCache = null;
             }
         }
 
-        private OwnerInfo? GetOwnerInfo()
+        private string? GetOwnerUsername()
         {
             using var ownerObj = ProxyObject.GetPropertyAsJSObject(Names.Owner);
             if (ownerObj == null) { return null; }
-            return new(ownerObj.GetPropertyAsString(Names.Username)!);
+            return ownerObj.GetPropertyAsString(Names.Username);
         }
     }
 

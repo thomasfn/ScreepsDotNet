@@ -31,6 +31,20 @@ int input_stream_subscribe(int stream)
     return 0;
 }
 
+// (import "wasi:io/streams@0.2.0" "[method]input-stream.blocking-read" (func $__wasm_import_streams_method_input_stream_blocking_read (param i32 i64 i32)))
+__attribute__((used))
+__attribute__((export_name("[method]input-stream.blocking-read")))
+void input_stream_blocking_read(int stream, uint64_t len, void* result_ptr)
+{
+    uint8_t* out = (uint8_t*)result_ptr;
+
+    (void)stream;
+    (void)len;
+
+    out[0] = 1; // ERR
+    *(uint32_t*)(out + 4) = 0; // stream-error::closed
+}
+
 //  (import "wasi:io/streams@0.2.0" "[method]output-stream.subscribe" (func $fimport$58 (param i32) (result i32)))
 __attribute__((used))
 __attribute__((export_name("[method]output-stream.subscribe")))

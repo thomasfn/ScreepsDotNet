@@ -51,7 +51,7 @@ namespace ScreepsDotNet.Native.World
         public static OrderDetails ToOrderDetails(this JSObject obj)
             => new(
                     id: obj.GetPropertyAsString("id")!,
-                    created: obj.GetPropertyAsInt32("created"),
+                    created: obj.TryGetPropertyAsInt32("created"),
                     createdTimestamp: obj.HasProperty("createdTimestamp") ? DateTime.UnixEpoch + TimeSpan.FromMilliseconds(obj.GetPropertyAsDouble("createdTimestamp")) : null,
                     type: obj.GetPropertyAsString("type")!.ParseOrderType(),
                     resourceType: obj.GetPropertyAsName("resourceType")!.ParseResourceType(),

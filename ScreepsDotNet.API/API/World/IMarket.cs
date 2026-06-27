@@ -9,7 +9,7 @@ namespace ScreepsDotNet.API.World
         Sell
     }
 
-    public readonly struct TransactionDetails
+    public readonly struct TransactionDetails(string transactionId, int time, string senderUsername, string recipientUsername, ResourceType resourceType, int amount, RoomCoord from, RoomCoord to, string description, TransactionDetails.OrderInfo? order)
     {
         public readonly struct OrderInfo
         {
@@ -25,117 +25,73 @@ namespace ScreepsDotNet.API.World
             }
         }
 
-        public readonly string TransactionId;
-        public readonly int Time;
-        public readonly string SenderUsername;
-        public readonly string RecipientUsername;
-        public readonly ResourceType ResourceType;
-        public readonly int Amount;
-        public readonly RoomCoord From;
-        public readonly RoomCoord To;
-        public readonly string Description;
-        public readonly OrderInfo? Order;
-
-        public TransactionDetails(string transactionId, int time, string senderUsername, string recipientUsername, ResourceType resourceType, int amount, RoomCoord from, RoomCoord to, string description, OrderInfo? order)
-        {
-            TransactionId = transactionId;
-            Time = time;
-            SenderUsername = senderUsername;
-            RecipientUsername = recipientUsername;
-            ResourceType = resourceType;
-            Amount = amount;
-            From = from;
-            To = to;
-            Description = description;
-            Order = order;
-        }
+        public readonly string TransactionId = transactionId;
+        public readonly int Time = time;
+        public readonly string SenderUsername = senderUsername;
+        public readonly string RecipientUsername = recipientUsername;
+        public readonly ResourceType ResourceType = resourceType;
+        public readonly int Amount = amount;
+        public readonly RoomCoord From = from;
+        public readonly RoomCoord To = to;
+        public readonly string Description = description;
+        public readonly OrderInfo? Order = order;
     }
 
-    public readonly struct MyOrderDetails
+    public readonly struct MyOrderDetails(OrderDetails orderDetails, bool active, int totalAmount)
     {
-        public readonly OrderDetails OrderDetails;
-        public readonly bool Active;
-        public readonly int TotalAmount;
-
-        public MyOrderDetails(OrderDetails orderDetails, bool active, int totalAmount)
-        {
-            OrderDetails = orderDetails;
-            Active = active;
-            TotalAmount = totalAmount;
-        }
+        public readonly OrderDetails OrderDetails = orderDetails;
+        public readonly bool Active = active;
+        public readonly int TotalAmount = totalAmount;
     }
 
-    public readonly struct OrderDetails
+    public readonly struct OrderDetails(string id, int? created, DateTime? createdTimestamp, OrderType type, ResourceType resourceType, RoomCoord? room, int amount, int remainingAmount, double price)
     {
         /// <summary>
         /// The unique order ID.
         /// </summary>
-        public readonly string Id;
+        public readonly string Id = id;
         /// <summary>
         /// The order creation time in game ticks. This property is absent for orders of the inter-shard market.
         /// </summary>
-        public readonly int Created;
+        public readonly int? Created = created;
         /// <summary>
         /// The order creation time in milliseconds since UNIX epoch time. This property is absent for old orders.
         /// </summary>
-        public readonly DateTime? CreatedTimestamp;
+        public readonly DateTime? CreatedTimestamp = createdTimestamp;
         /// <summary>
         /// Either ORDER_SELL or ORDER_BUY.
         /// </summary>
-        public readonly OrderType Type;
+        public readonly OrderType Type = type;
         /// <summary>
         /// Either one of the RESOURCE_* constants or one of account-bound resources (See INTERSHARD_RESOURCES constant).
         /// </summary>
-        public readonly ResourceType ResourceType;
+        public readonly ResourceType ResourceType = resourceType;
         /// <summary>
         /// The room where this order is placed.
         /// </summary>
-        public readonly RoomCoord? Room;
+        public readonly RoomCoord? Room = room;
         /// <summary>
         /// Currently available amount to trade.
         /// </summary>
-        public readonly int Amount;
+        public readonly int Amount = amount;
         /// <summary>
         /// How many resources are left to trade via this order.
         /// </summary>
-        public readonly int RemainingAmount;
+        public readonly int RemainingAmount = remainingAmount;
         /// <summary>
         /// The current price per unit.
         /// </summary>
-        public readonly double Price;
-
-        public OrderDetails(string id, int created, DateTime? createdTimestamp, OrderType type, ResourceType resourceType, RoomCoord? room, int amount, int remainingAmount, double price)
-        {
-            Id = id;
-            Created = created;
-            CreatedTimestamp = createdTimestamp;
-            Type = type;
-            ResourceType = resourceType;
-            Room = room;
-            Amount = amount;
-            RemainingAmount = remainingAmount;
-            Price = price;
-        }
+        public readonly double Price = price;
     }
 
-    public readonly struct PriceHistory
+    public readonly struct PriceHistory(ResourceType resourceType, DateOnly date, int transactions, int volume, double avgPrice, double stddevPrice)
     {
-        public readonly ResourceType ResourceType;
-        public readonly DateOnly Date;
-        public readonly int Transactions;
-        public readonly int Volume;
-        public readonly double AvgPrice;
-        public readonly double StddevPrice;
-
-        public PriceHistory(ResourceType resourceType, DateOnly date, int transactions, int volume, double avgPrice, double stddevPrice)
-        {
-            ResourceType = resourceType;
-            Date = date;
-            Transactions = transactions;
-            Volume = volume;
-            AvgPrice = avgPrice;
-            StddevPrice = stddevPrice;
-        }
+        public readonly ResourceType ResourceType = resourceType;
+        public readonly DateOnly Date = date;
+        public readonly int Transactions = transactions;
+        public readonly int Volume = volume;
+        public readonly double AvgPrice = avgPrice;
+        public readonly double StddevPrice = stddevPrice;
     }
 
     public enum MarketCancelOrderResult
