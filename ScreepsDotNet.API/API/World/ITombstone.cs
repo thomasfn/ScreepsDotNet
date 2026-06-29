@@ -5,7 +5,7 @@ namespace ScreepsDotNet.API.World
     /// <summary>
     /// A remnant of dead creeps. This is a walkable object.
     /// </summary>
-    public interface ITombstone : IRoomObject, IWithId
+    public interface ITombstone : IRoomObject, IWithId, IWithStore
     {
         /// <summary>
         /// An object containing the deceased creep or power creep.
@@ -16,11 +16,6 @@ namespace ScreepsDotNet.API.World
         /// Time of death.
         /// </summary>
         int DeathTime { get; }
-
-        /// <summary>
-        /// A Store object that contains cargo of this structure.
-        /// </summary>
-        IStore Store { get; }
 
         /// <summary>
         /// The amount of game ticks before this tombstone decays.
