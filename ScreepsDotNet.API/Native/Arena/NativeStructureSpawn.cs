@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
-
 using ScreepsDotNet.Interop;
 
 using ScreepsDotNet.API;
@@ -16,13 +15,10 @@ namespace ScreepsDotNet.Native.Arena
         #region Imports
 
         [JSImport("Spawning.cancel", "game/prototypes/wrapped")]
-        
-        internal static partial int? Native_Cancel(JSObject proxyObject);
 
-        public CancelSpawnCreepResult Cancel()
-        {
-            throw new NotImplementedException();
-        }
+        internal static partial int Native_Cancel(JSObject proxyObject);
+
+
 
         #endregion
 
@@ -66,6 +62,8 @@ namespace ScreepsDotNet.Native.Arena
             this.nativeRoot = nativeRoot;
             this.proxyObject = proxyObject;
         }
+        public CancelSpawnCreepResult Cancel()
+            => (CancelSpawnCreepResult)Native_Cancel(proxyObject);
 
         protected virtual void Dispose(bool disposing)
         {
@@ -94,6 +92,10 @@ namespace ScreepsDotNet.Native.Arena
 
         [JSImport("StructureSpawn.spawnCreep", "game/prototypes/wrapped")]
         internal static partial JSObject Native_SpawnCreep(JSObject proxyObject, Name[] bodyParts);
+
+        [JSImport("StructureSpawn.setDirections", "game/prototypes/wrapped")]
+
+        internal static partial int Native_SetDirections(JSObject proxyObject, int[] directions);
 
         #endregion
 
@@ -127,6 +129,9 @@ namespace ScreepsDotNet.Native.Arena
 
         public SpawnCreepResult SpawnCreep(BodyType<BodyPartType> bodyType)
             => SpawnCreep(bodyType.AsBodyPartList);
+
+        public SetDirectionsSpawningResult SetDirections(IEnumerable<Direction> directions)
+            => (SetDirectionsSpawningResult)Native_SetDirections(proxyObject, directions.Cast<int>().ToArray());
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private NativeSpawning? FetchSpawning()

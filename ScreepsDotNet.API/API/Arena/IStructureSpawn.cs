@@ -16,7 +16,21 @@ namespace ScreepsDotNet.API.Arena
         Ok = 0,
         NotOwner = -1
     }
-
+    public enum SetDirectionsSpawningResult
+    {
+        /// <summary>
+        /// The operation has been scheduled successfully.
+        /// </summary>
+        Ok = 0,
+        /// <summary>
+        /// You are not the owner of this spawn.
+        /// </summary>
+        NotOwner = -1,
+        /// <summary>
+        /// The directions array is invalid.
+        /// </summary>
+        InvalidArgs = -10
+    }
     public readonly struct SpawnCreepResult : IEquatable<SpawnCreepResult>
     {
         public readonly ICreep? Object;
@@ -96,5 +110,12 @@ namespace ScreepsDotNet.API.Arena
         /// <param name="body"></param>
         /// <returns></returns>
         SpawnCreepResult SpawnCreep(BodyType<BodyPartType> bodyType);
+
+        /// <summary>
+        /// Set desired directions where the creep should move when spawned.
+        /// </summary>
+        /// <param name="directions"></param>
+        /// <returns></returns>
+        SetDirectionsSpawningResult SetDirections(IEnumerable<Direction> directions);
     }
 }
