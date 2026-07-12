@@ -19,10 +19,10 @@
 	</PropertyGroup>
 	
 	<PropertyGroup>
-		<WasmEnableNonTrappingFloatToIntConversions>false</WasmEnableNonTrappingFloatToIntConversions>
 		<WasiSdkVersion>29</WasiSdkVersion>
 		<WasiSdkMinorVersion>0</WasiSdkMinorVersion>
 		<BinaryenVersion>123</BinaryenVersion>
+		<LinkerFlavor>lld</LinkerFlavor>
 	</PropertyGroup>
 
 	<PropertyGroup>
@@ -40,7 +40,6 @@
 		<WasmMergeConfigurationFlags Include="-q" />
 		<WasmMergeConfigurationFlags Include="-rec" />
 		<WasmMergeConfigurationFlags Include="--enable-bulk-memory-opt" />
-		<WasmMergeConfigurationFlags Include="--enable-multimemory" />
 		<WasmMergeConfigurationFlags Include="--enable-multimemory" />
 		
 		<WasmMergeModules Include="&quot;$(ScreepsWasmPolyfillBaseDir)wasi_cli_environment.wasm&quot; wasi:cli/environment@0.2.0" />
@@ -75,6 +74,10 @@
 		<WasmOptConfigurationFlags Include="--llvm-nontrapping-fptoint-lowering" />
 		<WasmOptConfigurationFlags Include="--signext-lowering" />
 	</ItemGroup>
+
+	<PropertyGroup Condition="'$(ScreepsEnv)' == 'legacy'">
+		<WasmEnableNonTrappingFloatToIntConversions>false</WasmEnableNonTrappingFloatToIntConversions>
+	</PropertyGroup>
 
 	<ItemGroup>
 		<WasmOptConfigurationFlags Include="--strip-debug" />

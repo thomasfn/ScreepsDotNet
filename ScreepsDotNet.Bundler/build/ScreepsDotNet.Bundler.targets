@@ -135,20 +135,10 @@
 		<EmscriptenEnvVars Include="EM_WORKAROUND_PYTHON_BUG_34780=1" />
 	</ItemGroup>
 
-	<Target Name="Screeps_ExtractCoreModule" AfterTargets="LinkNativeLlvm">
-		<PropertyGroup>
-			<InputWasmFile>$(NativeOutputPath)\$(TargetName).wasm</InputWasmFile>
-			<OutputWasmFile>$(NativeOutputPath)\$(TargetName)-coremodule.wasm</OutputWasmFile>
-		</PropertyGroup>
-
-		<Message Text="Extracting core module..." Importance="High"/>
-		<ExtractCoreModuleTask InWasmFileName="$(InputWasmFile)" OutWasmFileName="$(OutputWasmFile)" />
-	</Target>
-
-	<Target Name="Screeps_LinkCoreModule" AfterTargets="Screeps_ExtractCoreModule" DependsOnTargets="ProvisionBinaryen">
+	<Target Name="Screeps_LinkCoreModule" AfterTargets="LinkNativeLlvm" DependsOnTargets="ProvisionBinaryen">
 		
 		<PropertyGroup>
-			<InputWasmFile>$(NativeOutputPath)\$(TargetName)-coremodule.wasm</InputWasmFile>
+			<InputWasmFile>$(NativeOutputPath)\$(TargetName).wasm</InputWasmFile>
 			<OutputWasmFile>$(NativeOutputPath)\$(TargetName)-linked.wasm</OutputWasmFile>
 		</PropertyGroup>
 

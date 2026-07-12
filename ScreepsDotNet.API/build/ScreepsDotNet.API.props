@@ -6,7 +6,6 @@
 	<ItemGroup>
 		<_WasmCommonCFlags Include="-mno-bulk-memory" />
 		<_WasiSdkClangArgs Include="-Wl,--features=mutable-globals" />
-    	<LinkerArg Include="-Wl,--component-type,&quot;$(ScreepsWit.Replace('\', '/'))&quot;" />
 		<LinkerArg Include="-Wl,--export=malloc" />
 		<LinkerArg Include="-Wl,--export=free" />
 		<UnmanagedEntryPointsAssembly Include="ScreepsDotNet.API" />

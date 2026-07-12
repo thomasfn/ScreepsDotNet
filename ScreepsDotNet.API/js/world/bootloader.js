@@ -2023,7 +2023,9 @@ var bootloader = (function (exports) {
     _createClass(WasmMemoryManager, [{
       key: "reportGrowth",
       value: function reportGrowth() {
-        console.log("WASM linear memory growth to ".concat(this._memory.buffer.byteLength, "b (sp=").concat(this._stackPointer.value, ", heapBase=").concat(this._heapBase, ", stackHigh=").concat(this._stackHigh, ", stackLow=").concat(this._stackLow, ")"));
+        {
+          return;
+        }
       }
     }, {
       key: "checkAlignment",
@@ -2332,7 +2334,6 @@ var bootloader = (function (exports) {
           size: sz
         };
         this.flush();
-        console.log("allocated transient page (".concat(page.size, "b @ ").concat(page.ptr, ")"));
         return page;
       }
     }, {
@@ -2435,7 +2436,7 @@ var bootloader = (function (exports) {
     return BaseBindings;
   }();
 
-  var CPU_HALT_WHEN_NO_CHECKIN_FOR = 10;
+  var CPU_HALT_WHEN_NO_CHECKIN_FOR = 2;
   var RESOURCE_LIST = ["energy", "power", "H", "O", "U", "L", "K", "Z", "X", "G", "silicon", "metal", "biomass", "mist", "OH", "ZK", "UL", "UH", "UO", "KH", "KO", "LH", "LO", "ZH", "ZO", "GH", "GO", "UH2O", "UHO2", "KH2O", "KHO2", "LH2O", "LHO2", "ZH2O", "ZHO2", "GH2O", "GHO2", "XUH2O", "XUHO2", "XKH2O", "XKHO2", "XLH2O", "XLHO2", "XZH2O", "XZHO2", "XGH2O", "XGHO2", "ops", "utrium_bar", "lemergium_bar", "zynthium_bar", "keanium_bar", "ghodium_melt", "oxidant", "reductant", "purifier", "battery", "composite", "crystal", "liquid", "wire", "switch", "transistor", "microchip", "circuit", "device", "cell", "phlegm", "tissue", "muscle", "organoid", "organism", "alloy", "tube", "fixtures", "frame", "hydraulics", "machine", "condensate", "concentrate", "extract", "spirit", "emanation", "essence", "season", "score", "token", "cpuUnlock", "pixel", "accessKey"]; // 89 total
   var RESOURCE_TO_ENUM_MAP = {};
   {
@@ -2495,9 +2496,9 @@ var bootloader = (function (exports) {
         RawMemory._parsed = this._memoryCache;
         // Checkin
         var ticksSinceLestCheckIn = Game.time - this._lastCheckIn;
-        if (ticksSinceLestCheckIn >= CPU_HALT_WHEN_NO_CHECKIN_FOR) {
+        if (ticksSinceLestCheckIn >= CPU_HALT_WHEN_NO_CHECKIN_FOR + 1) {
           Game.cpu.halt && Game.cpu.halt();
-        } else if (ticksSinceLestCheckIn >= CPU_HALT_WHEN_NO_CHECKIN_FOR - 1) {
+        } else if (ticksSinceLestCheckIn >= CPU_HALT_WHEN_NO_CHECKIN_FOR) {
           this.log("no checkin for ".concat(ticksSinceLestCheckIn, " ticks, halting cpu next tick..."));
         }
       }

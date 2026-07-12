@@ -40,7 +40,6 @@ function startup() {
     }
     if (!bootloader.compiled) {
         bootloader.compile(decompressedRawWasm);
-        return false;
     }
     if (!bootloader.started) {
         bootloader.start([/*CUSTOM_INIT_EXPORT_NAMES*/]);

@@ -2029,7 +2029,9 @@ var bootloader = (function (exports) {
     _createClass(WasmMemoryManager, [{
       key: "reportGrowth",
       value: function reportGrowth() {
-        console.log("WASM linear memory growth to ".concat(this._memory.buffer.byteLength, "b (sp=").concat(this._stackPointer.value, ", heapBase=").concat(this._heapBase, ", stackHigh=").concat(this._stackHigh, ", stackLow=").concat(this._stackLow, ")"));
+        {
+          return;
+        }
       }
     }, {
       key: "checkAlignment",
@@ -2338,7 +2340,6 @@ var bootloader = (function (exports) {
           size: sz
         };
         this.flush();
-        console.log("allocated transient page (".concat(page.size, "b @ ").concat(page.ptr, ")"));
         return page;
       }
     }, {

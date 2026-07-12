@@ -4,6 +4,7 @@ import { FreeFunction, MallocFunction } from "./interop.js";
 const DEFENSIVE_CHECKS = false; // Turn this on to debug memory corruption issues
 const SIMPLE_TRANSIENT_ALLOCATOR = false;
 const CANARY_SIZE = 4;
+const REPORT_GROWTH = false;
 
 const INITIAL_TRANSIENT_PAGE_SIZE = 128 * 1024;
 
@@ -78,6 +79,7 @@ export class WasmMemoryManager {
     }
 
     private reportGrowth(): void {
+        if (!REPORT_GROWTH) { return; }
         console.log(`WASM linear memory growth to ${this._memory.buffer.byteLength}b (sp=${this._stackPointer.value}, heapBase=${this._heapBase}, stackHigh=${this._stackHigh}, stackLow=${this._stackLow})`);
     }
 
@@ -523,7 +525,7 @@ export class WasmMemoryManager {
             if (page.ptr < this._heapBase) { throw new Error(`transient page was < heap base (${page.ptr} < ${this._heapBase})`); }
             this._u8.fill(0xCC, page.ptr, page.ptr + page.size);
         }        
-        console.log(`allocated transient page (${page.size}b @ ${page.ptr})`);
+        if (REPORT_GROWTH) { console.log(`allocated transient page (${page.size}b @ ${page.ptr})`); }
         return page;
     }
 
