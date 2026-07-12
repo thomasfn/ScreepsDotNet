@@ -21,8 +21,8 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.DotNet.ILCompiler.LLVM" Version="9.0.0-*" />
-		<PackageReference Include="runtime.win-x64.Microsoft.DotNet.ILCompiler.LLVM" Version="9.0.0-*" />
+		<PackageReference Include="Microsoft.DotNet.ILCompiler.LLVM" Version="10.0.0-*" />
+		<PackageReference Include="runtime.win-x64.Microsoft.DotNet.ILCompiler.LLVM" Version="10.0.0-*" />
 	</ItemGroup>
 
 	<PropertyGroup>
@@ -41,7 +41,7 @@
 	<Import Project="..\ScreepsDotNet.API\build\ScreepsDotNet.API.props" />
 
 	<ItemGroup>
-		<PackageReference Include="ScreepsDotNet.Bundler" Version="2.1.0" PrivateAssets="All" />
+		<PackageReference Include="ScreepsDotNet.Bundler" Version="3.0.0" PrivateAssets="All" />
 	</ItemGroup>
 
 </Project>

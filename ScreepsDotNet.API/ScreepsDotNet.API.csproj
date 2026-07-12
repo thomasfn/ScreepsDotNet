@@ -15,8 +15,8 @@
 		<Title>ScreepsDotNet API</Title>
 		<Authors>thomasfn</Authors>
 		<Description>A set of interfaces and a JS binding for the Screeps Arena and Screeps World APIs</Description>
-		<Version>2.1.1</Version>
-		<PackageVersion>2.1.1</PackageVersion>
+		<Version>3.0.0</Version>
+		<PackageVersion>3.0.0</PackageVersion>
 		<PackageProjectUrl>https://github.com/thomasfn/ScreepsDotNet</PackageProjectUrl>
 		<PackageLicenseFile>LICENSE</PackageLicenseFile>
 		<PackageTags>screeps world arena api</PackageTags>
@@ -42,7 +42,6 @@
 		<None Remove="js\world\bootloader.js" />
 		<None Remove="js\world\loop.js" />
 		<None Remove="js\world\startup.js" />
-		<None Remove="js\screeps.wit" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -63,8 +62,6 @@
 		<Content Include="js\world\bootloader.js" PackagePath="js\world\" />
 		<Content Include="js\world\loop.js" PackagePath="js\world\" />
 		<Content Include="js\world\startup.js" PackagePath="js\world\" />
-
-		<Content Include="js\screeps.wit" PackagePath="js\" />
 	</ItemGroup>
 
 </Project>
