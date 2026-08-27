@@ -13,7 +13,7 @@ type GamePrototype = {};
 
 type GameConstructor = { readonly prototype: GamePrototype };
 
-type ResourceConstantEx = ResourceConstant | "season" | "score" | "token" | "cpuUnlock" | "pixel" | "accessKey";
+type ResourceConstantEx = ResourceConstant | "season" | "score" | "T" | "token" | "cpuUnlock" | "pixel" | "accessKey";
 
 const RESOURCE_LIST: readonly ResourceConstantEx[] = [
     "energy", "power",
@@ -29,7 +29,7 @@ const RESOURCE_LIST: readonly ResourceConstantEx[] = [
     "cell", "phlegm", "tissue", "muscle", "organoid", "organism",
     "alloy", "tube", "fixtures", "frame", "hydraulics", "machine",
     "condensate", "concentrate", "extract", "spirit", "emanation", "essence",
-    "season", "score",
+    "season", "score", "T",
     "token", "cpuUnlock", "pixel", "accessKey",
 ]; // 89 total
 
@@ -109,7 +109,12 @@ export default class WorldBindings extends BaseBindings {
         this.bindingsImport['batch-fetch-object-room-positions'] = this.impBatchFetchObjectRoomPositions.bind(this);
         this.bindingsImport['get-object-by-id'] = this.impGetObjectById.bind(this);
         this.bindingsImport['get-object-id'] = this.impGetObjectId.bind(this);
-        const _global = global as unknown as { ScoreCollector?: GameConstructor, ScoreContainer?: GameConstructor, Score?: GameConstructor };
+        const _global = global as unknown as {
+            ScoreCollector?: GameConstructor;
+            ScoreContainer?: GameConstructor;
+            Score?: GameConstructor;
+            Reactor?: GameConstructor;
+        };
         const gameConstructors: Record<string, GameConstructor> = {
             StructureContainer,
             StructureController,
@@ -151,6 +156,7 @@ export default class WorldBindings extends BaseBindings {
             ScoreCollector: _global.ScoreCollector ?? function() {},
             ScoreContainer: _global.ScoreContainer ?? function() {},
             Score: _global.Score ?? function() {},
+            Reactor: _global.Reactor ?? function() {},
         }
         this.imports['object'] = {
             getConstructorOf: (x: object) => Object.getPrototypeOf(x).constructor,

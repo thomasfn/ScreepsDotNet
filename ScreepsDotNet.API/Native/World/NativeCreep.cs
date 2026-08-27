@@ -30,6 +30,7 @@ namespace ScreepsDotNet.Native.World
             Name.Create("attackController"),
             Name.Create("build"),
             Name.Create("claimController"),
+            Name.Create("claimReactor"),
             Name.Create("dismantle"),
             Name.Create("drop"),
             Name.Create("generateSafeMode"),
@@ -88,6 +89,9 @@ namespace ScreepsDotNet.Native.World
 
         [JSImport("Creep.claimController", "game/prototypes/wrapped")]
         internal static partial int Native_ClaimController(JSObject proxyObject, JSObject targetProxyObject);
+
+        [JSImport("Creep.claimReactor", "game/prototypes/wrapped")]
+        internal static partial int Native_ClaimReactor(JSObject proxyObject, JSObject targetProxyObject);
 
         [JSImport("Creep.dismantle", "game/prototypes/wrapped")]
         internal static partial int Native_Dismantle(JSObject proxyObject, JSObject targetProxyObject);
@@ -271,6 +275,9 @@ namespace ScreepsDotNet.Native.World
         public CreepClaimControllerResult ClaimController(IStructureController controller)
             => (CreepClaimControllerResult)Native_ClaimController(ProxyObject, controller.ToJS());
 
+        public CreepClaimReactorResult ClaimReactor(IReactor reactor)
+            => (CreepClaimReactorResult)Native_ClaimReactor(ProxyObject, reactor.ToJS());
+
         public CreepDismantleResult Dismantle(IStructure target)
             => (CreepDismantleResult)Native_Dismantle(ProxyObject, target.ToJS());
 
@@ -384,6 +391,9 @@ namespace ScreepsDotNet.Native.World
             => (CreepTransferResult)Native_Transfer(ProxyObject, target.ToJS(), resourceType.ToJS(), amount);
 
         public CreepTransferResult Transfer(IScoreCollector target, ResourceType resourceType, int? amount = null)
+            => (CreepTransferResult)Native_Transfer(ProxyObject, target.ToJS(), resourceType.ToJS(), amount);
+
+        public CreepTransferResult Transfer(IReactor target, ResourceType resourceType, int? amount = null)
             => (CreepTransferResult)Native_Transfer(ProxyObject, target.ToJS(), resourceType.ToJS(), amount);
 
         public CreepUpgradeControllerResult UpgradeController(IStructureController target)

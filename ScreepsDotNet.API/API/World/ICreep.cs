@@ -168,6 +168,34 @@ namespace ScreepsDotNet.API.World
         GclNotEnough = -15
     }
 
+    public enum CreepClaimReactorResult
+    {
+        /// <summary>
+        /// The operation has been scheduled successfully.
+        /// </summary>
+        Ok = 0,
+        /// <summary>
+        /// You are not the owner of this creep.
+        /// </summary>
+        NotOwner = -1,
+        /// <summary>
+        /// The creep is still being spawned.
+        /// </summary>
+        Busy = -4,
+        /// <summary>
+        /// The target is not a valid reactor object.
+        /// </summary>
+        InvalidTarget = -7,
+        /// <summary>
+        /// The target is too far away.
+        /// </summary>
+        NotInRange = -9,
+        /// <summary>
+        /// There are not enough CLAIM body parts in this creep’s body.
+        /// </summary>
+        NoBodyPart = -12,
+    }
+
     public enum CreepDismantleResult
     {
         /// <summary>
@@ -690,6 +718,7 @@ namespace ScreepsDotNet.API.World
         AttackController,
         Build,
         ClaimController,
+        ClaimReactor,
         Dismantle,
         Drop,
         GenerateSafeMode,
@@ -870,6 +899,15 @@ namespace ScreepsDotNet.API.World
         /// <param name="controller"></param>
         /// <returns></returns>
         CreepClaimControllerResult ClaimController(IStructureController controller);
+
+        /// <summary>
+        /// Claims a reactor under your control.
+        /// Requires the CLAIM body part.
+        /// The target has to be at adjacent square to the creep.
+        /// </summary>
+        /// <param name="reactor"></param>
+        /// <returns></returns>
+        CreepClaimReactorResult ClaimReactor(IReactor reactor);
 
         /// <summary>
         /// Dismantles any structure that can be constructed (even hostile) returning 50% of the energy spent on its repair.
@@ -1170,6 +1208,15 @@ namespace ScreepsDotNet.API.World
         /// <param name="amount"></param>
         /// <returns></returns>
         CreepTransferResult Transfer(IScoreCollector target, ResourceType resourceType, int? amount = null);
+
+        /// <summary>
+        /// Transfer resource from the creep to another object. The target has to be at adjacent square to the creep.
+        /// </summary>
+        /// <param name="target"></param>
+        /// <param name="resourceType"></param>
+        /// <param name="amount"></param>
+        /// <returns></returns>
+        CreepTransferResult Transfer(IReactor target, ResourceType resourceType, int? amount = null);
 
         /// <summary>
         /// Upgrade your controller to the next level using carried energy.

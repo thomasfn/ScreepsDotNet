@@ -145,6 +145,7 @@ namespace ScreepsDotNet.API.World
 
         Season,
         Score,
+        Thorium,
 
         SubscriptionToken,
         CpuUnlock,

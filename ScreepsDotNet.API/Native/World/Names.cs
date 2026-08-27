@@ -139,5 +139,6 @@ namespace ScreepsDotNet.Native.World
         public static readonly Name GCL = Name.Create("gcl");
         public static readonly Name GPL = Name.Create("gpl");
         public static readonly Name Score = Name.Create("score");
+        public static readonly Name ContinuousWork = Name.Create("continuousWork");
     }
 }

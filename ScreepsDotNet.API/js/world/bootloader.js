@@ -2437,7 +2437,7 @@ var bootloader = (function (exports) {
   }();
 
   var CPU_HALT_WHEN_NO_CHECKIN_FOR = 2;
-  var RESOURCE_LIST = ["energy", "power", "H", "O", "U", "L", "K", "Z", "X", "G", "silicon", "metal", "biomass", "mist", "OH", "ZK", "UL", "UH", "UO", "KH", "KO", "LH", "LO", "ZH", "ZO", "GH", "GO", "UH2O", "UHO2", "KH2O", "KHO2", "LH2O", "LHO2", "ZH2O", "ZHO2", "GH2O", "GHO2", "XUH2O", "XUHO2", "XKH2O", "XKHO2", "XLH2O", "XLHO2", "XZH2O", "XZHO2", "XGH2O", "XGHO2", "ops", "utrium_bar", "lemergium_bar", "zynthium_bar", "keanium_bar", "ghodium_melt", "oxidant", "reductant", "purifier", "battery", "composite", "crystal", "liquid", "wire", "switch", "transistor", "microchip", "circuit", "device", "cell", "phlegm", "tissue", "muscle", "organoid", "organism", "alloy", "tube", "fixtures", "frame", "hydraulics", "machine", "condensate", "concentrate", "extract", "spirit", "emanation", "essence", "season", "score", "token", "cpuUnlock", "pixel", "accessKey"]; // 89 total
+  var RESOURCE_LIST = ["energy", "power", "H", "O", "U", "L", "K", "Z", "X", "G", "silicon", "metal", "biomass", "mist", "OH", "ZK", "UL", "UH", "UO", "KH", "KO", "LH", "LO", "ZH", "ZO", "GH", "GO", "UH2O", "UHO2", "KH2O", "KHO2", "LH2O", "LHO2", "ZH2O", "ZHO2", "GH2O", "GHO2", "XUH2O", "XUHO2", "XKH2O", "XKHO2", "XLH2O", "XLHO2", "XZH2O", "XZHO2", "XGH2O", "XGHO2", "ops", "utrium_bar", "lemergium_bar", "zynthium_bar", "keanium_bar", "ghodium_melt", "oxidant", "reductant", "purifier", "battery", "composite", "crystal", "liquid", "wire", "switch", "transistor", "microchip", "circuit", "device", "cell", "phlegm", "tissue", "muscle", "organoid", "organism", "alloy", "tube", "fixtures", "frame", "hydraulics", "machine", "condensate", "concentrate", "extract", "spirit", "emanation", "essence", "season", "score", "T", "token", "cpuUnlock", "pixel", "accessKey"]; // 89 total
   var RESOURCE_TO_ENUM_MAP = {};
   {
     var i = 0;
@@ -2508,6 +2508,7 @@ var bootloader = (function (exports) {
         var _global$ScoreCollecto,
           _global$ScoreContaine,
           _global$Score,
+          _global$Reactor,
           _this2 = this;
         _get(_getPrototypeOf(WorldBindings.prototype), "setupImports", this).call(this);
         this.bindingsImport['renew-object'] = this.impRenewObject.bind(this);
@@ -2557,7 +2558,8 @@ var bootloader = (function (exports) {
           Nuke: Nuke,
           ScoreCollector: (_global$ScoreCollecto = _global.ScoreCollector) !== null && _global$ScoreCollecto !== void 0 ? _global$ScoreCollecto : function () {},
           ScoreContainer: (_global$ScoreContaine = _global.ScoreContainer) !== null && _global$ScoreContaine !== void 0 ? _global$ScoreContaine : function () {},
-          Score: (_global$Score = _global.Score) !== null && _global$Score !== void 0 ? _global$Score : function () {}
+          Score: (_global$Score = _global.Score) !== null && _global$Score !== void 0 ? _global$Score : function () {},
+          Reactor: (_global$Reactor = _global.Reactor) !== null && _global$Reactor !== void 0 ? _global$Reactor : function () {}
         };
         this.imports['object'] = {
           getConstructorOf: function getConstructorOf(x) {
